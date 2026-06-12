@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#1a4a8a">
   <title>Bewerbungstool – Einstellungstest-Simulator</title>
   <link rel="manifest" href="manifest.webmanifest">
@@ -12,9 +12,14 @@
 </head>
 <body>
   <header>
-    <h1>Bewerbungstool</h1>
-    <p class="subtitle">Simulierter Einstellungstest zu einer Stellenausschreibung</p>
-    <button id="btn-settings" class="ghost" title="Einstellungen">Einstellungen</button>
+    <div class="header-text">
+      <h1>Bewerbungstool</h1>
+      <p class="subtitle">Simulierter Einstellungstest zu einer Stellenausschreibung</p>
+    </div>
+    <div class="header-actions">
+      <button id="btn-history" class="ghost" title="Historie">Historie</button>
+      <button id="btn-settings" class="ghost" title="Einstellungen">Einstellungen</button>
+    </div>
   </header>
 
   <main>
@@ -176,9 +181,20 @@
       <h3>Fragen im Detail</h3>
       <div id="result-details"></div>
 
-      <div class="row">
+      <div class="row wrap">
         <button id="btn-restart" class="primary">Neuer Test</button>
-        <button id="btn-print" class="ghost">Ergebnis drucken / als PDF speichern</button>
+        <button id="btn-review-questions" class="ghost">Fragen durchgehen (Lernmodus)</button>
+        <button id="btn-print" class="ghost">Drucken / PDF</button>
+      </div>
+    </section>
+
+    <!-- Historie -->
+    <section id="view-history" class="card hidden">
+      <h2>Historie</h2>
+      <p class="hint" id="history-empty">Noch keine abgeschlossenen Tests. Nach jeder Auswertung landet das Ergebnis automatisch hier &ndash; pro Stelle gruppiert, damit der Fortschritt sichtbar wird.</p>
+      <div id="history-list"></div>
+      <div class="row">
+        <button id="btn-history-back" class="primary">Zurück</button>
       </div>
     </section>
 

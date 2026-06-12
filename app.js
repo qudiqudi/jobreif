@@ -88,7 +88,7 @@ const timer = { intervalId: null, deadline: 0, overtime: false, limitMin: 0 };
 
 const $ = (id) => document.getElementById(id);
 
-const views = ["view-onboarding", "view-settings", "view-input", "view-quiz", "view-result"];
+const views = ["view-onboarding", "view-settings", "view-input", "view-quiz", "view-result", "view-history"];
 
 function showView(id) {
   views.forEach((v) => $(v).classList.toggle("hidden", v !== id));
@@ -820,6 +820,7 @@ async function evaluateQuiz() {
         ? `Antwort ${Math.min(seen, total)} von ${total} wird bewertet...`
         : "Antworten werden ausgewertet...");
     });
+    saveAttempt(result, durationMs);
     renderResult(result, durationMs);
     showView("view-result");
   } catch (e) {
@@ -893,6 +894,182 @@ function renderResult(result, durationMs) {
     }
     details.appendChild(div);
   });
+}
+
+/* ---------- Historie (localStorage, pro Stelle gruppiert) ---------- */
+
+function loadHistory() {
+  try {
+    return JSON.parse(localStorage.getItem("bewerbungstool.history")) || { jobs: [] };
+  } catch {
+    return { jobs: [] };
+  }
+}
+
+function saveHistory(h) {
+  // Bei vollem Speicher aelteste Versuche verwerfen und erneut versuchen
+  for (let i = 0; i < 5; i++) {
+    try {
+      localStorage.setItem("bewerbungstool.history", JSON.stringify(h));
+      return;
+    } catch {
+      let oldest = null;
+      let oldestJob = null;
+      h.jobs.forEach((j) => j.attempts.forEach((a) => {
+        if (!oldest || a.date < oldest.date) { oldest = a; oldestJob = j; }
+      }));
+      if (!oldest) return;
+      oldestJob.attempts = oldestJob.attempts.filter((a) => a !== oldest);
+      h.jobs = h.jobs.filter((j) => j.attempts.length > 0);
+    }
+  }
+}
+
+// Dieselbe Anzeige (gleicher Text) landet immer bei derselben Stelle
+function jobKey(text) {
+  const norm = text.replace(/\s+/g, " ").trim().toLowerCase();
+  let hash = 5381;
+  for (let i = 0; i < norm.length; i++) {
+    hash = ((hash << 5) + hash + norm.charCodeAt(i)) | 0;
+  }
+  return "j" + (hash >>> 0).toString(36);
+}
+
+function saveAttempt(result, durationMs) {
+  const h = loadHistory();
+  const key = jobKey(quiz.jobText);
+  let job = h.jobs.find((j) => j.key === key);
+  if (!job) {
+    job = { key, titel: quiz.titel, jobText: quiz.jobText, attempts: [] };
+    h.jobs.unshift(job);
+  }
+  job.titel = quiz.titel;
+
+  const quizCopy = JSON.parse(JSON.stringify(quiz));
+  delete quizCopy.jobText; // liegt schon auf dem Job, spart Speicher
+
+  job.attempts.push({
+    date: Date.now(),
+    mode,
+    schwierigkeitsgrad: quiz.schwierigkeitsgrad || "",
+    prozent: result.gesamt.prozent,
+    durationMs,
+    timerLimitMin: timer.limitMin,
+    overtime: timer.overtime,
+    quiz: quizCopy,
+    answers: answers.slice(),
+    revealed: revealed.slice(),
+    result,
+  });
+
+  if (job.attempts.length > 20) job.attempts = job.attempts.slice(-20);
+  if (h.jobs.length > 20) h.jobs.length = 20;
+  saveHistory(h);
+}
+
+function formatDate(ts) {
+  return new Date(ts).toLocaleDateString("de-DE", {
+    day: "2-digit", month: "2-digit", year: "2-digit",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
+function scoreClass(p) {
+  return p >= 70 ? "good" : p >= 40 ? "mid" : "bad";
+}
+
+function renderHistory() {
+  const h = loadHistory();
+  const list = $("history-list");
+  list.innerHTML = "";
+  $("history-empty").classList.toggle("hidden", h.jobs.length > 0);
+
+  h.jobs.forEach((job) => {
+    const block = document.createElement("div");
+    block.className = "job-block";
+
+    const best = Math.max(...job.attempts.map((a) => a.prozent));
+    const last = job.attempts[job.attempts.length - 1].prozent;
+
+    const head = document.createElement("div");
+    head.className = "job-head";
+    const title = document.createElement("div");
+    const strong = document.createElement("strong");
+    strong.textContent = job.titel;
+    const sub = document.createElement("p");
+    sub.className = "hint";
+    sub.textContent = `${job.attempts.length} Versuch${job.attempts.length === 1 ? "" : "e"} · Bester: ${best} % · Letzter: ${last} %`;
+    title.appendChild(strong);
+    title.appendChild(sub);
+    const practiceBtn = document.createElement("button");
+    practiceBtn.textContent = "Weiter üben";
+    practiceBtn.title = "Neuen Test zu dieser Stelle erstellen";
+    practiceBtn.addEventListener("click", () => {
+      $("job-text").value = job.jobText;
+      setSourceTab("text");
+      showView("view-input");
+    });
+    head.appendChild(title);
+    head.appendChild(practiceBtn);
+    block.appendChild(head);
+
+    // Verlauf als Balken (chronologisch, max. die letzten 12)
+    const trend = document.createElement("div");
+    trend.className = "trend";
+    job.attempts.slice(-12).forEach((a) => {
+      const bar = document.createElement("div");
+      bar.className = "trend-bar " + scoreClass(a.prozent);
+      bar.style.height = Math.max(4, Math.round(a.prozent * 0.44)) + "px";
+      bar.title = `${formatDate(a.date)}: ${a.prozent} %`;
+      trend.appendChild(bar);
+    });
+    block.appendChild(trend);
+
+    // Versuche, neueste zuerst
+    const ul = document.createElement("ul");
+    ul.className = "attempt-list";
+    job.attempts.slice().reverse().forEach((att) => {
+      const li = document.createElement("li");
+      const info = document.createElement("span");
+      info.textContent = `${formatDate(att.date)} · ${att.mode === "pruefung" ? "Prüfung" : "Lernen"}` +
+        (att.schwierigkeitsgrad ? ` · ${difficultyLabel(att.schwierigkeitsgrad)}` : "") +
+        ` · ${att.quiz.fragen.length} Fragen`;
+      const score = document.createElement("span");
+      score.className = "attempt-score " + scoreClass(att.prozent);
+      score.textContent = att.prozent + " %";
+      const openBtn = document.createElement("button");
+      openBtn.textContent = "Ansehen";
+      openBtn.addEventListener("click", () => openAttempt(job, att));
+      li.appendChild(info);
+      li.appendChild(score);
+      li.appendChild(openBtn);
+      ul.appendChild(li);
+    });
+    block.appendChild(ul);
+
+    list.appendChild(block);
+  });
+}
+
+// Gespeicherten Versuch wieder oeffnen: Auswertung anzeigen, Fragebogen
+// laesst sich von dort im Lernmodus erneut durchgehen
+function openAttempt(job, att) {
+  quiz = JSON.parse(JSON.stringify(att.quiz));
+  quiz.jobText = job.jobText;
+  answers = att.answers.slice();
+  revealed = (att.revealed || []).slice();
+  while (revealed.length < quiz.fragen.length) revealed.push(false);
+  current = 0;
+  startTime = Date.now();
+  stopTimer();
+  $("quiz-timer").classList.add("hidden");
+
+  // Meta-Zeile der historischen Auswertung korrekt reproduzieren
+  mode = att.mode;
+  timer.limitMin = att.timerLimitMin || 0;
+  timer.overtime = !!att.overtime;
+  renderResult(att.result, att.durationMs);
+  showView("view-result");
 }
 
 /* ---------- Onboarding ---------- */
@@ -1088,6 +1265,25 @@ $("btn-restart").addEventListener("click", () => {
 });
 
 $("btn-print").addEventListener("click", () => window.print());
+
+// Beantworteten Fragebogen erneut durchgehen (immer im Lernmodus, ohne Timer)
+$("btn-review-questions").addEventListener("click", () => {
+  if (!quiz) return;
+  mode = "lernen";
+  startTime = Date.now();
+  stopTimer();
+  $("quiz-timer").classList.add("hidden");
+  current = 0;
+  renderQuestion();
+  showView("view-quiz");
+});
+
+$("btn-history").addEventListener("click", () => {
+  renderHistory();
+  showView("view-history");
+});
+
+$("btn-history-back").addEventListener("click", () => showView("view-input"));
 
 // Zeit abgelaufen: auswerten oder bewusst überziehen
 $("btn-timeout-submit").addEventListener("click", () => {

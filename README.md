@@ -32,6 +32,10 @@ Unterstützte Anbieter und Modelle:
 
 Die Auswahl ist bewusst auf leistungsstarke Modelle beschränkt: Kleine Modelle (Haiku, Mini-Varianten) erzeugen keine zuverlässig strukturierten Fragenkataloge und bewerten freie Antworten zu oberflächlich. Zu jedem Modell zeigt das Dropdown eine kurze Einordnung, wofür es sich eignet.
 
+## Historie
+
+Jede Auswertung wird automatisch lokal gespeichert (localStorage), gruppiert pro Stelle &ndash; dieselbe Stellenanzeige landet immer beim selben Eintrag. Die Historie zeigt den Verlauf der Ergebnisse als Balken, sodass Verbesserungen sichtbar werden. Jeder Versuch lässt sich wieder öffnen: Auswertung ansehen, den beantworteten Fragebogen im Lernmodus erneut durchgehen oder über &bdquo;Weiter üben&ldquo; einen neuen Test zur selben Stelle erstellen. Bei vollem Speicher werden die ältesten Versuche automatisch verworfen.
+
 ## Lokal ausführen
 
 Beliebigen statischen Server starten, z. B.:
