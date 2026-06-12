@@ -51,10 +51,15 @@
   --shadow: 0 18px 40px -18px oklch(0.45 0.04 40 / 0.20);
   --shadow-sm: 0 2px 8px -3px oklch(0.45 0.04 40 / 0.18);
   --display: "Sora", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
 }
 
+/* Dunkel-Tokens. Greifen automatisch per System (ausser der Nutzer erzwingt
+   ueber den Kopfzeilen-Schalter Hell) ODER manuell ueber [data-theme="dark"].
+   Die Werte beider Bloecke muessen identisch bleiben. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --primary: oklch(0.72 0.15 38);
     --primary-dark: oklch(0.66 0.15 38);
     --primary-soft: oklch(0.33 0.06 35);
@@ -84,6 +89,38 @@
     --shadow: 0 18px 44px -18px #000a;
     --shadow-sm: 0 2px 10px -4px #0008;
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --primary: oklch(0.72 0.15 38);
+  --primary-dark: oklch(0.66 0.15 38);
+  --primary-soft: oklch(0.33 0.06 35);
+  --primary-soft-border: oklch(0.45 0.08 35);
+  --primary-on: oklch(0.20 0.03 40);
+  --accent-text: oklch(0.78 0.13 40);
+
+  --bg: oklch(0.205 0.012 50);
+  --card: oklch(0.25 0.015 50);
+  --card-2: oklch(0.235 0.014 50);
+  --text: oklch(0.90 0.01 60);
+  --text-strong: oklch(0.95 0.008 60);
+  --muted: oklch(0.67 0.015 55);
+  --border: oklch(0.34 0.015 50);
+  --border-strong: oklch(0.44 0.015 50);
+
+  --green: oklch(0.78 0.13 150);
+  --green-soft: oklch(0.31 0.05 150);
+  --orange: oklch(0.80 0.12 65);
+  --orange-soft: oklch(0.33 0.05 62);
+  --red: oklch(0.72 0.16 27);
+  --red-soft: oklch(0.34 0.06 27);
+
+  --header-bg: oklch(0.28 0.04 35);
+  --header-on: oklch(0.96 0.02 45);
+
+  --shadow: 0 18px 44px -18px #000a;
+  --shadow-sm: 0 2px 10px -4px #0008;
 }
 
 * { box-sizing: border-box; }
@@ -133,6 +170,16 @@ header .subtitle { margin: 0.15rem 0 0; font-size: 0.85rem; opacity: 0.85; }
 .header-actions button:hover {
   background: color-mix(in srgb, var(--header-on) 14%, transparent);
 }
+
+/* Farbschema-Schalter: kompakter Icon-Button (Touch-Ziel via button:not(.tab)) */
+#btn-theme {
+  width: 44px;
+  padding: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+#btn-theme svg { display: block; width: 20px; height: 20px; }
 
 main {
   max-width: 720px;

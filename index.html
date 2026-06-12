@@ -11,6 +11,14 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon.svg">
   <link rel="stylesheet" href="style.css">
+  <script>
+    // Farbschema-Override (Auto/Hell/Dunkel) frueh setzen, damit beim Laden
+    // kein Farbsprung entsteht. Kein/ungueltiger Wert => Auto (folgt dem System).
+    try {
+      var __t = localStorage.getItem("bewerbungstool.theme");
+      if (__t === "light" || __t === "dark") document.documentElement.dataset.theme = __t;
+    } catch (e) {}
+  </script>
 </head>
 <body>
   <header>
@@ -19,6 +27,7 @@
       <p class="subtitle">Simulierter Einstellungstest zu einer Stellenausschreibung</p>
     </div>
     <div class="header-actions">
+      <button id="btn-theme" class="ghost" type="button" aria-label="Farbschema: Auto"></button>
       <button id="btn-history" class="ghost" title="Historie">Historie</button>
       <button id="btn-settings" class="ghost" title="Einstellungen">Einstellungen</button>
     </div>
