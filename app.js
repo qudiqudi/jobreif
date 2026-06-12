@@ -872,9 +872,49 @@ async function evaluateQuiz() {
   }
 }
 
+// Score-Ring (SVG) in #result-score zeichnen. Liest defensiv: Prozent ist
+// immer vorhanden; die Punkte-Unterzeile wird nur gezeigt, wenn ergebnisse da
+// sind (alte Historie-Eintraege bleiben damit kompatibel).
+function renderScoreRing(prozent, ergebnisse) {
+  const el = $("result-score");
+  const pct = Math.max(0, Math.min(100, Math.round(Number(prozent) || 0)));
+  const C = 364.42; // Umfang bei r=58
+  const target = C * (1 - pct / 100);
+
+  let sub = "";
+  if (Array.isArray(ergebnisse) && ergebnisse.length) {
+    const sum = ergebnisse.reduce((a, e) => a + (e && typeof e.punkte === "number" ? e.punkte : 0), 0);
+    sub = `${sum} / ${ergebnisse.length * 10} Punkte`;
+  }
+
+  el.setAttribute("role", "img");
+  el.setAttribute("aria-label", `Ergebnis ${pct} Prozent`);
+  el.innerHTML = `
+    <svg class="score-ring-svg" width="152" height="152" viewBox="0 0 152 152" aria-hidden="true">
+      <circle class="score-ring-track" cx="76" cy="76" r="58"></circle>
+      <circle class="score-ring-progress" cx="76" cy="76" r="58" stroke-dasharray="${C}" stroke-dashoffset="${C}"></circle>
+    </svg>
+    <div class="score-ring-center">
+      <span class="score-ring-pct">${pct}<i>%</i></span>
+      ${sub ? `<span class="score-ring-sub">${sub}</span>` : ""}
+    </div>`;
+
+  const prog = el.querySelector(".score-ring-progress");
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce) {
+    prog.style.strokeDashoffset = String(target);
+  } else {
+    // zwei Frames warten, damit der Browser den Startzustand (voller Offset)
+    // uebernimmt und dann zum Ziel animiert
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      prog.style.strokeDashoffset = String(target);
+    }));
+  }
+}
+
 function renderResult(result, durationMs) {
   const g = result.gesamt;
-  $("result-score").textContent = `${g.prozent}%`;
+  renderScoreRing(g.prozent, result.ergebnisse);
   $("result-summary").textContent = g.zusammenfassung;
 
   const modeLabel = mode === "pruefung" ? "Prüfungsmodus" : "Lernmodus";
