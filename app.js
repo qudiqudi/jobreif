@@ -74,6 +74,68 @@ function saveSettings(s) {
 
 let settings = loadSettings();
 
+/* ---------- Farbschema (Auto / Hell / Dunkel) ---------- */
+// Eigener, additiver Key - die Einstellungen (settings) bleiben unberuehrt.
+// Kein/ungueltiger Wert => "auto" (folgt dem System per prefers-color-scheme).
+// Das Attribut data-theme wird bereits per Inline-Skript im <head> gesetzt
+// (kein Farbsprung beim Laden); hier nur Umschalten, Persistenz und das Icon.
+const THEME_KEY = "bewerbungstool.theme";
+const THEME_CYCLE = ["auto", "light", "dark"];
+const THEME_LABEL = { auto: "Auto", light: "Hell", dark: "Dunkel" };
+const THEME_ICON = {
+  auto: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg>',
+  light: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>',
+  dark: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
+};
+
+function loadTheme() {
+  try {
+    const t = localStorage.getItem(THEME_KEY);
+    return t === "light" || t === "dark" ? t : "auto";
+  } catch {
+    return "auto";
+  }
+}
+
+function applyTheme(t) {
+  if (t === "light" || t === "dark") {
+    document.documentElement.dataset.theme = t;
+    try { localStorage.setItem(THEME_KEY, t); } catch {}
+  } else {
+    delete document.documentElement.dataset.theme;
+    try { localStorage.removeItem(THEME_KEY); } catch {}
+  }
+  syncThemeButton(t);
+  syncThemeColorMeta(t);
+}
+
+function syncThemeButton(t) {
+  const btn = $("btn-theme");
+  if (!btn) return;
+  btn.innerHTML = THEME_ICON[t] || THEME_ICON.auto;
+  const label = THEME_LABEL[t] || THEME_LABEL.auto;
+  btn.setAttribute("aria-label", `Farbschema: ${label}`);
+  btn.title = `Farbschema: ${label} (klicken zum Wechseln)`;
+}
+
+// Adressleisten-Farbe an das erzwungene Schema anpassen. Bei "auto" uebernehmen
+// wieder die statischen <meta media>-Tags (das Override-Tag wird entfernt).
+function syncThemeColorMeta(t) {
+  const id = "tc-override";
+  let m = document.getElementById(id);
+  if (t !== "light" && t !== "dark") {
+    if (m) m.remove();
+    return;
+  }
+  if (!m) {
+    m = document.createElement("meta");
+    m.name = "theme-color";
+    m.id = id;
+    document.head.appendChild(m);
+  }
+  m.setAttribute("content", t === "dark" ? "#3a2a25" : "#c5543a");
+}
+
 /* ---------- App-Zustand ---------- */
 
 let quiz = null;      // { titel, fragen: [...] }
@@ -872,9 +934,49 @@ async function evaluateQuiz() {
   }
 }
 
+// Score-Ring (SVG) in #result-score zeichnen. Liest defensiv: Prozent ist
+// immer vorhanden; die Punkte-Unterzeile wird nur gezeigt, wenn ergebnisse da
+// sind (alte Historie-Eintraege bleiben damit kompatibel).
+function renderScoreRing(prozent, ergebnisse) {
+  const el = $("result-score");
+  const pct = Math.max(0, Math.min(100, Math.round(Number(prozent) || 0)));
+  const C = 364.42; // Umfang bei r=58
+  const target = C * (1 - pct / 100);
+
+  let sub = "";
+  if (Array.isArray(ergebnisse) && ergebnisse.length) {
+    const sum = ergebnisse.reduce((a, e) => a + (e && typeof e.punkte === "number" ? e.punkte : 0), 0);
+    sub = `${sum} / ${ergebnisse.length * 10} Punkte`;
+  }
+
+  el.setAttribute("role", "img");
+  el.setAttribute("aria-label", `Ergebnis ${pct} Prozent`);
+  el.innerHTML = `
+    <svg class="score-ring-svg" width="152" height="152" viewBox="0 0 152 152" aria-hidden="true">
+      <circle class="score-ring-track" cx="76" cy="76" r="58"></circle>
+      <circle class="score-ring-progress" cx="76" cy="76" r="58" stroke-dasharray="${C}" stroke-dashoffset="${C}"></circle>
+    </svg>
+    <div class="score-ring-center">
+      <span class="score-ring-pct">${pct}<i>%</i></span>
+      ${sub ? `<span class="score-ring-sub">${sub}</span>` : ""}
+    </div>`;
+
+  const prog = el.querySelector(".score-ring-progress");
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce) {
+    prog.style.strokeDashoffset = String(target);
+  } else {
+    // zwei Frames warten, damit der Browser den Startzustand (voller Offset)
+    // uebernimmt und dann zum Ziel animiert
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      prog.style.strokeDashoffset = String(target);
+    }));
+  }
+}
+
 function renderResult(result, durationMs) {
   const g = result.gesamt;
-  $("result-score").textContent = `${g.prozent}%`;
+  renderScoreRing(g.prozent, result.ergebnisse);
   $("result-summary").textContent = g.zusammenfassung;
 
   const modeLabel = mode === "pruefung" ? "Prüfungsmodus" : "Lernmodus";
@@ -1328,6 +1430,14 @@ $("btn-history").addEventListener("click", () => {
 });
 
 $("btn-history-back").addEventListener("click", () => showView("view-input"));
+
+// Farbschema-Schalter (Auto -> Hell -> Dunkel -> Auto)
+syncThemeButton(loadTheme());
+syncThemeColorMeta(loadTheme());
+$("btn-theme").addEventListener("click", () => {
+  const cur = loadTheme();
+  applyTheme(THEME_CYCLE[(THEME_CYCLE.indexOf(cur) + 1) % THEME_CYCLE.length]);
+});
 
 // Zeit abgelaufen: auswerten oder bewusst überziehen
 $("btn-timeout-submit").addEventListener("click", () => {

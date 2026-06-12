@@ -1,12 +1,12 @@
 {
-  "name": "Bewerbungstool – Einstellungstest-Simulator",
-  "short_name": "Bewerbungstool",
+  "name": "jobreif.de – Einstellungstest-Simulator",
+  "short_name": "jobreif.de",
   "description": "Erstellt aus einer Stellenbeschreibung einen interaktiven, simulierten Einstellungstest (Claude oder OpenAI, eigener API-Key).",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
-  "background_color": "#f4f6fa",
-  "theme_color": "#1a4a8a",
+  "background_color": "#fdf7f3",
+  "theme_color": "#c5543a",
   "lang": "de",
   "icons": [
     {

@@ -1,6 +1,6 @@
-# Bewerbungstool
+# jobreif.de
 
-Eine kleine PWA, die aus einer Stellenbeschreibung einen interaktiven, simulierten Einstellungstest erstellt. Läuft komplett im Browser, ohne Backend.
+Eine kleine PWA, die aus einer Stellenbeschreibung einen interaktiven, simulierten Einstellungstest erstellt. Läuft komplett im Browser, ohne Backend. Erreichbar unter [jobreif.de](https://jobreif.de).
 
 ## Funktionsweise
 

@@ -11,6 +11,7 @@ const ASSETS = [
   "manifest.webmanifest",
   "icon.svg",
   "icon-maskable.svg",
+  "fonts/Sora-variable.ttf",
 ];
 
 self.addEventListener("install", (event) => {
