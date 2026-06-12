@@ -282,7 +282,9 @@ async function callLLM(systemPrompt, userPrompt, schema, onProgress) {
         thinking: { type: "adaptive" },
         system: systemPrompt,
         messages: [{ role: "user", content: userPrompt }],
-        output_config: { format: { type: "json_schema", schema } },
+        // effort "medium" statt Default "high": deutlich kuerzere Denkphase,
+        // fuer diese klar umrissene Schema-Aufgabe ohne Qualitaetsverlust
+        output_config: { format: { type: "json_schema", schema }, effort: "medium" },
       }),
     });
 
