@@ -383,7 +383,7 @@ async function fetchJobFromUrl(url) {
 async function generateQuiz() {
   const jobText = $("job-text").value.trim();
   if (jobText.length < 50) {
-    showError("Bitte zuerst eine Stellenbeschreibung einfügen (mindestens ein paar Sätze).");
+    showError("Bitte zuerst eine Stellenanzeige per URL laden oder den Text unter „Text einfügen“ einfügen.");
     return;
   }
   const numQuestions = $("num-questions").value;
@@ -813,6 +813,17 @@ $("btn-save-settings").addEventListener("click", () => {
 
 $("btn-cancel-settings").addEventListener("click", () => showView("view-input"));
 
+// Quelle der Stellenbeschreibung: entweder URL oder manuell eingefuegter Text
+function setSourceTab(which) {
+  $("tab-url").classList.toggle("active", which === "url");
+  $("tab-text").classList.toggle("active", which === "text");
+  $("source-url").classList.toggle("hidden", which !== "url");
+  $("source-text").classList.toggle("hidden", which !== "text");
+}
+
+$("tab-url").addEventListener("click", () => setSourceTab("url"));
+$("tab-text").addEventListener("click", () => setSourceTab("text"));
+
 $("btn-fetch-url").addEventListener("click", async () => {
   const url = $("job-url").value.trim();
   if (!url) return;
@@ -820,6 +831,7 @@ $("btn-fetch-url").addEventListener("click", async () => {
   try {
     const text = cleanPageText(await fetchJobFromUrl(url));
     $("job-text").value = text;
+    setSourceTab("text");
     if (!looksLikeRealContent(text)) {
       showError("Die Seite konnte nur unvollständig ausgelesen werden (vermutlich eine JavaScript-Anwendung). Bitte prüfen und die Stellenbeschreibung ggf. manuell einfügen.");
     }

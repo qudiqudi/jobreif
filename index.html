@@ -46,16 +46,26 @@
     <!-- Stellenbeschreibung -->
     <section id="view-input" class="card">
       <h2>Stellenbeschreibung</h2>
+      <p class="hint">Entweder die Anzeige per URL laden oder den Text direkt einfügen.</p>
 
-      <label for="job-url">Per URL laden (optional)</label>
-      <div class="row">
-        <input type="url" id="job-url" placeholder="https://beispiel.de/stellenanzeige">
-        <button id="btn-fetch-url">Laden</button>
+      <div class="tabs">
+        <button id="tab-url" class="tab active">Per URL laden</button>
+        <button id="tab-text" class="tab">Text einfügen</button>
       </div>
-      <p class="hint">Die Seite wird über den Jina-Reader als Text geladen. Falls das fehlschlägt, einfach den Text unten einfügen.</p>
 
-      <label for="job-text">Stellenbeschreibung</label>
-      <textarea id="job-text" rows="12" placeholder="Stellenbeschreibung hier einfügen..."></textarea>
+      <div id="source-url">
+        <label for="job-url">URL der Stellenanzeige</label>
+        <div class="row">
+          <input type="url" id="job-url" placeholder="https://beispiel.de/stellenanzeige">
+          <button id="btn-fetch-url">Laden</button>
+        </div>
+        <p class="hint">Die Seite wird über den Jina-Reader als Text geladen und danach unter &bdquo;Text einfügen&ldquo; zur Kontrolle angezeigt. Falls das Laden fehlschlägt, dort den Text manuell einfügen.</p>
+      </div>
+
+      <div id="source-text" class="hidden">
+        <label for="job-text">Stellenbeschreibung</label>
+        <textarea id="job-text" rows="12" placeholder="Stellenbeschreibung hier einfügen..."></textarea>
+      </div>
 
       <label>Modus</label>
       <div class="mode-row">

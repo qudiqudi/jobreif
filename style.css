@@ -132,6 +132,30 @@ button.ghost {
   background: transparent;
 }
 
+/* Quellen-Tabs (URL oder Text) */
+.tabs {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 0.6rem;
+}
+
+.tab {
+  border: none;
+  border-radius: 0;
+  background: #fff;
+  padding: 0.5rem 1rem;
+}
+
+.tab + .tab { border-left: 1px solid var(--border); }
+
+.tab.active {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+
 /* Modusauswahl */
 .mode-row {
   display: grid;
