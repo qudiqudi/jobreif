@@ -58,6 +58,62 @@ function modelsFor(provider) {
   return MODELS[provider] || MODELS.anthropic;
 }
 
+/* ---------- Kosten (US-Dollar je 1 Mio. Tokens) ---------- */
+
+// Richtpreise der Anbieter (Stand 2026). Dienen nur der Kostenanzeige und
+// -schätzung im Tool; abgerechnet wird immer direkt beim Anbieter. Bei den
+// Anthropic-Modellen sind die Denk-Tokens ("thinking") in den Output-Tokens
+// enthalten und damit bereits eingepreist. Unbekannte Modelle (z. B. eigene
+// Eintraege) liefern null und werden in der Anzeige stillschweigend
+// uebersprungen.
+const PRICING = {
+  "claude-opus-4-8": { in: 5, out: 25 },
+  "claude-fable-5": { in: 10, out: 50 },
+  "claude-sonnet-4-6": { in: 3, out: 15 },
+  "gpt-5.1": { in: 1.25, out: 10 },
+  "gpt-5": { in: 1.25, out: 10 },
+  "gpt-4.1": { in: 2, out: 8 },
+  "deepseek-chat": { in: 0.27, out: 1.1 },
+  "deepseek-reasoner": { in: 0.55, out: 2.19 },
+};
+
+// Grobe Annahme fuer den Token-Verbrauch eines kompletten Tests mit etwa
+// 10 Fragen (Fragen erstellen inkl. Stellenanzeige + Antworten auswerten),
+// inklusive der modellinternen Denk-Tokens. Nur fuer die ungefaehre
+// Kostenorientierung im Modell-Picker.
+const COST_ESTIMATE_TOKENS = { input: 4000, output: 9000 };
+
+// Errechnet die Kosten in USD aus Token-Verbrauch und Modellpreis; null, wenn
+// fuer das Modell kein Preis hinterlegt ist.
+function costForUsage(modelId, inputTokens, outputTokens) {
+  const p = PRICING[modelId];
+  if (!p) return null;
+  return ((inputTokens || 0) * p.in + (outputTokens || 0) * p.out) / 1e6;
+}
+
+// Verbrauchsobjekt mit eingerechneten Kosten (cost ggf. null)
+function usageWithCost(modelId, inputTokens, outputTokens) {
+  return {
+    inputTokens: inputTokens || 0,
+    outputTokens: outputTokens || 0,
+    cost: costForUsage(modelId, inputTokens, outputTokens),
+  };
+}
+
+// Ungefaehre Kosten eines Standard-Tests fuer den Modell-Picker; null bei
+// unbekanntem Preis.
+function estimatedQueryCost(modelId) {
+  return costForUsage(modelId, COST_ESTIMATE_TOKENS.input, COST_ESTIMATE_TOKENS.output);
+}
+
+// USD-Betrag deutsch formatiert ("0,25 $"); kleine Betraege mit mehr
+// Nachkommastellen, damit Cent-Bruchteile nicht zu 0 gerundet verschwinden.
+function formatUsd(usd) {
+  if (typeof usd !== "number" || !isFinite(usd) || usd < 0) return "";
+  const v = usd >= 0.1 ? usd.toFixed(2) : usd.toFixed(3);
+  return v.replace(".", ",") + " $";
+}
+
 /* ---------- Einstellungen (localStorage) ---------- */
 
 function loadSettings() {
@@ -368,10 +424,23 @@ async function callLLM(systemPrompt, userPrompt, schema, onProgress) {
     }
 
     let stopReason = null;
+    // input_tokens kommt im message_start, die finalen output_tokens (inkl.
+    // Denk-Tokens) im message_delta; Cache-Tokens zaehlen wir zum Input
+    let inputTokens = 0;
+    let outputTokens = 0;
     const text = await readSSEText(
       res,
       (d) => {
-        if (d.type === "message_delta" && d.delta?.stop_reason) stopReason = d.delta.stop_reason;
+        if (d.type === "message_start" && d.message?.usage) {
+          const u = d.message.usage;
+          inputTokens = (u.input_tokens || 0) +
+            (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0);
+          outputTokens = u.output_tokens || 0;
+        }
+        if (d.type === "message_delta") {
+          if (d.delta?.stop_reason) stopReason = d.delta.stop_reason;
+          if (d.usage?.output_tokens != null) outputTokens = d.usage.output_tokens;
+        }
         if (d.type === "content_block_delta" && d.delta?.type === "text_delta") return d.delta.text;
         return "";
       },
@@ -382,7 +451,7 @@ async function callLLM(systemPrompt, userPrompt, schema, onProgress) {
       throw new Error("Die Anfrage wurde vom Modell abgelehnt. Bitte Stellenbeschreibung prüfen.");
     }
     if (!text) throw new Error("Leere Antwort vom Modell erhalten.");
-    return parseJsonLoose(text);
+    return { data: parseJsonLoose(text), usage: usageWithCost(model, inputTokens, outputTokens) };
   }
 
   // OpenAI und DeepSeek (OpenAI-kompatible API)
@@ -394,6 +463,8 @@ async function callLLM(systemPrompt, userPrompt, schema, onProgress) {
   const body = {
     model,
     stream: true,
+    // Liefert am Stream-Ende einen Usage-Block (prompt_/completion_tokens)
+    stream_options: { include_usage: true },
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
@@ -430,14 +501,23 @@ async function callLLM(systemPrompt, userPrompt, schema, onProgress) {
     throw new Error(apiErrorMessage(res.status, err?.error?.message));
   }
 
+  // Der Usage-Block kommt als letzter Chunk (choices ist dann leer)
+  let inputTokens = 0;
+  let outputTokens = 0;
   const text = await readSSEText(
     res,
-    (d) => d.choices?.[0]?.delta?.content || "",
+    (d) => {
+      if (d.usage) {
+        if (d.usage.prompt_tokens != null) inputTokens = d.usage.prompt_tokens;
+        if (d.usage.completion_tokens != null) outputTokens = d.usage.completion_tokens;
+      }
+      return d.choices?.[0]?.delta?.content || "";
+    },
     onProgress
   );
 
   if (!text) throw new Error("Leere Antwort vom Modell erhalten.");
-  return parseJsonLoose(text);
+  return { data: parseJsonLoose(text), usage: usageWithCost(model, inputTokens, outputTokens) };
 }
 
 // Toleriert Markdown-Zaeune und Text um das JSON herum (noetig fuer DeepSeek)
@@ -658,7 +738,7 @@ async function generateQuiz() {
 
     const total = Number(numQuestions);
     setLoadingProgress(0, total, "Das Modell liest die Stellenanzeige...");
-    const result = await callLLM(system, user, QUESTIONS_SCHEMA, (acc) => {
+    const { data: result, usage: genUsage } = await callLLM(system, user, QUESTIONS_SCHEMA, (acc) => {
       // Jede fertige Frage hat im gestreamten JSON genau einen "frage"-Schluessel
       const seen = (acc.match(/"frage"\s*:/g) || []).length;
       setLoadingProgress(seen, total, seen > 0
@@ -672,6 +752,10 @@ async function generateQuiz() {
     quiz = result;
     quiz.jobText = jobText;
     quiz.schwierigkeitsgrad = difficulty;
+    // Kosten der Fragenerstellung (inkl. Verarbeitung der Stellenanzeige) bis
+    // zur Auswertung am Quiz mitfuehren, damit der Gesamtpreis je Fragebogen
+    // gespeichert werden kann
+    quiz.genUsage = genUsage;
     answers = new Array(quiz.fragen.length).fill("");
     revealed = new Array(quiz.fragen.length).fill(false);
     current = 0;
@@ -970,13 +1054,13 @@ async function evaluateQuiz() {
 
     const total = quiz.fragen.length;
     setLoadingProgress(0, total, "Das Modell prüft deine Antworten...");
-    const result = await callLLM(system, user, EVAL_SCHEMA, (acc) => {
+    const { data: result, usage: evalUsage } = await callLLM(system, user, EVAL_SCHEMA, (acc) => {
       const seen = (acc.match(/"feedback"\s*:/g) || []).length;
       setLoadingProgress(seen, total, seen > 0
         ? `Antwort ${Math.min(seen, total)} von ${total} wird bewertet...`
         : "Antworten werden ausgewertet...");
     });
-    saveAttempt(result, durationMs);
+    saveAttempt(result, durationMs, evalUsage);
     renderResult(result, durationMs);
     showView("view-result");
   } catch (e) {
@@ -1131,7 +1215,16 @@ function jobKey(text) {
   return "j" + (hash >>> 0).toString(36);
 }
 
-function saveAttempt(result, durationMs) {
+// Gesamtkosten eines Fragebogens aus Erstellung und Auswertung; null, wenn
+// fuer keinen der beiden Aufrufe ein Preis bekannt ist (z. B. eigenes Modell)
+function buildCost(genUsage, evalUsage) {
+  const gen = genUsage && typeof genUsage.cost === "number" ? genUsage.cost : null;
+  const ev = evalUsage && typeof evalUsage.cost === "number" ? evalUsage.cost : null;
+  if (gen === null && ev === null) return null;
+  return { gen, eval: ev, total: (gen || 0) + (ev || 0) };
+}
+
+function saveAttempt(result, durationMs, evalUsage) {
   const h = loadHistory();
   const key = jobKey(quiz.jobText);
   let job = h.jobs.find((j) => j.key === key);
@@ -1141,8 +1234,11 @@ function saveAttempt(result, durationMs) {
   }
   job.titel = quiz.titel;
 
+  const cost = buildCost(quiz.genUsage, evalUsage);
+
   const quizCopy = JSON.parse(JSON.stringify(quiz));
   delete quizCopy.jobText; // liegt schon auf dem Job, spart Speicher
+  delete quizCopy.genUsage; // liegt als cost am Versuch, nicht doppelt sichern
 
   job.attempts.push({
     date: Date.now(),
@@ -1152,6 +1248,7 @@ function saveAttempt(result, durationMs) {
     durationMs,
     timerLimitMin: timer.limitMin,
     overtime: timer.overtime,
+    cost, // { gen, eval, total } in USD; fehlt bei aelteren Versuchen
     quiz: quizCopy,
     answers: answers.slice(),
     revealed: revealed.slice(),
@@ -1229,7 +1326,11 @@ function renderHistory() {
       const info = document.createElement("span");
       info.textContent = `${formatDate(att.date)} · ${att.mode === "pruefung" ? "Prüfung" : "Lernen"}` +
         (att.schwierigkeitsgrad ? ` · ${difficultyLabel(att.schwierigkeitsgrad)}` : "") +
-        ` · ${att.quiz.fragen.length} Fragen`;
+        ` · ${att.quiz.fragen.length} Fragen` +
+        // Kosten nur zeigen, wenn fuer diesen Versuch erfasst (aeltere fehlen)
+        (att.cost && typeof att.cost.total === "number"
+          ? ` · ca. ${formatUsd(att.cost.total)}`
+          : "");
       const score = document.createElement("span");
       score.className = "attempt-score " + scoreClass(att.prozent);
       score.textContent = att.prozent + " %";
@@ -1378,7 +1479,9 @@ function populateModelSelect(provider, selectedId) {
   catalog.forEach((m) => {
     const opt = document.createElement("option");
     opt.value = m.id;
-    opt.textContent = m.label;
+    // Ungefaehre Kosten je Test direkt im Picker, sofern ein Preis bekannt ist
+    const est = estimatedQueryCost(m.id);
+    opt.textContent = est !== null ? `${m.label} · ca. ${formatUsd(est)}/Test` : m.label;
     select.appendChild(opt);
   });
   select.value = catalog.some((m) => m.id === selectedId) ? selectedId : catalog[0].id;
