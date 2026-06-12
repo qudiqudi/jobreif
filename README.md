@@ -16,6 +16,10 @@ Eine kleine PWA, die aus einer Stellenbeschreibung einen interaktiven, simuliert
 
 In beiden Modi zeigt die Auswertung die benötigte Zeit und lässt sich drucken bzw. als PDF speichern.
 
+## Schwierigkeitsgrad
+
+Vor dem Erstellen lässt sich Leicht/Mittel/Schwer wählen. „Schwer" bedeutet: Fragen, wie sie im echten Auswahlverfahren für die Stelle am wahrscheinlichsten gestellt werden. Die Stufe steuert den Anteil dieser realistischen Fragen im Test (Leicht ca. 10 %, Mittel ca. 30 %, Schwer ca. 60 %). Die Schwierigkeit jeder einzelnen Frage ist nur im Lernmodus sichtbar (Badge neben der Kategorie und in der Auswertung).
+
 ## Eigener API-Key
 
 Jeder Nutzer hinterlegt seinen eigenen API-Key in den Einstellungen. Der Key wird ausschließlich im localStorage des Browsers gespeichert und direkt an den jeweiligen Anbieter gesendet (Anthropic, OpenAI und DeepSeek erlauben Browser-Aufrufe per CORS). Es gibt keinen Server, der den Key sieht.

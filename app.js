@@ -145,6 +145,11 @@ const QUESTIONS_SCHEMA = {
           id: { type: "integer" },
           typ: { type: "string", enum: ["multiple_choice", "offen"] },
           kategorie: { type: "string", description: "z. B. Fachwissen, Soft Skills, Situativ" },
+          schwierigkeit: {
+            type: "string",
+            enum: ["leicht", "mittel", "schwer"],
+            description: "schwer = Frage, wie sie im echten Auswahlverfahren fuer diese Stelle am wahrscheinlichsten gestellt wird",
+          },
           frage: { type: "string" },
           optionen: {
             type: "array",
@@ -178,7 +183,7 @@ const QUESTIONS_SCHEMA = {
             description: "1 bis 3 real existierende Quellen zur Vertiefung",
           },
         },
-        required: ["id", "typ", "kategorie", "frage", "optionen", "korrekte_antwort", "erklaerungen", "lerninfo", "quellen"],
+        required: ["id", "typ", "kategorie", "schwierigkeit", "frage", "optionen", "korrekte_antwort", "erklaerungen", "lerninfo", "quellen"],
         additionalProperties: false,
       },
     },
@@ -464,6 +469,15 @@ async function generateQuiz() {
   }
   const numQuestions = $("num-questions").value;
   mode = document.querySelector('input[name="mode"]:checked').value;
+  const difficulty = document.querySelector('input[name="difficulty"]:checked').value;
+
+  // "schwer" sind die Fragen, die im echten Auswahlverfahren am
+  // wahrscheinlichsten drankommen; die Stufe steuert deren Anteil
+  const DIFFICULTY_MIX = {
+    leicht: "etwa 60% leichte, 30% mittlere und 10% schwere Fragen",
+    mittel: "etwa 25% leichte, 45% mittlere und 30% schwere Fragen",
+    schwer: "etwa 10% leichte, 30% mittlere und 60% schwere Fragen",
+  };
 
   showLoading("Fragenkatalog wird erstellt...");
   try {
@@ -473,6 +487,10 @@ async function generateQuiz() {
       "Mische Fachfragen, situative Fragen und Soft-Skill-Fragen. " +
       "Etwa die Hälfte der Fragen soll Multiple-Choice sein (4 plausible Optionen, genau eine ist die beste), " +
       "der Rest offene Fragen. " +
+      "Ordne jeder Frage eine Schwierigkeit zu: 'schwer' sind Fragen, wie sie im echten Auswahlverfahren " +
+      "oder Vorstellungsgespräch für genau diese Stelle am wahrscheinlichsten gestellt werden - realistisch, " +
+      "spezifisch und anspruchsvoll. 'mittel' sind solide Fachfragen, 'leicht' sind Grundlagen- und Einstiegsfragen. " +
+      `Stelle die Mischung so zusammen: ${DIFFICULTY_MIX[difficulty]}. ` +
       "Gib zu jeder Frage die korrekte Antwort an (bei Multiple-Choice exakt den Wortlaut der besten Option, " +
       "bei offenen Fragen eine knappe Musterantwort), bei Multiple-Choice zu jeder Option eine kurze Erklärung, " +
       "warum sie richtig oder falsch ist, einen lernrelevanten Hintergrund (lerninfo) sowie 1 bis 3 Quellen zur Vertiefung. " +
@@ -505,6 +523,7 @@ async function generateQuiz() {
 
     quiz = result;
     quiz.jobText = jobText;
+    quiz.schwierigkeitsgrad = difficulty;
     answers = new Array(quiz.fragen.length).fill("");
     revealed = new Array(quiz.fragen.length).fill(false);
     current = 0;
@@ -600,6 +619,15 @@ function renderQuestion() {
   $("question-category").textContent = q.kategorie;
   $("question-text").textContent = q.frage;
 
+  // Schwierigkeit nur im Lernmodus sichtbar
+  const diffEl = $("question-difficulty");
+  if (mode === "lernen" && q.schwierigkeit) {
+    diffEl.textContent = difficultyLabel(q.schwierigkeit);
+    diffEl.className = "diff-badge " + q.schwierigkeit;
+  } else {
+    diffEl.className = "diff-badge hidden";
+  }
+
   const area = $("answer-area");
   area.innerHTML = "";
 
@@ -655,6 +683,10 @@ function sourceAnchor(src) {
   a.rel = "noopener noreferrer";
   a.textContent = titel + (isSearch ? " (Suche)" : "");
   return a;
+}
+
+function difficultyLabel(value) {
+  return { leicht: "Leicht", mittel: "Mittel", schwer: "Schwer" }[value] || value;
 }
 
 // Lernmodus: Auflösen-Button bzw. Erklärungsbox unter der Frage
@@ -807,6 +839,9 @@ function renderResult(result, durationMs) {
   if (mode === "pruefung") {
     meta += ` · Zeitlimit ${timer.limitMin} min` + (timer.overtime ? " (überschritten)" : "");
   }
+  if (mode === "lernen" && quiz.schwierigkeitsgrad) {
+    meta += ` · Schwierigkeitsgrad ${difficultyLabel(quiz.schwierigkeitsgrad)}`;
+  }
   $("result-meta").textContent = meta;
 
   const fill = (id, items) => {
@@ -839,6 +874,12 @@ function renderResult(result, durationMs) {
       <p class="fb"></p>
       <p class="fb src"></p>`;
     div.querySelector(".q").textContent = q.frage;
+    if (mode === "lernen" && q.schwierigkeit) {
+      const badge = document.createElement("span");
+      badge.className = "diff-badge " + q.schwierigkeit;
+      badge.textContent = difficultyLabel(q.schwierigkeit);
+      div.querySelector(".q").appendChild(badge);
+    }
     div.querySelector(".a").textContent = "Deine Antwort: " + (answers[i] || "(keine Antwort)");
     div.querySelectorAll(".fb")[0].textContent = r.feedback || "";
     div.querySelectorAll(".fb")[1].textContent = r.musterantwort ? "Musterantwort: " + r.musterantwort : "";

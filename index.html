@@ -111,6 +111,14 @@
         </label>
       </div>
 
+      <label>Schwierigkeitsgrad</label>
+      <div class="diff-row">
+        <label class="diff-option"><input type="radio" name="difficulty" value="leicht"> Leicht</label>
+        <label class="diff-option"><input type="radio" name="difficulty" value="mittel" checked> Mittel</label>
+        <label class="diff-option"><input type="radio" name="difficulty" value="schwer"> Schwer</label>
+      </div>
+      <p class="hint">&bdquo;Schwer&ldquo; sind Fragen, wie sie im echten Auswahlverfahren für diese Stelle am wahrscheinlichsten gestellt werden &ndash; die Stufe steuert ihren Anteil im Test. Im Lernmodus wird die Schwierigkeit jeder Frage angezeigt.</p>
+
       <div class="row space-between">
         <div class="field-inline">
           <label for="num-questions">Fragen</label>
@@ -135,7 +143,7 @@
       </div>
       <div class="progress-bar"><div id="progress-fill"></div></div>
 
-      <p id="question-category" class="category"></p>
+      <p class="category"><span id="question-category"></span><span id="question-difficulty" class="diff-badge hidden"></span></p>
       <h2 id="question-text"></h2>
 
       <div id="answer-area"></div>
