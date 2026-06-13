@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.0.11";
+const APP_VERSION = "1.0.12";
 
 const CHANGELOG = [
+  {
+    version: "1.0.12",
+    date: "13.06.2026",
+    items: [
+      "Links aus der Jobsuche der Arbeitsagentur funktionieren jetzt zuverlässig: Bisher wurde beim Laden eines aus der Trefferliste kopierten Links die gesamte Ergebnisliste mit hunderten anderen Stellen eingelesen statt der gewählten Anzeige. Jetzt wird gezielt die Detailseite zur Stelle geladen.",
+    ],
+  },
   {
     version: "1.0.11",
     date: "13.06.2026",
@@ -835,6 +842,18 @@ function indeedJobKey(u) {
   return jk && /^[0-9a-f]+$/i.test(jk) ? jk : null;
 }
 
+// Arbeitsagentur-Jobsuche: Aus der Trefferliste kopierte Links zeigen auf
+// /jobsuche/suche?...&id=<Referenznummer> - der Reader liefert dort die ganze
+// Liste mit hunderten Treffern als Rauschen statt der gewählten Anzeige. Die
+// Referenznummer (id-Parameter oder /jobsuche/jobdetail/<refnr>) identifiziert
+// die einzelne, serverseitig gerenderte Detailseite mit nur diesem Inserat.
+function arbeitsagenturRef(u) {
+  const m = u.pathname.match(/\/jobsuche\/jobdetail\/([\w-]+)/i);
+  if (m) return m[1];
+  const id = u.searchParams.get("id");
+  return id && /^[\w-]+$/.test(id) ? id : null;
+}
+
 // Manche Jobportale sind reine JavaScript-Apps, deren Inhalt der Reader nicht
 // sieht. Für bekannte Portale gibt es serverseitig gerenderte Alternativ-URLs,
 // die zuerst versucht werden.
@@ -867,6 +886,14 @@ function candidateUrls(url) {
       const m = u.pathname.match(/--(\d+)\.html$/);
       if (m) {
         list.unshift(u.origin + u.pathname.replace(/--(\d+)\.html$/, "--$1-inline.html"));
+      }
+    }
+    // Arbeitsagentur: statt der Trefferliste die Detailseite zur Referenznummer laden
+    if (/(^|\.)arbeitsagentur\.de$/i.test(u.hostname)) {
+      const ref = arbeitsagenturRef(u);
+      const detail = "https://www.arbeitsagentur.de/jobsuche/jobdetail/" + ref;
+      if (ref && detail !== url) {
+        list.unshift(detail);
       }
     }
   } catch {
@@ -1818,6 +1845,10 @@ function canonicalJobUrl(url) {
   if (/(^|\.)stepstone\.de$/i.test(u.hostname)) {
     const m = u.pathname.match(/--(\d+)\.html$/);
     if (m) return "stepstone:" + m[1];
+  }
+  if (/(^|\.)arbeitsagentur\.de$/i.test(u.hostname)) {
+    const ref = arbeitsagenturRef(u);
+    if (ref) return "arbeitsagentur:" + ref.toLowerCase();
   }
   // Unbekanntes Portal: Host (ohne www) und Pfad ohne Query/Hash/Trailing-Slash
   const host = u.hostname.replace(/^www\./i, "").toLowerCase();
