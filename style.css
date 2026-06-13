@@ -1033,6 +1033,7 @@ button.ghost {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--card);
+  cursor: pointer;
 }
 .home-card:hover { border-color: var(--border-strong); background: var(--card-2); }
 .home-card-main { min-width: 0; flex: 1; }

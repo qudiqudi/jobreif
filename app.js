@@ -2351,9 +2351,14 @@ const HOME_MAX = 5;
 function buildHomeCard(job) {
   const best = Math.max(...job.attempts.map((a) => a.prozent));
   const prog = computeJobProgress(job);
-  const card = document.createElement("button");
-  card.type = "button";
+  // Bewusst ein div mit role/tabindex statt <button>: die Karte enthaelt
+  // Block-Inhalte (Titel, Untertitel, Kennzahlen, Mini-Trend), die im
+  // Button-Inhaltsmodell nicht zulaessig waeren. Tastaturbedienung (Enter/Leer)
+  // wird unten nachgebildet.
+  const card = document.createElement("div");
   card.className = "home-card";
+  card.setAttribute("role", "button");
+  card.tabIndex = 0;
 
   const main = document.createElement("div");
   main.className = "home-card-main";
@@ -2391,6 +2396,12 @@ function buildHomeCard(job) {
   card.appendChild(main);
   card.appendChild(side);
   card.addEventListener("click", () => openJob(job));
+  card.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openJob(job);
+    }
+  });
   return card;
 }
 
@@ -2404,14 +2415,26 @@ function renderHome() {
   jobs.slice(0, HOME_MAX).forEach((job) => list.appendChild(buildHomeCard(job)));
 }
 
+// Auswaehlbare Fragenzahlen - identisch zum Auswahlfeld im Eingabe-Bildschirm
+// (#num-questions). Eine Stelle.
+const NUM_OPTIONS = [6, 8, 10, 12, 15, 20, 25, 30];
+
 // Test-Einstellungen defensiv lesen: aeltere Stellen haben kein lastTestConfig,
-// dann Standard (Lernmodus, mittel, 10 Fragen).
+// dann Standard (Lernmodus, mittel, 10 Fragen). Die gespeicherte Fragenzahl ist
+// die tatsaechlich erzeugte (quiz.fragen.length) und kann daneben liegen, wenn
+// ein Modell mehr/weniger Fragen liefert - auf den naechsten waehlbaren Wert
+// rasten, damit Dropdown, Label und das Eingabe-Auswahlfeld nicht auseinander
+// laufen.
+function snapNum(n) {
+  return NUM_OPTIONS.reduce((best, o) => (Math.abs(o - n) < Math.abs(best - n) ? o : best), NUM_OPTIONS[0]);
+}
+
 function normalizeTestConfig(c) {
   const valid = (d) => (d === "leicht" || d === "mittel" || d === "schwer" ? d : "mittel");
   const c2 = c && typeof c === "object" ? c : {};
   let num = Number(c2.num);
   if (!Number.isFinite(num) || num < 1) num = 10;
-  return { mode: c2.mode === "pruefung" ? "pruefung" : "lernen", difficulty: valid(c2.difficulty), num };
+  return { mode: c2.mode === "pruefung" ? "pruefung" : "lernen", difficulty: valid(c2.difficulty), num: snapNum(num) };
 }
 
 // Start-Panel der Subpage: zwei Knoepfe (Lern-/Pruefungsmodus) mit den zuletzt
@@ -2485,7 +2508,7 @@ function buildStartPanel(job) {
   numLabel.textContent = "Fragen";
   numWrap.appendChild(numLabel);
   const numSel = document.createElement("select");
-  [6, 8, 10, 12, 15, 20, 25, 30].forEach((n) => {
+  NUM_OPTIONS.forEach((n) => {
     const o = document.createElement("option");
     o.value = String(n);
     o.textContent = String(n);
@@ -3217,7 +3240,10 @@ document.addEventListener("keydown", (e) => {
 restoreDraft();
 
 // Beim ersten Start zum Onboarding, sonst auf die Startliste der Stellen.
-if (!settings.apiKey) {
+// Lokaler Anbieter laeuft ohne API-Schluessel - dort gilt ein gewaehltes Modell
+// als eingerichtet, sonst landeten lokale Nutzer bei jedem Reload im Onboarding.
+const isConfigured = settings.provider === "local" ? !!settings.model : !!settings.apiKey;
+if (!isConfigured) {
   renderOnboardingSteps($("ob-provider").value);
   showView("view-onboarding");
 } else {
