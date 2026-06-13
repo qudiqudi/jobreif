@@ -4,9 +4,25 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.0.15";
+const APP_VERSION = "1.0.17";
 
 const CHANGELOG = [
+  {
+    version: "1.0.17",
+    date: "13.06.2026",
+    items: [
+      "Historie: Bei lokalen Modellen wird statt der Kosten (die es dort nicht gibt) jetzt der Token-Verbrauch je Versuch angezeigt – als Orientierung, wie viel ein Test das lokale Modell gekostet hat. Für die Cloud-Anbieter bleibt die gewohnte Kostenanzeige in Dollar.",
+    ],
+  },
+  {
+    version: "1.0.16",
+    date: "13.06.2026",
+    items: [
+      "Lokales Modell: Wird die Antwort des Modells abgeschnitten, weil die Kontextlänge nicht für alle Fragen reicht, erscheint jetzt eine klare Meldung (weniger Fragen wählen oder Modell mit größerem Kontext laden) statt eines kryptischen Fehlers.",
+      "Lokales Modell: Für die Fragengenerierung wird bei LM Studio jetzt ein striktes JSON-Schema erzwungen – das liefert zuverlässiger gültiges JSON. Versteht der lokale Server das nicht, wird automatisch ohne diese Vorgabe wiederholt, sodass auch ältere Server und Ollama weiter funktionieren.",
+      "Einstellungen: Beim lokalen Anbieter wird nach „Modelle laden“ die geladene Kontextlänge des Modells angezeigt (sofern LM Studio sie meldet) – als Orientierung, ob der Kontext für die gewünschte Fragenzahl reicht.",
+    ],
+  },
   {
     version: "1.0.15",
     date: "13.06.2026",
@@ -241,6 +257,33 @@ async function fetchLocalModels(rawBaseUrl) {
   return list.map((m) => m && m.id).filter(Boolean);
 }
 
+// Geladene Kontextlaenge je Modell, aus LM Studios nativer API. Wird nach dem
+// Modell-Laden befuellt und in updateModelDesc angezeigt. Ollama kennt diesen
+// Endpunkt nicht - dann bleibt die Map leer und es wird nichts angezeigt.
+let localModelContexts = {};
+async function loadLocalModelContexts(rawBaseUrl) {
+  localModelContexts = {};
+  // Native LM-Studio-API liegt neben /v1, nicht darunter.
+  const root = normalizeBaseUrl(rawBaseUrl).replace(/\/v1$/, "");
+  let res;
+  try {
+    res = await fetch(root + "/api/v0/models");
+  } catch {
+    return;
+  }
+  if (!res.ok) return;
+  const data = await res.json().catch(() => null);
+  const list = data && Array.isArray(data.data) ? data.data : [];
+  list.forEach((m) => {
+    if (m && m.id && m.state === "loaded" && m.loaded_context_length) {
+      localModelContexts[m.id] = {
+        loaded: m.loaded_context_length,
+        max: m.max_context_length || null,
+      };
+    }
+  });
+}
+
 /* ---------- Kosten (US-Dollar) ---------- */
 
 // Grobe Annahme fuer den Token-Verbrauch eines kompletten Tests mit etwa
@@ -288,6 +331,14 @@ function formatUsd(usd) {
   if (typeof usd !== "number" || !isFinite(usd) || usd < 0) return "";
   const v = usd >= 0.1 ? usd.toFixed(2) : usd.toFixed(3);
   return v.replace(".", ",") + " $";
+}
+
+// Token-Anzahl kompakt ("12k Tokens"); ab 1000 auf Tausender gerundet, darunter
+// exakt. Fuer lokale Modelle, die keinen Preis haben, aber Verbrauch melden.
+function formatTokens(n) {
+  if (typeof n !== "number" || !isFinite(n) || n <= 0) return "";
+  const label = n >= 1000 ? `${Math.round(n / 1000)}k` : `${Math.round(n)}`;
+  return `${label} Tokens`;
 }
 
 /* ---------- Einstellungen (localStorage) ---------- */
@@ -734,7 +785,11 @@ async function callLLM(systemPrompt, userPrompt, schema, onProgress) {
       throw new Error("Die Anfrage wurde vom Modell abgelehnt. Bitte Stellenbeschreibung prüfen.");
     }
     if (!text) throw new Error("Leere Antwort vom Modell erhalten.");
-    return { data: parseJsonLoose(text), cost: callCost(model, inputTokens, outputTokens) };
+    return {
+      data: parseJsonLoose(text),
+      cost: callCost(model, inputTokens, outputTokens),
+      tokens: { input: inputTokens, output: outputTokens },
+    };
   }
 
   // OpenAI, DeepSeek und lokale Modelle (Ollama / LM Studio) sprechen alle
@@ -762,17 +817,23 @@ async function callLLM(systemPrompt, userPrompt, schema, onProgress) {
   };
 
   if (embedSchema) {
-    // Schema in den Prompt geben (kein striktes json_schema verfuegbar).
+    // Schema zusaetzlich in den Prompt geben: dient als Fallback, wenn der
+    // Server kein striktes response_format unterstuetzt (DeepSeek, aeltere
+    // lokale Server). parseJsonLoose toleriert dann Beiwerk.
     body.messages[0].content +=
       "\n\nAntworte ausschliesslich mit einem JSON-Objekt, das exakt diesem JSON-Schema entspricht (keine Erklaerungen, kein Markdown):\n" +
       JSON.stringify(schema);
-    // JSON-Modus nur fuer DeepSeek-Chat. Neuere LM-Studio-Versionen lehnen
-    // response_format.type "json_object" mit HTTP 400 ab (akzeptieren nur noch
-    // "json_schema" oder "text"), und Ollama-Versionen verhalten sich ebenfalls
-    // uneinheitlich. Fuer lokale Server verlassen wir uns daher allein auf das
-    // in den Prompt eingebettete Schema; parseJsonLoose toleriert Beiwerk.
     if (model === "deepseek-chat") {
+      // DeepSeek-Chat kennt nur den JSON-Modus, kein striktes json_schema.
       body.response_format = { type: "json_object" };
+    } else if (isLocal) {
+      // LM Studio (und neuere Ollama) erzwingen mit json_schema ueber eine
+      // Grammatik garantiert valides, schema-konformes JSON. Aeltere Server
+      // lehnen es mit HTTP 400 ab; das faengt der Fallback unten ab.
+      body.response_format = {
+        type: "json_schema",
+        json_schema: { name: "ergebnis", strict: true, schema },
+      };
     }
   } else {
     body.response_format = {
@@ -786,18 +847,28 @@ async function callLLM(systemPrompt, userPrompt, schema, onProgress) {
   // LM-Studio-Konfigurationen), wird er mitgeschickt.
   if (settings.apiKey) headers.Authorization = `Bearer ${settings.apiKey}`;
 
+  const localConnError = "Keine Verbindung zum lokalen Modellserver. Läuft Ollama bzw. LM Studio, und ist die Adresse in den Einstellungen korrekt? Bei Aufruf über https muss der Server zudem Cross-Origin-Anfragen dieser Seite erlauben (z. B. OLLAMA_ORIGINS).";
+  const doPost = () => fetch(endpoint, { method: "POST", headers, body: JSON.stringify(body) });
+
   let res;
   try {
-    res = await fetch(endpoint, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-    });
+    res = await doPost();
   } catch (e) {
-    if (isLocal) {
-      throw new Error("Keine Verbindung zum lokalen Modellserver. Läuft Ollama bzw. LM Studio, und ist die Adresse in den Einstellungen korrekt? Bei Aufruf über https muss der Server zudem Cross-Origin-Anfragen dieser Seite erlauben (z. B. OLLAMA_ORIGINS).");
-    }
+    if (isLocal) throw new Error(localConnError);
     throw e;
+  }
+
+  // Fallback: Aeltere lokale Server kennen response_format (json_schema) nicht
+  // und antworten mit HTTP 400. Dann einmal ohne response_format wiederholen -
+  // das Schema steckt ohnehin im Prompt. Der 400 kommt vor der Generierung,
+  // der Retry kostet also praktisch nichts.
+  if (!res.ok && res.status === 400 && isLocal && body.response_format) {
+    delete body.response_format;
+    try {
+      res = await doPost();
+    } catch (e) {
+      throw new Error(localConnError);
+    }
   }
 
   if (!res.ok) {
@@ -808,6 +879,9 @@ async function callLLM(systemPrompt, userPrompt, schema, onProgress) {
   // Der Usage-Block kommt als letzter Chunk (choices ist dann leer)
   let inputTokens = 0;
   let outputTokens = 0;
+  // "length" => Antwort wurde am Token-/Kontextlimit abgeschnitten und ist
+  // unvollstaendig; das JSON liesse sich dann nicht sauber parsen.
+  let finishReason = null;
   const text = await readSSEText(
     res,
     (d) => {
@@ -815,13 +889,26 @@ async function callLLM(systemPrompt, userPrompt, schema, onProgress) {
         if (d.usage.prompt_tokens != null) inputTokens = d.usage.prompt_tokens;
         if (d.usage.completion_tokens != null) outputTokens = d.usage.completion_tokens;
       }
+      if (d.choices?.[0]?.finish_reason) finishReason = d.choices[0].finish_reason;
       return d.choices?.[0]?.delta?.content || "";
     },
     onProgress
   );
 
+  // Abgeschnitten zuerst pruefen: klare Meldung statt eines kryptischen
+  // JSON-Parse-Fehlers - und auch dann, wenn ein Reasoning-Modell die Tokens
+  // ganz im Denkteil verbraucht hat und der sichtbare Text leer blieb.
+  if (finishReason === "length") {
+    throw new Error(isLocal
+      ? "Die Antwort wurde abgeschnitten - die Kontextlänge des lokalen Modells reicht für so viele Fragen nicht. Wähle weniger Fragen oder lade das Modell mit größerer Kontextlänge (in LM Studio beim Laden des Modells einstellbar)."
+      : "Die Antwort wurde abgeschnitten, weil das Token-Limit erreicht wurde. Bitte mit weniger Fragen erneut versuchen.");
+  }
   if (!text) throw new Error("Leere Antwort vom Modell erhalten.");
-  return { data: parseJsonLoose(text), cost: callCost(model, inputTokens, outputTokens) };
+  return {
+    data: parseJsonLoose(text),
+    cost: callCost(model, inputTokens, outputTokens),
+    tokens: { input: inputTokens, output: outputTokens },
+  };
 }
 
 // Toleriert Markdown-Zaeune und Text um das JSON herum (noetig fuer DeepSeek)
@@ -1075,7 +1162,7 @@ async function generateQuiz() {
 
     const total = Number(numQuestions);
     setLoadingProgress(0, total, "Das Modell liest die Stellenanzeige...");
-    const { data: result, cost: genCost } = await callLLM(system, user, QUESTIONS_SCHEMA, (acc) => {
+    const { data: result, cost: genCost, tokens: genTokens } = await callLLM(system, user, QUESTIONS_SCHEMA, (acc) => {
       // Jede fertige Frage hat im gestreamten JSON genau einen "frage"-Schluessel
       const seen = (acc.match(/"frage"\s*:/g) || []).length;
       setLoadingProgress(seen, total, seen > 0
@@ -1102,6 +1189,9 @@ async function generateQuiz() {
     // zur Auswertung am Quiz mitfuehren, damit der Gesamtpreis je Fragebogen
     // gespeichert werden kann
     quiz.genCost = genCost;
+    // Token-Verbrauch der Erstellung mitfuehren - bei lokalen Modellen gibt es
+    // keinen Preis, dort dient die Token-Zahl als Verbrauchsanzeige
+    quiz.genTokens = genTokens;
     answers = new Array(quiz.fragen.length).fill("");
     revealed = new Array(quiz.fragen.length).fill(false);
     current = 0;
@@ -1448,7 +1538,7 @@ async function runEvaluation() {
 
     const total = quiz.fragen.length;
     setLoadingProgress(0, total, "Das Modell prüft deine Antworten...");
-    const { data: rawResult, cost: evalCost } = await callLLM(system, user, EVAL_SCHEMA, (acc) => {
+    const { data: rawResult, cost: evalCost, tokens: evalTokens } = await callLLM(system, user, EVAL_SCHEMA, (acc) => {
       const seen = (acc.match(/"feedback"\s*:/g) || []).length;
       setLoadingProgress(seen, total, seen > 0
         ? `Antwort ${Math.min(seen, total)} von ${total} wird bewertet...`
@@ -1458,7 +1548,7 @@ async function runEvaluation() {
     // (DeepSeek, lokale Modelle) koennte z. B. das gesamt-Objekt fehlen, was
     // beim Speichern (result.gesamt.prozent) sonst einen Absturz ausloest
     const result = normalizeEvalData(rawResult);
-    saveAttempt(result, durationMs, evalCost);
+    saveAttempt(result, durationMs, evalCost, evalTokens);
     renderResult(result, durationMs);
     // Spielfortschritt dieser Stelle; frisch freigeschaltete Abzeichen und ein
     // Levelaufstieg werden gegen den Stand vor diesem Versuch hervorgehoben.
@@ -1944,7 +2034,24 @@ function buildCost(genCost, evalCost) {
   return { gen, eval: ev, total: (gen || 0) + (ev || 0) };
 }
 
-function saveAttempt(result, durationMs, evalCost) {
+// Summe der verbrauchten Tokens (Ein- und Ausgabe) eines callLLM-Aufrufs; 0,
+// wenn der Stream keine Verbrauchsdaten geliefert hat.
+function tokenSum(t) {
+  if (!t || typeof t !== "object") return 0;
+  return (t.input || 0) + (t.output || 0);
+}
+
+// Gesamter Token-Verbrauch eines Fragebogens (Erstellung + Auswertung); null,
+// wenn fuer keinen der beiden Aufrufe Verbrauchsdaten vorliegen. Dient bei
+// lokalen Modellen als Anzeige anstelle der nicht vorhandenen Kosten.
+function buildTokens(genTokens, evalTokens) {
+  const gen = tokenSum(genTokens);
+  const ev = tokenSum(evalTokens);
+  if (gen === 0 && ev === 0) return null;
+  return { gen, eval: ev, total: gen + ev };
+}
+
+function saveAttempt(result, durationMs, evalCost, evalTokens) {
   const h = loadHistory();
   const key = jobKey(quiz.jobText);
   const uKey = quiz.urlKey || null;
@@ -1969,10 +2076,12 @@ function saveAttempt(result, durationMs, evalCost) {
   job.titel = quiz.titel;
 
   const cost = buildCost(quiz.genCost, evalCost);
+  const tokens = buildTokens(quiz.genTokens, evalTokens);
 
   const quizCopy = JSON.parse(JSON.stringify(quiz));
   delete quizCopy.jobText; // liegt schon auf dem Job, spart Speicher
   delete quizCopy.genCost; // liegt als cost am Versuch, nicht doppelt sichern
+  delete quizCopy.genTokens; // liegt als tokens am Versuch, nicht doppelt sichern
   delete quizCopy.urlKey;  // liegt am Job
   delete quizCopy.jobUrl;  // liegt am Job
 
@@ -1985,6 +2094,7 @@ function saveAttempt(result, durationMs, evalCost) {
     timerLimitMin: timer.limitMin,
     overtime: timer.overtime,
     cost, // { gen, eval, total } in USD; fehlt bei aelteren Versuchen
+    tokens, // { gen, eval, total } Token-Verbrauch; v. a. fuer lokale Modelle
     quiz: quizCopy,
     answers: answers.slice(),
     revealed: revealed.slice(),
@@ -2070,9 +2180,13 @@ function renderHistory() {
       info.textContent = `${formatDate(att.date)} · ${att.mode === "pruefung" ? "Prüfung" : "Lernen"}` +
         (att.schwierigkeitsgrad ? ` · ${difficultyLabel(att.schwierigkeitsgrad)}` : "") +
         ` · ${att.quiz.fragen.length} Fragen` +
-        // Kosten nur zeigen, wenn fuer diesen Versuch erfasst (aeltere fehlen)
+        // Kosten zeigen, wenn fuer diesen Versuch erfasst (Cloud-Anbieter mit
+        // Preis); sonst bei lokalen Modellen ersatzweise den Token-Verbrauch.
+        // Aeltere Versuche haben keins von beidem - dann bleibt der Slot leer.
         (att.cost && typeof att.cost.total === "number"
           ? ` · ca. ${formatUsd(att.cost.total)}`
+          : att.tokens && typeof att.tokens.total === "number" && att.tokens.total > 0
+          ? ` · ${formatTokens(att.tokens.total)}`
           : "");
       const score = document.createElement("span");
       score.className = "attempt-score " + scoreClass(att.prozent);
@@ -2322,9 +2436,20 @@ function populateLocalModelSelect(models, selectedId) {
 function updateModelDesc() {
   const provider = $("provider").value;
   if (provider === "local") {
-    $("model-desc").textContent = $("model").value
-      ? "Lokales Modell – kostenlos, läuft auf deinem Rechner."
-      : "Noch kein Modell ausgewählt – auf „Modelle laden“ klicken.";
+    if (!$("model").value) {
+      $("model-desc").textContent = "Noch kein Modell ausgewählt – auf „Modelle laden“ klicken.";
+      return;
+    }
+    let desc = "Lokales Modell – kostenlos, läuft auf deinem Rechner.";
+    const ctx = localModelContexts[$("model").value];
+    if (ctx) {
+      desc += ` Geladen mit ${ctx.loaded.toLocaleString("de-DE")} Token Kontext`;
+      if (ctx.max && ctx.max > ctx.loaded) {
+        desc += ` (möglich bis ${ctx.max.toLocaleString("de-DE")})`;
+      }
+      desc += ". Reicht der Kontext für die gewünschte Fragenzahl nicht, das Modell in LM Studio mit größerem Kontext laden.";
+    }
+    $("model-desc").textContent = desc;
     return;
   }
   const m = modelsFor(provider).find((x) => x.id === $("model").value);
@@ -2390,6 +2515,10 @@ $("btn-load-models").addEventListener("click", async () => {
       const keep = $("model").value;
       populateLocalModelSelect(models, models.includes(keep) ? keep : models[0]);
       status.textContent = models.length + (models.length === 1 ? " Modell" : " Modelle") + " gefunden.";
+      // Geladene Kontextlaengen nachladen (nur LM Studio) und Beschreibung
+      // aktualisieren - degradiert lautlos, wenn der Endpunkt fehlt (Ollama).
+      await loadLocalModelContexts(baseUrl);
+      updateModelDesc();
     }
   } finally {
     $("btn-load-models").disabled = false;
