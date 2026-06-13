@@ -3011,7 +3011,10 @@ function importData(text) {
         (impIKey && h.jobs.find((j) => j.identityKey === impIKey && !(impJob.urlKey && j.urlKey && j.urlKey !== impJob.urlKey))) ||
         h.jobs.find((j) => j.key === impJob.key);
       if (!existing) {
-        h.jobs.push({ ...impJob, attempts: incoming });
+        // identityKey direkt mitschreiben, falls er aus den Feldern abgeleitet
+        // wurde, aber im Alt-Export noch fehlte - sonst greift die Identitaets-
+        // Zusammenfuehrung erst nach dem naechsten Versuch/Import.
+        h.jobs.push({ ...impJob, attempts: incoming, ...(impIKey ? { identityKey: impIKey } : {}) });
         newJobs++;
         newAttempts += incoming.length;
         return;
