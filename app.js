@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.0.31";
+const APP_VERSION = "1.0.32";
 
 const CHANGELOG = [
+  {
+    version: "1.0.32",
+    date: "14.06.2026",
+    items: [
+      "Lokales Modell: Die Fragen werden jetzt in einem Aufruf erzeugt statt blockweise. Das frühere Nachfragen in 3er-Blöcken war die eigentliche Ursache für wiederholte Fragen – kleine Modelle ignorierten die Bitte „stelle etwas anderes“ und erzeugten den ersten Block immer wieder neu. In einem Aufruf sieht das Modell seine bisherigen Fragen und variiert von selbst. Zusätzlich ein klarer Hinweis im Prompt, jede Frage einem anderen Aspekt zu widmen.",
+    ],
+  },
   {
     version: "1.0.31",
     date: "14.06.2026",
@@ -1384,11 +1391,17 @@ function restoreDraft() {
   }
 }
 
-// Lokale Modelle bekommen einen kuerzeren Jobtext (kleinerer Kontext) und die
-// Fragen in kleinen Bloecken. Die Werte sind bewusst konservativ: lieber ein
-// paar Runden mehr als ein abgeschnittener Block.
+// Lokale Modelle bekommen einen kuerzeren Jobtext (kleinerer Kontext).
 const LOCAL_JOBTEXT_CAP = 8000;
-const LOCAL_BATCH_SIZE = 3;
+// Wie viele Fragen pro Aufruf hoechstens angefordert werden. Bewusst gross:
+// Messungen mit qwen3-8b zeigen, dass ein einzelner Aufruf bis ~20 Fragen
+// zuverlaessig und ohne Wiederholungen liefert, weil das Modell beim Schreiben
+// die schon erzeugten Fragen sieht und von selbst variiert. Blockweises
+// Nachfragen (frueher 3 pro Aufruf) war die Ursache der Dubletten: kleine
+// Modelle ignorierten die Bitte "stelle etwas anderes" und erzeugten den
+// ersten Block greedy immer wieder neu. Nur wenn ein Modell bei sehr vielen
+// Fragen zu wenige liefert, wird in weiteren Runden aufgefuellt.
+const LOCAL_BATCH_SIZE = 15;
 
 // Vergleichsschluessel zum Erkennen doppelter Fragen. Kleine lokale Modelle
 // ignorieren die Bitte "keine Wiederholungen" mitunter und liefern dieselbe
@@ -1409,13 +1422,12 @@ function fragenKey(q) {
   return [q.frage, q.korrekte_antwort, ...optionen].map(normText).join(" | ");
 }
 
-// Lokale Generierung in kleinen Bloecken. Vorteile gegenueber einem einzigen
-// grossen Aufruf: der Kontext pro Aufruf bleibt klein (kein Abschneiden bei
-// kleinen Modellen), der Fortschritt ist sichtbar, und der Nutzer kann
-// jederzeit abbrechen und mit den bereits fertigen Fragen weitermachen. Der
-// Jobtext steht als konstanter Prompt-Prefix vorn, nur die kurze
-// Zusatzanweisung variiert - so kann der lokale Server den Prefix cachen.
-// Liefert dieselbe Form wie callLLM: { data, cost, tokens }.
+// Lokale Generierung. Im Normalfall (bis LOCAL_BATCH_SIZE Fragen) ist das ein
+// einziger Aufruf - das vermeidet die Dubletten, die beim blockweisen
+// Nachfragen entstanden. Liefert ein Modell bei sehr vielen Fragen zu wenige,
+// wird in weiteren Runden aufgefuellt; dabei verworfene Dubletten fangen wir
+// zusaetzlich im Code ab. Der Nutzer kann jederzeit abbrechen; schon fertige
+// Runden bleiben erhalten. Liefert dieselbe Form wie callLLM: { data, cost, tokens }.
 async function generateLocalBatches(system, jobText, total, onProgress) {
   const collected = [];
   // Schon vergebene Fragen-Schluessel, um Dubletten ueber Bloecke hinweg zu
@@ -1626,6 +1638,8 @@ async function generateQuiz() {
     const system =
       "Du bist ein erfahrener Recruiter und erstellst realistische Einstellungstests. " +
       "Erstelle präzise, anspruchsvolle Fragen, die exakt auf die gegebene Stelle zugeschnitten sind. " +
+      "Jede Frage muss einen anderen Aspekt der Stelle abdecken - vermeide inhaltliche Wiederholungen " +
+      "und stelle nicht mehrfach dieselbe Frage in anderer Formulierung. " +
       "Mische Fachfragen, situative Fragen und Soft-Skill-Fragen. " +
       "Etwa die Hälfte der Fragen soll Multiple-Choice sein (4 plausible Optionen, genau eine ist die beste), " +
       "der Rest offene Fragen. " +
