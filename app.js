@@ -2742,13 +2742,13 @@ function jobSubtitle(job) {
 }
 
 // Eine Stelle samt aller Versuche aus der Historie entfernen. Identifikation
-// ueber den stabilen key (Hash des Stellentexts, auf jedem Eintrag vorhanden);
-// als Rueckfall die Referenzgleichheit und urlKey, damit auch aeltere Eintraege
-// ohne key getroffen werden. Destruktiv und unwiderruflich.
+// ueber den stabilen key (Hash des Stellentexts, liegt auf jedem gespeicherten
+// Eintrag), zusaetzlich der urlKey als Rueckfall. Eine Referenzgleichheit
+// hilft nicht: loadHistory parst frisch, das uebergebene job-Objekt ist nie
+// dasselbe wie ein geladenes. Destruktiv und unwiderruflich.
 function deleteJob(job) {
   const h = loadHistory();
   h.jobs = h.jobs.filter((j) =>
-    j !== job &&
     !(job.key && j.key === job.key) &&
     !(job.urlKey && j.urlKey === job.urlKey));
   saveHistory(h);
@@ -3741,12 +3741,31 @@ function closeConfirmDelete() {
 $("btn-confirm-delete").addEventListener("click", () => {
   const job = confirmDeleteJob;
   const after = confirmDeleteAfter;
+  // Beim Loeschen wird der ausloesende Knopf gleich aus dem DOM entfernt
+  // (afterDelete baut die Ansicht neu auf). Den Fokus daher nicht dorthin
+  // zuruecklegen - sonst landet er nach dem Neuaufbau am <body>. Stattdessen
+  // unten gezielt auf die Ueberschrift der nun sichtbaren Ansicht setzen.
+  confirmDeleteReturnFocus = null;
   closeConfirmDelete();
   if (job) {
     deleteJob(job);
     if (typeof after === "function") after();
+    focusVisibleViewHeading();
   }
 });
+
+// Fokus nach einem Ansichtswechsel ohne stabilen Rueckkehrpunkt auf die
+// Ueberschrift der gerade sichtbaren Ansicht legen (gaengiges Muster fuer
+// Single-Page-Ansichten). tabindex -1 macht die Ueberschrift einmalig
+// fokussierbar, ohne sie in die Tab-Reihenfolge aufzunehmen.
+function focusVisibleViewHeading() {
+  const visible = views.map((id) => $(id)).find((el) => el && !el.classList.contains("hidden"));
+  const heading = visible && visible.querySelector("h2");
+  if (heading) {
+    heading.setAttribute("tabindex", "-1");
+    heading.focus();
+  }
+}
 $("btn-confirm-delete-cancel").addEventListener("click", closeConfirmDelete);
 
 // Versionsanzeige im Footer und Changelog-Fenster
