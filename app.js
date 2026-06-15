@@ -4436,12 +4436,23 @@ function importData(text) {
   let settingsImported = false;
   if (data.settings && typeof data.settings === "object") {
     // Pro Feld additiv zusammenfuehren: ein leerer importierter Wert (z. B.
-    // apiKey: "" aus einem Backup ohne Schluessel) darf einen vorhandenen,
-    // funktionierenden Wert nicht ueberschreiben. Nur bekannte Felder uebernehmen.
-    const merged = { ...loadSettings() };
-    for (const k of ["provider", "apiKey", "model", "baseUrl"]) {
-      const v = data.settings[k];
-      if (typeof v === "string" && v.trim()) merged[k] = v;
+    // apiKey: "" aus einem Backup ohne Schluessel) darf bei GLEICHEM Anbieter
+    // einen vorhandenen, funktionierenden Wert nicht ueberschreiben. Wechselt
+    // der Import dagegen den Anbieter, gehoeren Schluessel/Modell/Adresse zum
+    // alten Anbieter und duerfen NICHT mitgeschleppt werden - sonst ginge z. B.
+    // ein vorhandener Cloud-Key an einen frisch importierten lokalen Server
+    // (callLLM haengt den Key als Authorization-Header an, auch lokal).
+    const cur = loadSettings();
+    const inc = data.settings;
+    const merged = { ...cur };
+    const incProvider = typeof inc.provider === "string" && inc.provider.trim() ? inc.provider : null;
+    const providerChanged = incProvider !== null && incProvider !== cur.provider;
+    if (incProvider) merged.provider = incProvider;
+    for (const k of ["apiKey", "model", "baseUrl"]) {
+      const v = inc[k];
+      if (typeof v === "string" && v.trim()) merged[k] = v;        // expliziter Importwert gewinnt
+      else if (providerChanged) delete merged[k];                   // fremder Altwert faellt weg
+      // sonst (gleicher Anbieter, leerer Importwert): vorhandenen Wert behalten
     }
     settings = merged;
     saveSettings(settings);
@@ -4455,16 +4466,19 @@ function importData(text) {
     data.history.jobs.forEach((impJob) => {
       if (!impJob || !impJob.key || !Array.isArray(impJob.attempts)) return;
       // Nur Versuche mit verwertbarem Zeitstempel UND den tragenden Feldern
-      // uebernehmen (date traegt die Identitaet beim Zusammenfuehren und die
-      // Sortierung; quiz/result werden beim Oeffnen und Rendern vorausgesetzt).
-      // Ein Versuch mit gueltigem date, aber fehlendem quiz/result wuerde die
-      // Historie sonst vergiften und openAttempt/Rendern zum Absturz bringen.
-      // Eine Stelle ohne brauchbare Versuche wird uebersprungen - ein leeres
-      // attempts-Array wuerde die Historie sonst beim Rendern zum Absturz bringen.
+      // uebernehmen. Es reicht nicht, dass quiz/result irgendein Objekt sind:
+      // der Verlauf liest att.quiz.fragen.length und att.prozent, die Detail-/
+      // Review-Ansicht iteriert ueber quiz.fragen. Ein Versuch mit gueltigem
+      // date, aber leerem quiz ({}) oder fehlendem prozent wuerde die Historie
+      // vergiften und Verlauf/openAttempt/Rendern zum Absturz bringen. result
+      // selbst wird ueberall defensiv gelesen (gesamt/ergebnisse optional),
+      // muss also nur ein Objekt sein. Stellen ohne brauchbare Versuche werden
+      // uebersprungen - ein leeres attempts-Array wuerde sonst beim Rendern
+      // abstuerzen.
       const incoming = impJob.attempts.filter(
         (a) =>
-          a && typeof a === "object" && Number.isFinite(a.date) &&
-          a.quiz && typeof a.quiz === "object" &&
+          a && typeof a === "object" && Number.isFinite(a.date) && Number.isFinite(a.prozent) &&
+          a.quiz && typeof a.quiz === "object" && Array.isArray(a.quiz.fragen) && a.quiz.fragen.length &&
           a.result && typeof a.result === "object"
       );
       if (!incoming.length) return;
