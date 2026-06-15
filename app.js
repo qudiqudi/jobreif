@@ -4,9 +4,18 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.0.38";
+const APP_VERSION = "1.0.39";
 
 const CHANGELOG = [
+  {
+    version: "1.0.39",
+    date: "15.06.2026",
+    items: [
+      "Fehler behoben: Beim Durchsehen eines älteren Versuchs konnte bei offenen Fragen das Wort „undefined“ im Antwortfeld stehen, wenn der Versuch aus einer früheren Version stammte. Das Feld bleibt jetzt korrekt leer.",
+      "Datensicherung: Beim Import werden beschädigte oder unvollständige Versuche jetzt aussortiert, statt die Historie zu stören. Außerdem überschreibt ein importierter Datensatz einen bereits hinterlegten API-Schlüssel nicht mehr mit einem leeren Wert.",
+      "Kleinere Korrekturen: Die Dauer-Anzeige im Ergebnis trug eine falsche Einheit, das Abbrechen einer laufenden Cloud-Anfrage greift jetzt zuverlässig, und die Anzeige bleibt bei alten oder lückenhaften Versuchen stabil.",
+    ],
+  },
   {
     version: "1.0.38",
     date: "14.06.2026",
@@ -956,29 +965,36 @@ async function readSSEText(res, extractDelta, onChunk) {
   let buf = "";
   let acc = "";
 
+  const handleLine = (line) => {
+    if (!line.startsWith("data:")) return;
+    const payload = line.slice(5).trim();
+    if (!payload || payload === "[DONE]") return;
+    let data;
+    try {
+      data = JSON.parse(payload);
+    } catch {
+      return;
+    }
+    const delta = extractDelta(data);
+    if (delta) {
+      acc += delta;
+      if (onChunk) onChunk(acc);
+    }
+  };
+
   for (;;) {
     const { done, value } = await reader.read();
     if (done) break;
     buf += decoder.decode(value, { stream: true });
     const lines = buf.split("\n");
     buf = lines.pop();
-    for (const line of lines) {
-      if (!line.startsWith("data:")) continue;
-      const payload = line.slice(5).trim();
-      if (!payload || payload === "[DONE]") continue;
-      let data;
-      try {
-        data = JSON.parse(payload);
-      } catch {
-        continue;
-      }
-      const delta = extractDelta(data);
-      if (delta) {
-        acc += delta;
-        if (onChunk) onChunk(acc);
-      }
-    }
+    for (const line of lines) handleLine(line);
   }
+  // Decoder leeren (evtl. halbes Multi-Byte-Zeichen am Stream-Ende) und eine
+  // letzte, nicht mit \n abgeschlossene data:-Zeile noch verarbeiten - sonst
+  // geht beim OpenAI-Pfad z. B. der abschliessende usage-Chunk verloren.
+  buf += decoder.decode();
+  if (buf) handleLine(buf);
   return acc;
 }
 
@@ -1027,6 +1043,7 @@ async function callLLM(systemPrompt, userPrompt, schema, onProgress, opts = {}) 
         messages: [{ role: "user", content: userPrompt }],
         output_config: outputConfig,
       }),
+      signal: opts.signal,
     });
 
     if (!res.ok) {
@@ -2168,7 +2185,7 @@ function renderQuestion() {
     const ta = document.createElement("textarea");
     ta.rows = 6;
     ta.placeholder = "Deine Antwort...";
-    ta.value = answers[current];
+    ta.value = answers[current] || "";
     ta.readOnly = locked;
     ta.addEventListener("input", () => (answers[current] = ta.value));
     area.appendChild(ta);
@@ -2450,7 +2467,7 @@ function renderResult(result, durationMs) {
   $("result-gami").innerHTML = "";
 
   const modeLabel = mode === "pruefung" ? "Prüfungsmodus" : "Lernmodus";
-  let meta = `${modeLabel} · ${quiz.fragen.length} Fragen · Dauer ${formatMinSec(durationMs)} min`;
+  let meta = `${modeLabel} · ${quiz.fragen.length} Fragen · Dauer ${formatMinSec(durationMs)}`;
   if (mode === "pruefung") {
     meta += ` · Zeitlimit ${timer.limitMin} min` + (timer.overtime ? " (überschritten)" : "");
   }
@@ -3156,7 +3173,7 @@ function saveHistory(h) {
       let oldest = null;
       let oldestJob = null;
       h.jobs.forEach((j) => j.attempts.forEach((a) => {
-        if (!oldest || a.date < oldest.date) { oldest = a; oldestJob = j; }
+        if (!oldest || (a.date || 0) < (oldest.date || 0)) { oldest = a; oldestJob = j; }
       }));
       if (!oldest) return;
       oldestJob.attempts = oldestJob.attempts.filter((a) => a !== oldest);
@@ -3440,8 +3457,8 @@ function renderJobBlock(job, opts) {
   const block = document.createElement("div");
   block.className = "job-block";
 
-  const best = Math.max(...job.attempts.map((a) => a.prozent));
-  const last = job.attempts[job.attempts.length - 1].prozent;
+  const best = Math.max(...job.attempts.map((a) => a.prozent || 0));
+  const last = job.attempts[job.attempts.length - 1].prozent || 0;
 
   const head = document.createElement("div");
   head.className = "job-head";
@@ -3547,7 +3564,7 @@ const HOME_MAX = 5;
 // Kompakte Karte einer Stelle fuer die Startliste: Titel, Arbeitgeber/Ort,
 // kurze Kennzahlen, Bestwert und ein Mini-Trend. Tippen oeffnet die Subpage.
 function buildHomeCard(job) {
-  const best = Math.max(...job.attempts.map((a) => a.prozent));
+  const best = Math.max(...job.attempts.map((a) => a.prozent || 0));
   const prog = computeJobProgress(job);
   // Bewusst ein div mit role/tabindex statt <button>: die Karte enthaelt
   // Block-Inhalte (Titel, Untertitel, Kennzahlen, Mini-Trend), die im
@@ -4053,7 +4070,8 @@ function openAttempt(job, att) {
   if (job.url) quiz.jobUrl = job.url;
   if (job.arbeitgeber) quiz.arbeitgeber = job.arbeitgeber;
   if (job.arbeitsort) quiz.arbeitsort = job.arbeitsort;
-  answers = att.answers.slice();
+  answers = (att.answers || []).slice();
+  while (answers.length < quiz.fragen.length) answers.push("");
   revealed = (att.revealed || []).slice();
   while (revealed.length < quiz.fragen.length) revealed.push(false);
   current = 0;
@@ -4417,7 +4435,26 @@ function importData(text) {
 
   let settingsImported = false;
   if (data.settings && typeof data.settings === "object") {
-    settings = { ...loadSettings(), ...data.settings };
+    // Pro Feld additiv zusammenfuehren: ein leerer importierter Wert (z. B.
+    // apiKey: "" aus einem Backup ohne Schluessel) darf bei GLEICHEM Anbieter
+    // einen vorhandenen, funktionierenden Wert nicht ueberschreiben. Wechselt
+    // der Import dagegen den Anbieter, gehoeren Schluessel/Modell/Adresse zum
+    // alten Anbieter und duerfen NICHT mitgeschleppt werden - sonst ginge z. B.
+    // ein vorhandener Cloud-Key an einen frisch importierten lokalen Server
+    // (callLLM haengt den Key als Authorization-Header an, auch lokal).
+    const cur = loadSettings();
+    const inc = data.settings;
+    const merged = { ...cur };
+    const incProvider = typeof inc.provider === "string" && inc.provider.trim() ? inc.provider : null;
+    const providerChanged = incProvider !== null && incProvider !== cur.provider;
+    if (incProvider) merged.provider = incProvider;
+    for (const k of ["apiKey", "model", "baseUrl"]) {
+      const v = inc[k];
+      if (typeof v === "string" && v.trim()) merged[k] = v;        // expliziter Importwert gewinnt
+      else if (providerChanged) delete merged[k];                   // fremder Altwert faellt weg
+      // sonst (gleicher Anbieter, leerer Importwert): vorhandenen Wert behalten
+    }
+    settings = merged;
     saveSettings(settings);
     settingsImported = true;
   }
@@ -4428,11 +4465,22 @@ function importData(text) {
     const h = loadHistory();
     data.history.jobs.forEach((impJob) => {
       if (!impJob || !impJob.key || !Array.isArray(impJob.attempts)) return;
-      // Nur Versuche mit verwertbarem Zeitstempel uebernehmen (date traegt die
-      // Identitaet beim Zusammenfuehren und die Sortierung). Eine Stelle ohne
-      // brauchbare Versuche wird uebersprungen - ein leeres attempts-Array wuerde
-      // die Historie sonst beim Rendern zum Absturz bringen.
-      const incoming = impJob.attempts.filter((a) => a && typeof a === "object" && Number.isFinite(a.date));
+      // Nur Versuche mit verwertbarem Zeitstempel UND den tragenden Feldern
+      // uebernehmen. Es reicht nicht, dass quiz/result irgendein Objekt sind:
+      // der Verlauf liest att.quiz.fragen.length und att.prozent, die Detail-/
+      // Review-Ansicht iteriert ueber quiz.fragen. Ein Versuch mit gueltigem
+      // date, aber leerem quiz ({}) oder fehlendem prozent wuerde die Historie
+      // vergiften und Verlauf/openAttempt/Rendern zum Absturz bringen. result
+      // selbst wird ueberall defensiv gelesen (gesamt/ergebnisse optional),
+      // muss also nur ein Objekt sein. Stellen ohne brauchbare Versuche werden
+      // uebersprungen - ein leeres attempts-Array wuerde sonst beim Rendern
+      // abstuerzen.
+      const incoming = impJob.attempts.filter(
+        (a) =>
+          a && typeof a === "object" && Number.isFinite(a.date) && Number.isFinite(a.prozent) &&
+          a.quiz && typeof a.quiz === "object" && Array.isArray(a.quiz.fragen) && a.quiz.fragen.length &&
+          a.result && typeof a.result === "object"
+      );
       if (!incoming.length) return;
       // Stelle zusammenführen wie beim normalen Speichern: zuerst über die
       // stabile URL-Identität, dann über die Stellen-Identität (Titel+Arbeit-
