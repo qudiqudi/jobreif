@@ -4,16 +4,22 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.0.39";
+const APP_VERSION = "1.0.40";
 
 const CHANGELOG = [
+  {
+    version: "1.0.40",
+    date: "15.06.2026",
+    items: [
+      "Das „Was ist neu“-Fenster zeigt jetzt die wichtigsten Neuerungen übersichtlich, statt jede kleine technische Änderung aufzulisten. Den vollständigen Verlauf aller Versionen findest du über den Link unten im Fenster auf GitHub.",
+    ],
+  },
   {
     version: "1.0.39",
     date: "15.06.2026",
     items: [
       "Fehler behoben: Beim Durchsehen eines älteren Versuchs konnte bei offenen Fragen das Wort „undefined“ im Antwortfeld stehen, wenn der Versuch aus einer früheren Version stammte. Das Feld bleibt jetzt korrekt leer.",
       "Datensicherung: Beim Import werden beschädigte oder unvollständige Versuche jetzt aussortiert, statt die Historie zu stören. Außerdem überschreibt ein importierter Datensatz einen bereits hinterlegten API-Schlüssel nicht mehr mit einem leeren Wert.",
-      "Kleinere Korrekturen: Die Dauer-Anzeige im Ergebnis trug eine falsche Einheit, das Abbrechen einer laufenden Cloud-Anfrage greift jetzt zuverlässig, und die Anzeige bleibt bei alten oder lückenhaften Versuchen stabil.",
     ],
   },
   {
@@ -35,36 +41,6 @@ const CHANGELOG = [
     date: "14.06.2026",
     items: [
       "Vertiefungen sind da: Ab Stufe 3 kannst du zu einer Stelle thematisch fokussierte Fragebögen erstellen. Das Tool leitet beim ersten Mal passende Themenfelder aus der Anzeige ab – mit Schwerpunkt auf den Themen, in denen du bisher schwächer warst. Du wählst bis zu 3 Felder aus; die Mindest-Fragenzahl passt sich an (1 Feld ab 4, 2 ab 8, 3 ab 10 Fragen). Vertiefungen sind bewusst immer „schwer“. Nur mit Cloud-Anbieter, nicht mit lokalen Modellen.",
-      "Die abgeleiteten Themenfelder werden gespeichert. Sind sie nach weiteren Stufen veraltet, kannst du sie mit einem Klick neu ableiten – nie automatisch, damit kein ungewollter Aufruf entsteht.",
-    ],
-  },
-  {
-    version: "1.0.35",
-    date: "14.06.2026",
-    items: [
-      "Lokales Modell: Fragen, die inhaltlich dasselbe abfragen wie eine bereits erzeugte – nur leicht umformuliert –, werden jetzt aussortiert. Bisher fielen nur wortgleiche Wiederholungen weg; schwache Modelle stellten dieselbe Frage mitunter zweimal in anderer Formulierung. Die Erkennung greift bewusst nur bei inhaltsreichen Fragen, damit verschiedene Fragen mit ähnlichem Wortlaut erhalten bleiben.",
-    ],
-  },
-  {
-    version: "1.0.34",
-    date: "14.06.2026",
-    items: [
-      "Stellenseite: Ein neuer Hinweis zeigt, dass sich ab Stufe 3 „Vertiefungen“ freischalten – thematisch fokussierte Fragebögen zu einer Stelle. Die Funktion selbst ist noch in Arbeit; der Hinweis macht schon sichtbar, worauf sich das Üben lohnt, samt der noch fehlenden XP bis Stufe 3.",
-    ],
-  },
-  {
-    version: "1.0.33",
-    date: "14.06.2026",
-    items: [
-      "Lokales Modell: Liefert ein kleines Modell pro Aufruf nur wenige Fragen, wird jetzt so lange nachgefordert, bis die gewünschte Zahl erreicht ist, statt nach einer festen Rundenzahl mit einem unvollständigen Fragebogen aufzuhören. Erreicht das Modell die Zahl trotzdem nicht, steht das jetzt offen als Hinweis über dem Fragebogen, statt stillschweigend weniger Fragen auszugeben.",
-    ],
-  },
-  {
-    version: "1.0.32",
-    date: "14.06.2026",
-    items: [
-      "Lokales Modell: Die Fragen werden jetzt in einem Aufruf erzeugt statt blockweise. Das frühere Nachfragen in 3er-Blöcken war die eigentliche Ursache für wiederholte Fragen – kleine Modelle ignorierten die Bitte „stelle etwas anderes“ und erzeugten den ersten Block immer wieder neu. In einem Aufruf sieht das Modell seine bisherigen Fragen und variiert von selbst. Zusätzlich ein klarer Hinweis im Prompt, jede Frage einem anderen Aspekt zu widmen.",
-      "Lokales Modell: Die Fragenerstellung lässt sich jetzt jederzeit mit „Abbrechen“ stoppen, auch während des ersten Aufrufs. Sobald schon Fragen fertig sind, heißt der Knopf „Stoppen & verwenden“ und übernimmt sie.",
     ],
   },
   {
@@ -72,13 +48,6 @@ const CHANGELOG = [
     date: "14.06.2026",
     items: [
       "Die Fragenanzahl wählst du jetzt über einen kompakten Stepper (− Wert +) statt über ein Dropdown – sowohl im Eingabe-Bildschirm als auch auf der Stellenseite. Standard bleibt 10, frei justierbar von 4 bis 30. Gleiche Optik wie die Schwierigkeit-Auswahl, größere Touch-Flächen fürs Handy.",
-    ],
-  },
-  {
-    version: "1.0.30",
-    date: "14.06.2026",
-    items: [
-      "Lokales Modell: Bei der blockweisen Fragengenerierung werden doppelte Fragen jetzt im Code aussortiert. Kleine Modelle haben die Bitte „keine Wiederholungen“ oft ignoriert und dieselbe Frage mehrfach gestellt – nun landen nur noch inhaltlich verschiedene Fragen im Test.",
     ],
   },
   {
@@ -96,13 +65,6 @@ const CHANGELOG = [
     ],
   },
   {
-    version: "1.0.27",
-    date: "14.06.2026",
-    items: [
-      "Lokales Modell: Der Hinweis bei der Anbieterwahl warnt jetzt zusätzlich vor Halluzinationen – kleine Modelle erfinden mitunter Angaben, die gar nicht in der Anzeige stehen (z. B. einen falschen Arbeitsort oder Arbeitgeber). Solche Angaben im Zweifel selbst prüfen.",
-    ],
-  },
-  {
     version: "1.0.26",
     date: "14.06.2026",
     items: [
@@ -110,31 +72,10 @@ const CHANGELOG = [
     ],
   },
   {
-    version: "1.0.25",
-    date: "14.06.2026",
-    items: [
-      "Lokale Modelle (Ollama/LM Studio): Die Fragen werden jetzt in kleinen Blöcken erzeugt statt alle auf einmal. Das hält den Kontext klein – kleine Modelle brechen nicht mehr mitten in der Antwort ab –, du siehst die Fragen einzeln entstehen und kannst die Erstellung jederzeit mit „Stoppen & verwenden“ abbrechen und mit den bereits fertigen Fragen weitermachen. Lernhintergrund und Quellen werden bei lokalen Modellen erst beim Auflösen einer Frage einzeln nachgeladen, damit die Erstellung deutlich schneller läuft. Cloud-Anbieter und gespeicherte Versuche bleiben unverändert.",
-    ],
-  },
-  {
     version: "1.0.24",
     date: "14.06.2026",
     items: [
       "Lernmodus: Fragen, die du aufgelöst hast, lösen vor dem Auswerten nicht mehr die Rückfrage „Unbeantwortete Fragen“ aus. Bisher galt eine nur aufgelöste Multiple-Choice-Frage als unbeantwortet, obwohl die Lösung schon eingeblendet war. In der Auswertung gehen solche Fragen weiterhin als aufgelöst ohne eigene Antwort ein.",
-    ],
-  },
-  {
-    version: "1.0.23",
-    date: "14.06.2026",
-    items: [
-      "Kleinigkeit in der Abzeichen-Detailansicht: Bei der Gruppe „Fleiß“ ist der Zusatz „Modusunabhängig“ entfallen.",
-    ],
-  },
-  {
-    version: "1.0.22",
-    date: "14.06.2026",
-    items: [
-      "Das „Was ist neu“-Fenster öffnet jetzt immer bei der neuesten Version statt mitten im Verlauf und lässt sich zusätzlich durch Tippen neben das Fenster schließen.",
     ],
   },
   {
@@ -167,36 +108,10 @@ const CHANGELOG = [
     ],
   },
   {
-    version: "1.0.17",
-    date: "13.06.2026",
-    items: [
-      "Historie: Bei lokalen Modellen wird statt der Kosten (die es dort nicht gibt) jetzt der Token-Verbrauch je Versuch angezeigt – als Orientierung, wie viel ein Test das lokale Modell gekostet hat. Für die Cloud-Anbieter bleibt die gewohnte Kostenanzeige in Dollar.",
-    ],
-  },
-  {
-    version: "1.0.16",
-    date: "13.06.2026",
-    items: [
-      "Lokales Modell: Wird die Antwort des Modells abgeschnitten, weil die Kontextlänge nicht für alle Fragen reicht, erscheint jetzt eine klare Meldung (weniger Fragen wählen oder Modell mit größerem Kontext laden) statt eines kryptischen Fehlers.",
-      "Lokales Modell: Für die Fragengenerierung wird bei LM Studio jetzt ein striktes JSON-Schema erzwungen – das liefert zuverlässiger gültiges JSON. Versteht der lokale Server das nicht, wird automatisch ohne diese Vorgabe wiederholt, sodass auch ältere Server und Ollama weiter funktionieren.",
-      "Einstellungen: Beim lokalen Anbieter wird nach „Modelle laden“ die geladene Kontextlänge des Modells angezeigt (sofern LM Studio sie meldet) – als Orientierung, ob der Kontext für die gewünschte Fragenzahl reicht.",
-    ],
-  },
-  {
-    version: "1.0.15",
-    date: "13.06.2026",
-    items: [
-      "Lokales Modell: Fragebogen-Erstellung schlug bei neueren LM-Studio-Versionen mit „HTTP 400“ fehl. Ursache war der angeforderte JSON-Modus (response_format „json_object“), den aktuelle LM-Studio-Versionen nicht mehr akzeptieren. Für lokale Server wird er jetzt weggelassen – das JSON-Schema liegt ohnehin schon im Prompt. DeepSeek bleibt unverändert.",
-      "Lokales Modell (LM Studio / Ollama): Der Einrichtungshinweis erklärt jetzt, dass der lokale Server Cross-Origin-Zugriffe erlauben muss – in LM Studio die Option „Enable CORS“, bei Ollama OLLAMA_ORIGINS. Ohne das blockt der Browser die Verbindung von dieser Seite. Zusätzlich der Tipp, bei Verbindungsproblemen 127.0.0.1 statt localhost zu verwenden.",
-    ],
-  },
-  {
     version: "1.0.14",
     date: "13.06.2026",
     items: [
       "Leistungsabzeichen (Bestanden, Souverän, Spitzenreiter, Aufwärtstrend) gibt es jetzt nur noch für Ergebnisse im Prüfungsmodus. Im Lernmodus lässt sich durch Auflösen leicht ein hoher Wert erreichen – deshalb zählen für diese Abzeichen nur echte Prüfungen. Die Fleiß-Abzeichen (Erster Schritt, Drei am Stück, Hartnäckig) bleiben in beiden Modi.",
-      "Das Abzeichen „Ernstfall“ gibt es jetzt schon fürs Antreten zu einer Prüfung (vorher erst ab 70 %), damit es sich nicht mehr mit „Souverän“ überschneidet.",
-      "Wer im Lernmodus mehrmals hintereinander gut abschneidet, bekommt am Ende der Auswertung einen Hinweis, es als Nächstes mit einer Prüfung zu versuchen.",
     ],
   },
   {
@@ -214,21 +129,6 @@ const CHANGELOG = [
     ],
   },
   {
-    version: "1.0.11",
-    date: "13.06.2026",
-    items: [
-      "Lokaler Anbieter wieder nutzbar: Die Sicherheitsrichtlinie der Seite blockierte bisher jede Verbindung zum lokal laufenden Modell (Ollama oder LM Studio). Verbindungen zu localhost sind jetzt erlaubt, sodass „Verbindung testen und Modelle laden“ funktioniert.",
-      "Onboarding einsteigerfreundlicher: verständlichere Erklärung, wozu der API-Schlüssel dient, eine klare Empfehlung bei der Anbieterwahl und ausführlichere, vollständigere Schritte fürs lokale Modell (LM Studio und Ollama) inklusive der häufigen Stolpersteine.",
-    ],
-  },
-  {
-    version: "1.0.10",
-    date: "13.06.2026",
-    items: [
-      "Robustheit und Barrierefreiheit: Antworten von Modellen ohne striktes Schema werden vor Anzeige und Speicherung auf ihre Form geprüft, der Import verträgt unvollständige Sicherungsdateien besser, der Timer bleibt nach Zeitablauf nicht mehr hängen, die Stellenanzeige lässt sich per Enter laden, Auswahlgruppen und das Schlüsselfeld sind sauber beschriftet, der Kopfzeilen-Kontrast erfüllt jetzt die AA-Vorgaben, und die Offline-Nutzung wurde gehärtet.",
-    ],
-  },
-  {
     version: "1.0.9",
     date: "13.06.2026",
     items: [
@@ -236,40 +136,10 @@ const CHANGELOG = [
     ],
   },
   {
-    version: "1.0.8",
-    date: "13.06.2026",
-    items: [
-      "Historie: Versuche zur selben per URL geladenen Stelle landen jetzt zuverlässig in einer Historie, auch wenn die Anzeige beim erneuten Laden leicht abweichenden Text liefert.",
-    ],
-  },
-  {
     version: "1.0.7",
     date: "13.06.2026",
     items: [
       "Neuer Anbieter „Lokales Modell“: Tests lassen sich jetzt kostenlos und datenschutzfreundlich mit einem lokal laufenden Modell (Ollama oder LM Studio) erstellen und auswerten – die installierten Modelle werden direkt aus dem lokalen Server geladen. Hinweis: Kleine lokale Modelle liefern oberflächlichere Fragen und Bewertungen als die Cloud-Modelle.",
-    ],
-  },
-  {
-    version: "1.0.6",
-    date: "13.06.2026",
-    items: [
-      "Die Rückfrage vor dem Auswerten bei unbeantworteten Fragen erscheint jetzt als Fenster in der App statt als blockierender Browser-Dialog.",
-    ],
-  },
-  {
-    version: "1.0.5",
-    date: "13.06.2026",
-    items: [
-      "Bessere Bedienbarkeit mit Tastatur und Screenreader: Dialoge sind als solche ausgezeichnet und erhalten den Fokus, der Fokus geht beim Beantworten und Auflösen nicht mehr verloren, Auswahlzustände und Fehlermeldungen werden angesagt, und der Tastaturfokus beim Schwierigkeitsgrad ist sichtbar.",
-      "Das Changelog-Fenster lässt sich mit Escape schließen.",
-    ],
-  },
-  {
-    version: "1.0.4",
-    date: "13.06.2026",
-    items: [
-      "Robustheit: Punktwerte aus der KI-Auswertung und aus importierten Sicherungen werden vor der Anzeige strikt als Zahl behandelt.",
-      "Offline-Modus: Fehlerseiten (z. B. während eines Deployments) überschreiben nicht mehr den funktionierenden Offline-Speicher.",
     ],
   },
   {
