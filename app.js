@@ -894,7 +894,7 @@ function hostedBase() {
 // (z. B. Cloudflare-Testkey "1x00000000000000000000BB" = unsichtbar, immer ok). Ohne
 // Sitekey liefert getTurnstileToken "" → nur sinnvoll, wenn der Worker SKIP_TURNSTILE
 // gesetzt hat. BYOK/lokal brauchen kein Turnstile.
-const TURNSTILE_SITEKEY = "";
+const TURNSTILE_SITEKEY = "0x4AAAAAADmmEQ6MVc83TvmX";
 function turnstileSitekey() {
   try {
     return localStorage.getItem("bewerbungstool.turnstileSitekey") || TURNSTILE_SITEKEY;
