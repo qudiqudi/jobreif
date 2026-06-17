@@ -135,18 +135,30 @@ export class BudgetDO {
   async fetch(req) {
     await this.load();
     this.rolloverIfNeeded();
-    this.reconcile();
 
     const op = new URL(req.url).pathname.replace(/^\//, "");
     let result;
     if (op === "stats") {
+      this.reconcile();
       result = this.stats();
     } else {
       const body = await req.json().catch(() => ({}));
-      if (op === "reserve") result = this.reserve(body);
-      else if (op === "settle") result = this.settle(body);
-      else if (op === "release") result = this.release(body);
-      else result = { ok: false, reason: "unknown-op" };
+      if (op === "reserve") {
+        // Vor dem Reservieren wirklich verwaiste Reserven aufräumen → Platz schaffen.
+        this.reconcile();
+        result = this.reserve(body);
+      } else if (op === "settle" || op === "release") {
+        // WICHTIG (Codex-Review): settle/release ZUERST gegen die echte Reservierung
+        // auflösen, DANN reconcile. Sonst würde reconcile() einen langen Stream
+        // (> RESERVE_TTL_S) auf der eigenen settle-Anfrage vorab verwerfen und der
+        // echte usage.cost ginge verloren. RESERVE_TTL_S liegt zudem deutlich über
+        // jeder realistischen Stream-Dauer, damit auch parallele Fremd-Requests keine
+        // noch laufende Reservierung wegräumen.
+        result = op === "settle" ? this.settle(body) : this.release(body);
+        this.reconcile();
+      } else {
+        result = { ok: false, reason: "unknown-op" };
+      }
     }
 
     await this.persist();
