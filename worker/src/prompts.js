@@ -216,10 +216,25 @@ export function buildEvalMessages({ jobText, payload, kontext }) {
     "erwähne den Umstand aber kurz im Feedback. Antworte auf Deutsch.";
 
   const rahmen = buildKontext(kontext);
+  // Mehrfach-MC-Fragen werden clientseitig deterministisch gescort und nicht im
+  // payload mitgeschickt. Damit die Gesamtbewertung sie trotzdem beruecksichtigt,
+  // nennt der Client sie kompakt in kontext.mcLokal ([{ frage, punkte }]).
+  // Gleicher Wortlaut wie der Client-Pfad in app.js (runEvaluation).
+  const mcLokal = kontext && Array.isArray(kontext.mcLokal) ? kontext.mcLokal : [];
+  const mcLokalHinweis = mcLokal.length
+    ? "\n\nZusätzlich wurden " + mcLokal.length + " Multiple-Choice-Fragen mit Mehrfachauswahl " +
+      "bereits separat und deterministisch bewertet. Bewerte sie NICHT erneut und gib fuer sie KEINE " +
+      "eigenen Ergebnis-Eintraege aus; beziehe ihre Ergebnisse aber in die Gesamteinschätzung " +
+      "(Zusammenfassung, Stärken, Verbesserungen) mit ein:\n" +
+      mcLokal
+        .map((m) => `- ${String((m && m.frage) || "").slice(0, 160)}: ${Number((m && m.punkte) || 0)}/10`)
+        .join("\n")
+    : "";
   const user =
     "Stellenausschreibung:\n" + String(jobText).slice(0, 15000) +
     "\n\nRahmen: " + rahmen +
-    "\n\nBewerte diese Antworten des Kandidaten:\n" + JSON.stringify(payload, null, 2);
+    "\n\nBewerte diese Antworten des Kandidaten:\n" + JSON.stringify(payload, null, 2) +
+    mcLokalHinweis;
 
   return [
     { role: "system", content: system },

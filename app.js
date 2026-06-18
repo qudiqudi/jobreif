@@ -12,6 +12,7 @@ const CHANGELOG = [
     date: "18.06.2026",
     items: [
       "Neu: Multiple-Choice-Fragen können jetzt mehrere richtige Antworten haben. Solche Fragen erkennst du an den eckigen Auswahlkästchen und dem Hinweis „Mehrere Antworten möglich“. Du bekommst Teilpunkte für richtig markierte Optionen; falsch Angekreuztes mindert die Punkte, damit blosses Ankreuzen aller Optionen nichts bringt.",
+      "Die Antwortoptionen bei Multiple-Choice werden jetzt zufällig angeordnet. So liegt die richtige Antwort nicht mehr auffällig oft auf demselben Platz und lässt sich nicht erraten.",
     ],
   },
   {
@@ -804,6 +805,7 @@ function normalizeQuizData(result) {
     // ohne Duplikate. Additiv - alte Daten ohne das Feld bleiben [].
     let korrekte_antwort = typeof q.korrekte_antwort === "string" ? q.korrekte_antwort : "";
     let korrekte_indizes = [];
+    let erklaerungen = Array.isArray(q.erklaerungen) ? q.erklaerungen.filter((e) => typeof e === "string") : [];
     if (typ === "multiple_choice") {
       korrekte_indizes = Array.isArray(q.korrekte_indizes)
         ? q.korrekte_indizes
@@ -817,13 +819,41 @@ function normalizeQuizData(result) {
         const m = optionen.findIndex((o) => o.trim() === korrekte_antwort.trim());
         if (m >= 0) korrekte_indizes = [m];
       }
-      // - Index gesetzt, aber korrekte_antwort leer/kein Match => Wortlaut aus
-      //   dem ersten richtigen Index nachziehen, damit alle Wortlaut-Altpfade
-      //   (Dedup, Single-Choice-Render) weiter funktionieren.
-      if (korrekte_indizes.length) {
-        const hasMatch = optionen.some((o) => o.trim() === korrekte_antwort.trim());
-        if (!korrekte_antwort.trim() || !hasMatch) {
-          korrekte_antwort = optionen[korrekte_indizes[0]] || korrekte_antwort;
+      // - Sind gueltige Indizes vorhanden, sind SIE die einzige Wahrheit:
+      //   korrekte_antwort IMMER an den ersten richtigen Index angleichen. Sonst
+      //   koennte das Modell korrekte_indizes:[2] und korrekte_antwort=Option 1
+      //   liefern - dann markiert mcCorrectIndices() Option 2 als richtig,
+      //   waehrend Single-Choice-Render, Dedup und Eval-Payload Option 1 nutzen.
+      //   Ein solcher Widerspruch wuerde den Nutzer gegen eine andere Option
+      //   bewerten als angezeigt. Das Angleichen schliesst das aus.
+      if (korrekte_indizes.length && optionen[korrekte_indizes[0]]) {
+        korrekte_antwort = optionen[korrekte_indizes[0]];
+      }
+
+      // Antwortoptionen unsichtbar mischen (clientseitig, einmalig beim Laden):
+      // manche Modelle legen die richtige Option auffaellig oft auf denselben
+      // Platz (meist die erste). Optionen und die parallel laufenden erklaerungen
+      // gemeinsam permutieren und korrekte_indizes auf die neuen Positionen
+      // umrechnen, damit die Zuordnung exakt erhalten bleibt. Laeuft in
+      // normalizeQuizData (einmal pro Quiz, alle Provider); das Ergebnis wird
+      // gespeichert, sodass sich die Reihenfolge bei Re-Render/Review nicht aendert.
+      if (optionen.length >= 2) {
+        const perm = optionen.map((_, idx) => idx);
+        for (let p = perm.length - 1; p > 0; p--) {
+          const r = Math.floor(Math.random() * (p + 1));
+          [perm[p], perm[r]] = [perm[r], perm[p]];
+        }
+        // perm[neu] = alterIndex; inv[alterIndex] = neu.
+        const inv = [];
+        perm.forEach((alt, neu) => { inv[alt] = neu; });
+        optionen = perm.map((alt) => optionen[alt]);
+        if (erklaerungen.length) erklaerungen = perm.map((alt) => erklaerungen[alt] || "");
+        korrekte_indizes = korrekte_indizes
+          .map((alt) => inv[alt])
+          .filter((n) => Number.isInteger(n))
+          .sort((a, b) => a - b);
+        if (korrekte_indizes.length && optionen[korrekte_indizes[0]]) {
+          korrekte_antwort = optionen[korrekte_indizes[0]];
         }
       }
     }
@@ -846,7 +876,7 @@ function normalizeQuizData(result) {
       optionen,
       korrekte_antwort,
       korrekte_indizes,
-      erklaerungen: Array.isArray(q.erklaerungen) ? q.erklaerungen.filter((e) => typeof e === "string") : [],
+      erklaerungen,
       lerninfo: typeof q.lerninfo === "string" ? q.lerninfo : "",
       quellen,
     });
@@ -2610,15 +2640,31 @@ async function runEvaluation() {
     // bleiben bewusst beim Modell (Verhalten bestehender Tests unveraendert).
     const modelFragen = [];
     const mcMultiResults = [];
+    const mcMultiSummary = [];
     quiz.fragen.forEach((q, i) => {
       if (mcIsMulti(q)) {
         const res = scoreMultiMc(q, answers[i]);
         if (mode === "lernen" && revealed[i]) res.feedback += " (im Lernmodus aufgelöst)";
         mcMultiResults.push(res);
+        // Kompakte Zusammenfassung fuer das Modell, damit die Gesamtbewertung
+        // (Zusammenfassung, Staerken, Verbesserungen) auch die lokal gescorten
+        // Mehrfach-MC-Fragen beruecksichtigt - ohne sie erneut zu bewerten.
+        mcMultiSummary.push({ frage: (q.frage || "").slice(0, 160), punkte: res.punkte });
       } else {
         modelFragen.push({ q, i });
       }
     });
+
+    // Hinweis-Block (gleicher Wortlaut wie im Worker, buildEvalMessages): nennt
+    // dem Modell die bereits bewerteten Mehrfach-MC-Fragen samt Punkten, mit der
+    // Anweisung, sie NICHT erneut als eigene Eintraege auszugeben.
+    const mcLokalHinweis = mcMultiSummary.length
+      ? "\n\nZusätzlich wurden " + mcMultiSummary.length + " Multiple-Choice-Fragen mit Mehrfachauswahl " +
+        "bereits separat und deterministisch bewertet. Bewerte sie NICHT erneut und gib fuer sie KEINE " +
+        "eigenen Ergebnis-Eintraege aus; beziehe ihre Ergebnisse aber in die Gesamteinschätzung " +
+        "(Zusammenfassung, Stärken, Verbesserungen) mit ein:\n" +
+        mcMultiSummary.map((m) => `- ${m.frage}: ${m.punkte}/10`).join("\n")
+      : "";
 
     const payload = modelFragen.map(({ q, i }) => ({
       id: q.id,
@@ -2640,7 +2686,8 @@ async function runEvaluation() {
     const user =
       "Stellenausschreibung:\n" + quiz.jobText.slice(0, 15000) +
       "\n\nRahmen: " + kontext +
-      "\n\nBewerte diese Antworten des Kandidaten:\n" + JSON.stringify(payload, null, 2);
+      "\n\nBewerte diese Antworten des Kandidaten:\n" + JSON.stringify(payload, null, 2) +
+      mcLokalHinweis;
 
     let result;
     let evalCost = 0;
@@ -2664,7 +2711,7 @@ async function runEvaluation() {
       const evalHostedPayload = {
         jobText: quiz.jobText,
         payload,
-        kontext: { mode, limitMin: timer.limitMin, minutesUsed, overtime: timer.overtime },
+        kontext: { mode, limitMin: timer.limitMin, minutesUsed, overtime: timer.overtime, mcLokal: mcMultiSummary },
       };
       const { data: rawResult, cost, tokens } = await callLLM(system, user, EVAL_SCHEMA, (acc) => {
         const seen = (acc.match(/"feedback"\s*:/g) || []).length;
@@ -2679,8 +2726,12 @@ async function runEvaluation() {
       // beim Speichern (result.gesamt.prozent) sonst einen Absturz ausloest
       result = normalizeEvalData(rawResult);
       // Lokale Mehrfach-MC-Ergebnisse einmischen (das Modell hat sie nicht
-      // gesehen). Reihenfolge spielt fuer renderResult keine Rolle (Suche per id).
-      result.ergebnisse = result.ergebnisse.concat(mcMultiResults);
+      // gesehen). Modell-Ergebnisse vorher auf die tatsaechlich gestellten
+      // (Payload-)IDs filtern: Erfindet das Modell trotz Anweisung einen Eintrag
+      // fuer eine Mehrfach-MC-Frage, gewinnt sonst beim id-Lookup in renderResult
+      // ggf. der falsche (Modell-)Eintrag. Reihenfolge ist egal (Suche per id).
+      const modelIds = new Set(payload.map((p) => p.id));
+      result.ergebnisse = result.ergebnisse.filter((e) => modelIds.has(e.id)).concat(mcMultiResults);
     }
 
     // gesamt.prozent NEU aus ALLEN Ergebnissen berechnen: das Modell kennt nur
