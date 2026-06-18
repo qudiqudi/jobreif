@@ -11,6 +11,7 @@ import { resolveTier, worstCaseCost } from "./tiers.js";
 import { corsHeaders, preflight } from "./cors.js";
 import { verifyTurnstile } from "./turnstile.js";
 import { validateQuiz, validateEval, validateThemenfelder } from "./validate.js";
+import { handleAuth } from "./auth.js";
 import {
   QUESTIONS_SCHEMA, EVAL_SCHEMA, THEMENFELDER_SCHEMA,
   buildQuizMessages, buildEvalMessages, buildThemenfelderMessages,
@@ -38,6 +39,9 @@ export default {
       const stats = await stub.fetch("https://do/stats").then((r) => r.json());
       return json(stats, 200, env, origin);
     }
+
+    // Auth-Gerüst (Phase B, Schritt 1): optionale Konten, eigener Zweig vor /api.
+    if (path.startsWith("/auth/")) return await handleAuth(req, env, ctx, path, origin);
 
     // Async-Generierung (Hintergrund-Job, Punkt 1): Start + Poll.
     if (path === "/api/jobs" && req.method === "POST") return await startJob(req, env, ctx, origin);

@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.6.2";
+const APP_VERSION = "1.7.0";
 
 const CHANGELOG = [
+  {
+    version: "1.7.0",
+    date: "18.06.2026",
+    items: [
+      "Neu: In den Einstellungen kannst du dich jetzt freiwillig anmelden – per Anmeldelink an deine E-Mail oder über Google. Das ist optional und bereitet kommende Funktionen vor; ohne Anmeldung funktioniert weiterhin alles wie bisher.",
+    ],
+  },
   {
     version: "1.6.2",
     date: "18.06.2026",
@@ -1156,6 +1163,64 @@ function hostedBase() {
   }
 }
 
+// --- Konto / Auth (Phase B, Schritt 1) -----------------------------------
+// Rein additiv: ohne Anmeldung laeuft alles wie bisher (anonymer Hosted-Modus). Das
+// Session-Token liegt additiv in settings.authToken; es wird, wenn vorhanden, als Bearer
+// an die Hosted-Endpoints mitgeschickt. Der Worker aendert damit AKTUELL nichts am Gate
+// oder den Kosten — es ist nur die Vorbereitung fuer spaetere Per-Konto-Funktionen.
+function authHeaders() {
+  return settings.authToken ? { Authorization: "Bearer " + settings.authToken } : {};
+}
+
+function setAuthToken(token) {
+  settings = { ...settings, authToken: token };
+  saveSettings(settings);
+}
+
+function clearAuthToken() {
+  if (!settings.authToken) return;
+  const { authToken, ...rest } = settings;
+  settings = rest;
+  saveSettings(settings);
+}
+
+// Meldung aus der Redirect-Aufnahme, die beim naechsten Oeffnen der Einstellungen
+// im Konto-Bereich angezeigt wird.
+let _authRedirectMsg = "";
+
+// Entfernt die Auth-Parameter aus der URL (Token nicht im Verlauf/teilen lassen).
+function cleanAuthParamsFromUrl(params) {
+  params.delete("session"); params.delete("auth"); params.delete("auth_error");
+  const qs = params.toString();
+  const url = location.pathname + (qs ? "?" + qs : "") + location.hash;
+  try { history.replaceState(null, "", url); } catch { /* egal */ }
+}
+
+// Nimmt nach Magic-Link/Google-Redirect das Token entgegen: ?session=<tok> direkt,
+// ?auth=<magic> via /auth/magic/verify; ?auth_error=1 als abgebrochene Anmeldung.
+// Gibt true zurueck, wenn ein Anmeldeversuch verarbeitet wurde.
+async function consumeAuthRedirect() {
+  let params;
+  try { params = new URLSearchParams(location.search); } catch { return false; }
+  const sess = params.get("session");
+  const magic = params.get("auth");
+  const err = params.get("auth_error");
+  if (!sess && !magic && !err) return false;
+  cleanAuthParamsFromUrl(params);
+  if (err) { _authRedirectMsg = "Die Anmeldung wurde abgebrochen."; return true; }
+  if (sess) { setAuthToken(sess); _authRedirectMsg = "Erfolgreich angemeldet."; return true; }
+  try {
+    const r = await fetch(hostedBase() + "/auth/magic/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: magic }),
+    });
+    if (r.ok) { const d = await r.json(); setAuthToken(d.token); _authRedirectMsg = "Erfolgreich angemeldet."; }
+    else _authRedirectMsg = "Der Anmeldelink ist ungültig oder abgelaufen.";
+  } catch { _authRedirectMsg = "Anmeldung fehlgeschlagen. Bitte erneut versuchen."; }
+  return true;
+}
+
 // Turnstile (Bot-/Missbrauchsschutz im Hosted-Modus). PRODUKTION: echten Sitekey hier
 // eintragen (Cloudflare-Dashboard → Turnstile). Override per localStorage nur fuer Tests
 // (z. B. Cloudflare-Testkey "1x00000000000000000000BB" = unsichtbar, immer ok). Ohne
@@ -1281,7 +1346,7 @@ async function callHosted(hosted, onProgress, opts = {}) {
   }
   const tier = settings.tier || "standard";
   const body = JSON.stringify({ ...hosted.payload, tier });
-  const headers = { "Content-Type": "application/json" };
+  const headers = { "Content-Type": "application/json", ...authHeaders() };
   const token = await getTurnstileToken(hosted.action);
   if (token) headers["CF-Turnstile-Token"] = token;
 
@@ -2573,7 +2638,7 @@ async function startHostedGeneration(ctx) {
   showLoading("Test wird gestartet...");
   try {
     const token = await getTurnstileToken("generate-quiz");
-    const headers = { "Content-Type": "application/json" };
+    const headers = { "Content-Type": "application/json", ...authHeaders() };
     if (token) headers["CF-Turnstile-Token"] = token;
     const res = await fetch(hostedBase() + "/api/jobs", {
       method: "POST",
@@ -2629,7 +2694,7 @@ async function pollActiveJob() {
   // 404, wenn der Job nicht mehr existiert) und pollt bei Netzfehlern nur weiter.
   let r;
   try {
-    r = await fetch(hostedBase() + "/api/jobs/" + encodeURIComponent(job.jobId));
+    r = await fetch(hostedBase() + "/api/jobs/" + encodeURIComponent(job.jobId), { headers: authHeaders() });
   } catch {
     scheduleJobPoll(5000); // Netzfehler/Offline: spaeter erneut versuchen, Job behalten
     return;
@@ -5576,6 +5641,8 @@ function updateSettingsProviderUI() {
   const isHosted = provider === "hosted";
   // Hosted: kein Key, kein Modell-/Lokal-Block; stattdessen die Qualitaetsstufe.
   $("row-tier").classList.toggle("hidden", !isHosted);
+  // Konto nur im Hosted-Modus (Auth gehoert zum gehosteten Dienst).
+  $("row-account").classList.toggle("hidden", !isHosted);
   $("row-model").classList.toggle("hidden", isHosted);
   $("model-desc").classList.toggle("hidden", isHosted);
   $("row-api-key").classList.toggle("hidden", isLocal || isHosted);
@@ -5597,7 +5664,87 @@ function initSettingsForm() {
   } else if ($("provider").value !== "hosted") {
     populateModelSelect($("provider").value, settings.model);
   }
+  $("account-email").value = "";
+  $("account-msg").textContent = _authRedirectMsg || "";
+  _authRedirectMsg = "";
+  renderAccountSection();
 }
+
+// Spiegelt den Anmeldezustand in den Einstellungen. Mit Token wird best-effort
+// /auth/me abgefragt; ein 401 verwirft das (abgelaufene) Token still.
+async function renderAccountSection() {
+  const status = $("account-status");
+  const showLoggedIn = (email) => {
+    $("account-login").classList.add("hidden");
+    $("account-loggedin").classList.remove("hidden");
+    status.textContent = email ? `Angemeldet als ${email}.` : "Angemeldet.";
+  };
+  const showLoggedOut = () => {
+    $("account-login").classList.remove("hidden");
+    $("account-loggedin").classList.add("hidden");
+    status.textContent = "Nicht angemeldet.";
+  };
+  if (!settings.authToken) { showLoggedOut(); return; }
+  showLoggedIn(null); // optimistisch, bis /auth/me antwortet
+  try {
+    const r = await fetch(hostedBase() + "/auth/me", { headers: authHeaders() });
+    if (r.status === 401) { clearAuthToken(); showLoggedOut(); return; }
+    if (r.ok) { const d = await r.json(); showLoggedIn(d.user && d.user.email); }
+  } catch { /* offline: optimistischer Zustand bleibt */ }
+}
+
+$("btn-account-magic").addEventListener("click", async () => {
+  const email = $("account-email").value.trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    $("account-msg").textContent = "Bitte eine gültige E-Mail-Adresse eingeben.";
+    return;
+  }
+  const btn = $("btn-account-magic");
+  btn.disabled = true;
+  $("account-msg").textContent = "Anmeldelink wird gesendet...";
+  try {
+    await fetch(hostedBase() + "/auth/magic/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    // Bewusst neutrale Meldung (keine Auskunft, ob die Adresse existiert).
+    $("account-msg").textContent = "Wenn alles passt, haben wir dir einen Anmeldelink geschickt. Bitte dein Postfach prüfen (auch Spam).";
+  } catch {
+    $("account-msg").textContent = "Senden fehlgeschlagen. Bitte Internetverbindung prüfen und erneut versuchen.";
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+$("btn-account-google").addEventListener("click", async () => {
+  const btn = $("btn-account-google");
+  btn.disabled = true;
+  $("account-msg").textContent = "Weiterleitung zu Google...";
+  try {
+    const r = await fetch(hostedBase() + "/auth/google/start", { headers: { Accept: "application/json" } });
+    if (r.ok) {
+      const d = await r.json();
+      if (d.url) { window.location.href = d.url; return; }
+    }
+    $("account-msg").textContent = r.status === 503
+      ? "Der Google-Login ist noch nicht eingerichtet."
+      : "Google-Anmeldung momentan nicht möglich. Bitte später erneut versuchen.";
+  } catch {
+    $("account-msg").textContent = "Keine Verbindung. Bitte später erneut versuchen.";
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+$("btn-account-logout").addEventListener("click", async () => {
+  try {
+    await fetch(hostedBase() + "/auth/logout", { method: "POST", headers: authHeaders() });
+  } catch { /* egal: lokal abmelden reicht */ }
+  clearAuthToken();
+  $("account-msg").textContent = "Abgemeldet.";
+  renderAccountSection();
+});
 
 $("btn-settings").addEventListener("click", () => {
   rememberReturnView();
@@ -6184,7 +6331,7 @@ function openDatenschutz(e) {
 function closeDatenschutz() {
   $("datenschutz-modal").classList.add("hidden");
 }
-["link-datenschutz", "link-datenschutz-footer", "link-datenschutz-tier"].forEach((id) => {
+["link-datenschutz", "link-datenschutz-footer", "link-datenschutz-tier", "link-datenschutz-account"].forEach((id) => {
   const el = $(id);
   if (el) el.addEventListener("click", openDatenschutz);
 });
@@ -6267,6 +6414,16 @@ if (!isConfigured) {
 } else {
   goHome();
 }
+
+// Nach Magic-Link-/Google-Redirect das Token uebernehmen und das Ergebnis im
+// Konto-Bereich der Einstellungen zeigen (nur im Hosted-Modus relevant).
+consumeAuthRedirect().then((didAuth) => {
+  if (didAuth && (settings.provider || "hosted") === "hosted") {
+    rememberReturnView();
+    initSettingsForm();
+    showView("view-settings");
+  }
+});
 
 // Offenen/fertigen Hintergrund-Job (Punkt 1) nach App-Start wieder aufnehmen.
 resumeActiveJob();
