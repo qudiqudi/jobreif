@@ -1017,20 +1017,24 @@ function mainAdSegment(text) {
 }
 
 // Bereinigt einen Kernpunkt-String fuer die ANZEIGE (nicht fuer die Belegpruefung):
-// entfernt eine fuehrende Listen-/Aufzaehlungsmarkierung (Spiegelstrich, Bullet,
-// Sternchen, "1." / "1)") samt folgendem Whitespace und kollabiert interne
-// Whitespace-/Zeilenumbruch-Laeufe zu einem Leerzeichen. Bewusst konservativ:
-// nur eine Markierung GANZ AM ANFANG, die von Whitespace gefolgt wird, wird
-// entfernt - Bindestriche INNERHALB eines Worts (z. B. "5-Tage-Woche",
-// "Nice-to-have", "m/w/d") bleiben unberuehrt. Mehrfach angewandt, damit auch
-// kombinierte Marker ("- • Text") sauber wegfallen.
+// entfernt eine fuehrende Listen-Markierung (Spiegelstrich, Bullet, Sternchen)
+// samt folgendem Whitespace und kollabiert interne Whitespace-/Zeilenumbruch-Laeufe
+// zu einem Leerzeichen. Bewusst konservativ: nur eine Markierung GANZ AM ANFANG,
+// die von Whitespace gefolgt wird, wird entfernt - Bindestriche INNERHALB eines
+// Worts (z. B. "5-Tage-Woche", "Nice-to-have", "m/w/d") bleiben unberuehrt.
+// Mehrfach angewandt, damit auch kombinierte Marker ("- • Text") sauber wegfallen.
+//
+// Fuehrende ZAHLEN-Aufzaehlungen ("1." / "1)") werden BEWUSST NICHT entfernt: eine
+// solche Zahl ist im Deutschen oft Teil eines echten Fakts (z. B. "2. Staatsexamen",
+// "3. Lehrjahr", "13. Monatsgehalt"), und der Sinn wuerde durch Streichen der Zahl
+// verfaelscht. Das gemeldete Problem (Spiegelstrich-/Bullet-Marker) deckt das nicht
+// ab, daher wird hier nichts Zahlenartiges angetastet.
 function cleanKernpunktText(s) {
   let out = String(s == null ? "" : s).replace(/\s+/g, " ").trim();
   // Solange am Anfang ein Marker + Whitespace (oder Marker am Stringende) steht,
-  // diesen abtrennen. Marker: Spiegelstriche/Bullets/Sternchen oder ein
-  // Enumerator wie "1." / "1)". Der nachfolgende Whitespace ist Pflicht, damit
-  // Wort-interne Bindestriche nicht getroffen werden.
-  const marker = /^(?:[-–—•·*▪◦‣]|\d+[.)])(?:\s+|$)/;
+  // diesen abtrennen. Marker: nur Spiegelstriche/Bullets/Sternchen. Der nachfolgende
+  // Whitespace ist Pflicht, damit Wort-interne Bindestriche nicht getroffen werden.
+  const marker = /^[-–—•·*▪◦‣](?:\s+|$)/;
   let prev;
   do {
     prev = out;
