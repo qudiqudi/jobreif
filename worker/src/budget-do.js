@@ -49,12 +49,16 @@ export class BudgetDO {
     const d = today();
     if (d === this.day) return;
     this.day = d;
-    this.dayReserved = 0;
+    // Echte Tageswerte zuruecksetzen: Ausgaben + Pro-Tag-Kontingente.
     this.daySpent = 0;
-    this.inflight = 0;
-    this.reservations = {};
     this.perSubject = {};
     this.perIp = {};
+    // ABER offene Reservierungen NICHT verwerfen: ein Stream, der ueber Mitternacht
+    // laeuft, muss seine Reserve behalten, sonst findet sein settle die Reservierung
+    // nicht mehr und der echte usage.cost ginge verloren — und der In-flight-Zaehler
+    // wuerde mitten im Stream auf 0 gesetzt (kurzzeitige Ueber-Concurrency). dayReserved
+    // konsistent auf die Summe der noch offenen Reserven neu setzen; inflight bleibt.
+    this.dayReserved = Object.values(this.reservations).reduce((sum, r) => sum + r.amount, 0);
   }
 
   // Abgelaufene Reserven ohne Settle konservativ runterbuchen (Hälfte des Worst-Case)
