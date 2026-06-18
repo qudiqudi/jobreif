@@ -222,8 +222,12 @@ async function pollJob(jobId, req, env, origin) {
   if (!jobId || jobId.length > 64) return json({ error: "bad-job" }, 400, env, origin);
   const jobStub = env.GENJOB_DO.get(env.GENJOB_DO.idFromName(jobId));
   let st;
-  try { st = await jobStub.fetch("https://do/status").then((r) => r.json()); }
+  try {
+    // user.id als X-Subject durchreichen → das DO prueft die Job-Ownership.
+    st = await jobStub.fetch("https://do/status", { headers: { "X-Subject": user.id } }).then((r) => r.json());
+  }
   catch { return json({ error: "poll-failed" }, 502, env, origin); }
+  if (st.status === "forbidden") return json({ error: "forbidden" }, 403, env, origin);
   if (st.status === "done") return json({ status: "done", quiz: st.result }, 200, env, origin);
   if (st.status === "error") return json({ status: "error", code: st.errorCode || null }, 200, env, origin);
   if (st.status === "unknown") return json({ status: "unknown" }, 404, env, origin);

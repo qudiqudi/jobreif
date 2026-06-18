@@ -50,6 +50,15 @@ export class GenerationJobDO {
       return jsonResponse({ ok: true });
     }
     if (op === "status") {
+      // Ownership: nur der Ersteller (gespeichertes subject = user.id) darf Status/Ergebnis
+      // lesen. Der Worker reicht die authentifizierte user.id als X-Subject durch. Ein
+      // unbekannter Job (kein subject gespeichert) faellt in den unknown-Pfad unten (404),
+      // ohne dass ein fremdes Konto je Inhalt zu sehen bekommt (Codex-Review: Job-Isolation).
+      const storedSubject = await this.state.storage.get("subject");
+      const requester = req.headers.get("X-Subject") || "";
+      if (storedSubject && requester !== storedSubject) {
+        return jsonResponse({ status: "forbidden" });
+      }
       const status = (await this.state.storage.get("status")) || "unknown";
       // Server-eigener Timeout: ein zu lange "pending" Job gilt als tot (Alarm vom
       // Plattform-Wall-Limit beendet) → terminal markieren, Reserve freigeben, Input

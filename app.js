@@ -2745,6 +2745,13 @@ async function pollActiveJob() {
     handleHostedUnauthorized();
     return;
   }
+  if (r.status === 403) {
+    // Der gemerkte Job gehoert einem anderen Konto (z. B. Kontowechsel auf diesem Geraet):
+    // lokalen Zeiger verwerfen, nicht weiter pollen (Job-Isolation, Codex-Review).
+    clearActiveJob();
+    renderActiveJobCard(null);
+    return;
+  }
   if (r.status === 404) {
     clearActiveJob();
     renderActiveJobCard(null);
@@ -5807,6 +5814,11 @@ $("btn-account-logout").addEventListener("click", async () => {
     await fetch(hostedBase() + "/auth/logout", { method: "POST", headers: authHeaders() });
   } catch { /* egal: lokal abmelden reicht */ }
   clearAuthToken();
+  // Beim Verlassen des Kontos den Hintergrund-Job-Zeiger verwerfen, damit eine fremde
+  // jobId nicht ueber einen spaeteren Login eines anderen Kontos weiterverwendet wird
+  // (Job-Isolation, Codex-Review). Der Job selbst laeuft/raeumt serverseitig.
+  clearActiveJob();
+  renderActiveJobCard(null);
   $("account-msg").textContent = "Abgemeldet.";
   renderAccountSection();
 });
