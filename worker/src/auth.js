@@ -8,11 +8,13 @@
 // Google-Code-Tausch + userinfo nur serverseitig; keine Fehlerdetails an den Client.
 
 import { corsHeaders } from "./cors.js";
+import { verifyTurnstile } from "./turnstile.js";
 
 const MAGIC_TTL_DEFAULT = 900;       // 15 min
 const SESSION_TTL_DEFAULT = 2592000; // 30 Tage
 const STATE_TTL = 600;               // 10 min
 const MAGIC_RATE_MAX = 5;            // max offene Magic-Tokens je E-Mail/Stunde
+const MAGIC_GLOBAL_MAX = 300;        // globaler Stundencap fuer ausgehende Magic-Mails
 const EMAIL_MAX = 254;
 
 // --- kleine Helfer ---------------------------------------------------------
@@ -134,16 +136,35 @@ async function sendMagicMail(env, email, link) {
 // --- Endpoints -------------------------------------------------------------
 
 async function magicStart(req, env, ctx, origin) {
+  // Anti-Bot: Magic-Link liegt seit der Login-Pflicht auf dem kritischen Pfad. Ohne
+  // Bot-Schutz koennte ein Skript beliebige Adressen durchiterieren (Mail-Bombing, Resend-
+  // Kontingent/Reputation, Spam mit Login-Links — Codex-Review R5). Turnstile wie /api/*,
+  // an die Aktion gebunden. Dev-Bypass via SKIP_TURNSTILE.
+  if (env.SKIP_TURNSTILE !== "1") {
+    const ip = req.headers.get("CF-Connecting-IP") || "0.0.0.0";
+    const token = req.headers.get("CF-Turnstile-Token") || "";
+    const tv = await verifyTurnstile(token, { action: "magic-link", secret: env.TURNSTILE_SECRET, ip });
+    if (!tv.ok) return json({ error: "turnstile", reason: tv.reason }, 403, env, origin);
+  }
+
   let body;
   try { body = await req.json(); } catch { return json({ error: "bad-json" }, 400, env, origin); }
   const email = normEmail(body && body.email);
   if (!email) return json({ error: "email" }, 400, env, origin);
 
-  // Throttle gegen Mail-Bombing: zu viele offene Tokens → still verwerfen (trotzdem 202).
-  const cnt = await env.DB.prepare(
+  // Throttle gegen Mail-Bombing: pro Empfaenger UND global (bounds das Gesamt-Mailvolumen,
+  // selbst wenn der Bot-Schutz umgangen wuerde). Bei Ueberschreitung still verwerfen
+  // (trotzdem 202, keine Enumeration/Auskunft); Unterdrueckung loggen.
+  const since = now() - 3600;
+  const emailCnt = await env.DB.prepare(
     "SELECT COUNT(*) AS n FROM magic_tokens WHERE email = ? AND created_at > ?"
-  ).bind(email, now() - 3600).first();
-  if (!cnt || cnt.n < MAGIC_RATE_MAX) {
+  ).bind(email, since).first();
+  const globalCnt = await env.DB.prepare(
+    "SELECT COUNT(*) AS n FROM magic_tokens WHERE created_at > ?"
+  ).bind(since).first();
+  const emailN = emailCnt ? emailCnt.n : 0;
+  const globalN = globalCnt ? globalCnt.n : 0;
+  if (emailN < MAGIC_RATE_MAX && globalN < MAGIC_GLOBAL_MAX) {
     const raw = randomToken();
     const hash = await sha256hex(raw);
     const ttl = Number(env.MAGIC_TTL_S || MAGIC_TTL_DEFAULT);
@@ -152,6 +173,8 @@ async function magicStart(req, env, ctx, origin) {
     ).bind(hash, email, now(), now() + ttl).run();
     const link = `${env.APP_ORIGIN || "https://jobreif.de"}/?auth=${raw}`;
     ctx.waitUntil(sendMagicMail(env, email, link));
+  } else {
+    console.log(JSON.stringify({ ev: "magic-suppressed", reason: emailN >= MAGIC_RATE_MAX ? "email" : "global" }));
   }
   // IMMER 202 – verrät nicht, ob die Adresse existiert/zugestellt wurde.
   return json({ ok: true }, 202, env, origin);
@@ -294,6 +317,16 @@ async function logout(req, env, origin) {
     await env.DB.prepare("DELETE FROM sessions WHERE token_hash = ?").bind(hash).run();
   }
   return json(null, 204, env, origin);
+}
+
+// Dev-Helfer (nur ueber den MOCK-gegateten /debug/session-Endpoint erreichbar): mintet
+// eine echte Session fuer eine Test-E-Mail, damit der Lasttest den Auth-Pflicht-Pfad
+// (Budget/Concurrency je user.id) tatsaechlich durchlaeuft (Codex-Review R5).
+export async function devMintSession(env, email) {
+  const e = normEmail(email) || "loadtest@dev.local";
+  const user = await upsertUser(env, e);
+  await ensureIdentity(env, user.id, "magic", e);
+  return createSession(env, user.id);
 }
 
 // --- Router ----------------------------------------------------------------

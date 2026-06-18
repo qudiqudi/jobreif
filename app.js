@@ -5806,9 +5806,13 @@ $("login-magic-form").addEventListener("submit", async (e) => {
   btn.disabled = true;
   $("login-msg").textContent = "Anmeldelink wird gesendet...";
   try {
+    // Turnstile (Anti-Bot) wie bei der Generierung – an die Aktion gebunden.
+    const tkn = await getTurnstileToken("magic-link");
+    const headers = { "Content-Type": "application/json" };
+    if (tkn) headers["CF-Turnstile-Token"] = tkn;
     await fetch(hostedBase() + "/auth/magic/start", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ email }),
     });
     // Bewusst neutrale Meldung (keine Auskunft, ob die Adresse existiert).

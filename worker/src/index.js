@@ -11,7 +11,7 @@ import { resolveTier, worstCaseCost } from "./tiers.js";
 import { corsHeaders, preflight } from "./cors.js";
 import { verifyTurnstile } from "./turnstile.js";
 import { validateQuiz, validateEval, validateThemenfelder } from "./validate.js";
-import { handleAuth, getSessionUser } from "./auth.js";
+import { handleAuth, getSessionUser, devMintSession } from "./auth.js";
 import {
   QUESTIONS_SCHEMA, EVAL_SCHEMA, THEMENFELDER_SCHEMA,
   buildQuizMessages, buildEvalMessages, buildThemenfelderMessages,
@@ -38,6 +38,12 @@ export default {
       const stub = budgetStub(env);
       const stats = await stub.fetch("https://do/stats").then((r) => r.json());
       return json(stats, 200, env, origin);
+    }
+    // Nur in Dev (MOCK_UPSTREAM): mintet eine Session, damit der Lasttest den Auth-Pflicht-
+    // Pfad echt durchlaeuft. In Produktion NIE erreichbar (MOCK_UPSTREAM ungesetzt).
+    if (path === "/debug/session" && env.MOCK_UPSTREAM === "1") {
+      const token = await devMintSession(env, new URL(req.url).searchParams.get("email"));
+      return json({ token }, 200, env, origin);
     }
 
     // Auth-Gerüst (Phase B, Schritt 1): optionale Konten, eigener Zweig vor /api.
