@@ -5272,8 +5272,13 @@ function renderJobBlock(job, opts) {
   const block = document.createElement("div");
   block.className = "job-block";
 
-  const best = Math.max(...job.attempts.map((a) => a.prozent || 0));
-  const last = job.attempts[job.attempts.length - 1].prozent || 0;
+  // Defensiv: eine gespeicherte Stelle koennte (theoretisch) keine Versuche
+  // tragen - dann nicht ueber ein leeres Array Math.max (-> -Infinity) bilden.
+  // Letzter Versuch kann aus aelteren Versionen ohne prozent stammen.
+  const attempts = Array.isArray(job.attempts) ? job.attempts : [];
+  const lastAtt = attempts[attempts.length - 1];
+  const best = attempts.length ? Math.max(...attempts.map((a) => a.prozent || 0)) : 0;
+  const last = lastAtt && typeof lastAtt.prozent === "number" ? lastAtt.prozent : 0;
 
   const head = document.createElement("div");
   head.className = "job-head";
@@ -5290,7 +5295,7 @@ function renderJobBlock(job, opts) {
   }
   const sub = document.createElement("p");
   sub.className = "hint";
-  sub.textContent = `${job.attempts.length} Versuch${job.attempts.length === 1 ? "" : "e"} · Bester: ${best} % · Letzter: ${last} %`;
+  sub.textContent = `${attempts.length} Versuch${attempts.length === 1 ? "" : "e"} · Bester: ${best} % · Letzter: ${last} %`;
   title.appendChild(sub);
   head.appendChild(title);
   const actions = document.createElement("div");
@@ -5311,7 +5316,7 @@ function renderJobBlock(job, opts) {
   // Verlauf als Balken (chronologisch, max. die letzten 12)
   const trend = document.createElement("div");
   trend.className = "trend";
-  job.attempts.slice(-12).forEach((a) => {
+  attempts.slice(-12).forEach((a) => {
     const bar = document.createElement("div");
     bar.className = "trend-bar " + scoreClass(a.prozent);
     bar.style.height = Math.max(4, Math.round(a.prozent * 0.44)) + "px";
@@ -5326,12 +5331,13 @@ function renderJobBlock(job, opts) {
   // Versuche, neueste zuerst
   const ul = document.createElement("ul");
   ul.className = "attempt-list";
-  job.attempts.slice().reverse().forEach((att) => {
+  attempts.slice().reverse().forEach((att) => {
     const li = document.createElement("li");
     const info = document.createElement("span");
     info.textContent = `${formatDate(att.date)} · ${att.mode === "pruefung" ? "Prüfung" : "Lernen"}` +
       (att.schwierigkeitsgrad ? ` · ${difficultyLabel(att.schwierigkeitsgrad)}` : "") +
-      ` · ${att.quiz.fragen.length} Fragen` +
+      // quiz/fragen koennen bei sehr alten Versuchen fehlen (defensiv lesen).
+      ` · ${att.quiz && Array.isArray(att.quiz.fragen) ? att.quiz.fragen.length : 0} Fragen` +
       // Vertiefungs-Versuche kennzeichnen; aeltere/normale Versuche haben kein
       // vertiefung-Feld (defensiv).
       (att.vertiefung && Array.isArray(att.vertiefung.felder) && att.vertiefung.felder.length
