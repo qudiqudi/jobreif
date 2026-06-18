@@ -912,7 +912,13 @@ function normalizeEvalData(result) {
   const strArr = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === "string") : []);
   return {
     ergebnisse: Array.isArray(result.ergebnisse)
-      ? result.ergebnisse.filter((e) => e && typeof e === "object")
+      ? result.ergebnisse
+          .filter((e) => e && typeof e === "object")
+          // id auf Zahl normalisieren: nicht-strikte Provider (Hosted guenstig,
+          // DeepSeek, lokal) liefern id teils als String ("1"). Sonst scheitert
+          // der id-basierte Abgleich (runEvaluation-Merge, renderResult) und
+          // gueltige Bewertungen wuerden faelschlich als 0 gespeichert.
+          .map((e) => ({ ...e, id: Number(e.id) }))
       : [],
     gesamt: {
       prozent,
@@ -1996,7 +2002,7 @@ function buildSchwaechenSummary(job) {
     const fragen = att.quiz && Array.isArray(att.quiz.fragen) ? att.quiz.fragen : [];
     const erg = att.result && Array.isArray(att.result.ergebnisse) ? att.result.ergebnisse : [];
     fragen.forEach((f, i) => {
-      const e = erg[i] || erg.find((x) => x && x.id === f.id);
+      const e = erg[i] || erg.find((x) => x && Number(x.id) === Number(f.id));
       const p = e && Number.isFinite(Number(e.punkte)) ? Number(e.punkte) : null;
       if (p !== null) rows.push({ kategorie: f.kategorie || "", frage: f.frage || "", punkte: p });
     });
@@ -2743,8 +2749,8 @@ async function runEvaluation() {
       // (Payload-)IDs filtern: Erfindet das Modell trotz Anweisung einen Eintrag
       // fuer eine Mehrfach-MC-Frage, gewinnt sonst beim id-Lookup in renderResult
       // ggf. der falsche (Modell-)Eintrag. Reihenfolge ist egal (Suche per id).
-      const modelIds = new Set(payload.map((p) => p.id));
-      result.ergebnisse = result.ergebnisse.filter((e) => modelIds.has(e.id)).concat(mcMultiResults);
+      const modelIds = new Set(payload.map((p) => Number(p.id)));
+      result.ergebnisse = result.ergebnisse.filter((e) => modelIds.has(Number(e.id))).concat(mcMultiResults);
     }
 
     // Ergebnisse gegen ALLE Quizfragen abgleichen: pro Frage genau eine Zeile, in
@@ -2754,7 +2760,9 @@ async function runEvaluation() {
     // Score (und damit Historie/Abzeichen/Fortschritt) faelschlich geschoent.
     {
       const byId = new Map(
-        result.ergebnisse.filter((e) => e && e.id != null).map((e) => [e.id, e]),
+        result.ergebnisse
+          .filter((e) => e && Number.isFinite(Number(e.id)))
+          .map((e) => [Number(e.id), e]),
       );
       // punkte pro Zeile hart auf eine Ganzzahl 0..10 klemmen und ZURUECK-
       // schreiben: nicht-strikte Provider (DeepSeek/lokal) sind nicht schema-
@@ -2886,7 +2894,7 @@ function renderResult(result, durationMs) {
   const details = $("result-details");
   details.innerHTML = "";
   quiz.fragen.forEach((q, i) => {
-    const r = (result.ergebnisse || []).find((e) => e && e.id === q.id) || {};
+    const r = (result.ergebnisse || []).find((e) => e && Number(e.id) === Number(q.id)) || {};
     const div = document.createElement("div");
     div.className = "detail-item";
 
