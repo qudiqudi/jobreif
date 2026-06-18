@@ -66,7 +66,15 @@ export class GenerationJobDO {
         const attemptDead = !alarmStartedAt || (Date.now() - alarmStartedAt > GEN_TIMEOUT_MS + 60 * 1000);
         if (Date.now() - createdAt > JOB_TIMEOUT_MS && attemptDead) {
           const reserveId = await this.state.storage.get("reserveId");
-          await this.finish("error", null, "timeout", reserveId, null);
+          // Wurde der Upstream-Call schon abgeschickt (durabler Marker, vor dem fetch
+          // gesetzt), der Alarm starb aber vor dem Abschluss → Kosten unbekannt:
+          // konservativ Worst-Case settlen statt freigeben (Codex-Review R5). Nur ohne
+          // abgeschickten Call wirklich freigeben.
+          const callStarted = await this.state.storage.get("callStarted");
+          const reserveAmount = await this.state.storage.get("reserveAmount");
+          const timeoutCost = callStarted ? (reserveAmount ?? null) : null;
+          const leave = callStarted && timeoutCost == null;
+          await this.finish("error", null, "timeout", reserveId, timeoutCost, leave);
           return jsonResponse({ status: "error", errorCode: "timeout" });
         }
       }
@@ -128,6 +136,11 @@ export class GenerationJobDO {
           : {}),
       };
       charged = true; // Call wird jetzt abgeschickt — ab hier Kosten moeglich.
+      // Durabler Marker VOR dem Dispatch: stirbt die Alarm-Invocation nach dem
+      // Absenden, weiss der Status-Timeout-Pfad (eigene Invocation, sieht das
+      // in-memory charged NICHT), dass Kosten entstanden sein koennen, und settlet
+      // konservativ statt freizugeben (Codex-Review R5).
+      await this.state.storage.put("callStarted", true);
       const res = await fetch(OPENROUTER_URL, {
         method: "POST",
         headers: {
@@ -182,7 +195,7 @@ export class GenerationJobDO {
     if ((await this.state.storage.get("status")) !== "pending") return;
     await this.state.storage.put({ status, result: result || null, errorCode: errorCode || null });
     if (!leaveReserve) await settleBudget(this.env, reserveId, cost);
-    await this.state.storage.delete(["params", "tier", "reserveId", "reserveAmount", "alarmStartedAt"]);
+    await this.state.storage.delete(["params", "tier", "reserveId", "reserveAmount", "alarmStartedAt", "callStarted"]);
     await this.state.storage.setAlarm(Date.now() + RESULT_TTL_MS);
   }
 }
