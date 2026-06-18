@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.5.0";
+const APP_VERSION = "1.6.0";
 
 const CHANGELOG = [
+  {
+    version: "1.6.0",
+    date: "18.06.2026",
+    items: [
+      "Die Test-Erstellung und Auswertung halten den Bildschirm jetzt wach und brechen seltener ab, wenn das Display von selbst ausgeht. Das gilt auch mit eigenem API-Schlüssel oder lokalem Modell. Hinweis: Wechselst du aktiv zu einer anderen App oder schließt den Tab, kann der Vorgang trotzdem stoppen – nur im gehosteten Modus läuft die Erstellung wirklich auf dem Server weiter.",
+    ],
+  },
   {
     version: "1.5.0",
     date: "18.06.2026",
@@ -566,12 +573,40 @@ function goReturn() {
 
 let loadingTicker = null;
 
+// Screen Wake Lock: haelt den Bildschirm waehrend langer Operationen (Fragen-
+// erstellung, Auswertung) wach. Greift fuer ALLE Modi - im Gegensatz zur echten
+// Server-Hintergrundarbeit des Hosted-Modus laeuft die Generierung bei BYOK und
+// lokal im Browser-Tab, der bei ausgeschaltetem Bildschirm sonst eingefroren und
+// der Lauf abgebrochen wuerde. Schuetzt NICHT vor echtem App-Wechsel/Tab-Schliessen
+// (dann gibt das OS den Lock frei) - das ist clientseitig nicht abfangbar.
+let _wakeLock = null;
+async function acquireWakeLock() {
+  // API fehlt (aelterer/Desktop-Browser) oder Seite nicht sichtbar: stillschweigend
+  // ueberspringen. Ein fehlender Wake Lock ist nie ein Fehler fuer den Nutzer.
+  if (!("wakeLock" in navigator) || document.visibilityState !== "visible") return;
+  try {
+    _wakeLock = await navigator.wakeLock.request("screen");
+    // Vom System wieder freigegeben (z. B. Tab versteckt): Referenz loeschen, damit
+    // visibilitychange ihn bei Rueckkehr neu anfordern kann, solange noch geladen wird.
+    _wakeLock.addEventListener("release", () => { _wakeLock = null; });
+  } catch { _wakeLock = null; }
+}
+function releaseWakeLock() {
+  if (_wakeLock) { try { _wakeLock.release(); } catch {} _wakeLock = null; }
+}
+// Wird der Tab wieder sichtbar und laeuft noch eine Operation, den vom System
+// freigegebenen Lock erneut anfordern.
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && loadingTicker && !_wakeLock) acquireWakeLock();
+});
+
 function showLoading(text) {
   $("loading-text").textContent = text;
   $("loading-progress").classList.add("hidden");
   $("loading-fill").style.width = "0%";
   hideAbortButton();
   $("loading").classList.remove("hidden");
+  acquireWakeLock();
 
   const started = Date.now();
   $("loading-elapsed").textContent = "";
@@ -592,6 +627,7 @@ function hideLoading() {
   loadingTicker = null;
   hideAbortButton();
   $("loading").classList.add("hidden");
+  releaseWakeLock();
 }
 
 // Abbruch-Knopf im Lade-Overlay (nur bei der lokalen Generierung sichtbar).
