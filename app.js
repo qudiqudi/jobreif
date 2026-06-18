@@ -4683,7 +4683,13 @@ function addReport(partial) {
     ...partial,
   };
   r.reports.push(report);
-  return saveReports(r) ? report : null;
+  if (!saveReports(r)) return null;
+  // saveReports verwirft unter Speicherdruck FIFO-Eintraege - im Extremfall auch
+  // den gerade angehaengten - und kann danach ein (leeres) Objekt erfolgreich
+  // schreiben und true zurueckgeben. Erfolg daher daran festmachen, dass der neue
+  // Report tatsaechlich persistiert wurde, sonst null (kein falsches "Gemeldet").
+  const persisted = loadReports().reports.some((x) => x && x.id === report.id);
+  return persisted ? report : null;
 }
 
 // Wurde diese Frage in DIESEM Stellen-Kontext schon gemeldet? Der Status ist pro
