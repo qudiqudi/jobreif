@@ -8,3 +8,12 @@ MOCK_COST=0.08
 # Für einen echten lokalen Lauf (OHNE Mock) stattdessen:
 # OPENROUTER_KEY=sk-or-...
 # TURNSTILE_SECRET=1x0000000000000000000000000000000AA   # Cloudflare-Testsecret (immer ok)
+
+# Auth-Gerüst (Phase B). OHNE RESEND_KEY wird der Magic-Link nur in die Konsole
+# geloggt statt gemailt – ideal zum lokalen Testen. D1 läuft mit `wrangler dev`
+# automatisch lokal (--local); vorher `wrangler d1 migrations apply jobreif-auth --local`.
+# RESEND_KEY=re_...
+# GOOGLE_CLIENT_ID=...apps.googleusercontent.com
+# GOOGLE_CLIENT_SECRET=...
+# Google-Redirect im Dev: http://localhost:8787/auth/google/callback
+# APP_ORIGIN=http://localhost:8000   # damit Redirects lokal auf den python-Server zeigen

@@ -6,8 +6,9 @@ export function corsHeaders(env, origin) {
   const allowed = String(env.ALLOWED_ORIGINS || "")
     .split(",").map((s) => s.trim()).filter(Boolean);
   const h = {
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, CF-Turnstile-Token",
+    // GET fuer /auth/me, Authorization fuer das Session-Bearer-Token (Phase B).
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, CF-Turnstile-Token, Authorization",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin",
   };

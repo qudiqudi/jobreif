@@ -46,7 +46,23 @@ ALERT_AT = "0.7"             # nur Benachrichtigung (KEIN stilles Modell-Downgra
 PER_SUBJECT_SHARE = "0.15"    # kein Subjekt (IP/ASN/Device) > 15 % des Tagesbudgets
 PER_IP_DAY = "8"             # harte Obergrenze Durchläufe/Tag/IP
 ALLOW_PAID = "0"            # Phase A: "Beste"/Opus hinter der Paywall → 402
+# Phase B – Schritt 1 (Auth-Gerüst):
+APP_ORIGIN = "https://jobreif.de"   # Ziel der Magic-Link-/OAuth-Redirects
+MAGIC_TTL_S = "900"          # Gültigkeit eines Magic-Link-Tokens (15 min, einmalig)
+SESSION_TTL_S = "2592000"    # Session-Lebensdauer (30 Tage)
+MAGIC_FROM = "login@mail.jobreif.de"  # Resend-Absender (Subdomain mail.jobreif.de verifiziert)
 # Dev-Flags (in Produktion NICHT setzen): MOCK_UPSTREAM, SKIP_TURNSTILE, MOCK_COST
+# Auth-Secrets via `wrangler secret put` (NIE hier): RESEND_KEY, GOOGLE_CLIENT_ID,
+# GOOGLE_CLIENT_SECRET. Ohne RESEND_KEY loggt der Worker den Magic-Link nur (Dev).
+
+# D1 für Konten/Sessions (Phase B). Anlegen: `wrangler d1 create jobreif-auth`,
+# dann die ausgegebene database_id hier eintragen. Migrationen im Ordner migrations/
+# (`wrangler d1 migrations apply jobreif-auth` – lokal mit --local).
+[[d1_databases]]
+binding = "DB"
+database_name = "jobreif-auth"
+database_id = "bdfa39da-e0cf-4263-bf21-b5cad7f6fd95"
+migrations_dir = "migrations"
 
 [[durable_objects.bindings]]
 name = "BUDGET_DO"
