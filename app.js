@@ -1935,6 +1935,18 @@ async function generateQuiz(opts = {}) {
     difficulty = "schwer";
   }
 
+  // Punkt 3: einen offenen, noch nicht ausgewerteten Lerntest nicht stillschweigend
+  // ueberschreiben. Nur im Lernmodus relevant; bei Bestaetigung wird die alte Sitzung
+  // verworfen und die Generierung mit gesetztem Flag erneut angestossen.
+  if (mode === "lernen" && !opts._replaceConfirmed && loadLearnSession()) {
+    openConfirmReplaceLearn(() => {
+      clearLearnSession();
+      renderHome();
+      generateQuiz({ ...opts, _replaceConfirmed: true });
+    });
+    return;
+  }
+
   // "schwer" sind die Fragen, die im echten Auswahlverfahren am
   // wahrscheinlichsten drankommen; die Stufe steuert deren Anteil
   const DIFFICULTY_MIX = {
@@ -2339,13 +2351,24 @@ function loadLearnSession() {
   try { const raw = localStorage.getItem(LEARN_SESSION_KEY); if (raw) return JSON.parse(raw); } catch {}
   return null;
 }
+let _learnSaveWarned = false;
 function saveLearnSession() {
-  if (!learnSessionActive || mode !== "lernen" || !quiz || reviewing) return;
+  if (!learnSessionActive || mode !== "lernen" || !quiz || reviewing) return false;
   try {
     localStorage.setItem(LEARN_SESSION_KEY, JSON.stringify({
       quiz, answers, revealed, current, savedAt: Date.now(),
     }));
-  } catch { /* Speicher voll/blockiert: Fortsetzen ueber Reload entfaellt dann eben */ }
+    _learnSaveWarned = false; // wieder ok → kuenftige Fehler duerfen erneut warnen
+    return true;
+  } catch {
+    // Nicht stumm schlucken: das Feature verspricht "spaeter fortsetzen". Einmal
+    // sichtbar warnen, damit der Nutzer nicht ahnungslos die Seite schliesst.
+    if (!_learnSaveWarned) {
+      _learnSaveWarned = true;
+      showError("Dein Lernfortschritt kann gerade nicht gespeichert werden (Browser-Speicher voll?). Wenn du die Seite jetzt verlässt, lässt sich der Test eventuell nicht fortsetzen.");
+    }
+    return false;
+  }
 }
 function clearLearnSession() {
   learnSessionActive = false;
@@ -2760,9 +2783,11 @@ async function runEvaluation() {
     // (DeepSeek, lokale Modelle) koennte z. B. das gesamt-Objekt fehlen, was
     // beim Speichern (result.gesamt.prozent) sonst einen Absturz ausloest
     const result = normalizeEvalData(rawResult);
-    // Ausgewertet: der Lerntest ist abgeschlossen, kein Fortsetzen mehr noetig.
-    clearLearnSession();
-    saveAttempt(result, durationMs, evalCost, evalTokens);
+    const saved = saveAttempt(result, durationMs, evalCost, evalTokens);
+    // Den fortsetzbaren Lerntest erst verwerfen, wenn der Versuch WIRKLICH gespeichert
+    // wurde — sonst koennten bei vollem/blockiertem Speicher beide verloren gehen.
+    if (saved) clearLearnSession();
+    else showError("Dein Ergebnis konnte nicht dauerhaft gespeichert werden (Browser-Speicher voll?). Der offene Lerntest bleibt erhalten, du kannst es später erneut auswerten.");
     renderResult(result, durationMs);
     // Spielfortschritt dieser Stelle; frisch freigeschaltete Abzeichen und ein
     // Levelaufstieg werden gegen den Stand vor diesem Versuch hervorgehoben.
@@ -3533,23 +3558,28 @@ function loadHistory() {
   }
 }
 
+// Gibt true zurueck, wenn der Verlauf wirklich geschrieben wurde, sonst false
+// (Speicher voll/blockiert, nichts mehr zum Verwerfen). Aufrufer, die etwas davon
+// abhaengig machen (z. B. eine offene Lern-Sitzung erst danach verwerfen), muessen
+// das Ergebnis pruefen.
 function saveHistory(h) {
   // Bei vollem Speicher aelteste Versuche verwerfen und erneut versuchen
   for (let i = 0; i < 5; i++) {
     try {
       localStorage.setItem("bewerbungstool.history", JSON.stringify(h));
-      return;
+      return true;
     } catch {
       let oldest = null;
       let oldestJob = null;
       h.jobs.forEach((j) => j.attempts.forEach((a) => {
         if (!oldest || (a.date || 0) < (oldest.date || 0)) { oldest = a; oldestJob = j; }
       }));
-      if (!oldest) return;
+      if (!oldest) return false;
       oldestJob.attempts = oldestJob.attempts.filter((a) => a !== oldest);
       h.jobs = h.jobs.filter((j) => j.attempts.length > 0);
     }
   }
+  return false;
 }
 
 // Dieselbe Anzeige (gleicher Text) landet immer bei derselben Stelle
@@ -3765,7 +3795,7 @@ function saveAttempt(result, durationMs, evalCost, evalTokens) {
 
   if (job.attempts.length > HISTORY_MAX_ATTEMPTS) job.attempts = job.attempts.slice(-HISTORY_MAX_ATTEMPTS);
   if (h.jobs.length > HISTORY_MAX_JOBS) h.jobs.length = HISTORY_MAX_JOBS;
-  saveHistory(h);
+  return saveHistory(h); // true, wenn der Versuch wirklich gespeichert wurde
 }
 
 function formatDate(ts) {
@@ -5161,6 +5191,31 @@ $("btn-confirm-eval").addEventListener("click", () => {
 });
 $("btn-confirm-eval-cancel").addEventListener("click", cancelConfirmEval);
 
+// Rueckfrage vor dem Ueberschreiben eines offenen Lerntests (Punkt 3). Merkt sich
+// die Aktion, die bei Bestaetigung laufen soll, und gibt den Fokus sauber zurueck.
+let confirmReplaceLearnAction = null;
+let confirmReplaceLearnReturnFocus = null;
+function openConfirmReplaceLearn(onConfirm) {
+  confirmReplaceLearnAction = onConfirm;
+  confirmReplaceLearnReturnFocus = document.activeElement;
+  $("confirm-replace-learn-modal").classList.remove("hidden");
+  $("btn-confirm-replace-learn").focus();
+}
+function closeConfirmReplaceLearn() {
+  $("confirm-replace-learn-modal").classList.add("hidden");
+  confirmReplaceLearnAction = null;
+  if (confirmReplaceLearnReturnFocus && typeof confirmReplaceLearnReturnFocus.focus === "function") {
+    confirmReplaceLearnReturnFocus.focus();
+  }
+  confirmReplaceLearnReturnFocus = null;
+}
+$("btn-confirm-replace-learn").addEventListener("click", () => {
+  const action = confirmReplaceLearnAction;
+  closeConfirmReplaceLearn();
+  if (action) action();
+});
+$("btn-confirm-replace-learn-cancel").addEventListener("click", closeConfirmReplaceLearn);
+
 // Rueckfrage vor dem Loeschen einer Stelle (ersetzt das blockierende native
 // confirm()). Merkt sich die betroffene Stelle und was nach dem Loeschen
 // neu gerendert wird; Fokus wird gesetzt und nach dem Schliessen zurueckgegeben.
@@ -5333,6 +5388,7 @@ const ESCAPE_CLOSERS = [
   ["datenschutz-modal", closeDatenschutz],
   ["impressum-modal", closeImpressum],
   ["confirm-eval-modal", cancelConfirmEval],
+  ["confirm-replace-learn-modal", closeConfirmReplaceLearn],
   ["badge-modal", closeBadgeModal],
   ["confirm-delete-modal", closeConfirmDelete],
   ["levelup-overlay", closeLevelUp],
