@@ -1025,10 +1025,28 @@ const EVAL_SCHEMA = {
 // (nicht-extrahierende Provider/lokal sollen keinen leeren Block speichern).
 // Tolerant gegen Fehlen und Teilbefuellung. Ohne jobText kann nichts verifiziert
 // werden -> alles wird verworfen (sichere Default).
+// Begrenzt den Anzeigentext auf die EIGENTLICHE Stellenausschreibung, indem ein
+// abschliessender "aehnliche/weitere Stellen"-Block abgeschnitten wird, den
+// Jobportale unter die Anzeige haengen. Damit lassen sich Kernpunkte nicht mehr
+// gegen Fremd-Anzeigen (z. B. ein anderes Gehalt im Teaser) belegen. Greift den
+// haeufigen Fall ab (Teaser am Ende); eine vollstaendige Struktur-Segmentierung
+// (Navigation/Footer/Seitenleiste) waere ein groesserer, separater Schritt.
+function mainAdSegment(text) {
+  const s = typeof text === "string" ? text : "";
+  const marker =
+    /(^|\n)\s*(ähnliche?\s+(stellen|jobs|anzeigen|stellenangebote)|weitere\s+(stellen|jobs|stellenangebote|passende)|das könnte (dich|sie) auch interessieren|empfohlene\s+jobs|passende\s+jobs|similar\s+jobs|related\s+jobs|recommended\s+jobs|more\s+jobs)/i;
+  const m = s.match(marker);
+  // Nur abschneiden, wenn ein sinnvoller Haupttext davor steht (sonst Fehltreffer).
+  if (m && m.index > 200) return s.slice(0, m.index);
+  return s;
+}
+
 function normalizeKernpunkte(k, jobText) {
   if (!k || typeof k !== "object") return null;
   const norm = (s) => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
-  const hay = norm(jobText);
+  // Belege werden NUR gegen den Haupt-Anzeigentext geprueft (ohne nachgehaengte
+  // Teaser fuer andere Stellen), nicht gegen die ganze gescrapte Seite.
+  const hay = norm(mainAdSegment(jobText));
   // item ist { text, beleg }. Gibt den getrimmten text zurueck, wenn text nicht
   // leer ist UND der beleg ein hinreichend langes, im Anzeigentext woertlich
   // auffindbares Zitat ist; sonst "" (verwerfen). Die Mindestlaenge schliesst aus,
