@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.7.1";
+const APP_VERSION = "1.8.0";
 
 const CHANGELOG = [
+  {
+    version: "1.8.0",
+    date: "18.06.2026",
+    items: [
+      "Der kostenlose gehostete Modus erfordert jetzt eine Anmeldung – per Anmeldelink an deine E-Mail oder über Google. So können wir den Dienst fair und zuverlässig für alle bereitstellen. Wer lieber ohne Konto arbeitet, kann in den Einstellungen weiterhin einen eigenen API-Schlüssel hinterlegen oder ein lokales Modell nutzen – dafür ist keine Anmeldung nötig.",
+    ],
+  },
   {
     version: "1.7.1",
     date: "18.06.2026",
@@ -557,7 +564,7 @@ const timer = { intervalId: null, deadline: 0, overtime: false, limitMin: 0 };
 
 const $ = (id) => document.getElementById(id);
 
-const views = ["view-onboarding", "view-settings", "view-home", "view-input", "view-job", "view-quiz", "view-result", "view-history"];
+const views = ["view-login", "view-onboarding", "view-settings", "view-home", "view-input", "view-job", "view-quiz", "view-result", "view-history"];
 
 function showView(id) {
   views.forEach((v) => $(v).classList.toggle("hidden", v !== id));
@@ -695,9 +702,25 @@ function hideAbortButton() {
   btn.textContent = "Abbrechen";
 }
 
+// Marker: wird statt einer Fehlermeldung geworfen, wenn ein Hosted-Call abbricht, weil
+// zur Anmeldung umgeleitet wurde. showError unterdrueckt ihn (keine doppelte Box).
+const LOGIN_REDIRECT = "__login_redirect__";
+
 function showError(msg) {
+  if (msg === LOGIN_REDIRECT) return;
   $("error-text").textContent = msg;
   $("error-box").classList.remove("hidden");
+}
+
+// Hosted-Call ohne Anmeldung: zum Login fuehren und den Aufruf sauber abbrechen.
+function requireHostedLoginOrThrow() {
+  if (hostedNeedsLogin()) { promptHostedLogin(); throw new Error(LOGIN_REDIRECT); }
+}
+
+// Antwort 401 vom Worker: (abgelaufenes) Token verwerfen und zur Anmeldung fuehren.
+function handleHostedUnauthorized() {
+  clearAuthToken();
+  promptHostedLogin("Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.");
 }
 
 // Hinweisleiste oben im Fragebogen (z. B. wenn ein lokales Modell weniger
@@ -1179,6 +1202,11 @@ function authHeaders() {
   return settings.authToken ? { Authorization: "Bearer " + settings.authToken } : {};
 }
 
+// Gehosteter Modus erfordert seit Phase B eine Anmeldung. BYOK/lokal sind ausgenommen.
+function hostedNeedsLogin() {
+  return (settings.provider || "hosted") === "hosted" && !settings.authToken;
+}
+
 function setAuthToken(token) {
   settings = { ...settings, authToken: token };
   saveSettings(settings);
@@ -1351,6 +1379,7 @@ async function callHosted(hosted, onProgress, opts = {}) {
   if (!hosted || !hosted.action) {
     throw new Error("Interner Fehler: Hosted-Aufruf ohne Aktion.");
   }
+  requireHostedLoginOrThrow(); // Backstop: Anmeldung Pflicht
   const tier = settings.tier || "standard";
   const body = JSON.stringify({ ...hosted.payload, tier });
   const headers = { "Content-Type": "application/json", ...authHeaders() };
@@ -1370,6 +1399,7 @@ async function callHosted(hosted, onProgress, opts = {}) {
     throw new Error("Keine Verbindung zum Dienst. Bitte Internetverbindung prüfen und erneut versuchen.");
   }
 
+  if (res.status === 401) { handleHostedUnauthorized(); throw new Error(LOGIN_REDIRECT); }
   if (!res.ok) throw new Error(hostedErrorMessage(res.status));
 
   let finishReason = null;
@@ -2633,6 +2663,7 @@ function scheduleJobPoll(delayMs) {
 // sofort zurueck; die Erstellung laeuft im Hintergrund (Worker-DO), tab-unabhaengig.
 async function startHostedGeneration(ctx) {
   if (actionRunning) return;
+  if (hostedNeedsLogin()) { promptHostedLogin(); return; } // Backstop: Anmeldung Pflicht
   // Nur EIN Test in Erstellung zugleich (deckt sich mit dem serverseitigen
   // exclusive-Gate). Ein bereits fertiger Job ("ready") blockiert nicht — er wird
   // durch den neuen Start ersetzt (saveActiveJob ueberschreibt ihn).
@@ -2658,6 +2689,7 @@ async function startHostedGeneration(ctx) {
         tier: settings.tier || "standard",
       }),
     });
+    if (res.status === 401) { handleHostedUnauthorized(); throw new Error(LOGIN_REDIRECT); }
     if (!res.ok) throw new Error(hostedErrorMessage(res.status));
     const data = await res.json();
     if (!data.jobId) throw new Error("Der Test konnte nicht gestartet werden. Bitte erneut versuchen.");
@@ -2704,6 +2736,13 @@ async function pollActiveJob() {
     r = await fetch(hostedBase() + "/api/jobs/" + encodeURIComponent(job.jobId), { headers: authHeaders() });
   } catch {
     scheduleJobPoll(5000); // Netzfehler/Offline: spaeter erneut versuchen, Job behalten
+    return;
+  }
+  if (r.status === 401) {
+    // Sitzung waehrend der Erstellung abgelaufen: Job NICHT verwerfen (laeuft serverseitig
+    // weiter), zur Anmeldung fuehren, Poll pausieren. Nach erneutem Login laedt die Seite
+    // neu und resumeActiveJob nimmt das Pollen wieder auf.
+    handleHostedUnauthorized();
     return;
   }
   if (r.status === 404) {
@@ -5671,24 +5710,23 @@ function initSettingsForm() {
   } else if ($("provider").value !== "hosted") {
     populateModelSelect($("provider").value, settings.model);
   }
-  $("account-email").value = "";
-  $("account-msg").textContent = _authRedirectMsg || "";
-  _authRedirectMsg = "";
+  $("account-msg").textContent = "";
   renderAccountSection();
 }
 
-// Spiegelt den Anmeldezustand in den Einstellungen. Mit Token wird best-effort
+// Spiegelt den Anmeldezustand im Settings-Konto-Bereich (nur Status + Abmelden/Anmelden;
+// die eigentlichen Login-Controls leben im view-login). Mit Token wird best-effort
 // /auth/me abgefragt; ein 401 verwirft das (abgelaufene) Token still.
 async function renderAccountSection() {
   const status = $("account-status");
   const showLoggedIn = (email) => {
-    $("account-login").classList.add("hidden");
+    $("account-loggedout").classList.add("hidden");
     $("account-loggedin").classList.remove("hidden");
     status.textContent = email ? `Angemeldet als ${email}.` : "Angemeldet.";
   };
   const showLoggedOut = () => {
-    $("account-login").classList.remove("hidden");
     $("account-loggedin").classList.add("hidden");
+    $("account-loggedout").classList.remove("hidden");
     status.textContent = "Nicht angemeldet.";
   };
   if (!settings.authToken) { showLoggedOut(); return; }
@@ -5700,17 +5738,25 @@ async function renderAccountSection() {
   } catch { /* offline: optimistischer Zustand bleibt */ }
 }
 
-$("account-magic-form").addEventListener("submit", async (e) => {
+// --- Login-Screen (view-login) -------------------------------------------
+
+// Fuehrt zum Anmelde-Screen und zeigt optional eine Meldung (z. B. "erneut anmelden").
+function promptHostedLogin(msg) {
+  rememberReturnView();
+  $("login-email").value = "";
+  $("login-msg").textContent = msg || "";
+  showView("view-login");
+}
+
+$("login-magic-form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const input = $("account-email");
-  // Native Constraint-Validierung (type=email + required) nutzen; bei Verstoss
-  // zeigt der Browser seine eigene, lokalisierte Meldung am Feld.
+  const input = $("login-email");
+  // Native Constraint-Validierung (type=email + required) → lokalisierte Browser-Meldung.
   if (!input.checkValidity()) { input.reportValidity(); return; }
-  // Sanitisierung: trimmen + klein normalisieren (der Worker normalisiert ebenfalls).
-  const email = input.value.trim().toLowerCase();
-  const btn = $("btn-account-magic");
+  const email = input.value.trim().toLowerCase(); // Sanitisierung (Worker normalisiert ebenfalls)
+  const btn = $("btn-login-magic");
   btn.disabled = true;
-  $("account-msg").textContent = "Anmeldelink wird gesendet...";
+  $("login-msg").textContent = "Anmeldelink wird gesendet...";
   try {
     await fetch(hostedBase() + "/auth/magic/start", {
       method: "POST",
@@ -5718,33 +5764,43 @@ $("account-magic-form").addEventListener("submit", async (e) => {
       body: JSON.stringify({ email }),
     });
     // Bewusst neutrale Meldung (keine Auskunft, ob die Adresse existiert).
-    $("account-msg").textContent = "Wenn alles passt, haben wir dir einen Anmeldelink geschickt. Bitte dein Postfach prüfen (auch Spam).";
+    $("login-msg").textContent = "Wenn alles passt, haben wir dir einen Anmeldelink geschickt. Bitte dein Postfach prüfen (auch Spam).";
   } catch {
-    $("account-msg").textContent = "Senden fehlgeschlagen. Bitte Internetverbindung prüfen und erneut versuchen.";
+    $("login-msg").textContent = "Senden fehlgeschlagen. Bitte Internetverbindung prüfen und erneut versuchen.";
   } finally {
     btn.disabled = false;
   }
 });
 
-$("btn-account-google").addEventListener("click", async () => {
-  const btn = $("btn-account-google");
+$("btn-login-google").addEventListener("click", async () => {
+  const btn = $("btn-login-google");
   btn.disabled = true;
-  $("account-msg").textContent = "Weiterleitung zu Google...";
+  $("login-msg").textContent = "Weiterleitung zu Google...";
   try {
     const r = await fetch(hostedBase() + "/auth/google/start", { headers: { Accept: "application/json" } });
     if (r.ok) {
       const d = await r.json();
       if (d.url) { window.location.href = d.url; return; }
     }
-    $("account-msg").textContent = r.status === 503
+    $("login-msg").textContent = r.status === 503
       ? "Der Google-Login ist noch nicht eingerichtet."
       : "Google-Anmeldung momentan nicht möglich. Bitte später erneut versuchen.";
   } catch {
-    $("account-msg").textContent = "Keine Verbindung. Bitte später erneut versuchen.";
+    $("login-msg").textContent = "Keine Verbindung. Bitte später erneut versuchen.";
   } finally {
     btn.disabled = false;
   }
 });
+
+// Escape-Pfad: ohne Konto weiter mit eigenem Schluessel / lokal.
+$("link-login-settings").addEventListener("click", (e) => {
+  e.preventDefault();
+  initSettingsForm();
+  showView("view-settings");
+});
+
+// Aus den Einstellungen zum Login-Screen.
+$("btn-account-login").addEventListener("click", () => promptHostedLogin());
 
 $("btn-account-logout").addEventListener("click", async () => {
   try {
@@ -6340,7 +6396,7 @@ function openDatenschutz(e) {
 function closeDatenschutz() {
   $("datenschutz-modal").classList.add("hidden");
 }
-["link-datenschutz", "link-datenschutz-footer", "link-datenschutz-tier", "link-datenschutz-account"].forEach((id) => {
+["link-datenschutz", "link-datenschutz-footer", "link-datenschutz-tier", "link-datenschutz-account", "link-datenschutz-login"].forEach((id) => {
   const el = $(id);
   if (el) el.addEventListener("click", openDatenschutz);
 });
@@ -6409,33 +6465,34 @@ document.addEventListener("keydown", (e) => {
 // Update/Reload ueberleben (und die Stelle ueber lastFetch wiedererkannt wird)
 restoreDraft();
 
-// Beim ersten Start zum Onboarding, sonst auf die Startliste der Stellen.
-// Hosted ist der Default und braucht keinen Schluessel → sofort einsatzbereit, kein
-// Onboarding-Wall. Lokaler Anbieter gilt mit gewaehltem Modell als eingerichtet,
-// BYOK-Anbieter mit hinterlegtem Key.
-const provider0 = settings.provider || "hosted";
-const isConfigured = provider0 === "hosted" ? true
-  : provider0 === "local" ? !!settings.model
-  : !!settings.apiKey;
-if (!isConfigured) {
-  renderOnboardingSteps($("ob-provider").value);
-  showView("view-onboarding");
-} else {
-  goHome();
+// Waehlt die Startansicht. Reihenfolge: gehosteter Modus OHNE Anmeldung → Login-Gate
+// (Phase B, harte Pflicht). Sonst BYOK/lokal nicht eingerichtet → Onboarding. Sonst Home.
+// Lokaler Anbieter gilt mit gewaehltem Modell als eingerichtet, BYOK mit hinterlegtem Key.
+function routeInitialView() {
+  const provider0 = settings.provider || "hosted";
+  if (provider0 === "hosted" && !settings.authToken) {
+    promptHostedLogin(_authRedirectMsg || ""); // _authRedirectMsg: evtl. Fehler aus dem Redirect
+    _authRedirectMsg = "";
+    return;
+  }
+  _authRedirectMsg = "";
+  const isConfigured = provider0 === "local" ? !!settings.model
+    : provider0 === "hosted" ? true
+    : !!settings.apiKey;
+  if (!isConfigured) {
+    renderOnboardingSteps($("ob-provider").value);
+    showView("view-onboarding");
+  } else {
+    goHome();
+  }
 }
 
-// Nach Magic-Link-/Google-Redirect das Token uebernehmen und das Ergebnis im
-// Konto-Bereich der Einstellungen zeigen (nur im Hosted-Modus relevant).
-consumeAuthRedirect().then((didAuth) => {
-  if (didAuth && (settings.provider || "hosted") === "hosted") {
-    rememberReturnView();
-    initSettingsForm();
-    showView("view-settings");
-  }
+// Erst einen evtl. Login-Redirect (?auth/?session) verarbeiten (setzt das Token bei
+// Erfolg), dann die Startansicht waehlen und einen offenen Hintergrund-Job aufnehmen.
+consumeAuthRedirect().then(() => {
+  routeInitialView();
+  resumeActiveJob();
 });
-
-// Offenen/fertigen Hintergrund-Job (Punkt 1) nach App-Start wieder aufnehmen.
-resumeActiveJob();
 
 /* ---------- Service Worker (PWA) ---------- */
 

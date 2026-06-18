@@ -11,7 +11,7 @@ import { resolveTier, worstCaseCost } from "./tiers.js";
 import { corsHeaders, preflight } from "./cors.js";
 import { verifyTurnstile } from "./turnstile.js";
 import { validateQuiz, validateEval, validateThemenfelder } from "./validate.js";
-import { handleAuth } from "./auth.js";
+import { handleAuth, getSessionUser } from "./auth.js";
 import {
   QUESTIONS_SCHEMA, EVAL_SCHEMA, THEMENFELDER_SCHEMA,
   buildQuizMessages, buildEvalMessages, buildThemenfelderMessages,
@@ -46,12 +46,17 @@ export default {
     // Async-Generierung (Hintergrund-Job, Punkt 1): Start + Poll.
     if (path === "/api/jobs" && req.method === "POST") return await startJob(req, env, ctx, origin);
     if (path.startsWith("/api/jobs/") && req.method === "GET") {
-      return await pollJob(path.slice("/api/jobs/".length), env, origin);
+      return await pollJob(path.slice("/api/jobs/".length), req, env, origin);
     }
 
     const route = ROUTES[path];
     if (req.method !== "POST" || !route) return json({ error: "not-found" }, 404, env, origin);
     const ip = req.headers.get("CF-Connecting-IP") || "0.0.0.0";
+
+    // 0) Anmeldung Pflicht (Phase B): jeder gehostete Call haengt an einem Konto.
+    // Zuerst pruefen, damit unauth schnell und ohne Turnstile-Kosten abprallt.
+    const user = await getSessionUser(req, env);
+    if (!user) return json({ error: "auth-required" }, 401, env, origin);
 
     // 1) Turnstile (Dev-Bypass via SKIP_TURNSTILE=1)
     if (env.SKIP_TURNSTILE !== "1") {
@@ -81,7 +86,9 @@ export default {
     // gleichzeitig"-Regel durch Direktaufruf umgehen (Codex-Finding). evaluate/themenfelder
     // bleiben nicht-exklusiv (kurze Aufrufe, kein Generierungs-Slot).
     const exclusive = route.action === "generate-quiz";
-    const gate = await doCall(stub, "reserve", { amount: reserve, subject: ip, ip, exclusive });
+    // Subjekt = Konto (Phase-B-Ausrichtung): Per-Subjekt-Share + exclusive-Gate gelten pro
+    // Nutzer; ip bleibt separat fuer den Tagescap PER_IP_DAY.
+    const gate = await doCall(stub, "reserve", { amount: reserve, subject: user.id, ip, exclusive });
     if (!gate.ok) {
       const status = gate.reason === "budget" ? 503 : 429; // active-job/inflight/subject/ip → 429
       // Gate-Ablehnung in Workers Logs festhalten, damit der Grund im Dashboard/per
@@ -157,6 +164,10 @@ export default {
 async function startJob(req, env, ctx, origin) {
   const ip = req.headers.get("CF-Connecting-IP") || "0.0.0.0";
 
+  // Anmeldung Pflicht (Phase B) – zuerst, vor Turnstile.
+  const user = await getSessionUser(req, env);
+  if (!user) return json({ error: "auth-required" }, 401, env, origin);
+
   if (env.SKIP_TURNSTILE !== "1") {
     const token = req.headers.get("CF-Turnstile-Token") || "";
     const tv = await verifyTurnstile(token, { action: "generate-quiz", secret: env.TURNSTILE_SECRET, ip });
@@ -175,7 +186,8 @@ async function startJob(req, env, ctx, origin) {
 
   const reserve = worstCaseCost(tier, Number(env.HARD_CAP_TOKENS || 24000));
   const stub = budgetStub(env);
-  const gate = await doCall(stub, "reserve", { amount: reserve, subject: ip, ip, exclusive: true });
+  // Subjekt = Konto (Phase B): exclusive-Gate + Per-Subjekt-Share pro Nutzer; ip separat.
+  const gate = await doCall(stub, "reserve", { amount: reserve, subject: user.id, ip, exclusive: true });
   if (!gate.ok) {
     const status = gate.reason === "budget" ? 503 : 429; // active-job/inflight/subject/ip → 429
     console.log(JSON.stringify({ ev: "gate-deny", action: "jobs", reason: gate.reason, status }));
@@ -193,7 +205,7 @@ async function startJob(req, env, ctx, origin) {
   try {
     await jobStub.fetch("https://do/start", {
       method: "POST",
-      body: JSON.stringify({ params, tier, subject: ip, reserveId: gate.reserveId, reserveAmount: reserve }),
+      body: JSON.stringify({ params, tier, subject: user.id, reserveId: gate.reserveId, reserveAmount: reserve }),
     });
   } catch {
     await doCall(stub, "release", { reserveId: gate.reserveId }); // Slot wieder freigeben
@@ -203,7 +215,10 @@ async function startJob(req, env, ctx, origin) {
 }
 
 // Pollt den Status/Result eines Jobs (jobId ist eine nicht erratbare UUID).
-async function pollJob(jobId, env, origin) {
+// Anmeldung Pflicht; touch:false, damit das haeufige Poll nicht jedes Mal last_seen schreibt.
+async function pollJob(jobId, req, env, origin) {
+  const user = await getSessionUser(req, env, { touch: false });
+  if (!user) return json({ error: "auth-required" }, 401, env, origin);
   if (!jobId || jobId.length > 64) return json({ error: "bad-job" }, 400, env, origin);
   const jobStub = env.GENJOB_DO.get(env.GENJOB_DO.idFromName(jobId));
   let st;

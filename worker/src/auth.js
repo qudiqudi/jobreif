@@ -87,8 +87,9 @@ async function createSession(env, userId) {
   return raw;
 }
 
-// Bearer → User oder null. Aktualisiert last_seen best-effort.
-export async function getSessionUser(req, env) {
+// Bearer → User oder null. Aktualisiert last_seen best-effort (touch). Beim häufigen
+// Job-Polling touch:false setzen, sonst schreibt jeder Poll in D1 (Write-Verstärkung).
+export async function getSessionUser(req, env, { touch = true } = {}) {
   const tok = bearer(req);
   if (!tok || !env.DB) return null;
   const hash = await sha256hex(tok);
@@ -98,7 +99,7 @@ export async function getSessionUser(req, env) {
       WHERE s.token_hash = ?`
   ).bind(hash).first();
   if (!row || row.expires_at <= now()) return null;
-  await env.DB.prepare("UPDATE sessions SET last_seen = ? WHERE token_hash = ?").bind(now(), hash).run();
+  if (touch) await env.DB.prepare("UPDATE sessions SET last_seen = ? WHERE token_hash = ?").bind(now(), hash).run();
   return { id: row.id, email: row.email, created_at: row.created_at };
 }
 
