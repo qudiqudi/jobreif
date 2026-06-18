@@ -43,6 +43,7 @@ export default {
     // Pfad echt durchlaeuft. In Produktion NIE erreichbar (MOCK_UPSTREAM ungesetzt).
     if (path === "/debug/session" && env.MOCK_UPSTREAM === "1") {
       const token = await devMintSession(env, new URL(req.url).searchParams.get("email"));
+      if (!token) return json({ error: "dev-email-only" }, 403, env, origin); // nur @dev.local
       return json({ token }, 200, env, origin);
     }
 
@@ -254,19 +255,24 @@ function budgetStub(env) {
   return env.BUDGET_DO.get(env.BUDGET_DO.idFromName("global"));
 }
 
-// Auth-Gate mit kontrolliertem Fehlerpfad UND Rollout-Flag (Codex-Review R2 + R9):
+// Auth-Gate mit kontrolliertem Fehlerpfad UND fail-closed-Default (Codex-Review R2/R9/R11):
 // - getSessionUser kann bei Schema-Drift werfen → 503 (auth-unavailable) statt 500-Outage.
-// - REQUIRE_AUTH="1": harte Pflicht (kein User → 401). REQUIRE_AUTH!="1" (Cutover-Fenster):
-//   anonyme Hosted-Calls bleiben erlaubt (user = null), damit bereits geladene/gecachte
-//   Alt-Clients beim Skew nicht abbrechen. Erst nach dem Auslaufen alter App-Shells per
-//   Var auf "1" schalten (Rollback = zurueck auf "0", reiner Var-Wechsel). Der neue Client
-//   verlangt clientseitig ohnehin Login; das Flag steuert nur die SERVER-Durchsetzung.
+// - FAIL CLOSED IM CODE: kein User → 401. Anonyme Hosted-Calls NUR im expliziten, temporaeren
+//   Cutover-Fenster (env.ALLOW_ANON_CUTOVER === "1"), das beim Auslaufen alter App-Shells
+//   wieder entfernt wird. So bleibt jede fehlende/falsch geschriebene/preview-/rollback-
+//   skew-Var gesperrt — Config-Drift wird KEIN Auth-Bypass. Der offene Zustand wird geloggt.
 async function gateUser(req, env, origin, opts) {
   let user = null;
   try { user = await getSessionUser(req, env, opts); }
   catch { return { resp: json({ error: "auth-unavailable" }, 503, env, origin) }; }
-  if (!user && env.REQUIRE_AUTH === "1") return { resp: json({ error: "auth-required" }, 401, env, origin) };
-  return { user }; // user kann null sein, solange REQUIRE_AUTH != "1"
+  if (!user) {
+    if (env.ALLOW_ANON_CUTOVER === "1") {
+      console.log(JSON.stringify({ ev: "anon-allowed" })); // sichtbar, dass das Fenster offen ist
+      return { user: null };
+    }
+    return { resp: json({ error: "auth-required" }, 401, env, origin) };
+  }
+  return { user };
 }
 
 async function doCall(stub, op, payload) {

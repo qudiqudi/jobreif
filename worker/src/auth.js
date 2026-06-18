@@ -334,11 +334,15 @@ async function logout(req, env, origin) {
   return json(null, 204, env, origin);
 }
 
-// Dev-Helfer (nur ueber den MOCK-gegateten /debug/session-Endpoint erreichbar): mintet
-// eine echte Session fuer eine Test-E-Mail, damit der Lasttest den Auth-Pflicht-Pfad
-// (Budget/Concurrency je user.id) tatsaechlich durchlaeuft (Codex-Review R5).
+// Dev-Helfer (nur ueber den MOCK-gegateten /debug/session-Endpoint erreichbar): mintet eine
+// Session fuer ein Wegwerf-Testkonto, damit der Lasttest den Auth-Pflicht-Pfad (Budget/
+// Concurrency je user.id) durchlaeuft (Codex-Review R5). HARTE EINSCHRAENKUNG auf die
+// reservierte Domain @dev.local (Codex-Review R11): selbst falls MOCK_UPSTREAM versehentlich
+// in einer deployten Umgebung aktiv ist, laesst sich so KEIN echtes Nutzerkonto (echte
+// E-Mail) impersonieren — nur synthetische dev-Konten, die kein realer Login je erzeugt.
 export async function devMintSession(env, email) {
   const e = normEmail(email) || "loadtest@dev.local";
+  if (!e.endsWith("@dev.local")) return null;
   const user = await upsertUser(env, e);
   await ensureIdentity(env, user.id, "magic", e);
   return createSession(env, user.id);
