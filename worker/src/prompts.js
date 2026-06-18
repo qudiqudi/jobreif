@@ -220,14 +220,19 @@ export function buildEvalMessages({ jobText, payload, kontext }) {
   // payload mitgeschickt. Damit die Gesamtbewertung sie trotzdem beruecksichtigt,
   // nennt der Client sie kompakt in kontext.mcLokal ([{ frage, punkte }]).
   // Gleicher Wortlaut wie der Client-Pfad in app.js (runEvaluation).
-  const mcLokal = kontext && Array.isArray(kontext.mcLokal) ? kontext.mcLokal : [];
+  // Defensiv begrenzen, obwohl validateEval mcLokal bereits prueft: hoechstens
+  // 60 Eintraege, punkte hart auf 0-10 geklemmt, Fragetext gekuerzt.
+  const mcLokal = (kontext && Array.isArray(kontext.mcLokal) ? kontext.mcLokal : []).slice(0, 60);
   const mcLokalHinweis = mcLokal.length
     ? "\n\nZusätzlich wurden " + mcLokal.length + " Multiple-Choice-Fragen mit Mehrfachauswahl " +
       "bereits separat und deterministisch bewertet. Bewerte sie NICHT erneut und gib fuer sie KEINE " +
       "eigenen Ergebnis-Eintraege aus; beziehe ihre Ergebnisse aber in die Gesamteinschätzung " +
       "(Zusammenfassung, Stärken, Verbesserungen) mit ein:\n" +
       mcLokal
-        .map((m) => `- ${String((m && m.frage) || "").slice(0, 160)}: ${Number((m && m.punkte) || 0)}/10`)
+        .map((m) => {
+          const pkt = Math.max(0, Math.min(10, Math.round(Number((m && m.punkte) || 0)) || 0));
+          return `- ${String((m && m.frage) || "").slice(0, 160)}: ${pkt}/10`;
+        })
         .join("\n")
     : "";
   const user =

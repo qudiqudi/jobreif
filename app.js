@@ -2734,12 +2734,27 @@ async function runEvaluation() {
       result.ergebnisse = result.ergebnisse.filter((e) => modelIds.has(e.id)).concat(mcMultiResults);
     }
 
-    // gesamt.prozent NEU aus ALLEN Ergebnissen berechnen: das Modell kennt nur
-    // seine Teilmenge, sein prozent ist daher nicht mehr repraesentativ. Deckt
-    // sich mit der Punkte-Summe im Score-Ring (Summe Punkte / n*10).
+    // Ergebnisse gegen ALLE Quizfragen abgleichen: pro Frage genau eine Zeile, in
+    // Quiz-Reihenfolge. Fehlt eine Zeile (Modell laesst unter Truncation/Drift eine
+    // schwere/offene Frage weg, oder DeepSeek/lokal liefert unvollstaendig), zaehlt
+    // sie als 0 Punkte statt aus dem Nenner zu verschwinden - sonst wuerde der
+    // Score (und damit Historie/Abzeichen/Fortschritt) faelschlich geschoent.
+    {
+      const byId = new Map(
+        result.ergebnisse.filter((e) => e && e.id != null).map((e) => [e.id, e]),
+      );
+      result.ergebnisse = quiz.fragen.map(
+        (q) => byId.get(q.id) || { id: q.id, punkte: 0, feedback: "Keine Bewertung erhalten.", musterantwort: "" },
+      );
+    }
+
+    // gesamt.prozent NEU aus ALLEN Fragen berechnen (Nenner = quiz.fragen.length,
+    // nicht die Zahl zurueckgelieferter Zeilen): das Modell kennt nur seine
+    // Teilmenge, sein prozent ist nicht mehr repraesentativ. Deckt sich mit der
+    // Punkte-Summe im Score-Ring (Summe Punkte / n*10).
     {
       const sum = result.ergebnisse.reduce((a, e) => a + (Number(e.punkte) || 0), 0);
-      const max = result.ergebnisse.length * 10;
+      const max = quiz.fragen.length * 10;
       result.gesamt.prozent = max ? Math.round((sum / max) * 100) : 0;
     }
 
