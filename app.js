@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.8.2";
+const APP_VERSION = "1.8.3";
 
 const CHANGELOG = [
+  {
+    version: "1.8.3",
+    date: "18.06.2026",
+    items: [
+      "Neu: Du kannst unpassende Fragen jetzt direkt melden – im Lern- und Prüfungsmodus sowie beim Durchsehen einer Auswertung. Wähle, was nicht stimmt (z. B. fachlich falsch oder thematisch irrelevant), optional mit einer kurzen Anmerkung. Die Meldung wird nur lokal in deinem Browser gespeichert.",
+    ],
+  },
   {
     version: "1.8.2",
     date: "18.06.2026",
@@ -3200,6 +3207,13 @@ function renderQuestion() {
 
   renderLearnArea(q, isRevealed);
 
+  // "Frage melden" in einem eigenen, stets befuellten Slot - so erscheint der
+  // Knopf in Lern- UND Pruefungsmodus (renderLearnArea steigt im Pruefungsmodus
+  // frueh aus). Rein lokal, loest keinen API-Call aus.
+  const reportArea = $("report-area");
+  reportArea.innerHTML = "";
+  appendReportButton(reportArea, q, reportKontextAktiv());
+
   $("btn-prev").disabled = current === 0;
   $("btn-next").textContent =
     current === total - 1 ? (reviewing ? "Zur Auswertung" : "Auswerten") : "Weiter";
@@ -3952,6 +3966,12 @@ function renderResult(result, durationMs) {
         srcEl.appendChild(sourceAnchor(src));
       });
     }
+    // "Frage melden" auch beim Durchsehen eines (gespeicherten) Versuchs - rein
+    // lokal, loest keine neue Bewertung/Generierung aus. Eigene Zeile im Detail.
+    const reportRow = document.createElement("p");
+    reportRow.className = "report-row";
+    appendReportButton(reportRow, q, reportKontextAktiv());
+    div.appendChild(reportRow);
     details.appendChild(div);
   });
 }
@@ -4606,6 +4626,70 @@ function saveHistory(h) {
     }
   }
   return false;
+}
+
+/* ---------- Gemeldete Fragen (rein lokal) ---------- */
+// Eigener, additiver localStorage-Key, bewusst getrennt von der Historie:
+// Reports sollen das Verwerfen alter Versuche (Quota) und das Loeschen einer
+// Stelle ueberleben. Rein lokal - keine Meldung loest je einen API-Call aus.
+const REPORTS_KEY = "bewerbungstool.reports";
+const REPORTS_MAX = 100;
+
+function loadReports() {
+  try {
+    const r = JSON.parse(localStorage.getItem(REPORTS_KEY));
+    // Defensiv: nur eine plausible Form akzeptieren, sonst Default. Alte
+    // Daten/fehlender Key sind voellig in Ordnung.
+    if (r && typeof r === "object" && Array.isArray(r.reports)) {
+      return { version: 1, reports: r.reports };
+    }
+  } catch {
+    /* ignorieren -> Default */
+  }
+  return { version: 1, reports: [] };
+}
+
+function saveReports(r) {
+  // Reports sind klein, trotzdem capen (FIFO: aelteste zuerst verwerfen) und bei
+  // vollem Speicher nicht crashen. Report-Speicherung ist von der Historie
+  // getrennt und darf deren Speichern nie stoeren.
+  if (r.reports.length > REPORTS_MAX) r.reports = r.reports.slice(-REPORTS_MAX);
+  for (let i = 0; i < 5; i++) {
+    try {
+      localStorage.setItem(REPORTS_KEY, JSON.stringify(r));
+      return true;
+    } catch {
+      if (!r.reports.length) return false;
+      r.reports.shift(); // aeltesten Report verwerfen und erneut versuchen
+    }
+  }
+  return false;
+}
+
+// Hilfstexte fuer Reports hart kuerzen, damit sie keinen Quota-Druck erzeugen.
+function clip(str, max) {
+  const s = typeof str === "string" ? str : "";
+  return s.length > max ? s.slice(0, max) : s;
+}
+
+// Schreibt einen Report (fuellt id/date) und gibt das gespeicherte Objekt zurueck.
+function addReport(partial) {
+  const r = loadReports();
+  const report = {
+    id: (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)),
+    date: Date.now(),
+    ...partial,
+  };
+  r.reports.push(report);
+  saveReports(r);
+  return report;
+}
+
+// Wurde diese Frage (stabile fragenKey-Identitaet) schon gemeldet? Steuert den
+// "Gemeldet"-Knopfzustand beim Render.
+function reportStatusForFrage(key) {
+  if (!key) return false;
+  return loadReports().reports.some((r) => r && r.fragenKey === key);
 }
 
 // Dieselbe Anzeige (gleicher Text) landet immer bei derselben Stelle
@@ -5994,6 +6078,7 @@ function exportData() {
     exportedAt: new Date().toISOString(),
     settings: exportedSettings,
     history: loadHistory(),
+    reports: loadReports(),
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -6016,7 +6101,7 @@ function importData(text) {
   } catch {
     throw new Error("Die Datei ist kein gültiges JSON.");
   }
-  if (!data || typeof data !== "object" || (!data.settings && !data.history)) {
+  if (!data || typeof data !== "object" || (!data.settings && !data.history && !data.reports)) {
     throw new Error("Die Datei enthält keine erkennbaren Bewerbungstool-Daten.");
   }
 
@@ -6136,6 +6221,21 @@ function importData(text) {
     saveHistory(h);
   }
 
+  // Gemeldete Fragen defensiv und nicht-destruktiv mergen: per id dedupen,
+  // beschaedigte Eintraege ueberspringen, den Import nie daran abbrechen lassen.
+  let newReports = 0;
+  if (data.reports && Array.isArray(data.reports.reports)) {
+    const r = loadReports();
+    const seen = new Set(r.reports.map((x) => x && x.id).filter(Boolean));
+    data.reports.reports.forEach((rep) => {
+      if (!rep || typeof rep !== "object" || !rep.id || seen.has(rep.id)) return;
+      seen.add(rep.id);
+      r.reports.push(rep);
+      newReports++;
+    });
+    if (newReports) saveReports(r);
+  }
+
   const parts = [];
   if (settingsImported) parts.push("Einstellungen übernommen");
   parts.push(
@@ -6143,6 +6243,9 @@ function importData(text) {
       ", " +
       (newAttempts === 1 ? "1 neuer Versuch" : newAttempts + " neue Versuche")
   );
+  if (newReports) {
+    parts.push(newReports === 1 ? "1 neue Meldung" : newReports + " neue Meldungen");
+  }
   return parts.join("; ") + ".";
 }
 
@@ -6441,6 +6544,143 @@ function focusVisibleViewHeading() {
 }
 $("btn-confirm-delete-cancel").addEventListener("click", closeConfirmDelete);
 
+/* ---------- Frage melden (rein lokal, kein API-Call) ---------- */
+// Auswahl-Modal nach dem confirm-delete-Muster: classList-Toggle, Fokus in den
+// Dialog, beim Schliessen zurueck auf den ausloesenden Knopf. Escape und
+// Overlay-Klick schliessen (siehe ESCAPE_CLOSERS und den Klick-Handler unten).
+const REPORT_KATEGORIEN = [
+  ["fachlich_falsch", "Antwort fachlich falsch"],
+  ["irrelevant", "Thematisch irrelevant für die Stelle"],
+  ["sprachliche_qualitaet", "Sprachliche Qualität / unverständlich"],
+  ["dublette", "Wiederholung / schon gestellt"],
+  ["sonstiges", "Sonstiges"],
+];
+let reportReturnFocus = null;
+let reportCtx = null; // { q, kontext, button }
+
+// Knopf an einen Container haengen: dezenter ghost-Link "Frage melden". Wurde
+// die Frage schon gemeldet (aus den Reports abgeleitet), zeigt er "Gemeldet"
+// und ist deaktiviert - keine Doppelmeldung. kontext traegt jobKey/Titel/
+// provider/tier/model fuer den spaeteren Report.
+function appendReportButton(container, q, kontext) {
+  if (!container || !q) return;
+  const key = fragenKey(q);
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "report-btn ghost";
+  const gemeldet = reportStatusForFrage(key);
+  if (gemeldet) {
+    btn.textContent = "Gemeldet";
+    btn.disabled = true;
+  } else {
+    btn.textContent = "Frage melden";
+    btn.addEventListener("click", () => openReportModal(q, kontext || {}, btn));
+  }
+  container.appendChild(btn);
+}
+
+function updateReportSubmitState() {
+  const anyCat = REPORT_KATEGORIEN.some(([code]) => {
+    const cb = $("report-cat-" + code);
+    return cb && cb.checked;
+  });
+  const note = ($("report-note").value || "").trim();
+  $("btn-report-submit").disabled = !(anyCat || note);
+}
+
+function openReportModal(q, kontext, button) {
+  reportCtx = { q, kontext: kontext || {}, button: button || null };
+  reportReturnFocus = document.activeElement;
+  // Felder zuruecksetzen
+  REPORT_KATEGORIEN.forEach(([code]) => {
+    const cb = $("report-cat-" + code);
+    if (cb) cb.checked = false;
+  });
+  $("report-note").value = "";
+  $("report-question").textContent = clip(q.frage || "", 200);
+  updateReportSubmitState();
+  $("report-modal").classList.remove("hidden");
+  const first = $("report-cat-fachlich_falsch");
+  if (first) first.focus();
+}
+
+function closeReportModal() {
+  $("report-modal").classList.add("hidden");
+  reportCtx = null;
+  if (reportReturnFocus && typeof reportReturnFocus.focus === "function") {
+    reportReturnFocus.focus();
+  }
+  reportReturnFocus = null;
+}
+
+REPORT_KATEGORIEN.forEach(([code]) => {
+  const cb = $("report-cat-" + code);
+  if (cb) cb.addEventListener("change", updateReportSubmitState);
+});
+$("report-note").addEventListener("input", updateReportSubmitState);
+
+$("btn-report-submit").addEventListener("click", () => {
+  if (!reportCtx) return;
+  const { q, kontext, button } = reportCtx;
+  const gruende = REPORT_KATEGORIEN
+    .filter(([code]) => { const cb = $("report-cat-" + code); return cb && cb.checked; })
+    .map(([code]) => code);
+  const note = clip(($("report-note").value || "").trim(), 500);
+  if (!gruende.length && !note) return; // Sicherheitsnetz: leeres Melden verhindern
+
+  // Fragetext/Antworten koennen lang sein -> hart kuerzen (Quota). Optionen
+  // limitiert. provider/tier/model defensiv aus dem Kontext (loadSettings()).
+  const optionen = Array.isArray(q.optionen)
+    ? q.optionen.slice(0, 8).map((o) => clip(o, 200))
+    : [];
+  addReport({
+    fragenKey: fragenKey(q),
+    frage: clip(q.frage || "", 600),
+    typ: q.typ === "multiple_choice" ? "multiple_choice" : "offen",
+    kategorie_fachlich: clip(q.kategorie || "", 200),
+    korrekte_antwort: clip(q.korrekte_antwort || "", 300),
+    optionen,
+    gruende,
+    notiz: note,
+    jobKey: kontext.jobKey || null,
+    stellenTitel: kontext.stellenTitel ? clip(kontext.stellenTitel, 200) : null,
+    provider: kontext.provider || null,
+    tier: kontext.tier || null,
+    model: kontext.model || null,
+  });
+
+  // Knopf der gemeldeten Frage wird zu "Gemeldet" (disabled) - keine
+  // Doppelmeldung. Bei erneutem Render leitet appendReportButton denselben
+  // Zustand aus reportStatusForFrage ab.
+  if (button) {
+    button.textContent = "Gemeldet";
+    button.disabled = true;
+  }
+  closeReportModal();
+});
+
+$("btn-report-cancel").addEventListener("click", closeReportModal);
+$("report-modal").addEventListener("click", (e) => {
+  if (e.target === $("report-modal")) closeReportModal();
+});
+
+// Kontext fuer einen Report aus der gerade aktiven Stelle ableiten (Settings +
+// quiz). Hosted hat kein Nutzer-Modell -> model bleibt leer, provider/tier
+// zaehlen. Defensiv: alle Felder optional.
+function reportKontextAktiv() {
+  const s = loadSettings();
+  const ctx = {
+    provider: s.provider || "hosted",
+    tier: s.tier || null,
+    model: s.model || null,
+  };
+  if (quiz) {
+    if (quiz.titel) ctx.stellenTitel = quiz.titel;
+    if (quiz.jobText) { try { ctx.jobKey = jobKey(quiz.jobText); } catch { /* egal */ } }
+  }
+  return ctx;
+}
+
 // Versionsanzeige im Footer und Changelog-Fenster
 function renderChangelog() {
   const list = $("changelog-list");
@@ -6561,6 +6801,7 @@ const ESCAPE_CLOSERS = [
   ["confirm-replace-learn-modal", closeConfirmReplaceLearn],
   ["badge-modal", closeBadgeModal],
   ["confirm-delete-modal", closeConfirmDelete],
+  ["report-modal", closeReportModal],
   ["levelup-overlay", closeLevelUp],
 ];
 document.addEventListener("keydown", (e) => {
