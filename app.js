@@ -6993,7 +6993,15 @@ $("btn-home").addEventListener("click", goHome);
 $("btn-history-back").addEventListener("click", goReturn);
 
 // Startliste und Stellen-Subpage
-$("btn-new-job").addEventListener("click", () => showView("view-input"));
+$("btn-new-job").addEventListener("click", () => {
+  // Neue Stelle: immer mit leeren Feldern starten - weder ein zuvor geoeffneter
+  // Stellentext/-Link noch ein alter Entwurf sollen im Eingabefeld stehen bleiben.
+  $("job-url").value = "";
+  $("job-text").value = "";
+  lastFetch = { url: "", text: "" };
+  saveDraft();
+  showView("view-input");
+});
 $("active-job-start").addEventListener("click", startReadyJob);
 $("resume-continue").addEventListener("click", resumeLearnSession);
 $("resume-discard").addEventListener("click", discardLearnSession);
