@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.8.7";
+const APP_VERSION = "1.8.8";
 
 const CHANGELOG = [
+  {
+    version: "1.8.8",
+    date: "19.06.2026",
+    items: [
+      "Stellenanzeigen per Link werden jetzt zuverlässiger und sauberer übernommen: Viele Jobbörsen liefern die Anzeige in einem maschinenlesbaren Format mit, das wir nun bevorzugt auslesen – das ergibt weniger Navigations- und Seitenrauschen im übernommenen Text. Klappt das bei einer Seite nicht, greift wie bisher der bewährte Weg, und du kannst die Anzeige im Zweifel weiterhin manuell einfügen.",
+    ],
+  },
   {
     version: "1.8.7",
     date: "19.06.2026",
@@ -2196,7 +2203,199 @@ function cleanLinkedIn(text) {
   return t;
 }
 
+/* ---------- Layer 1: schema.org JobPosting (JSON-LD) ---------- */
+
+// Fast jedes Jobportal bettet einen schema.org-JobPosting-Block als JSON-LD ein
+// (Google Jobs verlangt ihn). Jinas Markdown-Modus verwirft ihn; im HTML-Modus
+// (Header X-Return-Format: html, gleicher Endpoint, gleiches CORS - per OPTIONS
+// gegen jobreif.de verifiziert) bleibt er erhalten. Aus diesem Block laesst sich
+// portalunabhaengig sauberer Text bauen, ohne Navigations-Rauschen. Alles
+// best-effort: schlaegt irgendetwas fehl, faellt fetchJobFromUrl still auf den
+// bisherigen Markdown-Pfad zurueck.
+
+// Sucht in einem geparsten JSON-LD-Wert (Objekt, Array, @graph, beliebig tief
+// verschachtelt) alle Objekte, deren @type "JobPosting" ist oder enthaelt.
+// Tiefe begrenzt, damit zirkulaere/uebergrosse Strukturen nicht haengenbleiben.
+function collectJobPostings(node, out, depth) {
+  if (!node || typeof node !== "object" || depth > 6) return out;
+  if (Array.isArray(node)) {
+    for (const item of node) collectJobPostings(item, out, depth + 1);
+    return out;
+  }
+  const t = node["@type"];
+  const types = Array.isArray(t) ? t : [t];
+  if (types.some((x) => typeof x === "string" && x.toLowerCase() === "jobposting")) {
+    out.push(node);
+  }
+  // @graph und andere verschachtelte Container ebenfalls durchsuchen
+  for (const key of Object.keys(node)) {
+    const v = node[key];
+    if (v && typeof v === "object") collectJobPostings(v, out, depth + 1);
+  }
+  return out;
+}
+
+// Liest einen Namen defensiv: hiringOrganization kann String, Objekt mit name,
+// oder ein Array davon sein.
+function jsonLdName(v) {
+  if (typeof v === "string") return v.trim();
+  if (Array.isArray(v)) return v.map(jsonLdName).filter(Boolean).join(", ");
+  if (v && typeof v === "object" && typeof v.name === "string") return v.name.trim();
+  return "";
+}
+
+// Baut aus jobLocation einen lesbaren Ortsstring (Objekt oder Array von
+// PostalAddress/Place). HTML-Strip via stripFn, damit auch hier keine Tags
+// durchrutschen.
+function jsonLdLocation(v, stripFn) {
+  if (!v) return "";
+  if (Array.isArray(v)) {
+    return v.map((x) => jsonLdLocation(x, stripFn)).filter(Boolean).join(" / ");
+  }
+  if (typeof v === "string") return stripFn(v);
+  if (typeof v !== "object") return "";
+  const addr = v.address && typeof v.address === "object" ? v.address : v;
+  const parts = [addr.addressLocality, addr.addressRegion, addr.postalCode, addr.addressCountry]
+    .map((p) => (typeof p === "string" ? stripFn(p) : (jsonLdName(p) || "")))
+    .filter(Boolean);
+  // Place ohne Adressfelder, aber mit Name (z. B. nur "Berlin"): Name nutzen.
+  if (!parts.length) return jsonLdName(v);
+  return parts.join(", ");
+}
+
+// baseSalary defensiv: value kann MonetaryAmount mit value/minValue/maxValue sein.
+function jsonLdSalary(v, stripFn) {
+  if (!v || typeof v !== "object") return typeof v === "string" ? stripFn(v) : "";
+  const cur = typeof v.currency === "string" ? v.currency : "";
+  const val = v.value && typeof v.value === "object" ? v.value : v;
+  const amount =
+    val.value != null
+      ? String(val.value)
+      : [val.minValue, val.maxValue].filter((x) => x != null).join("-");
+  if (!amount) return "";
+  const unit = typeof val.unitText === "string" ? val.unitText : "";
+  return [cur, amount, unit].filter(Boolean).join(" ").trim();
+}
+
+// Setzt aus einem JobPosting-Objekt sauberen Text zusammen. stripFn entfernt
+// HTML (im Browser via DOMParser, im Test injizierbar). Gibt "" zurueck, wenn
+// keine brauchbare Beschreibung vorhanden ist - dann greift der Fallback.
+function jobPostingToText(job, stripFn) {
+  if (!job || typeof job !== "object") return "";
+  const description = stripFn(typeof job.description === "string" ? job.description : "");
+  // Ohne substanzielle Beschreibung lieber den Markdown-Fallback nutzen, der
+  // unter Umstaenden mehr Fliesstext findet.
+  if (description.replace(/\s+/g, " ").trim().length < 200) return "";
+
+  const empType = Array.isArray(job.employmentType)
+    ? job.employmentType.filter((x) => typeof x === "string").join(", ")
+    : (typeof job.employmentType === "string" ? job.employmentType : "");
+
+  const lines = [];
+  if (typeof job.title === "string" && job.title.trim()) lines.push(job.title.trim());
+  const org = jsonLdName(job.hiringOrganization);
+  if (org) lines.push("Arbeitgeber: " + org);
+  const loc = jsonLdLocation(job.jobLocation, stripFn);
+  if (loc) lines.push("Standort: " + loc);
+  if (empType) lines.push("Beschäftigungsart: " + stripFn(empType));
+  const sal = jsonLdSalary(job.baseSalary, stripFn);
+  if (sal) lines.push("Gehalt: " + sal);
+  lines.push("");
+  lines.push(description.trim());
+  return lines.join("\n").trim();
+}
+
+// Wandelt einen HTML-Fragmentstring in reinen Text (Entities aufgeloest,
+// Whitespace normalisiert). Nutzt DOMParser -> totes Dokument, keine
+// Skriptausfuehrung, kein XSS/CSP-Problem.
+function stripHtmlToText(html) {
+  if (!html) return "";
+  if (typeof DOMParser === "undefined") {
+    // Sehr defensiver Fallback (z. B. exotische Umgebung): grobes Tag-Entfernen
+    return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  }
+  const doc = new DOMParser().parseFromString(String(html), "text/html");
+  return (doc.body ? doc.body.textContent : "").replace(/ /g, " ").replace(/[ \t]+/g, " ").trim();
+}
+
+// Holt das rohe HTML einer URL ueber Jina (HTML-Modus), parst alle
+// JSON-LD-Bloecke tolerant und liefert bei Fund eines brauchbaren JobPosting
+// den zusammengesetzten Text - sonst "".
+// Obergrenze fuer das geparste HTML: schuetzt den DOMParser vor uebergrossen
+// oder boesartigen Antworten, bevor der bewaehrte Markdown-Pfad greift.
+const JSONLD_HTML_MAX = 4 * 1024 * 1024; // 4 MB
+const JSONLD_FETCH_TIMEOUT_MS = 15000;
+
+async function fetchJobPostingJsonLd(u) {
+  if (typeof DOMParser === "undefined") return "";
+  let html;
+  // Timeout, damit ein haengender HTML-Abruf den Import nicht blockiert -
+  // bei Abbruch faellt fetchJobFromUrl auf den Markdown-Pfad zurueck.
+  const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+  const timer = ctrl ? setTimeout(() => ctrl.abort(), JSONLD_FETCH_TIMEOUT_MS) : 0;
+  try {
+    const res = await fetch("https://r.jina.ai/" + u, {
+      headers: { "X-Return-Format": "html" },
+      signal: ctrl ? ctrl.signal : undefined,
+    });
+    if (!res.ok) return "";
+    html = await res.text();
+  } catch {
+    return "";
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+  if (!html) return "";
+  // Uebergrosses HTML gar nicht erst parsen - lieber der Markdown-Pfad.
+  if (html.length > JSONLD_HTML_MAX) return "";
+  let doc;
+  try {
+    doc = new DOMParser().parseFromString(html, "text/html");
+  } catch {
+    return "";
+  }
+  const blocks = doc.querySelectorAll('script[type="application/ld+json"]');
+  const jobs = [];
+  blocks.forEach((el) => {
+    let parsed;
+    try {
+      // JSON-LD ist gelegentlich kaputt (z. B. nackte Zeilenumbrueche in
+      // Strings). Ein fehlerhafter Block darf die anderen nicht killen.
+      parsed = JSON.parse(el.textContent);
+    } catch {
+      return;
+    }
+    collectJobPostings(parsed, jobs, 0);
+  });
+  if (!jobs.length) return "";
+  // Mehrere JobPostings (z. B. die Detailanzeige plus verwandte Stellen):
+  // collectJobPostings liefert sie in Dokumentreihenfolge - die primaere
+  // Anzeige (oft im ersten/mainEntity-Block) steht typischerweise vorn. Den
+  // ERSTEN Block mit brauchbarer Beschreibung nehmen statt blind den laengsten
+  // (eine ausfuehrliche "verwandte Stelle" wuerde sonst die eigentliche Anzeige
+  // verdraengen). jobPostingToText gibt "" zurueck, wenn die Beschreibung zu
+  // duenn ist, also ueberspringen wir solche Bloecke automatisch.
+  for (const job of jobs) {
+    const text = jobPostingToText(job, stripHtmlToText);
+    if (text) return text;
+  }
+  return "";
+}
+
 async function fetchJobFromUrl(url) {
+  // Layer 1 (primaer): portalunabhaengiges JobPosting-JSON-LD aus dem rohen
+  // HTML. Best-effort - bei jedem Fehlschlag still weiter zum Markdown-Pfad.
+  try {
+    const jsonLd = await fetchJobPostingJsonLd(url);
+    // Dieselbe Schwelle wie der Aufrufer (looksLikeRealContent): so faellt ein
+    // duenner JSON-LD-Treffer auf den Markdown-Pfad zurueck, statt ihn als
+    // unvollstaendigen Text zu uebernehmen (Konsistenz der Fallback-Kette).
+    if (jsonLd && looksLikeRealContent(jsonLd)) return jsonLd;
+  } catch {
+    // egal was schiefgeht: unten der bewaehrte Markdown-Pfad
+  }
+
+  // Layer 2 (Fallback, unveraendert):
   // r.jina.ai liefert beliebige Webseiten als Markdown-Text mit offenen CORS-Headern
   let isLinkedIn = false;
   try {
