@@ -5414,7 +5414,11 @@ const HOME_MAX = 5;
 // Kompakte Karte einer Stelle fuer die Startliste: Titel, Arbeitgeber/Ort,
 // kurze Kennzahlen, Bestwert und ein Mini-Trend. Tippen oeffnet die Subpage.
 function buildHomeCard(job) {
-  const best = Math.max(...job.attempts.map((a) => a.prozent || 0));
+  // Score/Trend ueber den zentralen attemptPct normalisieren (Fallback auf
+  // result.gesamt.prozent, 0-100 geklemmt), damit die Startseite alte Versuche ohne
+  // top-level prozent genauso anzeigt wie die Detailansicht (kein 0 % / NaNpx).
+  const attempts = Array.isArray(job.attempts) ? job.attempts : [];
+  const best = attempts.length ? Math.max(...attempts.map(attemptPct)) : 0;
   const prog = computeJobProgress(job);
   // Bewusst ein div mit role/tabindex statt <button>: die Karte enthaelt
   // Block-Inhalte (Titel, Untertitel, Kennzahlen, Mini-Trend), die im
@@ -5439,7 +5443,7 @@ function buildHomeCard(job) {
   }
   const meta = document.createElement("p");
   meta.className = "hint";
-  meta.textContent = `${job.attempts.length} Versuch${job.attempts.length === 1 ? "" : "e"} · Level ${prog.level}`;
+  meta.textContent = `${attempts.length} Versuch${attempts.length === 1 ? "" : "e"} · Level ${prog.level}`;
   main.appendChild(meta);
 
   const side = document.createElement("div");
@@ -5450,10 +5454,11 @@ function buildHomeCard(job) {
   side.appendChild(score);
   const trend = document.createElement("div");
   trend.className = "trend mini";
-  job.attempts.slice(-8).forEach((a) => {
+  attempts.slice(-8).forEach((a) => {
+    const p = attemptPct(a);
     const bar = document.createElement("div");
-    bar.className = "trend-bar " + scoreClass(a.prozent);
-    bar.style.height = Math.max(3, Math.round(a.prozent * 0.28)) + "px";
+    bar.className = "trend-bar " + scoreClass(p);
+    bar.style.height = Math.max(3, Math.round(p * 0.28)) + "px";
     trend.appendChild(bar);
   });
   side.appendChild(trend);
