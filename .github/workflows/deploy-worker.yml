@@ -53,7 +53,7 @@ jobs:
       # neue Worker wird NICHT veroeffentlicht (fail-closed Deploy). Voraussetzung: der
       # CLOUDFLARE_API_TOKEN braucht D1-Edit-Recht (Token-Vorlage um "D1 Edit" erweitern).
       - name: D1-Migrationen anwenden
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: worker
@@ -65,7 +65,7 @@ jobs:
       # CLOUDFLARE_ACCOUNT_ID setzen und hier als env ergaenzen
       # (CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}).
       - name: Deploy via Wrangler
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: worker
