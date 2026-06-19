@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.8.5";
+const APP_VERSION = "1.8.6";
 
 const CHANGELOG = [
+  {
+    version: "1.8.6",
+    date: "19.06.2026",
+    items: [
+      "Die Kernpunkte-Übersicht („Das Wichtigste auf einen Blick“) erscheint bei bestehenden Stellen jetzt schon, sobald ein neuer Test fertig erstellt ist – du musst den Test nicht mehr erst komplett durchspielen.",
+    ],
+  },
   {
     version: "1.8.5",
     date: "19.06.2026",
@@ -1207,10 +1214,22 @@ function regroundImportedKernpunkte(impJob) {
   const data = regroundKernpunkteData(kp.data, impJob.jobText);
   if (!data) return undefined;
   // Provenienz-URL aus dem Backup uebernehmen, damit der "Original-Anzeige"-Link
-  // ein Export/Import (anderer Browser/Geraet) ueberlebt. Nur eine echte http(s)-URL
-  // akzeptieren; sonst leer lassen (dann zeigt das Panel keinen Link, kein falscher).
-  const impSrcUrl =
-    typeof kp.srcUrl === "string" && /^https?:\/\//i.test(kp.srcUrl.trim()) ? kp.srcUrl.trim() : "";
+  // ein Export/Import (anderer Browser/Geraet) ueberlebt. ABER: ein editiertes/korruptes
+  // Backup darf den Link nicht auf eine FREMDE Seite zeigen lassen (gleiche Bedrohung
+  // wie bei den Fakten, s. regroundKernpunkteData). Daher die srcUrl nur uebernehmen,
+  // wenn sie zur Stellen-Identitaet passt: echte http(s)-URL UND
+  // urlKeyOf(srcUrl) === impJob.urlKey UND die Kernpunkte-Provenienz srcKey gehoert zum
+  // Text dieser Stelle (jobKey(impJob.jobText)). Sonst kein Link (lieber keiner als ein
+  // falscher).
+  let impSrcUrl = "";
+  if (typeof kp.srcUrl === "string" && /^https?:\/\//i.test(kp.srcUrl.trim())) {
+    const u = kp.srcUrl.trim();
+    let textKey = null;
+    try { textKey = jobKey(impJob.jobText); } catch { /* egal */ }
+    const srcKeyOk = typeof kp.srcKey === "string" && textKey && kp.srcKey === textKey;
+    const urlOk = impJob.urlKey && urlKeyOf(u) === impJob.urlKey;
+    if (srcKeyOk && urlOk) impSrcUrl = u;
+  }
   return {
     v: 1,
     generatedAt: Number.isFinite(Number(kp.generatedAt)) ? Number(kp.generatedAt) : Date.now(),
@@ -2982,6 +3001,34 @@ async function generateQuiz(opts = {}) {
 // Baut die Quiz-Session aus dem Generierungsergebnis auf — gemeinsam genutzt vom
 // synchronen (BYOK/lokal) und vom asynchronen Hosted-Pfad. ctx traegt den zur
 // Fertigstellung noetigen Kontext (zur Startzeit festgehalten).
+// Kernpunkte schon beim FERTIGSTELLEN der Generierung verfuegbar machen (nicht erst
+// beim Abschluss via saveAttempt), damit die Uebersicht "Das Wichtigste auf einen
+// Blick" erscheint, ohne dass man den Test erst komplett durchspielen muss.
+//
+// BEWUSST in einem GETRENNTEN Komfort-Cache (kpKernpunkteCache), NICHT in der
+// Versuchs-Historie: dieser Schreibvorgang kann aus dem Hosted-Polling im Hintergrund
+// laufen, waehrend in einem anderen Tab gerade ein echter Versuch gespeichert wird.
+// Wuerden wir den gesamten Historie-Snapshot zurueckschreiben, koennte ein parallel
+// gespeicherter Versuch verloren gehen (Cross-Tab-Lost-Update). Der Komfort-Cache ist
+// von der Historie entkoppelt: sein Verlust ist harmlos (Panel erscheint dann erst nach
+// Abschluss), und er kann NIE einen Versuch verdraengen. saveAttempt schreibt die
+// Kernpunkte beim Abschluss in die Historie; job.kernpunkte hat beim Anzeigen Vorrang.
+// Vertiefungsboegen werden uebersprungen (wie in saveAttempt) - ihr verengtes Quiz
+// darf die Stellen-Kernpunkte nicht ueberschreiben.
+function persistKernpunkteForActiveJob(q) {
+  if (!q || !q.kernpunkte || typeof q.kernpunkte !== "object") return;
+  if (Array.isArray(q.vertiefungFelder) && q.vertiefungFelder.length) return;
+  let key;
+  try { key = jobKey(q.jobText); } catch { return; }
+  if (!key) return;
+  // srcUrl-Provenienz: aktuelle Quell-URL, sonst eine bereits bekannte srcUrl desselben
+  // Textes bewahren (kein Flackern des Original-Links).
+  const prev = cachedKernpunkte(key);
+  const prevSrcUrl = prev && prev.srcKey === key && typeof prev.srcUrl === "string" ? prev.srcUrl : "";
+  const srcUrl = typeof q.jobUrl === "string" && q.jobUrl ? q.jobUrl : prevSrcUrl;
+  cacheKernpunkte(key, { v: 1, generatedAt: Date.now(), srcKey: key, srcUrl, data: q.kernpunkte });
+}
+
 function finalizeQuiz(result, ctx) {
   quiz = normalizeQuizData(result, ctx.jobText);
   quiz.jobText = ctx.jobText;
@@ -2999,6 +3046,10 @@ function finalizeQuiz(result, ctx) {
     tier: ctx.tier || null,
     model: ctx.model || null,
   };
+  // Kernpunkte sofort an eine bereits bestehende Stelle schreiben, damit die
+  // Uebersicht ohne Test-Abschluss erscheint (saveAttempt schreibt sie beim
+  // Abschluss ohnehin erneut - idempotent).
+  persistKernpunkteForActiveJob(quiz);
   answers = new Array(quiz.fragen.length).fill("");
   revealed = new Array(quiz.fragen.length).fill(false);
   sortDisplay = {};
@@ -3164,6 +3215,19 @@ async function pollActiveJob() {
   if (data.status === "done" && data.quiz) {
     // Ergebnis sichern und ruhen lassen — der Nutzer startet selbst (kein Wegreissen).
     saveActiveJob({ ...job, status: "ready", quiz: data.quiz });
+    // Kernpunkte schon JETZT (bei Fertigstellung, vor "Loslegen") an eine bestehende
+    // Stelle schreiben, damit die Uebersicht ohne Durchspielen erscheint — der Hosted-
+    // Pfad finalisiert sonst erst beim "Loslegen" (startReadyJob -> finalizeQuiz). Wir
+    // verifizieren das rohe Server-Ergebnis gegen ctx.jobText (normalizeKernpunkte) und
+    // nutzen denselben Helper/dieselben Garantien wie finalizeQuiz — OHNE die Quiz-
+    // Session zu starten oder den aktiven Job zu loeschen.
+    try {
+      const c = job.ctx || {};
+      const kpNorm = normalizeKernpunkte(data.quiz.kernpunkte, c.jobText);
+      if (kpNorm) {
+        persistKernpunkteForActiveJob({ kernpunkte: kpNorm, jobText: c.jobText, jobUrl: c.jobUrl, vertiefungFelder: c.vertiefungFelder });
+      }
+    } catch { /* reines Komfort-Update: Fehler ignorieren, saveAttempt schreibt spaeter */ }
     renderActiveJobCard("ready");
   } else if (data.status === "done") {
     // Defensiv: "done" ohne Quiz ist ein Serverfehler — nicht endlos weiter pollen.
@@ -4972,11 +5036,26 @@ function loadHistory() {
 // das Ergebnis pruefen.
 function saveHistory(h) {
   // Bei vollem Speicher aelteste Versuche verwerfen und erneut versuchen
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 6; i++) {
     try {
       localStorage.setItem("bewerbungstool.history", JSON.stringify(h));
       return true;
     } catch {
+      // ZUERST den entbehrlichen Komfort-Cache (Kernpunkte-Vorschau) opfern, BEVOR
+      // echte Versuche verworfen werden - beide teilen sich dasselbe Origin-Quota, und
+      // die autoritative Versuchs-Historie ist wichtiger als die nicht-autoritative
+      // Vorschau. ALLE localStorage-Zugriffe hier selbst absichern: in storage-denied-
+      // Umgebungen kann auch getItem/removeItem werfen, saveHistory muss aber ein
+      // Soft-Fail-API bleiben (nie werfen). Scheitert die Cache-Probe, regulaer weiter
+      // zum Versuch-Trimmen.
+      let cacheDropped = false;
+      try {
+        if (localStorage.getItem(KP_CACHE_KEY) != null) {
+          localStorage.removeItem(KP_CACHE_KEY);
+          cacheDropped = true;
+        }
+      } catch { /* Cache-Probe/-Entfernung fehlgeschlagen: ignorieren */ }
+      if (cacheDropped) continue; // erneut versuchen, ohne einen Versuch zu loeschen
       let oldest = null;
       let oldestJob = null;
       h.jobs.forEach((j) => j.attempts.forEach((a) => {
@@ -4988,6 +5067,57 @@ function saveHistory(h) {
     }
   }
   return false;
+}
+
+// Komfort-Cache fuer Kernpunkte, die schon BEI der Generierung feststehen (vor dem
+// ersten Abschluss). BEWUSST getrennt von der Versuchs-Historie (s.
+// persistKernpunkteForActiveJob): dieser Hintergrund-/Komfort-Schreibvorgang darf nie
+// die Historie ueberschreiben. Ein Verlust dieses Caches ist harmlos. Eigener Key,
+// per Stellen-key (jobKey) indiziert, mit Groessen-Cap (FIFO nach generatedAt).
+const KP_CACHE_KEY = "bewerbungstool.kpcache";
+const KP_CACHE_MAX = 20;
+function loadKpCache() {
+  try {
+    const m = JSON.parse(localStorage.getItem(KP_CACHE_KEY));
+    return m && typeof m === "object" && !Array.isArray(m) ? m : {};
+  } catch { return {}; }
+}
+// Gibt den gespeicherten Wrapper ({v,generatedAt,srcKey,srcUrl,data}) fuer eine Stelle
+// zurueck oder null. Defensiv: nur mit brauchbarem data-Objekt.
+function cachedKernpunkte(key) {
+  if (!key) return null;
+  const w = loadKpCache()[key];
+  return w && typeof w === "object" && w.data && typeof w.data === "object" ? w : null;
+}
+function cacheKernpunkte(key, wrapper) {
+  if (!key) return;
+  // Footprint begrenzen: pro Kategorie hoechstens so viele Eintraege speichern, wie das
+  // Panel ohnehin rendert (KERNPUNKTE_LIST_MAX). Mehr waere verschwendetes Quota.
+  if (wrapper && wrapper.data && typeof wrapper.data === "object") {
+    const d = wrapper.data;
+    for (const cat of ["aufgaben", "anforderungen_muss", "anforderungen_optional", "besonderheiten"]) {
+      if (Array.isArray(d[cat]) && d[cat].length > KERNPUNKTE_LIST_MAX) d[cat] = d[cat].slice(0, KERNPUNKTE_LIST_MAX);
+    }
+  }
+  const m = loadKpCache();
+  m[key] = wrapper;
+  // Groesse begrenzen: aelteste Eintraege (kleinste generatedAt) zuerst verwerfen.
+  const keys = Object.keys(m);
+  if (keys.length > KP_CACHE_MAX) {
+    keys.sort((a, b) => (Number(m[a] && m[a].generatedAt) || 0) - (Number(m[b] && m[b].generatedAt) || 0));
+    for (const k of keys.slice(0, keys.length - KP_CACHE_MAX)) delete m[k];
+  }
+  // Einzelner Schreibversuch; bei Quota-Fehler still auslassen (reiner Komfort, nie die
+  // Historie anfassen).
+  try { localStorage.setItem(KP_CACHE_KEY, JSON.stringify(m)); } catch { /* voll: auslassen */ }
+}
+function dropKpCache(key) {
+  if (!key) return;
+  const m = loadKpCache();
+  if (key in m) {
+    delete m[key];
+    try { localStorage.setItem(KP_CACHE_KEY, JSON.stringify(m)); } catch { /* egal */ }
+  }
 }
 
 /* ---------- Gemeldete Fragen (rein lokal) ---------- */
@@ -5269,6 +5399,9 @@ function saveAttempt(result, durationMs, evalCost, evalTokens) {
             : "";
         const srcUrl = typeof quiz.jobUrl === "string" && quiz.jobUrl ? quiz.jobUrl : prevSrcUrl;
         job.kernpunkte = { v: 1, generatedAt: Date.now(), srcKey: curKey, srcUrl, data: quiz.kernpunkte };
+        // Authoritative Kernpunkte stehen jetzt in der Historie -> Komfort-Cache-Eintrag
+        // ist redundant, entfernen (job.kernpunkte hat beim Anzeigen ohnehin Vorrang).
+        dropKpCache(curKey);
       }
     }
   }
@@ -5378,6 +5511,8 @@ function deleteJob(job) {
     !(job.key && j.key === job.key) &&
     !(job.urlKey && j.urlKey === job.urlKey));
   saveHistory(h);
+  // Komfort-Cache-Eintrag der Stelle mitloeschen, sonst bliebe er verwaist liegen.
+  if (job.key) dropKpCache(job.key);
   // Zugehoerige Meldungen mitloeschen: Reports liegen in einem eigenen Key, der
   // Quota-Trimmung der Historie ueberlebt - aber beim EXPLIZITEN Loeschen einer
   // Stelle sollen ihre Meldungen (Fragetext, Notizen, ggf. Loesung) nicht als
@@ -5718,12 +5853,16 @@ function buildNumStepper(initial, onChange, opts = {}) {
 // wird ausschliesslich ueber textContent gesetzt (kein innerHTML).
 const KERNPUNKTE_LIST_MAX = 8; // sehr lange Listen kappen (geschwaetzige Modelle)
 function buildKernpunktePanel(job) {
-  // job.kernpunkte ist stets die jeweils neueste Extraktion fuer diese Stelle
-  // (bei jedem normalen Test ueberschrieben) und wird angezeigt, sobald vorhanden.
-  // Kein Abgleich gegen job.jobText/job.key: ein solches Render-Gate konnte frisch
-  // erzeugte Kernpunkte nach einem Merge dauerhaft verbergen, und das noetige
-  // Mutieren der Job-Identitaet barg Kollisions-/Loesch-Risiken.
-  const rawKp = job && job.kernpunkte && job.kernpunkte.data ? job.kernpunkte.data : null;
+  // Quelle der Kernpunkte: bevorzugt job.kernpunkte (beim Abschluss via saveAttempt
+  // gespeichert, autoritativ). Fehlt das, der Komfort-Cache (kpcache): Kernpunkte, die
+  // schon bei der Generierung feststanden, aber noch nicht in einem abgeschlossenen
+  // Versuch persistiert wurden - so erscheint das Panel ohne Durchspielen. Cache-Key ist
+  // die Stellen-key (jobKey(job.jobText) === job.key). Kein Abgleich gegen job.jobText:
+  // ein solches Render-Gate koennte frische Kernpunkte nach einem Merge verbergen.
+  const wrapper =
+    job && job.kernpunkte && job.kernpunkte.data ? job.kernpunkte
+      : (job ? cachedKernpunkte(job.key) : null);
+  const rawKp = wrapper && wrapper.data ? wrapper.data : null;
   if (!rawKp) return null;
   // Bereits gespeicherte Eintraege koennen noch fuehrende Listen-Marker und
   // Dubletten enthalten (aus aelteren Versionen). Beim Rendern dieselbe Bereinigung
@@ -5769,8 +5908,8 @@ function buildKernpunktePanel(job) {
   // (und der Anzeigentext unten) extrahiert wurden. Aeltere Kernpunkte ohne srcUrl
   // bekommen den Link erst beim naechsten Test aus einer URL-Quelle - lieber kein
   // Link als ein moeglicherweise falscher.
-  const srcUrl = job && job.kernpunkte && typeof job.kernpunkte.srcUrl === "string"
-    ? job.kernpunkte.srcUrl.trim()
+  const srcUrl = wrapper && typeof wrapper.srcUrl === "string"
+    ? wrapper.srcUrl.trim()
     : "";
   if (/^https?:\/\//i.test(srcUrl)) {
     const link = document.createElement("a");
