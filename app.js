@@ -1214,10 +1214,22 @@ function regroundImportedKernpunkte(impJob) {
   const data = regroundKernpunkteData(kp.data, impJob.jobText);
   if (!data) return undefined;
   // Provenienz-URL aus dem Backup uebernehmen, damit der "Original-Anzeige"-Link
-  // ein Export/Import (anderer Browser/Geraet) ueberlebt. Nur eine echte http(s)-URL
-  // akzeptieren; sonst leer lassen (dann zeigt das Panel keinen Link, kein falscher).
-  const impSrcUrl =
-    typeof kp.srcUrl === "string" && /^https?:\/\//i.test(kp.srcUrl.trim()) ? kp.srcUrl.trim() : "";
+  // ein Export/Import (anderer Browser/Geraet) ueberlebt. ABER: ein editiertes/korruptes
+  // Backup darf den Link nicht auf eine FREMDE Seite zeigen lassen (gleiche Bedrohung
+  // wie bei den Fakten, s. regroundKernpunkteData). Daher die srcUrl nur uebernehmen,
+  // wenn sie zur Stellen-Identitaet passt: echte http(s)-URL UND
+  // urlKeyOf(srcUrl) === impJob.urlKey UND die Kernpunkte-Provenienz srcKey gehoert zum
+  // Text dieser Stelle (jobKey(impJob.jobText)). Sonst kein Link (lieber keiner als ein
+  // falscher).
+  let impSrcUrl = "";
+  if (typeof kp.srcUrl === "string" && /^https?:\/\//i.test(kp.srcUrl.trim())) {
+    const u = kp.srcUrl.trim();
+    let textKey = null;
+    try { textKey = jobKey(impJob.jobText); } catch { /* egal */ }
+    const srcKeyOk = typeof kp.srcKey === "string" && textKey && kp.srcKey === textKey;
+    const urlOk = impJob.urlKey && urlKeyOf(u) === impJob.urlKey;
+    if (srcKeyOk && urlOk) impSrcUrl = u;
+  }
   return {
     v: 1,
     generatedAt: Number.isFinite(Number(kp.generatedAt)) ? Number(kp.generatedAt) : Date.now(),
@@ -3214,6 +3226,19 @@ async function pollActiveJob() {
   if (data.status === "done" && data.quiz) {
     // Ergebnis sichern und ruhen lassen — der Nutzer startet selbst (kein Wegreissen).
     saveActiveJob({ ...job, status: "ready", quiz: data.quiz });
+    // Kernpunkte schon JETZT (bei Fertigstellung, vor "Loslegen") an eine bestehende
+    // Stelle schreiben, damit die Uebersicht ohne Durchspielen erscheint — der Hosted-
+    // Pfad finalisiert sonst erst beim "Loslegen" (startReadyJob -> finalizeQuiz). Wir
+    // verifizieren das rohe Server-Ergebnis gegen ctx.jobText (normalizeKernpunkte) und
+    // nutzen denselben Helper/dieselben Garantien wie finalizeQuiz — OHNE die Quiz-
+    // Session zu starten oder den aktiven Job zu loeschen.
+    try {
+      const c = job.ctx || {};
+      const kpNorm = normalizeKernpunkte(data.quiz.kernpunkte, c.jobText);
+      if (kpNorm) {
+        persistKernpunkteForActiveJob({ kernpunkte: kpNorm, jobText: c.jobText, jobUrl: c.jobUrl, vertiefungFelder: c.vertiefungFelder });
+      }
+    } catch { /* reines Komfort-Update: Fehler ignorieren, saveAttempt schreibt spaeter */ }
     renderActiveJobCard("ready");
   } else if (data.status === "done") {
     // Defensiv: "done" ohne Quiz ist ein Serverfehler — nicht endlos weiter pollen.
