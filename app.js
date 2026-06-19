@@ -6994,12 +6994,14 @@ $("btn-history-back").addEventListener("click", goReturn);
 
 // Startliste und Stellen-Subpage
 $("btn-new-job").addEventListener("click", () => {
-  // Neue Stelle: immer mit leeren Feldern starten - weder ein zuvor geoeffneter
-  // Stellentext/-Link noch ein alter Entwurf sollen im Eingabefeld stehen bleiben.
+  // Neue Stelle: Eingabefelder fuer einen frischen Start leeren (kein zuvor
+  // geoeffneter Stellentext/-Link bleibt stehen). Den persistierten Entwurf
+  // (bewerbungstool.draft) dabei bewusst NICHT ueberschreiben - sonst ginge ein
+  // noch nicht abgeschickter Entwurf unwiderruflich verloren. Sobald hier etwas
+  // eingegeben wird, sichert scheduleDraftSave den neuen Stand ohnehin.
   $("job-url").value = "";
   $("job-text").value = "";
   lastFetch = { url: "", text: "" };
-  saveDraft();
   showView("view-input");
 });
 $("active-job-start").addEventListener("click", startReadyJob);
