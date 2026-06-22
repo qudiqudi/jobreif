@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.8.10";
+const APP_VERSION = "1.8.11";
 
 const CHANGELOG = [
+  {
+    version: "1.8.11",
+    date: "22.06.2026",
+    items: [
+      "Stellen-Kernpunkte: Lange Listen zeigen jetzt zunächst die wichtigsten Punkte; den Rest blendest du je Karte mit einem Tippen ein – deutlich weniger Scrollen, vor allem am Handy.",
+    ],
+  },
   {
     version: "1.8.10",
     date: "22.06.2026",
@@ -6153,6 +6160,7 @@ function buildNumStepper(initial, onChange, opts = {}) {
 // gibt die Funktion null zurueck und renderJob haengt nichts ein. Modell-Output
 // wird ausschliesslich ueber textContent gesetzt (kein innerHTML).
 const KERNPUNKTE_LIST_MAX = 8; // sehr lange Listen kappen (geschwaetzige Modelle)
+const KERNPUNKTE_PREVIEW = 3;  // pro Karte initial sichtbare Punkte; Rest per "mehr anzeigen"
 function buildKernpunktePanel(job) {
   // Quelle der Kernpunkte: bevorzugt job.kernpunkte (beim Abschluss via saveAttempt
   // gespeichert, autoritativ). Fehlt das, der Komfort-Cache (kpcache): Kernpunkte, die
@@ -6243,14 +6251,36 @@ function buildKernpunktePanel(job) {
     title.textContent = s.label;
     card.appendChild(title);
 
+    const items = kp[s.key].slice(0, KERNPUNKTE_LIST_MAX);
     const ul = document.createElement("ul");
     ul.className = "kernpunkte-list";
-    kp[s.key].slice(0, KERNPUNKTE_LIST_MAX).forEach((item) => {
+    items.forEach((item, i) => {
       const li = document.createElement("li");
       li.textContent = String(item);
+      // Lange Listen: nur die ersten KERNPUNKTE_PREVIEW Punkte sofort zeigen, der Rest
+      // bleibt im DOM (per CSS ausgeblendet) und wird mit dem Knopf eingeblendet - so
+      // muss man pro Stelle nicht so weit scrollen (v.a. mobil), ohne Re-Render.
+      if (i >= KERNPUNKTE_PREVIEW) li.classList.add("kp-extra");
       ul.appendChild(li);
     });
     card.appendChild(ul);
+
+    const extra = items.length - KERNPUNKTE_PREVIEW;
+    if (extra > 0) {
+      ul.classList.add("is-collapsed");
+      const more = document.createElement("button");
+      more.type = "button";
+      more.className = "kernpunkte-more";
+      more.setAttribute("aria-expanded", "false");
+      const collapsedLabel = `+ ${extra} weitere anzeigen`;
+      more.textContent = collapsedLabel;
+      more.addEventListener("click", () => {
+        const expanded = !ul.classList.toggle("is-collapsed"); // toggle gibt true = jetzt collapsed
+        more.setAttribute("aria-expanded", expanded ? "true" : "false");
+        more.textContent = expanded ? "weniger anzeigen" : collapsedLabel;
+      });
+      card.appendChild(more);
+    }
     grid.appendChild(card);
   });
 
