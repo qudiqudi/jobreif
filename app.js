@@ -2468,9 +2468,13 @@ async function callLLM(systemPrompt, userPrompt, schema, onProgress, opts = {}) 
   }
 
   const headers = { "Content-Type": "application/json" };
-  // Lokale Server brauchen keinen Key; ist trotzdem einer gesetzt (manche
-  // LM-Studio-Konfigurationen), wird er mitgeschickt.
-  if (settings.apiKey) headers.Authorization = `Bearer ${settings.apiKey}`;
+  // Cloud-Anbieter (OpenAI/DeepSeek) brauchen den BYOK-Key als Bearer. Beim lokalen
+  // Anbieter NICHT mitschicken: settings.apiKey ist dort typischerweise ein von einem
+  // frueheren Cloud-Anbieter uebrig gebliebener Geheim-Key (das Key-Feld ist fuer "local"
+  // ausgeblendet, der Key bleibt aber bewusst als BYOK-Fallback gespeichert). Wuerde er
+  // mitgeschickt, leakte das Cloud-Secret an den lokalen Serverendpunkt. Lokale Server
+  // brauchen ohnehin keinen Key.
+  if (settings.apiKey && !isLocal) headers.Authorization = `Bearer ${settings.apiKey}`;
 
   const localConnError = "Keine Verbindung zum lokalen Modellserver. Läuft Ollama bzw. LM Studio, und ist die Adresse in den Einstellungen korrekt? Bei Aufruf über https muss der Server zudem Cross-Origin-Anfragen dieser Seite erlauben (z. B. OLLAMA_ORIGINS).";
   const doPost = () => fetch(endpoint, { method: "POST", headers, body: JSON.stringify(body), signal: opts.signal });
