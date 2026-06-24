@@ -37,20 +37,20 @@ jobs:
     steps:
       # 1) Basis-Branch in den Root (vertrauenswürdig, liefert u.a. CLAUDE.md zum Abgleich).
       - name: Checkout base
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           persist-credentials: false
 
       # 2) PR-Stand isoliert in ein Unterverzeichnis — NICHT in den Root.
       - name: Checkout PR head (isolated, untrusted)
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: pr-files
           persist-credentials: false
 
       - name: Claude review
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@80b31826338489861333dc17217865dfe8085cdc # v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
