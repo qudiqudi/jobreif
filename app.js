@@ -1879,7 +1879,9 @@ function updateFreeTierHint() {
   } else {
     // euro aus einer Zahl formatiert (keine Nutzereingabe) → kein XSS.
     const euro = formatGuthabenEuro(tierPriceCredits(tier));
-    hint.innerHTML = `Dein kostenloses Tageskontingent ist aufgebraucht. Jeder weitere Test in dieser Qualität kostet <strong>${euro}</strong> aus deinem Guthaben (mit Bestätigung).`;
+    hint.innerHTML = settings.autoUseCredits
+      ? `Dein kostenloses Tageskontingent ist aufgebraucht. Jeder weitere Test in dieser Qualität wird automatisch mit <strong>${euro}</strong> aus deinem Guthaben bezahlt.`
+      : `Dein kostenloses Tageskontingent ist aufgebraucht. Jeder weitere Test in dieser Qualität kostet <strong>${euro}</strong> aus deinem Guthaben (mit Bestätigung).`;
   }
   hint.classList.remove("hidden");
 }
@@ -1893,6 +1895,14 @@ function renderCreditsUI() {
   // Login-Zustand (Block liegt in #account-loggedin).
   const topup = $("topup");
   if (topup) topup.classList.toggle("hidden", !creditsState.creditsEnabled);
+  // Opt-in "automatisch Guthaben verwenden": nur bei aktivem Flag sichtbar; Haken aus dem
+  // gespeicherten settings.autoUseCredits spiegeln.
+  const autoRow = $("auto-credits-row");
+  if (autoRow) {
+    autoRow.classList.toggle("hidden", !creditsState.creditsEnabled);
+    const cb = $("auto-use-credits");
+    if (cb) cb.checked = !!settings.autoUseCredits;
+  }
 }
 
 // Nach einer (moeglichen) Guthaben-Aenderung durch einen bezahlten Opus-Job: Cache als
@@ -3980,7 +3990,11 @@ async function startHostedGeneration(ctx) {
           openTopupDialog();
           return;
         }
-        const ok = await openOverflowConfirm({ tier: body.tier || tierSent, priceCredits: price });
+        // Opt-in "automatisch Guthaben verwenden": der Nutzer hat dauerhaftes Einverstaendnis
+        // gegeben (Einstellung, Default aus) UND sieht den Kostenhinweis an der Stufe → kein
+        // Dialog. Sonst pro Test bestaetigen (keine unbeabsichtigten Kosten, CLAUDE.md).
+        const ok = settings.autoUseCredits ? true
+          : await openOverflowConfirm({ tier: body.tier || tierSent, priceCredits: price });
         if (!ok) { refreshBalance(); return; } // abgebrochen → kein Test, kein Charge
         showLoading("Test wird gestartet...");
         res = await postGenerationJob(ctx, tierSent, true);
@@ -7816,7 +7830,11 @@ $("btn-save-settings").addEventListener("click", () => {
   if (provider === "hosted") {
     // Hosted: nur Provider + Stufe setzen. Vorhandene BYOK-Felder (apiKey/baseUrl/
     // model) BLEIBEN als Fallback erhalten - nie verwerfen (Leitplanke).
-    settings = { ...settings, provider: "hosted", tier: $("tier").value || "standard" };
+    // autoUseCredits (Opt-in: Overflow ohne jedes Mal nachzufragen) additiv mitspeichern;
+    // der Haken existiert nur bei aktivem Credits-Flag, sonst bleibt der alte Wert erhalten.
+    const autoCb = $("auto-use-credits");
+    const autoUseCredits = creditsState.creditsEnabled && autoCb ? autoCb.checked : !!settings.autoUseCredits;
+    settings = { ...settings, provider: "hosted", tier: $("tier").value || "standard", autoUseCredits };
   } else {
     settings = {
       ...settings,
@@ -7909,6 +7927,10 @@ async function importData(text) {
     // Hosted-Calls bis zum naechsten Speichern scheitern liesse (defensiv lesen).
     const tierImp = typeof inc.tier === "string" ? inc.tier.trim() : "";
     if (tierImp === "standard" || tierImp === "guenstig" || tierImp === "beste") merged.tier = tierImp;
+    // autoUseCredits BEWUSST NICHT importieren: ein "automatisch Guthaben verwenden" darf nur
+    // durch ausdrueckliches lokales Anhaken aktiviert werden, nie still durch ein Backup-File
+    // (sonst koennte ein importiertes Backup unbemerkt Abbuchungen scharf schalten). Der lokale
+    // Wert aus {...cur} bleibt erhalten.
     settings = merged;
     saveSettings(settings);
     settingsImported = true;
