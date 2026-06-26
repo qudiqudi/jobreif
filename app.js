@@ -602,9 +602,13 @@ function sanitizeProfile(raw) {
   for (const k of ["erfahrung", "trajectory", "ausbildung"]) {
     if (PROFILE_ENUMS[k].includes(raw[k])) out[k] = raw[k];
   }
+  // branche: Freitext mit hartem Limit. Ein zu langer Wert wird VERWORFEN (nicht
+  // gekuerzt) — konsistent mit dem Worker (validateProfile lehnt >Limit mit 400 ab)
+  // und mit den Enums (unbekannt → verworfen). So ueberschreibt ein praeparierter
+  // Import nie eine vorhandene gueltige branche mit einer gekuerzten Fassung.
   if (typeof raw.branche === "string") {
-    const b = raw.branche.trim().slice(0, PROFILE_BRANCHE_MAX);
-    if (b) out.branche = b;
+    const b = raw.branche.trim();
+    if (b && b.length <= PROFILE_BRANCHE_MAX) out.branche = b;
   }
   return out;
 }
