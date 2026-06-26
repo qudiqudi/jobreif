@@ -6,7 +6,7 @@ A PWA that turns any job description into an interactive, simulated aptitude tes
 
 ## Now also without your own API key
 
-Sign in with email or Google and start right away – a limited quota is free. If you need more, unlock it via billing. The original path remains: your own API key, kept only in the browser.
+Sign in with email or Google and start right away – a limited quota is free. Paid top-ups for higher demand are coming soon. The original path remains: your own API key, kept only in the browser.
 
 ## How it works
 
@@ -32,7 +32,7 @@ Every evaluation is stored locally, grouped per position. The history shows impr
 
 ## Access and models
 
-- **Hosted**: Sign in with email or Google and start for free. For higher demand, unlock via billing – no key of your own needed.
+- **Hosted**: Sign in with email or Google and start for free. Paid top-ups for higher demand are coming soon – no key of your own needed.
 - **Your own API key**: The key lives exclusively in `localStorage` and goes directly to the provider (CORS). No server ever sees it.
 
 Supported models:
