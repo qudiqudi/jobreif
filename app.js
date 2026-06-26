@@ -5488,8 +5488,16 @@ function dayOrdinal(ts) {
 // Signal: keine Strafe fuer Luecken, keine "aktive" Serie, die auf 0 faellt.
 // dayOrdinal mappt einen Zeitpunkt auf den lokalen Kalendertag.
 function distinctPracticeDays(attempts) {
-  return new Set((Array.isArray(attempts) ? attempts : [])
-    .filter(Boolean).map((a) => dayOrdinal(a.date))).size;
+  const days = new Set();
+  for (const a of (Array.isArray(attempts) ? attempts : [])) {
+    // Nur Versuche mit echtem positivem Zeitstempel zaehlen. Sonst koennte ein
+    // krummes date das Abzeichen faelschlich verdienen: fehlend/"kaputt" ergibt
+    // dayOrdinal=NaN (ein Set zaehlt ein NaN als Wert), und new Date(null) faellt
+    // auf den Epoch-Tag 1970 zurueck (auch ein gueltiger, aber falscher "Tag").
+    if (!a || typeof a.date !== "number" || !Number.isFinite(a.date) || a.date <= 0) continue;
+    days.add(dayOrdinal(a.date));
+  }
+  return days.size;
 }
 
 // Abzeichen-Katalog. test(s) entscheidet aus den aggregierten Werten einer
