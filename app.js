@@ -2770,7 +2770,10 @@ async function consumeAuthRedirect() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, verifier }),
       });
-      if (r.ok) { const d = await r.json(); setAuthToken(d.token); _authRedirectMsg = "Erfolgreich angemeldet."; }
+      // Erfolg nur bei tatsaechlich vorhandenem Token-String — ein 2xx ohne
+      // Token ist kein gueltiges Login.
+      const d = r.ok ? await r.json().catch(() => null) : null;
+      if (d && typeof d.token === "string" && d.token) { setAuthToken(d.token); _authRedirectMsg = "Erfolgreich angemeldet."; }
       else _authRedirectMsg = "Die Anmeldung ist fehlgeschlagen oder abgelaufen. Bitte erneut versuchen.";
     } catch { _authRedirectMsg = "Anmeldung fehlgeschlagen. Bitte erneut versuchen."; }
     return true;
@@ -2781,7 +2784,9 @@ async function consumeAuthRedirect() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token: magic }),
     });
-    if (r.ok) { const d = await r.json(); setAuthToken(d.token); _authRedirectMsg = "Erfolgreich angemeldet."; }
+    // Erfolg nur bei tatsaechlich vorhandenem Token-String (2xx ohne Token zaehlt nicht).
+    const d = r.ok ? await r.json().catch(() => null) : null;
+    if (d && typeof d.token === "string" && d.token) { setAuthToken(d.token); _authRedirectMsg = "Erfolgreich angemeldet."; }
     else _authRedirectMsg = "Der Anmeldelink ist ungültig oder abgelaufen.";
   } catch { _authRedirectMsg = "Anmeldung fehlgeschlagen. Bitte erneut versuchen."; }
   return true;
@@ -9291,6 +9296,15 @@ function exportData() {
   // koennte von jedem, der die Datei liest, bis zum Logout/Ablauf als Bearer replayt werden
   // (Codex-Review R8). Beim Import wird ein fremdes Token ohnehin nicht uebernommen.
   const { authToken, ...exportedSettings } = loadSettings();
+  // apiKey (BYOK-Provider-Schluessel) bleibt bewusst im Backup: beim Umzug zwischen Geraeten/
+  // Browsern ist er die Credential, die der Nutzer mitnehmen will (CLAUDE.md: Keys nie verwerfen).
+  // Anders als der kurzlebige authToken (R8, oben herausgefiltert) ist er aber ein langlebiges,
+  // abrechenbares Geheimnis — daher VOR dem Download einmal warnen (nur wenn wirklich gesetzt),
+  // damit die Klartext-Datei nicht arglos in Cloud/Mail/geteilten Speicher landet.
+  if (exportedSettings.apiKey && !confirm(
+    "Achtung: Diese Sicherung enthält deinen gespeicherten API-Schlüssel im Klartext. " +
+    "Bewahre die Datei sicher auf und teile sie mit niemandem. Fortfahren?"
+  )) return;
   const data = {
     app: "bewerbungstool",
     version: 1,
