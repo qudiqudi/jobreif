@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.24.0";
+const APP_VERSION = "1.25.0";
 
 const CHANGELOG = [
+  {
+    version: "1.25.0",
+    date: "27.06.2026",
+    items: [
+      "Gesprächsstufen schärfer zugeschnitten: Wählst du eine Stufe wie Telefoninterview, Fachgespräch oder Finalrunde, besteht der Test jetzt vollständig aus dazu passenden Fragen – die allgemeinen Eignungsaufgaben (Zahlenreihen, Konzentration, Figuren) entfallen dort, weil sie in ein solches Gespräch nicht gehören. Beim Assessment-Center bleiben sie erhalten, da sie dort regulärer Bestandteil sind.",
+    ],
+  },
   {
     version: "1.24.0",
     date: "27.06.2026",
@@ -2129,6 +2136,10 @@ function generateUebungByType(typ) {
 function appendFiguralQuestion(quiz) {
   if (!quiz || !Array.isArray(quiz.fragen) || !quiz.fragen.length) return;
   if (Array.isArray(quiz.vertiefungFelder) && quiz.vertiefungFelder.length) return;
+  // Bei einer gewaehlten Gespraechsstufe gehoert eine generische Matrizenaufgabe nicht in den
+  // Test (Telefon/Fachgespraech/Finalrunde sind reine Gespraeche) - AUSNAHME Assessment-Center,
+  // wo figurale Eignungstests regulaerer Bestandteil sind. Spiegelt die Backend-Logik.
+  if (quiz.gespraechsstufe && quiz.gespraechsstufe !== "assessment") return;
   if (quiz.fragen.some((f) => f && f.typ === "figural")) return;
   const pz = generateFiguralPuzzle();
   // id robust aus dem Maximum der vorhandenen ids ableiten, NICHT aus fragen.length:
@@ -4439,6 +4450,7 @@ function finalizeQuiz(result, ctx) {
   if (ctx.urlKey) { quiz.urlKey = ctx.urlKey; quiz.jobUrl = ctx.jobUrl; }
   quiz.schwierigkeitsgrad = ctx.difficulty;
   if (ctx.vertiefungFelder) quiz.vertiefungFelder = ctx.vertiefungFelder;
+  if (ctx.gespraechsstufe) quiz.gespraechsstufe = ctx.gespraechsstufe;
   // Figural-/Matrizenaufgabe (Plan 3.x) clientseitig an Standardtests anhaengen (nicht im
   // Vertiefungsbogen). Muss VOR der answers/revealed-Initialisierung stehen, damit deren Laengen
   // die zusaetzliche Frage einschliessen.
@@ -4611,6 +4623,8 @@ async function startHostedGeneration(ctx) {
       ctx: {
         jobText: ctx.jobText, difficulty: ctx.difficulty, mode: ctx.mode,
         urlKey: ctx.urlKey, jobUrl: ctx.jobUrl, vertiefungFelder: ctx.vertiefungFelder,
+        gespraechsstufe: ctx.gespraechsstufe, // gewaehlte Interviewrunde aufs Quiz durchreichen
+          // (steuert u. a., ob die clientseitige Figural-Aufgabe angehaengt wird).
         // Provenienz fuer Reports (Hosted-Pfad): Modell baut der Server -> model null.
         provider: "hosted", tier: tierSent, model: null,
         // Gratis-Stufen-Overflow per Guthaben bezahlt? Dann auch bei spaeterem (asynchronem)
