@@ -848,6 +848,10 @@ function viewRecordKey(id) {
     if (!quiz) return null;
     return quiz.urlKey || (quiz.jobText ? jobKey(quiz.jobText) : null);
   }
+  // view-sr traegt den Modus: eine echte Wiederholung ("review") wird beim Zurueckblaettern
+  // wiederhergestellt; der fluechtige Uebungs-Modus bzw. die Typ-Auswahl ("practice") landet
+  // im Picker, NICHT in einer echten Review (die sonst faellige Deck-Karten verplanen wuerde).
+  if (id === "view-sr") return srSession && srSession.practice ? "practice" : (srSession ? "review" : "practice");
   return null;
 }
 
@@ -891,7 +895,14 @@ function restoreView(state) {
       if (job) openJob(job); else goHome();
     }
     else if (id === "view-history") { renderHistory(); showView("view-history"); }
-    else if (id === "view-sr") { if (srDueCards().length) openSrReview(); else goHome(); }
+    else if (id === "view-sr") {
+      // "review" nur wiederherstellen, wenn noch Karten faellig sind; der Uebungs-/Picker-
+      // Modus ("practice") fuehrt in den Picker (fluechtige Karten lassen sich nicht
+      // wiederherstellen) und beruehrt damit NIE das SR-Deck.
+      if (key === "review" && srDueCards().length) openSrReview();
+      else if (key === "practice") openPracticePicker();
+      else goHome();
+    }
     else if (id === "view-quiz" || id === "view-result") {
       // Nur zeigen, wenn der aktuell geladene Fragebogen noch der des Eintrags ist
       // (Live-Test oder eben angesehener Versuch). Sonst nicht den falschen Versuch
