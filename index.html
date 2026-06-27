@@ -337,6 +337,11 @@
           <button id="resume-continue" class="primary">Fortsetzen</button>
         </div>
       </div>
+      <!-- Spaced Repetition (Plan 3.8): faellige Wiederholungen der uebertragbaren Skill-Aufgaben. -->
+      <div id="sr-card" class="active-job-card hidden">
+        <p id="sr-text" class="active-job-text"></p>
+        <button id="sr-card-btn" class="primary">Übungen wiederholen</button>
+      </div>
       <div id="home-list"></div>
       <div class="row" id="home-all-row">
         <button id="btn-all-jobs" class="ghost">Alle Stellen ansehen</button>
@@ -486,6 +491,14 @@
       <div class="row">
         <button id="btn-history-back" class="primary">Zurück</button>
       </div>
+    </section>
+
+    <!-- Spaced Repetition (Plan 3.8): faellige Wiederholungen der uebertragbaren Skill-Aufgaben. -->
+    <section id="view-sr" class="card hidden">
+      <button id="btn-sr-back" class="ghost back-link" type="button">‹ Meine Stellen</button>
+      <h2>Übungen wiederholen</h2>
+      <p class="hint">Zahlenreihen und Sprachlogik aus deinen Tests – im Abstand wiederholt, damit sie sitzen. Wird sofort auf deinem Gerät bewertet.</p>
+      <div id="sr-cards-container"></div>
     </section>
 
     <!-- Zeit abgelaufen (Prüfungsmodus) -->

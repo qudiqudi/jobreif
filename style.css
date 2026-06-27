@@ -683,6 +683,15 @@ button.ghost {
 .zr-field.zr-correct { border-color: var(--green); background: var(--green-soft); color: var(--text-strong); }
 .zr-field.zr-wrong { border-color: var(--red); background: var(--red-soft); color: var(--text-strong); }
 
+/* Spaced Repetition (Plan 3.8): Review-Karten. Nutzt .zr-field und .option wie im Quiz. */
+.sr-progress { margin: 0 0 0.6rem; }
+.sr-frage { font-family: var(--display); font-size: 1.05rem; color: var(--text-strong); margin: 0 0 0.9rem; }
+.sr-answer { margin: 0 0 0.9rem; }
+.sr-solution { font-weight: 600; margin: 0.2rem 0 0.5rem; }
+.sr-solution.ok { color: var(--green); }
+.sr-solution.no { color: var(--red); }
+.sr-lerninfo { margin: 0 0 0.9rem; }
+
 .option::before {
   content: "";
   width: 20px;

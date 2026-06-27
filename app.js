@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.17.0";
+const APP_VERSION = "1.18.0";
 
 const CHANGELOG = [
+  {
+    version: "1.18.0",
+    date: "27.06.2026",
+    items: [
+      "Neu: Übungen wiederholen. Zahlenreihen- und Sprachlogik-Aufgaben aus deinen Tests landen in einem kleinen Wiederholungs-Stapel und werden dir im sinnvollen Abstand erneut vorgelegt – so bleiben diese übertragbaren Fähigkeiten im Kopf. Auf der Startseite erscheint „Fällige Übungen“, sobald welche dran sind. Alles passiert lokal auf deinem Gerät.",
+    ],
+  },
   {
     version: "1.17.0",
     date: "27.06.2026",
@@ -788,7 +795,7 @@ const timer = { intervalId: null, deadline: 0, overtime: false, limitMin: 0 };
 
 const $ = (id) => document.getElementById(id);
 
-const views = ["view-login", "view-onboarding", "view-settings", "view-home", "view-input", "view-job", "view-quiz", "view-result", "view-history"];
+const views = ["view-login", "view-onboarding", "view-settings", "view-home", "view-input", "view-job", "view-quiz", "view-result", "view-history", "view-sr"];
 
 function showView(id) {
   views.forEach((v) => $(v).classList.toggle("hidden", v !== id));
@@ -863,6 +870,7 @@ function restoreView(state) {
       if (job) openJob(job); else goHome();
     }
     else if (id === "view-history") { renderHistory(); showView("view-history"); }
+    else if (id === "view-sr") { if (srDueCards().length) openSrReview(); else goHome(); }
     else if (id === "view-quiz" || id === "view-result") {
       // Nur zeigen, wenn der aktuell geladene Fragebogen noch der des Eintrags ist
       // (Live-Test oder eben angesehener Versuch). Sonst nicht den falschen Versuch
@@ -6566,7 +6574,8 @@ async function saveAttempt(result, durationMs, evalCost, evalTokens) {
   // Tab parallel laufender Schreibvorgang (z. B. eine Themenfeld-Ableitung)
   // diesen Versuch nicht ueberschreibt. Der gesamte Block liest/mutiert die
   // frische History h und laeuft synchron innerhalb der Sektion.
-  return (await mutateHistory((h) => {
+  const _srHarvestQuiz = quiz; // Referenz fuer den SR-Harvest nach dem Speichern festhalten
+  const _saved = (await mutateHistory((h) => {
   const key = jobKey(quiz.jobText);
   const uKey = quiz.urlKey || null;
   const iKey = identityKeyOf(quiz.titel, quiz.arbeitgeber, quiz.arbeitsort);
@@ -6728,6 +6737,10 @@ async function saveAttempt(result, durationMs, evalCost, evalTokens) {
   if (job.attempts.length > HISTORY_MAX_ATTEMPTS) job.attempts = job.attempts.slice(-HISTORY_MAX_ATTEMPTS);
   if (h.jobs.length > HISTORY_MAX_JOBS) h.jobs.length = HISTORY_MAX_JOBS;
   })).ok; // true, wenn der Versuch wirklich gespeichert wurde
+  // Spaced Repetition (Plan 3.8): uebertragbare Skill-Aufgaben (zahlenreihe/sprachlogik)
+  // dieses Tests ins SR-Deck ernten - eigener Store, self-guard auf Vertiefungsboegen.
+  harvestSrCards(_srHarvestQuiz);
+  return _saved;
 }
 
 function formatDate(ts) {
@@ -7155,6 +7168,248 @@ function buildHomeCard(job) {
   return card;
 }
 
+/* ---------- Spaced Repetition (Plan 2026, 3.8) ---------- */
+// Lokale Wiederholung NUR der UEBERTRAGBAREN Skill-Aufgaben (zahlenreihe + sprachlogik) -
+// beide deterministisch/LLM-frei bewertbar. KEIN job-spezifisches Trivia (verfaellt mit dem
+// Gespraech). Eigener Store, eigener Renderer, eigene View - entkoppelt vom Quiz-Flow.
+const SR_DECK_KEY = "bewerbungstool.srdeck";
+const SR_DECK_MAX = 150;          // FIFO-Deckel (wie reports)
+const SR_DAY = 86400000;
+const SR_TYPES = ["zahlenreihe", "sprachlogik"];
+
+function loadSrDeck() {
+  try {
+    const d = JSON.parse(localStorage.getItem(SR_DECK_KEY));
+    if (d && typeof d === "object" && d.cards && typeof d.cards === "object") return { v: 1, cards: d.cards };
+  } catch { /* ignorieren */ }
+  return { v: 1, cards: {} };
+}
+function saveSrDeck(deck) {
+  // FIFO bei Quota wie bei reports: aelteste Karten (kleinstes added) zuerst verwerfen.
+  const trim = (d) => {
+    const ids = Object.keys(d.cards);
+    if (ids.length <= SR_DECK_MAX) return;
+    ids.sort((a, b) => (Number(d.cards[a].added) || 0) - (Number(d.cards[b].added) || 0));
+    for (const id of ids.slice(0, ids.length - SR_DECK_MAX)) delete d.cards[id];
+  };
+  trim(deck);
+  for (let i = 0; i < 5; i++) {
+    try { localStorage.setItem(SR_DECK_KEY, JSON.stringify(deck)); return true; }
+    catch {
+      const ids = Object.keys(deck.cards);
+      if (!ids.length) return false;
+      ids.sort((a, b) => (Number(deck.cards[a].added) || 0) - (Number(deck.cards[b].added) || 0));
+      delete deck.cards[ids[0]];
+    }
+  }
+  return false;
+}
+// Stabile Karten-id aus typ + normalisiertem Fragetext (dedupt gleiche Aufgabe ueber Tests).
+function srCardId(q) {
+  const base = (q.typ || "") + "|" + String(q.frage || "").toLowerCase().replace(/\s+/g, " ").trim();
+  let h = 0;
+  for (let i = 0; i < base.length; i++) { h = (h * 31 + base.charCodeAt(i)) | 0; }
+  return (q.typ || "x") + "_" + (h >>> 0).toString(36);
+}
+// Nur die zum Rendern/Scoren noetigen Felder behalten (kompakt, kein jobText/Quellen-Ballast).
+function srPickFields(q) {
+  return {
+    typ: q.typ, frage: q.frage,
+    optionen: Array.isArray(q.optionen) ? q.optionen.slice(0, 8) : [],
+    korrekte_indizes: Array.isArray(q.korrekte_indizes) ? q.korrekte_indizes.slice(0, 8) : [],
+    korrekte_antwort: typeof q.korrekte_antwort === "string" ? q.korrekte_antwort : "",
+    erklaerungen: Array.isArray(q.erklaerungen) ? q.erklaerungen.slice(0, 8) : [],
+    lerninfo: typeof q.lerninfo === "string" ? q.lerninfo : "",
+  };
+}
+// Eine Aufgabe ist SR-tauglich, wenn sie LOKAL deterministisch bewertbar ist.
+function srEligible(q) {
+  if (!q || !SR_TYPES.includes(q.typ) || typeof q.frage !== "string" || !q.frage.trim()) return false;
+  if (q.typ === "zahlenreihe") return Number.isFinite(parseZahl(q.korrekte_antwort));
+  // sprachlogik: braucht Optionen + genau eine bekannte richtige Option.
+  return Array.isArray(q.optionen) && q.optionen.length >= 2 && mcCorrectIndices(q).size === 1;
+}
+// Beim Abschluss eines NORMALEN Tests (kein Vertiefungsbogen) die uebertragbaren Aufgaben
+// ins Deck ernten. Neue Karte: erste Wiederholung morgen. Vorhandene behalten ihren Plan.
+function harvestSrCards(quiz) {
+  if (!quiz || !Array.isArray(quiz.fragen)) return;
+  if (Array.isArray(quiz.vertiefungFelder) && quiz.vertiefungFelder.length) return;
+  const deck = loadSrDeck();
+  let added = false;
+  for (const q of quiz.fragen) {
+    if (!srEligible(q)) continue;
+    const id = srCardId(q);
+    if (deck.cards[id]) continue; // schon im Deck -> Plan unangetastet
+    deck.cards[id] = { q: srPickFields(q), ease: 2.5, interval: 1, reps: 0, lapses: 0, added: Date.now(), due: Date.now() + SR_DAY };
+    added = true;
+  }
+  if (added) saveSrDeck(deck);
+}
+// Faellige Karten (due <= jetzt), aelteste Faelligkeit zuerst.
+function srDueCards(deck) {
+  const now = Date.now();
+  return Object.entries((deck || loadSrDeck()).cards)
+    .filter(([, c]) => c && c.q && (Number(c.due) || 0) <= now)
+    .sort((a, b) => (Number(a[1].due) || 0) - (Number(b[1].due) || 0))
+    .map(([id, c]) => ({ id, ...c }));
+}
+// SM-2-leicht: richtig -> laengeres Intervall (1,3,7, dann *ease); falsch -> zurueck auf 1 Tag.
+function scheduleSrCard(deck, id, correct) {
+  const c = deck.cards[id];
+  if (!c) return;
+  if (correct) {
+    c.reps = (c.reps || 0) + 1;
+    c.ease = Math.min(2.8, (c.ease || 2.5) + 0.1);
+    c.interval = c.reps <= 1 ? 1 : c.reps === 2 ? 3 : c.reps === 3 ? 7 : Math.round((c.interval || 7) * c.ease);
+  } else {
+    c.lapses = (c.lapses || 0) + 1;
+    c.reps = 0;
+    c.ease = Math.max(1.3, (c.ease || 2.5) - 0.2);
+    c.interval = 1;
+  }
+  c.due = Date.now() + c.interval * SR_DAY;
+  c.lastReviewed = Date.now();
+}
+// Lokale, deterministische Bewertung einer SR-Karte (kein LLM): { correct, musterantwort }.
+function scoreSrCard(q, answer) {
+  if (q.typ === "zahlenreihe") {
+    return { correct: scoreZahlenreihe(q, answer).punkte === 10, musterantwort: String(q.korrekte_antwort || "") };
+  }
+  const correctIdx = mcCorrectIndices(q);
+  const chosen = (q.optionen || []).indexOf(answer);
+  const richtig = [...correctIdx][0];
+  return { correct: chosen >= 0 && correctIdx.has(chosen), musterantwort: q.optionen && q.optionen[richtig] != null ? q.optionen[richtig] : (q.korrekte_antwort || "") };
+}
+
+// --- SR-Review-Session (eigene Globals, NICHT die Quiz-Globals) ---
+let srSession = null; // { cards:[{id,q}], i, answer, checked, result, richtig, geübt }
+
+function renderSrHomeCard() {
+  const card = $("sr-card");
+  if (!card) return;
+  const due = srDueCards().length;
+  if (!due) { card.classList.add("hidden"); return; }
+  card.classList.remove("hidden");
+  $("sr-text").textContent = `Fällige Übungen: ${due} ${due === 1 ? "Aufgabe" : "Aufgaben"} (Zahlenreihen & Sprachlogik) warten auf Wiederholung.`;
+}
+
+function openSrReview() {
+  const due = srDueCards();
+  if (!due.length) { goHome(); return; }
+  srSession = { cards: due, i: 0, answer: "", checked: false, result: null, richtig: 0, geübt: 0 };
+  showView("view-sr");
+  renderSrCardView();
+}
+
+function renderSrCardView() {
+  const wrap = $("sr-cards-container");
+  if (!wrap || !srSession) return;
+  wrap.innerHTML = "";
+  const s = srSession;
+  if (s.i >= s.cards.length) { renderSrSummary(wrap); return; }
+  const q = s.cards[s.i].q;
+
+  const prog = document.createElement("p");
+  prog.className = "hint sr-progress";
+  prog.textContent = `Karte ${s.i + 1} von ${s.cards.length}`;
+  wrap.appendChild(prog);
+
+  const frage = document.createElement("p");
+  frage.className = "sr-frage";
+  frage.textContent = q.frage;
+  wrap.appendChild(frage);
+
+  const area = document.createElement("div");
+  area.className = "sr-answer";
+  if (q.typ === "zahlenreihe") {
+    const input = document.createElement("input");
+    input.type = "text"; input.inputMode = "decimal"; input.autocomplete = "off"; input.className = "zr-field";
+    input.setAttribute("aria-label", "Deine Antwort als Zahl");
+    input.placeholder = "Deine Antwort (Zahl)";
+    input.value = s.answer || "";
+    if (s.checked) {
+      input.readOnly = true;
+      input.classList.add(s.result.correct ? "zr-correct" : "zr-wrong");
+    } else {
+      input.addEventListener("input", () => {
+        s.answer = input.value;
+        const btn = wrap.querySelector("button.primary");
+        if (btn) btn.disabled = !String(input.value).trim();
+      });
+    }
+    area.appendChild(input);
+  } else {
+    (q.optionen || []).forEach((opt) => {
+      const btn = document.createElement("button");
+      let cls = "option";
+      if (s.answer === opt) cls += " selected";
+      if (s.checked) {
+        if (opt.trim() === (s.result.musterantwort || "").trim()) cls += " correct";
+        else if (s.answer === opt) cls += " wrong";
+      }
+      btn.className = cls; btn.type = "button"; btn.textContent = opt;
+      btn.setAttribute("aria-pressed", s.answer === opt ? "true" : "false");
+      if (s.checked) btn.disabled = true;
+      else btn.addEventListener("click", () => { s.answer = opt; renderSrCardView(); });
+      area.appendChild(btn);
+    });
+  }
+  wrap.appendChild(area);
+
+  if (s.checked) {
+    const sol = document.createElement("p");
+    sol.className = "sr-solution " + (s.result.correct ? "ok" : "no");
+    sol.textContent = (s.result.correct ? "Richtig. " : "Leider falsch. ") + "Richtige Antwort: " + s.result.musterantwort;
+    wrap.appendChild(sol);
+    if (q.lerninfo) {
+      const li = document.createElement("p");
+      li.className = "hint sr-lerninfo";
+      li.textContent = q.lerninfo;
+      wrap.appendChild(li);
+    }
+    const next = document.createElement("button");
+    next.className = "primary"; next.type = "button";
+    next.textContent = s.i + 1 >= s.cards.length ? "Fertig" : "Weiter";
+    next.addEventListener("click", () => {
+      s.i++; s.answer = ""; s.checked = false; s.result = null;
+      renderSrCardView();
+    });
+    wrap.appendChild(next);
+  } else {
+    const check = document.createElement("button");
+    check.className = "primary"; check.type = "button"; check.textContent = "Prüfen";
+    check.disabled = !String(s.answer || "").trim();
+    check.addEventListener("click", () => {
+      const res = scoreSrCard(q, s.answer);
+      s.checked = true; s.result = res; s.geübt++;
+      if (res.correct) s.richtig++;
+      // sofort persistieren (Plan aktualisieren), unabhaengig vom Rest der Session.
+      const deck = loadSrDeck();
+      scheduleSrCard(deck, s.cards[s.i].id, res.correct);
+      saveSrDeck(deck);
+      renderSrCardView();
+    });
+    wrap.appendChild(check);
+  }
+}
+
+function renderSrSummary(wrap) {
+  const s = srSession;
+  const h = document.createElement("p");
+  h.className = "sr-frage";
+  h.textContent = "Geschafft!";
+  wrap.appendChild(h);
+  const p = document.createElement("p");
+  p.className = "hint";
+  p.textContent = `${s.geübt} ${s.geübt === 1 ? "Aufgabe" : "Aufgaben"} wiederholt, ${s.richtig} richtig. Gut bewertete Aufgaben kommen erst spaeter wieder dran.`;
+  wrap.appendChild(p);
+  const btn = document.createElement("button");
+  btn.className = "primary"; btn.type = "button"; btn.textContent = "Zurück zu Meine Stellen";
+  btn.addEventListener("click", () => goHome());
+  wrap.appendChild(btn);
+  srSession = null;
+}
+
 function renderHome() {
   const h = loadHistory();
   const jobs = h.jobs.filter((j) => j && Array.isArray(j.attempts) && j.attempts.length > 0);
@@ -7169,6 +7424,7 @@ function renderHome() {
   if (aj) renderActiveJobCard(aj.status === "ready" ? "ready" : "pending");
   // Offenen Lerntest anbieten (blendet bei Bedarf den Leer-Hinweis aus).
   renderResumeCard();
+  renderSrHomeCard(); // Spaced Repetition: "Faellige Uebungen"-Karte, wenn welche faellig sind
 }
 
 // Gueltiger Fragenzahl-Bereich - identisch zum Stepper im Eingabe-Bildschirm
@@ -8386,6 +8642,7 @@ function exportData() {
     exportedAt: new Date().toISOString(),
     settings: exportedSettings,
     profile: loadProfile(), // nicht-identifizierendes Profil gehoert ins Backup (Plan 3.1)
+    srDeck: loadSrDeck(), // Spaced-Repetition-Deck (Plan 3.8) gehoert ins Backup/den Umzug
     history: loadHistory(),
     reports: loadReports(),
   };
@@ -8424,6 +8681,27 @@ async function importData(text) {
       saveProfile({ ...loadProfile(), ...inc });
       profileImported = true;
     }
+  }
+
+  // SR-Deck additiv mergen: importierte Karten nur uebernehmen, wenn lokal noch nicht
+  // vorhanden (vorhandener Wiederhol-Plan bleibt unangetastet) und defensiv validiert.
+  let srImported = 0;
+  if (data.srDeck && typeof data.srDeck === "object" && data.srDeck.cards && typeof data.srDeck.cards === "object") {
+    const deck = loadSrDeck();
+    for (const [id, c] of Object.entries(data.srDeck.cards)) {
+      if (deck.cards[id] || !c || typeof c !== "object" || !c.q || !srEligible(c.q)) continue;
+      deck.cards[id] = {
+        q: srPickFields(c.q),
+        ease: Number.isFinite(Number(c.ease)) ? Number(c.ease) : 2.5,
+        interval: Number.isFinite(Number(c.interval)) ? Number(c.interval) : 1,
+        reps: Number.isInteger(c.reps) ? c.reps : 0,
+        lapses: Number.isInteger(c.lapses) ? c.lapses : 0,
+        added: Number.isFinite(Number(c.added)) ? Number(c.added) : Date.now(),
+        due: Number.isFinite(Number(c.due)) ? Number(c.due) : Date.now() + SR_DAY,
+      };
+      srImported++;
+    }
+    if (srImported) saveSrDeck(deck);
   }
 
   let settingsImported = false;
@@ -8639,6 +8917,7 @@ async function importData(text) {
   const parts = [];
   if (settingsImported) parts.push("Einstellungen übernommen");
   if (profileImported) parts.push("Profil übernommen");
+  if (srImported) parts.push(`${srImported} Übungskarte${srImported === 1 ? "" : "n"} übernommen`);
   parts.push(
     (newJobs === 1 ? "1 neue Stelle" : newJobs + " neue Stellen") +
       ", " +
@@ -8800,6 +9079,9 @@ $("btn-review-questions").addEventListener("click", () => {
 $("btn-home").addEventListener("click", goHome);
 
 $("btn-history-back").addEventListener("click", () => history.back());
+// Spaced Repetition (Plan 3.8)
+$("sr-card-btn").addEventListener("click", openSrReview);
+$("btn-sr-back").addEventListener("click", () => history.back());
 
 // Startliste und Stellen-Subpage
 $("btn-new-job").addEventListener("click", () => {
