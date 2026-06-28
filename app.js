@@ -4,9 +4,18 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.27.0";
+const APP_VERSION = "1.27.1";
 
 const CHANGELOG = [
+  {
+    version: "1.27.1",
+    date: "28.06.2026",
+    items: [
+      "Mehr Transparenz beim Import per Link: Beim Einlesen einer Stellenanzeige über ihre Internetadresse ist jetzt klar ausgewiesen, dass die Seite über einen Drittanbieter-Dienst (Jina AI) geladen wird. „Text einfügen“ bleibt wie bisher komplett lokal im Browser.",
+      "Datensicherung mit Warnung: Enthält deine Backup-Datei einen gespeicherten API-Schlüssel, weist die App vor dem Speichern darauf hin – damit die Datei bewusst sicher aufbewahrt wird.",
+      "Offline-Verbesserung: Auch tiefe Seiten (z. B. die Einstellungstest-Berufsseiten) laden jetzt offline zuverlässig die App statt einer Fehlerseite.",
+    ],
+  },
   {
     version: "1.27.0",
     date: "27.06.2026",
