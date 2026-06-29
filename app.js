@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.27.3";
+const APP_VERSION = "1.27.4";
 
 const CHANGELOG = [
+  {
+    version: "1.27.4",
+    date: "29.06.2026",
+    items: [
+      "Üben ohne Anmeldung – direkt vom Anmeldefenster: Wer noch kein Konto hat, kann die allgemeinen Eignungsmodule (Zahlenreihen, Konzentration, Figuren) jetzt sofort und ohne Anmeldung ausprobieren. Ein stellenbezogener Test aus einer Anzeige braucht weiterhin die kostenlose Anmeldung.",
+    ],
+  },
   {
     version: "1.27.3",
     date: "29.06.2026",
@@ -8218,8 +8225,11 @@ function renderSrSummary(wrap) {
   }
   const btn = document.createElement("button");
   btn.className = practice ? "option" : "primary"; btn.type = "button";
-  btn.textContent = "Zurück zu Meine Stellen";
-  btn.addEventListener("click", () => goHome());
+  // Ausgeloggte Hosted-Nutzer (No-Login-Praxis) kehren ehrlich ans Login-Gate zurueck,
+  // statt in die App-Shell zu fallen; alle anderen zu "Meine Stellen".
+  const backToLogin = practice && hostedNeedsLogin();
+  btn.textContent = backToLogin ? "Zurück zur Anmeldung" : "Zurück zu Meine Stellen";
+  btn.addEventListener("click", () => leavePractice());
   wrap.appendChild(btn);
 }
 
@@ -8848,6 +8858,16 @@ function goHome() {
   showView("view-home");
 }
 
+// Austritt aus dem Ueben dorthin, wo der Nutzer hergekommen ist: ein eingerichteter
+// Nutzer (angemeldet bzw. BYOK/lokal) landet auf "Meine Stellen"; ein ausgeloggter
+// Hosted-Nutzer kehrt ans Login-Gate zurueck. So fuehrt die No-Login-Praxis nicht in
+// die volle App-Shell mit scheinbarem "Neue Stelle"-Pfad, der erst spaeter am Login
+// scheitert (gehostete Testerstellung bleibt anmeldepflichtig, hostedNeedsLogin()).
+function leavePractice() {
+  if (hostedNeedsLogin()) promptHostedLogin();
+  else goHome();
+}
+
 // Einen Test fuer eine bestehende Stelle starten (One-Tap-Repeat): die Eingabe-
 // Steuerelemente, die generateQuiz liest, mit Stellentext, URL und Konfiguration
 // fuellen und dann normal generieren. lastFetch wie beim Laden setzen, damit der
@@ -9291,6 +9311,12 @@ $("login-magic-form").addEventListener("submit", async (e) => {
     btn.disabled = false;
   }
 });
+
+// No-Login-Praxis direkt aus dem Login-Gate: oeffnet den generischen Uebungs-Hub. Rein
+// lokal erzeugt/ausgewertet (startPractice() -> generateUebungByType()), kein Konto und
+// kein Anbieter noetig. WICHTIG: nur die generische Praxis ist no-login – die gehostete,
+// stellenbezogene Testerstellung bleibt hinter der Anmeldung (hostedNeedsLogin()).
+$("btn-login-practice").addEventListener("click", () => openPracticePicker());
 
 $("btn-login-google").addEventListener("click", async () => {
   const btn = $("btn-login-google");
