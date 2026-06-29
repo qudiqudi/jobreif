@@ -10674,7 +10674,8 @@ const IMPORT_INTENT_KEY = "bewerbungstool.importIntent";
 function consumeImportDeepLink() {
   let fromUrl = null;
   try { fromUrl = new URLSearchParams(location.search).get("import"); } catch { /* egal */ }
-  if (fromUrl !== null) {
+  // Nur den bekannten Wert akzeptieren - ein beliebiges ?import soll nichts ausloesen.
+  if (fromUrl === "linkedin") {
     try {
       const u = new URL(location.href);
       u.searchParams.delete("import");
@@ -10684,20 +10685,17 @@ function consumeImportDeepLink() {
   }
   let stored = null;
   try { stored = sessionStorage.getItem(IMPORT_INTENT_KEY); } catch { /* egal */ }
-  return stored;
+  return stored === "linkedin" ? stored : null;
 }
 
 // Oeffnet die Eingabe auf dem Tab „Text einfügen“ und blendet die Zwischenablage-Hilfe
-// ein. Wie „Neue Stelle“ ein bewusster Frischstart (Felder + Entwurf leeren), weil der
-// Import-Klick eine neue Anzeige bedeutet. Die gemerkte Absicht wird hier verbraucht.
+// ein. Bewusst NICHT zerstoerend: ein evtl. vorhandener Entwurf (per restoreDraft schon
+// in die Felder geladen) bleibt erhalten, weil dieser Pfad auch durch einen alten/
+// gebookmarkten ?import-Link oder einen fehlgeschlagenen Clipboard-Transfer ausgeloest
+// werden kann. Ueberschrieben wird erst beim erfolgreichen, nicht-leeren Einfuegen
+// (explizite Geste im Paste-Handler). Die gemerkte Absicht wird hier verbraucht.
 function startImportFlow() {
   try { sessionStorage.removeItem(IMPORT_INTENT_KEY); } catch { /* egal */ }
-  clearTimeout(draftSaveTimer);
-  draftSaveTimer = 0;
-  $("job-url").value = "";
-  $("job-text").value = "";
-  lastFetch = { url: "", text: "" };
-  try { localStorage.removeItem(DRAFT_KEY); } catch { /* Entwurf ist nur Komfort */ }
   showView("view-input");
   setSourceTab("text");
   const help = $("import-clipboard");
