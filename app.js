@@ -4192,7 +4192,14 @@ async function generateQuiz(opts = {}) {
   const vertiefung = opts && opts.vertiefung ? opts.vertiefung : null;
   const jobText = $("job-text").value.trim();
   if (jobText.length < 50) {
-    showError("Bitte zuerst eine Stellenanzeige per URL laden oder den Text unter „Text einfügen“ einfügen.");
+    // „Per URL laden“ gibt es nur im gehosteten Modus — den Hinweis entsprechend
+    // anpassen, damit BYOK-/lokale Nutzer nicht auf eine ausgeblendete Funktion
+    // verwiesen werden.
+    showError(
+      (settings.provider || "hosted") === "hosted"
+        ? "Bitte zuerst eine Stellenanzeige per URL laden oder den Text unter „Text einfügen“ einfügen."
+        : "Bitte zuerst die Stellenbeschreibung unter „Text einfügen“ einfügen."
+    );
     return;
   }
   // Auf das Tier-Maximum klemmen (Sicherheitsnetz, falls der Stepper nach einem
