@@ -3491,18 +3491,20 @@ function isLinkedInUrl(url) {
 }
 
 // Billiger Client-Vorabcheck, BEVOR ein Import einen Turnstile-Solve und eine
-// Quota-Buchung verbrennt: Muss eine absolute http(s)-Adresse mit plausiblem
-// Host (mindestens ein Punkt, z. B. "beispiel.de") sein. Bewusst tolerant —
-// die endgueltige Validierung macht der Server; hier nur offensichtlichen Muell
-// (Freitext, fehlendes Schema, "localhost") sofort abfangen.
-function isPlausibleHttpUrl(value) {
+// Quota-Buchung verbrennt: Muss eine absolute https-Adresse mit plausiblem
+// Host (mindestens ein Punkt, z. B. "beispiel.de") sein. Bewusst https-only —
+// der Server akzeptiert nur https (sonst bad-url), darum hier kein http
+// durchwinken, das ohnehin Turnstile/Quota verbrennen und dann scheitern wuerde.
+// Ansonsten tolerant: die endgueltige Validierung macht der Server, hier nur
+// offensichtlichen Muell (Freitext, fehlendes/falsches Schema, "localhost") abfangen.
+function isPlausibleImportUrl(value) {
   let u;
   try {
     u = new URL(value);
   } catch {
     return false;
   }
-  if (u.protocol !== "http:" && u.protocol !== "https:") return false;
+  if (u.protocol !== "https:") return false;
   const host = u.hostname.replace(/\.+$/, "");
   return host.includes(".") && host.length >= 3;
 }
@@ -9907,8 +9909,8 @@ $("btn-fetch-url").addEventListener("click", async () => {
   // Turnstile-Solve und eine Import-Quota verbrannt werden. LinkedIn ist eine
   // gueltige URL und wird bewusst nicht hier, sondern in fetchJobFromUrl mit der
   // passenden Anleitung kurzgeschlossen.
-  if (!isLinkedInUrl(url) && !isPlausibleHttpUrl(url)) {
-    showImportStatus("Das sieht nicht wie eine gültige Internetadresse aus. Bitte eine vollständige Adresse einfügen (z. B. https://beispiel.de/stelle) – oder den Text über „Text einfügen“ manuell einfügen.", "error");
+  if (!isLinkedInUrl(url) && !isPlausibleImportUrl(url)) {
+    showImportStatus("Das sieht nicht wie eine gültige https-Adresse aus. Bitte eine vollständige Adresse einfügen (z. B. https://beispiel.de/stelle) – oder den Text über „Text einfügen“ manuell einfügen.", "error");
     return;
   }
   actionRunning = true;
