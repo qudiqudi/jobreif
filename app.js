@@ -3050,6 +3050,12 @@ function onPaddleEvent(ev) {
     if (_checkoutCompletePending) { _checkoutCompletePending = false; trackEvent("checkout-complete"); }
     setTopupMsg("Zahlung erhalten. Dein Guthaben wird aktualisiert …");
     pollBalanceAfterPurchase();
+  } else if (ev && (ev.name === "checkout.closed" || ev.name === "checkout.error")) {
+    // Overlay geschlossen/abgebrochen ohne Abschluss: Pending-Flag raeumen, damit ein
+    // spaeter eintreffender (verzoegerter/duplizierter) Callback aus DIESEM oder einem
+    // frueheren Overlay checkout-complete nicht faelschlich zaehlt. Das Telemetrie-
+    // Zeitfenster ist so exakt "Overlay offen".
+    _checkoutCompletePending = false;
   }
 }
 
