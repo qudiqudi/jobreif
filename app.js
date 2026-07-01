@@ -2713,7 +2713,11 @@ function renderFreeQuotaBadges() {
   for (const { id, tier } of badges) {
     const el = $(id);
     if (!el) continue;
-    if (!show) { el.classList.add("hidden"); el.textContent = ""; continue; }
+    // "beste" (Opus) gehoert NICHT zum Gratis-Kontingent — es ist separat bepreist/gegated.
+    // Wie updateFreeTierHint das Gratis-Signal fuer beste ausblendet, blendet auch das Badge
+    // fuer beste aus: sonst zeigte der aufgebraucht-Zustand faelschlich den Standard-Preis,
+    // obwohl der naechste Opus-Test anders (teurer) abgerechnet wird.
+    if (!show || tier === "beste") { el.classList.add("hidden"); el.textContent = ""; continue; }
     if (remaining > 0) {
       el.textContent = remaining === 1
         ? "Heute noch 1 kostenloser Test"
