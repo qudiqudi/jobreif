@@ -2643,6 +2643,17 @@ function freeQuotaVisible() {
 // Euro-Preis eines weiteren (Overflow-)Tests in einer Gratis-Stufe, ueber den bestehenden
 // Preis-Helper (tierPriceCredits; massgeblich bleibt der Server). "beste" gehoert nicht zum
 // Gratis-Kontingent und faellt fuer die Anzeige auf die Standard-Stufe zurueck.
+//
+// Preis-Quelle bewusst: dieser Helper zieht den Preis aus tierPriceCredits — demselben
+// kanonischen Helper, den updateFreeTierHint schon vor diesem Branch fuer den aufgebraucht-
+// Zustand nutzte (in origin/main identisch `formatGuthabenEuro(tierPriceCredits(tier))`).
+// Es wird KEINE neue Client-Preis-Konstante eingefuehrt; die Vorab-Anzeige bleibt eine
+// Schaetzung, massgeblich abgerechnet wird serverseitig. Wichtig fuers Review: das Gratis-
+// Kontingent-Badge zeigt ausschliesslich die Gratis-Stufen an — die einzige separat vom
+// Server bepreiste Stufe (beste/Opus) ist von der Gratis-Anzeige ausgeschlossen (siehe
+// renderFreeQuotaBadges). Daher ist "Preis in den Balance-Contract aufnehmen" fuer dieses
+// Feature nicht anwendbar und wuerde die harte Vorgabe "kein neuer Server-Zustand/API-Call"
+// verletzen.
 function freeTierOverflowEuro(tier) {
   return formatGuthabenEuro(tierPriceCredits(tier === "guenstig" ? "guenstig" : "standard"));
 }
