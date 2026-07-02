@@ -945,6 +945,13 @@ function showView(id) {
   // nicht in andere Kontexte (Folge-Calls, Historie, Analytics) leckt. Vor dem Sync unten, damit
   // ein Wiedereintritt sauber den globalen settings.tier als Default zeigt.
   if (id !== "view-input") formTierOverride = null;
+  // Der Aufladen-Detour (pendingCreateBesteIntent) darf NUR den direkten Weg Eingabe → Einstellungen
+  // → zurueck zur Eingabe ueberleben. Jedes andere Ziel (Home, Historie, Login, ein neuer/anderer
+  // Test …) beendet den Detour und verwirft die Absicht — sonst koennte ein laengst vergessener
+  // Klick auf „Guthaben aufladen" in einer voellig unabhaengigen, spaeteren Sitzung noch still
+  // die teure Opus-Stufe vorauswaehlen (Kosten-Regel: keine Tier-Aktivierung ohne frischen,
+  // erkennbaren Nutzerkontext).
+  if (id !== "view-input" && id !== "view-settings") pendingCreateBesteIntent = false;
   views.forEach((v) => $(v).classList.toggle("hidden", v !== id));
   // P4: Auf der Startseite zeigt die Job-Karte den Fertig-Zustand selbst — der
   // (redundante) "Dein Test ist fertig"-Banner verschwindet dort.
@@ -2494,6 +2501,11 @@ function clearAuthToken() {
   const { authToken, ...rest } = settings;
   settings = rest;
   saveSettings(settings);
+  // Ein noch offener Aufladen-Detour (pendingCreateBesteIntent, P7) gehoert zwingend zum
+  // GERADE abgemeldeten Konto. Ohne diesen Reset koennte er ueber Logout/Login hinweg auf ein
+  // ANDERES Konto anwenden und dort die teure Opus-Stufe voraus waehlen, ohne dass die neue
+  // Sitzung je selbst „Guthaben aufladen" geklickt hat (Kosten-/Konto-Isolation).
+  pendingCreateBesteIntent = false;
 }
 
 // --- Credits / Guthaben (Phase B) ----------------------------------------
