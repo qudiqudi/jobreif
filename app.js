@@ -959,6 +959,10 @@ function syncCreateTierSelect() {
   const g = TIER_CONTROLS.create;
   const sel = $(g.sel);
   if (!sel) return;
+  // Nach einem Aufladen-Detour aus der Erstell-Maske die beste-Absicht einmalig
+  // wiederherstellen (der Detour hatte den transienten Override verworfen). Vor selectedTier(),
+  // damit die Auswahl gleich beste zeigt; updateTierOptions entscheidet dann waehlbar/gesperrt.
+  if (pendingCreateBesteIntent) { formTierOverride = "beste"; pendingCreateBesteIntent = false; }
   sel.value = selectedTier();
   updateTierOptions(g);   // setzt ggf. beste sichtbar/gesperrt und korrigiert den Wert
   updateFreeTierHint(g);
@@ -2497,6 +2501,14 @@ function canAffordBeste() {
 // Historie, Analytics) leckt. settings.tier (CLAUDE.md-Storage-Key) bleibt unveraendert.
 let formTierOverride = null;
 
+// Merker fuer den Top-up-Detour aus der Erstell-Maske: klickt der Nutzer den Aufladen-CTA,
+// waehrend fuer diesen Test „beste" (Opus) beabsichtigt ist, verlaesst showView den Eingabe-
+// Bildschirm und verwirft dabei den transienten formTierOverride (er darf nicht in andere
+// Kontexte lecken). Ohne diesen Merker faende der Nutzer nach dem Aufladen wieder „standard"
+// vor — hier festgehalten und bei der Rueckkehr in die Erstell-Maske (syncCreateTierSelect)
+// einmalig als beste-Absicht wiederhergestellt.
+let pendingCreateBesteIntent = false;
+
 // Aktuell gewaehlte Qualitaetsstufe (Nutzer-ABSICHT, vor dem Opus-Affordability-Clamp): der
 // Pro-Test-Override, sonst der globale settings.tier. EINZIGE Quelle der Wahrheit fuer numMax
 // (Guenstig-Cap), das Opus-Gate, effectiveTier, Analytics und die /api/jobs-Payload — so laeuft
@@ -2572,24 +2584,22 @@ const TIER_OPTION_LABELS = {
   beste: "Beste (Opus) – höchste Qualität",
 };
 
-// Preis-Anker direkt in den Option-Beschriftungen (P7): Opus zeigt bei aktivem Flag immer
-// seinen Preis (NUR der Server-Wert; ohne ihn bleibt die Basis-Beschriftung — keine
-// Client-Konstante in einem echten Preisstring). Standard/Guenstig bekommen ihren Preis erst,
-// wenn das Gratis-Kontingent aufgebraucht ist (freeRemaining === 0) — vorher waere ein Preis
-// irrefuehrend, denn die Tests sind gratis. Ohne Flag (dormant) exakt die Basis-Labels.
+// Preis-Anker direkt in der Opus-Option (P7): bei aktivem Flag zeigt „Beste (Opus)" immer
+// seinen Preis — aber AUSSCHLIESSLICH den vom Server gemeldeten Wert (serverOpusCredits);
+// liegt er (noch) nicht vor, bleibt die Basis-Beschriftung. So steht in einem echten
+// Preisstring nie eine geratene Client-Konstante. Standard/Guenstig bekommen BEWUSST KEIN
+// Preis-Suffix im Label: ihr Overflow-Preis (Kontingent leer) wird allein in updateFreeTierHint
+// gezeigt — das dort nicht zu duplizieren haelt die eine Preis-Quelle konsistent und vermeidet
+// eine zweite (client-konstanten-)Preisflaeche. Ohne Flag (dormant) exakt die Basis-Labels.
 function applyTierOptionPriceLabels(sel) {
   const priced = creditsState.loaded && creditsState.creditsEnabled;
   for (const opt of sel.options) {
     const base = TIER_OPTION_LABELS[opt.value];
     if (!base) continue; // unbekannte/zukuenftige Option: nie anfassen
     let label = base;
-    if (priced) {
-      if (opt.value === "beste") {
-        const c = serverOpusCredits();
-        if (c !== null) label = `${base} · ${formatGuthabenEuro(c)}`;
-      } else if (creditsState.freeRemaining === 0) {
-        label = `${base} · ${formatGuthabenEuro(tierPriceCredits(opt.value))}`;
-      }
+    if (priced && opt.value === "beste") {
+      const c = serverOpusCredits();
+      if (c !== null) label = `${base} · ${formatGuthabenEuro(c)}`;
     }
     if (opt.textContent !== label) opt.textContent = label;
   }
@@ -9540,10 +9550,17 @@ document.querySelectorAll(".btn-topup").forEach((b) => {
 
 // Kompakter Aufladen-CTA direkt am Qualitaets-Select (sichtbar nur, wenn Opus mangels
 // Guthaben gesperrt ist) → bestehender Aufladen-Flow in den Einstellungen.
-["tier-topup-cta", "create-tier-topup-cta"].forEach((id) => {
-  const b = $(id);
-  if (b) b.addEventListener("click", () => openTopupDialog());
-});
+{
+  const settingsCta = $("tier-topup-cta");
+  if (settingsCta) settingsCta.addEventListener("click", () => openTopupDialog());
+  // Der Create-CTA merkt sich zusaetzlich, ob fuer diesen Test gerade Opus beabsichtigt ist,
+  // damit der Detour in die Einstellungen die Auswahl nicht still auf standard fallen laesst.
+  const createCta = $("create-tier-topup-cta");
+  if (createCta) createCta.addEventListener("click", () => {
+    pendingCreateBesteIntent = selectedTier() === "beste";
+    openTopupDialog();
+  });
+}
 
 $("btn-load-models").addEventListener("click", async () => {
   const status = $("local-models-status");
