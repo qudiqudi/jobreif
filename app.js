@@ -4,9 +4,18 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.28.0";
+const APP_VERSION = "1.29.0";
 
 const CHANGELOG = [
+  {
+    version: "1.29.0",
+    date: "03.07.2026",
+    items: [
+      "Neuer, geführter Einstieg: Statt vieler Optionen auf einmal startest du jetzt in klaren Schritten – „Test für meine Stelle“, „Beispiel ansehen“ oder „Module üben“. Die Anmeldung kommt weiterhin erst, wenn dein Test erstellt wird.",
+      "„Üben“ ist jetzt dauerhaft oben im Menü erreichbar (neben „Einstellungen“) – die allgemeinen Eignungsmodule sind so jederzeit einen Klick entfernt.",
+      "Weniger Klicks beim URL-Import: Hast du vor der Anmeldung eine Stellenanzeige per Link eingegeben, wird sie nach dem Anmelden automatisch geladen – du musst „Laden“ nicht noch einmal drücken.",
+    ],
+  },
   {
     version: "1.28.0",
     date: "03.07.2026",
