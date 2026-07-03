@@ -949,7 +949,7 @@ const timer = { intervalId: null, deadline: 0, overtime: false, limitMin: 0 };
 
 const $ = (id) => document.getElementById(id);
 
-const views = ["view-login", "view-onboarding", "view-settings", "view-home", "view-input", "view-job", "view-quiz", "view-result", "view-history", "view-sr"];
+const views = ["view-wizard", "view-login", "view-onboarding", "view-settings", "view-home", "view-input", "view-job", "view-quiz", "view-result", "view-history", "view-sr"];
 
 function showView(id) {
   // Eingabe-Bildschirm verlassen → den TRANSIENTEN Pro-Test-Tier-Override verwerfen, damit er
@@ -986,14 +986,31 @@ function updateGuestInputUi() {
   const guest = hostedNeedsLogin();
   $("guest-value-prop").classList.toggle("hidden", !guest);
   $("guest-escape").classList.toggle("hidden", !guest);
-  // "Meine Stellen"-Ruecksprung fuehrt Erstbesucher nur in eine leere Liste — ausblenden,
-  // damit der Einstieg fokussiert bleibt (Startliste bleibt ueber die Kopfzeile erreichbar).
-  $("btn-input-back").classList.toggle("hidden", guest);
+  // Wizard-Schritt 2: die Feinkonfiguration (Modus/Schwierigkeit/Qualitaet/Gespraechsstufe)
+  // fuer ausgeloggte Besucher ausblenden — hier zaehlt nur Stelle eingeben + "Test erstellen".
+  // Nach der Anmeldung ist der Nutzer kein Gast mehr, der Block erscheint und wird beim
+  // bewussten Bestaetigen ("Test erstellen") mit den vollen Optionen gezeigt. Defensiv:
+  // die Bedienelemente bleiben im DOM (nur display:none), ihre Defaults gelten weiterhin.
+  const adv = $("input-advanced");
+  if (adv) adv.classList.toggle("hidden", guest);
+  // Zurueck-Weg: fuer Gaeste fuehrt er zu Wizard-Schritt 1 (per History-Rueckwaerts, das den
+  // Wizard-Eintrag wiederherstellt), fuer eingerichtete Nutzer wie bisher zu "Meine Stellen".
+  const back = $("btn-input-back");
+  back.classList.remove("hidden");
+  back.textContent = guest ? "‹ Zurück" : "‹ Meine Stellen";
   // Der Wiederhergestellt-Hinweis gilt nur unmittelbar nach dem Login-Ruecksprung;
   // consumePendingJobInputIntoForm blendet ihn danach gezielt wieder ein.
   const hint = $("pending-restored-hint");
   hint.classList.add("hidden");
   hint.textContent = "";
+}
+
+// Onboarding v2, Schritt 1: den gefuehrten Wizard zeigen und den Fokus fuer Tastatur/
+// Screenreader auf die erste Auswahl legen. Rein clientseitig; kein Zustand, kein API-Call.
+function showWizard() {
+  showView("view-wizard");
+  const first = $("wizard-choice-stelle");
+  if (first) first.focus({ preventScroll: true });
 }
 
 // Den Pro-Test-Tier-Selektor (#create-tier) mit der aktuellen Absicht (Override oder globaler
@@ -1097,9 +1114,9 @@ function restoreView(state) {
       // zeigen, sondern auf die Startliste.
       if (key && viewRecordKey(id) === key) showView(id); else goHome();
     }
-    // Einrichtungs-Gates (Login/Onboarding) nicht per Zurueck erneut zeigen, wenn
-    // der Anbieter inzwischen nutzbar eingerichtet ist - dann auf die Startliste.
-    else if ((id === "view-login" || id === "view-onboarding") && isProviderConfigured()) goHome();
+    // Einrichtungs-Gates (Login/Onboarding) und der Gast-Wizard nicht per Zurueck erneut
+    // zeigen, wenn der Anbieter inzwischen nutzbar eingerichtet ist - dann auf die Startliste.
+    else if ((id === "view-login" || id === "view-onboarding" || id === "view-wizard") && isProviderConfigured()) goHome();
     // Zurueck/Vorwaerts IN view-login (Login noch noetig): ueber promptHostedLogin fuehren,
     // nicht direkt showView — sonst umgeht diese Wiederherstellung den Once-pro-Anzeige-Gate
     // der login-shown-Telemetrie (P10).
@@ -4156,6 +4173,18 @@ function consumePendingJobInputIntoForm() {
   const hint = $("pending-restored-hint");
   hint.textContent = "Erfolgreich angemeldet. Deine Eingabe ist wieder da – bitte kurz prüfen und dann auf „Test erstellen“ klicken.";
   hint.classList.remove("hidden");
+  // URL-Doppel-Load-Fix: Hatte der Besucher vor der Anmeldung eine URL eingegeben und "Laden"
+  // ausgeloest (Gast-Pfad: sichern + anmelden, ohne den Anzeigentext zu importieren), dann ist
+  // die URL jetzt wiederhergestellt, aber noch KEIN Text geladen. Den Import EINMAL automatisch
+  // nachholen — derselbe Pfad wie ein Klick auf "Laden". Der Import ist kostenfrei; die
+  // kostenpflichtige Generierung bleibt ein separater, bewusster Klick des Nutzers. Bedingungen
+  // eng gehalten (nur URL-Tab, URL vorhanden, kein Text, angemeldet), damit nichts doppelt oder
+  // unerwartet laeuft; der Klick-Handler schuetzt via actionRunning zusaetzlich gegen Mehrfach-
+  // Ausloesung und zeigt Import-Fehler inline (kein Crash, kein Retry).
+  if (p.tab === "url" && $("job-url").value.trim() && !$("job-text").value.trim() && !hostedNeedsLogin()) {
+    const fetchBtn = $("btn-fetch-url");
+    if (fetchBtn) fetchBtn.click();
+  }
   return true;
 }
 
@@ -9620,12 +9649,11 @@ function goHome() {
 
 // Austritt aus dem Ueben dorthin, wo der Nutzer hergekommen ist: ein eingerichteter
 // Nutzer (angemeldet bzw. BYOK/lokal) landet auf "Meine Stellen"; ein ausgeloggter
-// Hosted-Besucher kehrt zum Investment-first-Einstieg (Stellen-Eingabe mit
-// Wertversprechen und Anmelde-Hinweis) zurueck — nicht in die volle App-Shell und
-// nicht mehr ans blanke Login-Gate (die gehostete Testerstellung selbst bleibt
-// anmeldepflichtig, hostedNeedsLogin()).
+// Hosted-Besucher kehrt zum gefuehrten Wizard-Einstieg (Schritt 1) zurueck — nicht in
+// die volle App-Shell und nicht ans blanke Login-Gate (die gehostete Testerstellung
+// selbst bleibt anmeldepflichtig, hostedNeedsLogin()).
 function leavePractice() {
-  if (hostedNeedsLogin()) showView("view-input");
+  if (hostedNeedsLogin()) showWizard();
   else goHome();
 }
 
@@ -10086,14 +10114,22 @@ $("login-magic-form").addEventListener("submit", async (e) => {
   }
 });
 
-// No-Login-Praxis direkt aus dem Login-Gate: oeffnet den generischen Uebungs-Hub. Rein
-// lokal erzeugt/ausgewertet (startPractice() -> generateUebungByType()), kein Konto und
-// kein Anbieter noetig. WICHTIG: nur die generische Praxis ist no-login – die gehostete,
-// stellenbezogene Testerstellung bleibt hinter der Anmeldung (hostedNeedsLogin()).
-$("btn-login-practice").addEventListener("click", () => openPracticePicker());
+// Onboarding v2, Schritt 1 (Wizard): drei gleichwertige Einstiege fuer ausgeloggte Besucher.
+// Alle rein lokal/clientseitig, kein API-Call: "Stelle" fuehrt zu Schritt 2 (Eingabe), "Beispiel"
+// spielt den Beispieltest ab (startDemoTest), "Ueben" oeffnet den generischen Uebungs-Hub.
+$("wizard-choice-stelle").addEventListener("click", () => {
+  showView("view-input");
+  const url = $("job-url");
+  if (url && !url.classList.contains("hidden")) url.focus({ preventScroll: true });
+});
+$("wizard-choice-demo").addEventListener("click", startDemoTest);
+$("wizard-choice-ueben").addEventListener("click", () => openPracticePicker());
+
+// Kanonischer Uebungs-Einstieg in der Kopfzeile ("Üben"), fuer ein- UND ausgeloggte Nutzer.
+// Ersetzt die frueheren Inline-Uebungs-Buttons am Login-Gate und in der Gast-Eingabe.
+$("btn-practice").addEventListener("click", () => openPracticePicker());
 
 // Beispieltest ohne Login: lokal abspielen (kein API-Call/Login/Turnstile).
-$("btn-demo-test").addEventListener("click", startDemoTest);
 // Abschluss-CTA: eigenen Test erstellen -> zurueck ans Login-Gate (Erstellen ist
 // anmeldepflichtig). demoMode explizit loesen, bevor der normale Fluss weiterlaeuft.
 $("btn-demo-end-create").addEventListener("click", () => {
@@ -10145,9 +10181,8 @@ $("link-login-settings").addEventListener("click", (e) => {
   showView("view-settings");
 });
 
-// Investment-first-Einstieg: dieselben No-Login-Wege wie am Anmelde-Gate, direkt auf
-// der Stellen-Eingabe fuer ausgeloggte Besucher (Sichtbarkeit: updateGuestInputUi).
-$("btn-guest-practice").addEventListener("click", () => openPracticePicker());
+// Wizard-Schritt 2: dezenter No-Login-Weg fuer ausgeloggte Besucher (eigener Schluessel/lokal).
+// Der Uebungs-Einstieg wanderte in die Kopfzeile ("Üben") und in Wizard-Schritt 1.
 $("link-guest-settings").addEventListener("click", (e) => {
   e.preventDefault();
   settingsOrigin = "gate";
@@ -11654,9 +11689,9 @@ function routeInitialView() {
   if (consumeUebenDeepLink()) return; // Uebungs-Deep-Link hat Vorrang (lokal, ohne Gate)
   const provider0 = settings.provider || "hosted";
   if (provider0 === "hosted" && !settings.authToken) {
-    // Investment-first: Erstbesucher sehen zuerst die Stellen-Eingabe mit Wertversprechen
-    // und den No-Login-Wegen statt einer Login-Wand; die Anmeldung kommt erst beim Klick
-    // auf "Test erstellen" bzw. "Laden" (generateQuiz/URL-Import sichern die Eingabe).
+    // Onboarding v2: Erstbesucher sehen einen gefuehrten Wizard (Schritt 1: Womit starten?)
+    // statt einer textlastigen Eingabemaske oder einer Login-Wand; die Anmeldung kommt erst
+    // beim Klick auf "Test erstellen" bzw. "Laden" (generateQuiz/URL-Import sichern die Eingabe).
     // Nur wenn gerade ein Login-Redirect mit Meldung zurueckkam (Fehler, abgebrochene
     // oder abgelaufene Anmeldung), weiter das Login-Gate zeigen, damit die Meldung
     // sichtbar ist und der Nutzer es direkt erneut versuchen kann.
@@ -11665,7 +11700,7 @@ function routeInitialView() {
       _authRedirectMsg = "";
       return;
     }
-    showView("view-input");
+    showWizard();
     return;
   }
   _authRedirectMsg = "";

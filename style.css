@@ -353,24 +353,40 @@ input:focus, select:focus, textarea:focus {
 .space-between { justify-content: space-between; }
 
 /* Beispieltest ohne Login: hervorgehobener Einstieg auf der Login-Karte. */
-.demo-callout {
-  margin: 1rem 0 1.25rem;
-  padding: 1rem;
-  border: 1px solid var(--primary-soft-border);
+/* Onboarding v2 – Wizard-Schritt 1: drei gleichgewichtige, grosse Auswahl-Buttons.
+   Auf Mobile stapeln sie ohnehin (flex-column, volle Breite) – kein horizontales Overflow. */
+.wizard-lead { margin-top: 0.35rem; }
+.wizard-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+.wizard-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  width: 100%;
+  text-align: left;
+  padding: 1.05rem 1.15rem;
   border-radius: var(--radius);
-  background: var(--primary-soft);
+  border: 1px solid var(--border-strong);
+  background: var(--card);
 }
-.demo-callout-lead {
-  margin: 0 0 0.25rem;
+.wizard-choice:hover { background: var(--primary-soft); border-color: var(--primary); }
+.wizard-choice-title {
+  font-family: var(--display);
   font-weight: 700;
-  color: var(--accent-text);
+  font-size: 1.05rem;
+  color: var(--text-strong, var(--text));
 }
-.demo-callout-text {
-  margin: 0 0 0.75rem;
-  font-size: 0.9rem;
-  color: var(--text);
+.wizard-choice-sub {
+  font-weight: 500;
+  font-size: 0.88rem;
+  color: var(--muted, #6b5d57);
+  line-height: 1.4;
 }
-.demo-cta { width: 100%; }
 
 .field-inline {
   display: flex;

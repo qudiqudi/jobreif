@@ -115,11 +115,35 @@
     <div class="header-actions">
       <button id="btn-theme" class="ghost" type="button" aria-label="Farbschema: Auto"></button>
       <button id="btn-home" class="ghost" title="Meine Stellen">Meine Stellen</button>
+      <button id="btn-practice" class="ghost" title="Module üben">Üben</button>
       <button id="btn-settings" class="ghost" title="Einstellungen">Einstellungen</button>
     </div>
   </header>
 
   <main>
+    <!-- Onboarding v2: gefuehrter Erststart fuer ausgeloggte Besucher im gehosteten Modus.
+         Ein Fokus je Schritt, minimal Text. Rein clientseitige Ansicht (kein neuer Zustand);
+         inszeniert die bestehenden Flows (Eingabe/Beispiel/Ueben) als Schritt 1. Eingeloggte,
+         BYOK- und lokale Nutzer sehen den Wizard nie (routeInitialView). -->
+    <section id="view-wizard" class="card hidden" aria-labelledby="wizard-title">
+      <h2 id="wizard-title">Womit möchtest du starten?</h2>
+      <p class="hint wizard-lead">Kostenlos und zum Ausprobieren ohne Anmeldung – such dir einfach einen Einstieg aus.</p>
+      <div class="wizard-choices">
+        <button id="wizard-choice-stelle" type="button" class="wizard-choice">
+          <span class="wizard-choice-title">Test für meine Stelle</span>
+          <span class="wizard-choice-sub">Stellenanzeige einfügen und einen passenden Übungstest erstellen.</span>
+        </button>
+        <button id="wizard-choice-demo" type="button" class="wizard-choice">
+          <span class="wizard-choice-title">Erst ein Beispiel ansehen</span>
+          <span class="wizard-choice-sub">Einen kompletten Beispieltest mit Lösungen und Quellen durchspielen – ohne Anmeldung.</span>
+        </button>
+        <button id="wizard-choice-ueben" type="button" class="wizard-choice">
+          <span class="wizard-choice-title">Nur Module üben</span>
+          <span class="wizard-choice-sub">Zahlenreihen, Konzentration und Figuren sofort üben – ohne Anmeldung.</span>
+        </button>
+      </div>
+    </section>
+
     <!-- Anmeldung (gehosteter Modus erfordert ein Konto) -->
     <section id="view-login" class="card hidden">
       <!-- Zwei Framings, per JS umgeschaltet (promptHostedLogin): der generische Titel fuer
@@ -129,11 +153,6 @@
       <h2 id="login-title-pending" class="hidden">Dein Test ist gleich fertig</h2>
       <p id="login-intro-default">jobreif.de macht aus jeder Stellenanzeige einen Übungs-Einstellungstest und gibt dir danach Feedback zu deinen Antworten. Für den kostenlosen gehosteten Modus melde dich einmal an – mit Google oder über einen Anmeldelink an deine E-Mail.</p>
       <p id="login-intro-pending" class="hidden">Melde dich einmal kostenlos an, damit wir deinen Test dir zuordnen können – mit Google oder über einen Anmeldelink an deine E-Mail. Deine Eingabe bleibt gespeichert und ist nach der Anmeldung wieder da.</p>
-      <div class="demo-callout">
-        <p class="demo-callout-lead">Neugierig, wie ein Test aussieht?</p>
-        <p class="demo-callout-text">Spiel einen kompletten Beispieltest mit Lösungen, Erklärungen und Quellen durch – ganz ohne Konto und ohne Kosten.</p>
-        <button id="btn-demo-test" type="button" class="primary demo-cta">So sieht ein Test aus – Beispiel durchspielen</button>
-      </div>
       <div class="row">
         <button id="btn-login-google" type="button" class="primary">Mit Google anmelden</button>
       </div>
@@ -150,10 +169,6 @@
       <p id="login-msg" class="hint" role="status"></p>
       <p class="hint">Bei der Anmeldung speichern wir deine E-Mail-Adresse, um dein Konto wiederzuerkennen – Details im <a href="#" id="link-datenschutz-login">Datenschutzhinweis</a>.</p>
       <hr class="settings-divider">
-      <p class="hint">Lieber erst ausprobieren? Übe die allgemeinen Eignungsmodule (Zahlenreihen, Konzentration, Figuren) sofort und ohne Anmeldung. Einen stellenbezogenen Test aus einer Anzeige erstellst du nach der kostenlosen Anmeldung.</p>
-      <div class="row">
-        <button id="btn-login-practice" type="button" class="ghost">Ohne Anmeldung Module üben</button>
-      </div>
       <p class="hint">Ganz ohne Konto arbeiten? Mit einem eigenen API-Schlüssel oder einem lokalen Modell läuft alles ohne Anmeldung. <a href="#" id="link-login-settings">Zu den Einstellungen</a></p>
     </section>
 
@@ -421,6 +436,12 @@
         <p class="hint">Den Beschreibungstext der Stellenanzeige hier einfügen. Bei LinkedIn-Anzeigen: Anzeige öffnen, den Beschreibungstext markieren, kopieren und hier einfügen.</p>
       </div>
 
+      <!-- Feinkonfiguration (Modus/Schwierigkeit/Qualitaet/Gespraechsstufe). Fuer ausgeloggte
+           Besucher im Wizard-Schritt 2 ausgeblendet (updateGuestInputUi): dort zaehlt nur
+           Stelle eingeben + "Test erstellen"; die Feinjustierung folgt nach der Anmeldung,
+           wenn der Nutzer die wiederhergestellte Eingabe ohnehin bewusst bestaetigt.
+           Eingeloggte/BYOK/lokale Nutzer sehen den Block unveraendert. -->
+      <div id="input-advanced">
       <label id="label-mode">Modus</label>
       <div class="mode-row" role="radiogroup" aria-labelledby="label-mode">
         <label class="mode-option">
@@ -466,6 +487,7 @@
         <option value="assessment">Assessment-Center</option>
       </select>
       <p class="hint">Schneidet die Fragen auf eine bestimmte Interviewrunde zu (z.&nbsp;B. breiteres Screening beim Telefoninterview, mehr Verhalten und Szenarien im Assessment-Center). Wirkt nur im gehosteten Modus.</p>
+      </div><!-- /#input-advanced -->
 
       <div class="row space-between">
         <div class="field-inline">
@@ -481,15 +503,12 @@
         <button id="btn-generate" class="primary">Test erstellen</button>
       </div>
 
-      <!-- Investment-first-Einstieg: dieselben No-Login-Wege wie am Anmelde-Gate, direkt
-           sichtbar fuer ausgeloggte Besucher (updateGuestInputUi blendet den Block sonst aus). -->
+      <!-- Wizard-Schritt 2: dezenter Sekundaer-Weg fuer ausgeloggte Besucher (updateGuestInputUi
+           blendet den Block sonst aus). Der Uebungs-Einstieg wanderte in die Kopfzeile ("Üben")
+           und in Wizard-Schritt 1 – hier nur noch der No-Login-Weg mit eigenem Schluessel/lokal. -->
       <div id="guest-escape" class="hidden">
         <hr class="settings-divider">
-        <p class="hint">Lieber erst ausprobieren? Übe die allgemeinen Eignungsmodule (Zahlenreihen, Konzentration, Figuren) sofort und ohne Anmeldung.</p>
-        <div class="row">
-          <button id="btn-guest-practice" type="button" class="ghost">Ohne Anmeldung Module üben</button>
-        </div>
-        <p class="hint">Ganz ohne Konto arbeiten? Mit einem eigenen API-Schlüssel oder einem lokalen Modell läuft alles ohne Anmeldung. <a href="#" id="link-guest-settings">Zu den Einstellungen</a></p>
+        <p class="hint">Ganz ohne Konto arbeiten? Mit einem eigenen API-Schlüssel oder einem lokalen Modell läuft alles ohne Anmeldung. <a href="#" id="link-guest-settings">Mit eigenem API-Schlüssel/lokalem Modell (ohne Anmeldung)</a></p>
       </div>
     </section>
 
