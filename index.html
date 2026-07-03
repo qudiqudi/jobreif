@@ -13,10 +13,9 @@
        muessen hier ergaenzt werden, sonst blockt der Browser sie.
        style-src bewusst OHNE 'unsafe-inline' (F7): die App hat keine inline-<style>/
        style="..."-Attribute mehr, dynamisches Styling laeuft ueber el.style.* (CSSOM,
-       von CSP nicht erfasst). CAVEAT vor Credits-Go-Live: das Paddle-Checkout-Overlay
-       unter dieser strengen style-src verifizieren — injiziert Paddle inline-<style>
-       in die Eltern-Seite, hier 'unsafe-inline' wieder ergaenzen (Paddle ist derzeit
-       dormant, siehe jobreif-credits-golive). -->
+       von CSP nicht erfasst). Hinweis: injiziert das Paddle-Checkout-Overlay
+       inline-<style> in die Eltern-Seite, muss style-src hier um 'unsafe-inline'
+       ergaenzt werden. -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-AS03majGGAgYGEK0v1Hwe170PaXGMA1A1goCTG9ZANs=' https://challenges.cloudflare.com https://*.paddle.com; style-src 'self' https://*.paddle.com; img-src 'self' https://*.paddle.com; font-src 'self' https://*.paddle.com; connect-src 'self' https://api.jobreif.de https://api.anthropic.com https://api.openai.com https://api.deepseek.com https://challenges.cloudflare.com https://*.paddle.com http://localhost:* http://127.0.0.1:*; frame-src https://challenges.cloudflare.com https://*.paddle.com; manifest-src 'self'; worker-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'">
   <meta name="theme-color" content="#c5543a" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#3a2a25" media="(prefers-color-scheme: dark)">
@@ -55,7 +54,7 @@
       if (__t === "light" || __t === "dark") document.documentElement.dataset.theme = __t;
     } catch (e) {}
   </script>
-  <!-- Cloudflare Turnstile (Bot-/Missbrauchsschutz im Hosted-Modus, Plan A.2.5/A.3.4).
+  <!-- Cloudflare Turnstile (Bot-/Missbrauchsschutz im Hosted-Modus).
        Explizites Rendern: app.js erzeugt/fuehrt das Widget bei Bedarf aus. Ohne
        gesetzten Sitekey passiert nichts (BYOK/lokal brauchen kein Turnstile). -->
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>

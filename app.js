@@ -2781,9 +2781,9 @@ async function pollBalanceAfterPurchase() {
 let _topupBusy = false;
 async function startTopup(euros) {
   if (_topupBusy) return;
-  // F-4b: Aufladen ist inert, solange Credits nicht freigeschaltet sind — spiegelt das
-  // serverseitige Gate von /api/checkout-intent. Ohne bestaetigtes Flag NICHTS einleiten
-  // (kein Intent, kein Paddle-Overlay), damit der Kaufpfad dormant bleibt, bis Credits live sind.
+  // Aufladen ist inert, solange die Serverkonfiguration den Kaufpfad nicht aktiviert —
+  // spiegelt das serverseitige Gate von /api/checkout-intent. Ohne bestaetigtes Flag NICHTS
+  // einleiten (kein Intent, kein Paddle-Overlay).
   if (!creditsState.creditsEnabled) return;
   if (!settings.authToken) { promptHostedLogin(); return; }
   _topupBusy = true;
@@ -3087,7 +3087,7 @@ async function getTurnstileToken(action, cData) {
   });
 }
 
-// Stabile, nutzerfreundliche Meldungen fuer die Hosted-Fehlercodes (Plan A.3.5). Der optionale
+// Stabile, nutzerfreundliche Meldungen fuer die Hosted-Fehlercodes. Der optionale
 // code stammt aus dem Fehler-BODY (z. B. bei 402) und erlaubt eine praezisere Meldung als der
 // reine Status. Unbekannte/fehlende codes fallen defensiv auf die Status-Meldung zurueck.
 function hostedErrorMessage(status, code) {
