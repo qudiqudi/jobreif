@@ -1089,6 +1089,10 @@ function restoreView(state) {
     // Einrichtungs-Gates (Login/Onboarding) nicht per Zurueck erneut zeigen, wenn
     // der Anbieter inzwischen nutzbar eingerichtet ist - dann auf die Startliste.
     else if ((id === "view-login" || id === "view-onboarding") && isProviderConfigured()) goHome();
+    // Zurueck/Vorwaerts IN view-login (Login noch noetig): ueber promptHostedLogin fuehren,
+    // nicht direkt showView — sonst umgeht diese Wiederherstellung den Once-pro-Anzeige-Gate
+    // der login-shown-Telemetrie (P10).
+    else if (id === "view-login") promptHostedLogin();
     else showView(id);
   } finally {
     _poppingHistory = false;
@@ -2477,6 +2481,32 @@ function trackEvent(flow) {
   } catch { /* egal */ }
 }
 
+// Funnel-Marker "first-test": die allererste erfolgreich abgeschlossene Test-
+// Generierung DIESES Browsers — anonym, es geht nur der Flow-Name raus (kein
+// Identifier, gleicher Kanal wie trackEvent). Einmal-Marker in localStorage;
+// Bestandsnutzer (History enthaelt schon Stellen) werden beim Laden still
+// markiert, damit ihre naechste Generierung nicht faelschlich als
+// Erstaktivierung zaehlt. Komplett defensiv: Storage-Fehler → kein Event
+// (lieber unterzaehlen als doppelt zaehlen), nie ein Wurf nach aussen.
+const FIRST_TEST_TRACKED_KEY = "bewerbungstool.firstTestTracked";
+function seedFirstTestMarker() {
+  try {
+    if (localStorage.getItem(FIRST_TEST_TRACKED_KEY)) return;
+    const jobs = loadHistory().jobs;
+    if (Array.isArray(jobs) && jobs.length > 0) localStorage.setItem(FIRST_TEST_TRACKED_KEY, "1");
+  } catch { /* egal */ }
+}
+seedFirstTestMarker();
+function trackFirstTest() {
+  try {
+    if (localStorage.getItem(FIRST_TEST_TRACKED_KEY)) return;
+    // Erst den Marker setzen, dann senden: schlaegt setItem fehl, wird NICHT
+    // gesendet — so kann derselbe Browser nie mehrfach als "erster Test" zaehlen.
+    localStorage.setItem(FIRST_TEST_TRACKED_KEY, "1");
+    trackEvent("first-test");
+  } catch { /* egal */ }
+}
+
 // --- Konto / Auth (Phase B, Schritt 1) -----------------------------------
 // Rein additiv: ohne Anmeldung laeuft alles wie bisher (anonymer Hosted-Modus). Das
 // Session-Token liegt additiv in settings.authToken; es wird, wenn vorhanden, als Bearer
@@ -3007,12 +3037,29 @@ function loadPaddle() {
   return _paddleReady;
 }
 
+// Once-Flag fuer die checkout-complete-Telemetrie: wird beim tatsaechlichen Oeffnen des
+// Paddle-Overlays gesetzt und beim ERSTEN checkout.completed konsumiert (Entprellung
+// gegen wiederholte Paddle-Callbacks). Betrifft NUR die Telemetrie, nicht die Gutschrift.
+let _checkoutCompletePending = false;
+
 // Paddle-Events. Nach erfolgreichem Checkout das Guthaben nachziehen (die Gutschrift macht der
 // Webhook serverseitig + asynchron → kurz pollen, bis der Stand steigt).
 function onPaddleEvent(ev) {
   if (ev && ev.name === "checkout.completed") {
+    // Funnel: erfolgreicher Checkout (nur der Flow-Name, keine Betrags-/Kaufdaten).
+    // Idempotent pro geoeffnetem Checkout: Paddle kann checkout.completed theoretisch
+    // mehrfach liefern (Callback-Wiederholung); der Once-Flag verhindert Ueberzaehlung.
+    // Der Geld-/Gutschrift-Pfad bleibt davon unberuehrt (pollBalanceAfterPurchase laeuft
+    // weiter bei jedem completed — nur die Telemetrie wird entprellt).
+    if (_checkoutCompletePending) { _checkoutCompletePending = false; trackEvent("checkout-complete"); }
     setTopupMsg("Zahlung erhalten. Dein Guthaben wird aktualisiert …");
     pollBalanceAfterPurchase();
+  } else if (ev && (ev.name === "checkout.closed" || ev.name === "checkout.error")) {
+    // Overlay geschlossen/abgebrochen ohne Abschluss: Pending-Flag raeumen, damit ein
+    // spaeter eintreffender (verzoegerter/duplizierter) Callback aus DIESEM oder einem
+    // frueheren Overlay checkout-complete nicht faelschlich zaehlt. Das Telemetrie-
+    // Zeitfenster ist so exakt "Overlay offen".
+    _checkoutCompletePending = false;
   }
 }
 
@@ -3052,6 +3099,9 @@ async function startTopup(euros) {
   if (!creditsState.creditsEnabled) return;
   if (!settings.authToken) { promptHostedLogin(); return; }
   _topupBusy = true;
+  // Funnel: Aufladen wurde tatsaechlich eingeleitet (nach allen Guards; Doppelklicks
+  // fängt _topupBusy ab). Ob der Checkout durchlaeuft, zaehlt checkout-complete.
+  trackEvent("topup-start");
   try {
     setTopupMsg("Aufladen wird vorbereitet …");
     let ud;
@@ -3073,6 +3123,9 @@ async function startTopup(euros) {
     catch { setTopupMsg("Aufladen ist gerade nicht verfügbar. Bitte später erneut versuchen."); return; }
 
     setTopupMsg("");
+    // Ab hier wird das Overlay wirklich geoeffnet → checkout-complete darf genau EINMAL
+    // fuer diesen Checkout gezaehlt werden (onPaddleEvent konsumiert das Flag).
+    _checkoutCompletePending = true;
     Paddle.Checkout.open({
       items: [{ priceId, quantity: 1 }],
       customData: { ud }, // signierter Intent — der Webhook entnimmt die uid daraus
@@ -3232,7 +3285,7 @@ async function consumeAuthRedirect() {
       // Erfolg nur bei tatsaechlich vorhandenem Token-String — ein 2xx ohne
       // Token ist kein gueltiges Login.
       const d = r.ok ? await r.json().catch(() => null) : null;
-      if (d && typeof d.token === "string" && d.token) { setAuthToken(d.token); _freshLogin = true; _authRedirectMsg = "Erfolgreich angemeldet."; }
+      if (d && typeof d.token === "string" && d.token) { setAuthToken(d.token); _freshLogin = true; trackEvent("login-success"); _authRedirectMsg = "Erfolgreich angemeldet."; }
       else _authRedirectMsg = "Die Anmeldung ist fehlgeschlagen oder abgelaufen. Bitte erneut versuchen.";
     } catch { _authRedirectMsg = "Anmeldung fehlgeschlagen. Bitte erneut versuchen."; }
     return true;
@@ -3245,7 +3298,7 @@ async function consumeAuthRedirect() {
     });
     // Erfolg nur bei tatsaechlich vorhandenem Token-String (2xx ohne Token zaehlt nicht).
     const d = r.ok ? await r.json().catch(() => null) : null;
-    if (d && typeof d.token === "string" && d.token) { setAuthToken(d.token); _freshLogin = true; _authRedirectMsg = "Erfolgreich angemeldet."; }
+    if (d && typeof d.token === "string" && d.token) { setAuthToken(d.token); _freshLogin = true; trackEvent("login-success"); _authRedirectMsg = "Erfolgreich angemeldet."; }
     else _authRedirectMsg = "Der Anmeldelink ist ungültig oder abgelaufen.";
   } catch { _authRedirectMsg = "Anmeldung fehlgeschlagen. Bitte erneut versuchen."; }
   return true;
@@ -5197,6 +5250,9 @@ async function pollActiveJob() {
       const v = currentView();
       if (v !== "view-home" && v !== "view-quiz") showJobReadyBanner();
     }
+    // Funnel: allererste erfolgreich abgeschlossene Generierung dieses Browsers
+    // (Einmal-Marker in trackFirstTest — wiederholte done-Polls zaehlen nicht).
+    trackFirstTest();
     // Bezahlter Opus-Job fertig → Guthaben-Cache nachziehen (Anzeige + naechste Opus-Pruefung).
     refreshCreditsAfterJob(job.ctx);
   } else if (data.status === "done") {
@@ -9941,6 +9997,10 @@ function promptHostedLogin(msg) {
   $("login-title-pending").classList.toggle("hidden", !pending);
   $("login-intro-default").classList.toggle("hidden", pending);
   $("login-intro-pending").classList.toggle("hidden", !pending);
+  // Funnel: einmal pro tatsaechlicher ANZEIGE zaehlen — nur wenn der Login-Screen
+  // gerade nicht sichtbar ist (wiederholte Aufrufe/Meldungs-Updates zaehlen nicht).
+  // Feuert vor dem Login, trackEvent braucht dafuer kein Token (fire-and-forget).
+  try { if ($("view-login").classList.contains("hidden")) trackEvent("login-shown"); } catch { /* egal */ }
   $("login-email").value = "";
   $("login-msg").textContent = msg || "";
   showView("view-login");
@@ -10961,6 +11021,8 @@ function openOverflowConfirm({ tier, priceCredits, lead, credits }) {
     affordable: null, // zuletzt gerenderter Zustand (fuer den Fokus-Wechsel beim Umschalten)
   };
   setOverflowTopupMsgText("");
+  // Funnel: Overflow-/Bezahl-Rueckfrage wurde tatsaechlich angezeigt (pro Oeffnung).
+  trackEvent("overflow-shown");
   overflowConfirmReturnFocus = document.activeElement;
   renderOverflowConfirmState();
   $("overflow-modal").classList.remove("hidden");
