@@ -4,9 +4,20 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.27.11";
+const APP_VERSION = "1.28.0";
 
 const CHANGELOG = [
+  {
+    version: "1.28.0",
+    date: "03.07.2026",
+    items: [
+      "Schnellerer Einstieg: Du kannst deine Wunsch-Stelle jetzt sofort eingeben und den Test einstellen – die kostenlose Anmeldung kommt erst, wenn dein Test erstellt wird. Deine Eingabe bleibt dabei erhalten und ist nach der Anmeldung wieder da.",
+      "Beispieltest ohne Anmeldung: Über „So sieht ein Test aus“ spielst du einen kompletten Beispieltest mit Lösungen, Erklärungen und Quellen durch – ganz ohne Konto.",
+      "Persönlichere Tests: Nach der ersten Anmeldung kannst du in einem kurzen, überspringbaren Schritt angeben, wie du zu deiner Stelle kommst (Fachkraft, Quereinstieg oder Aufstieg). Das fließt in die Gestaltung deiner Tests ein und lässt sich jederzeit in den Einstellungen ändern.",
+      "Wartezeit sinnvoll nutzen: Während dein Test erstellt wird, kannst du jetzt eine kurze Übung machen (z. B. Zahlenreihen) – sobald dein Test fertig ist, wirst du benachrichtigt.",
+      "Gezielt weiterüben: Nach der Auswertung schlägt dir das Tool deine Schwachstellen-Themen vor und führt dich direkt zu einem vertiefenden Test.",
+    ],
+  },
   {
     version: "1.27.11",
     date: "30.06.2026",
