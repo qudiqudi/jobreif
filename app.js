@@ -10954,7 +10954,6 @@ $("btn-home").addEventListener("click", goHome);
 $("btn-history-back").addEventListener("click", () => history.back());
 // Spaced Repetition (Plan 3.8)
 $("sr-card-btn").addEventListener("click", openSrReview);
-$("practice-card-btn").addEventListener("click", openPracticePicker);
 $("btn-sr-back").addEventListener("click", () => history.back());
 
 // Startliste und Stellen-Subpage
