@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.29.1";
+const APP_VERSION = "1.29.2";
 
 const CHANGELOG = [
+  {
+    version: "1.29.2",
+    date: "03.07.2026",
+    items: [
+      "Fehler behoben: Auf „Meine Stellen“ zeigte eine Stellenkarte nach einem gerade ausgewerteten Test mitunter noch die alte Versuchszahl und Stufe, und der „Test fortsetzen“-Hinweis blieb dort stehen, obwohl der Test bereits ausgewertet war. Die Startliste wird jetzt zuverlässig aktualisiert.",
+    ],
+  },
   {
     version: "1.29.1",
     date: "03.07.2026",
@@ -5249,8 +5256,13 @@ async function startHostedGeneration(ctx) {
     markCreditsDirtyIfPaid(tierSent);
     if (paidOverflow || creditsState.creditsEnabled) refreshBalance();
     hideLoading();
+    // Startliste frisch AUFBAUEN, nicht nur einblenden: dies ist der einzige Pfad, der
+    // view-home ohne renderHome zeigte. Sonst behaelt die Liste nach der Rueckkehr aus
+    // einem gerade ausgewerteten Test veraltete Versuchszahlen/Level UND einen bereits
+    // erledigten "Test fortsetzen"-Banner (Stale-UI). renderHome() stellt die pending
+    // Aktiv-Job-Karte gleich mit her (loadActiveJob wurde oben soeben gesichert).
+    renderHome();
     showView("view-home");
-    renderActiveJobCard("pending");
     // Konnte der Zeiger nicht dauerhaft gespeichert werden (Speicher voll/blockiert),
     // laeuft der Job dank In-Memory-Spiegel im aktuellen Tab weiter — ein Reload oder
     // Tabwechsel wuerde ihn aber verlieren. Den Nutzer darauf hinweisen.
