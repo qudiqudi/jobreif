@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.29.0";
+const APP_VERSION = "1.29.1";
 
 const CHANGELOG = [
+  {
+    version: "1.29.1",
+    date: "03.07.2026",
+    items: [
+      "Aufgeräumtere Startseite: „Üben“ findest du jetzt dauerhaft oben im Menü – die doppelte Übungs-Karte auf „Meine Stellen“ ist entfernt.",
+    ],
+  },
   {
     version: "1.29.0",
     date: "03.07.2026",
