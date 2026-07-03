@@ -947,9 +947,27 @@ function showView(id) {
   if (id === "view-input") {
     syncCreateTierSelect();
     applySourceUiForProvider();   // URL-Tab nur im Hosted-Modus anbieten
+    updateGuestInputUi();         // Investment-first: Gast-Elemente je nach Anmeldezustand
     const ni = $("num-questions"); if (ni && ni.refreshMax) ni.refreshMax();
   }
   syncHistory(id);
+}
+
+// Investment-first-Elemente der Eingabe-Ansicht: Wertversprechen und No-Login-Wege nur
+// fuer ausgeloggte Besucher im gehosteten Modus; eingeloggte sowie BYOK-/lokale Nutzer
+// sehen davon nichts (fuer sie bleibt die Ansicht exakt wie bisher).
+function updateGuestInputUi() {
+  const guest = hostedNeedsLogin();
+  $("guest-value-prop").classList.toggle("hidden", !guest);
+  $("guest-escape").classList.toggle("hidden", !guest);
+  // "Meine Stellen"-Ruecksprung fuehrt Erstbesucher nur in eine leere Liste — ausblenden,
+  // damit der Einstieg fokussiert bleibt (Startliste bleibt ueber die Kopfzeile erreichbar).
+  $("btn-input-back").classList.toggle("hidden", guest);
+  // Der Wiederhergestellt-Hinweis gilt nur unmittelbar nach dem Login-Ruecksprung;
+  // consumePendingJobInputIntoForm blendet ihn danach gezielt wieder ein.
+  const hint = $("pending-restored-hint");
+  hint.classList.add("hidden");
+  hint.textContent = "";
 }
 
 // Den Pro-Test-Tier-Selektor (#create-tier) mit der aktuellen Absicht (Override oder globaler
@@ -3659,6 +3677,12 @@ function saveDraft() {
   } catch {
     // localStorage voll oder gesperrt: Entwurf ist nur Komfort, nicht kritisch
   }
+  // Investment-first: Ist bereits eine Eingabe fuer den Login gesichert, sie mit dem
+  // aktuellen Formular gleichziehen, damit nach dem Login der NEUESTE Stand wiederkommt
+  // und ein aelterer Snapshot einen zwischenzeitlich bearbeiteten Entwurf nicht
+  // ueberschreibt. Aktualisiert NUR eine schon vorhandene Sicherung, legt nie eine neue
+  // an (das bleibt den Login-ausloesenden Aktionen vorbehalten).
+  refreshPendingJobInputIfPresent();
 }
 
 // Entwurf verzoegert sichern, damit nicht jeder Tastendruck schreibt
@@ -3696,6 +3720,86 @@ function restoreDraft() {
   // Anbieter-Gate zuletzt: ausserhalb des Hosted-Modus gibt es keinen URL-Tab,
   // dann immer auf „Text einfügen“ stehen (auch wenn der Entwurf "url" war).
   applySourceUiForProvider();
+}
+
+// --- Investment-first: Stellen-Eingabe vor dem Login sichern ---------------
+// Der Erstbesuch fuehrt zuerst zur Stellen-Eingabe; die Anmeldung kommt erst beim Klick
+// auf "Test erstellen" bzw. "Laden". Damit die Eingabe den Login-Redirect ueberlebt,
+// wird sie hier gesichert. Bewusst localStorage statt sessionStorage: der Anmeldelink
+// aus der E-Mail oeffnet oft einen NEUEN Tab, und sessionStorage ist tab-gebunden.
+// Eigener, NEUER Key mit Zeitstempel; nach ~1 Stunde oder nach Gebrauch wird
+// aufgeraeumt. Bestehende Storage-Keys (settings/history/draft) bleiben unberuehrt.
+const PENDING_JOB_INPUT_KEY = "bewerbungstool.pendingJobInput";
+const PENDING_JOB_INPUT_TTL_MS = 60 * 60 * 1000; // 1 Stunde
+
+function savePendingJobInput() {
+  try {
+    const url = $("job-url").value;
+    const text = $("job-text").value;
+    if (!url.trim() && !text.trim()) return; // nichts eingegeben -> nichts zu sichern
+    localStorage.setItem(PENDING_JOB_INPUT_KEY, JSON.stringify({
+      url,
+      text,
+      // Aktiver Tab wie beim Entwurf: source-url sichtbar -> URL-Tab, sonst Text-Tab
+      tab: $("source-url").classList.contains("hidden") ? "text" : "url",
+      ts: Date.now(),
+    }));
+  } catch { /* localStorage voll oder gesperrt: nur Komfort, nicht kritisch */ }
+}
+
+// Liefert die gesicherte Eingabe oder null; abgelaufene oder kaputte Eintraege
+// werden dabei gleich entfernt.
+function readPendingJobInput() {
+  let p = null;
+  try {
+    p = JSON.parse(localStorage.getItem(PENDING_JOB_INPUT_KEY));
+  } catch {
+    clearPendingJobInput();
+    return null;
+  }
+  if (p === null) return null; // Key existiert nicht (Normalfall)
+  if (typeof p !== "object" || !Number.isFinite(p.ts) || Date.now() - p.ts > PENDING_JOB_INPUT_TTL_MS) {
+    clearPendingJobInput();
+    return null;
+  }
+  return p;
+}
+
+function clearPendingJobInput() {
+  try { localStorage.removeItem(PENDING_JOB_INPUT_KEY); } catch { /* egal */ }
+}
+
+// Eine BEREITS gesicherte Eingabe mit dem aktuellen Formular aktualisieren, solange sie
+// besteht (aus saveDraft aufgerufen). Verhindert, dass nach einer unterbrochenen Anmeldung
+// (Nutzer editiert nach ausgeloestem Login weiter) ein aelterer Snapshot den neueren Stand
+// ueberschreibt. Legt bewusst NIE eine neue Sicherung an — sonst wuerde blosses Tippen den
+// Investment-first-Ruecksprung zur Eingabe faelschlich scharfschalten.
+function refreshPendingJobInputIfPresent() {
+  let exists = false;
+  try { exists = localStorage.getItem(PENDING_JOB_INPUT_KEY) !== null; }
+  catch { return; } // Storage gesperrt: nur Komfort, nicht kritisch
+  if (exists) savePendingJobInput();
+}
+
+// Nach erfolgreichem Login: gesicherte Eingabe ins Formular zuruecklegen und die
+// Eingabe-Ansicht zeigen. Der Nutzer startet selbst per "Test erstellen" — es wird
+// NIE automatisch generiert (Aktionen mit API-Kosten nie unbeabsichtigt ausloesen).
+function consumePendingJobInputIntoForm() {
+  const p = readPendingJobInput();
+  if (!p) return false;
+  clearPendingJobInput();
+  // Defensiv lesen — jedes Feld kann fehlen (aelterer/teilweiser Eintrag).
+  if (typeof p.url === "string") $("job-url").value = p.url;
+  if (typeof p.text === "string") $("job-text").value = p.text;
+  // Tab wie beim Entwurf: auf den URL-Tab nur, wenn dort wirklich etwas steht.
+  if (p.tab === "url" && $("job-url").value.trim()) setSourceTab("url");
+  else if ($("job-text").value.trim()) setSourceTab("text");
+  saveDraft(); // Entwurf angleichen, damit auch ein Reload dieselbe Eingabe zeigt
+  showView("view-input");
+  const hint = $("pending-restored-hint");
+  hint.textContent = "Erfolgreich angemeldet. Deine Eingabe ist wieder da – bitte kurz prüfen und dann auf „Test erstellen“ klicken.";
+  hint.classList.remove("hidden");
+  return true;
 }
 
 // Lokale Modelle bekommen einen kuerzeren Jobtext (kleinerer Kontext).
@@ -4213,6 +4317,16 @@ async function generateQuiz(opts = {}) {
     );
     return;
   }
+  // Investment-first: Der ausgeloggte Besucher hat hier bereits Stelle und Konfiguration
+  // eingegeben — die Eingabe VOR dem Login sichern (localStorage: der Anmeldelink kann in
+  // einem neuen Tab landen) und die Anmeldung mit passendem Framing anfragen. Nach dem
+  // Login wird das Formular wiederhergestellt; generiert wird erst nach erneutem,
+  // bewusstem Klick (keine unbeabsichtigt ausgeloesten Kosten).
+  if (hostedNeedsLogin()) {
+    savePendingJobInput();
+    promptHostedLogin();
+    return;
+  }
   // Auf das Tier-Maximum klemmen (Sicherheitsnetz, falls der Stepper nach einem
   // Stufenwechsel noch einen hoeheren Wert traegt): guenstig nie ueber NUM_MAX_GUENSTIG.
   const numQuestions = clampNum(Number($("num-questions").value) || 10);
@@ -4632,7 +4746,7 @@ function postGenerationJob(ctx, tierSent, payWithCredits) {
 // sofort zurueck; die Erstellung laeuft im Hintergrund (Worker-DO), tab-unabhaengig.
 async function startHostedGeneration(ctx) {
   if (actionRunning) return;
-  if (hostedNeedsLogin()) { promptHostedLogin(); return; } // Backstop: Anmeldung Pflicht
+  if (hostedNeedsLogin()) { savePendingJobInput(); promptHostedLogin(); return; } // Backstop: Anmeldung Pflicht
   // Nur EIN Test in Erstellung zugleich (deckt sich mit dem serverseitigen
   // exclusive-Gate). Ein bereits fertiger Job ("ready") blockiert nicht — er wird
   // durch den neuen Start ersetzt (saveActiveJob ueberschreibt ihn).
@@ -8382,10 +8496,11 @@ function renderSrSummary(wrap) {
   }
   const btn = document.createElement("button");
   btn.className = practice ? "option" : "primary"; btn.type = "button";
-  // Ausgeloggte Hosted-Nutzer (No-Login-Praxis) kehren ehrlich ans Login-Gate zurueck,
-  // statt in die App-Shell zu fallen; alle anderen zu "Meine Stellen".
-  const backToLogin = practice && hostedNeedsLogin();
-  btn.textContent = backToLogin ? "Zurück zur Anmeldung" : "Zurück zu Meine Stellen";
+  // Ausgeloggte Hosted-Besucher (No-Login-Praxis) kehren zur Stellen-Eingabe zurueck
+  // (Investment-first-Einstieg), statt in die App-Shell zu fallen; alle anderen zu
+  // "Meine Stellen".
+  const backToGuestInput = practice && hostedNeedsLogin();
+  btn.textContent = backToGuestInput ? "Zurück zur Stellen-Eingabe" : "Zurück zu Meine Stellen";
   btn.addEventListener("click", () => leavePractice());
   wrap.appendChild(btn);
 }
@@ -9017,11 +9132,12 @@ function goHome() {
 
 // Austritt aus dem Ueben dorthin, wo der Nutzer hergekommen ist: ein eingerichteter
 // Nutzer (angemeldet bzw. BYOK/lokal) landet auf "Meine Stellen"; ein ausgeloggter
-// Hosted-Nutzer kehrt ans Login-Gate zurueck. So fuehrt die No-Login-Praxis nicht in
-// die volle App-Shell mit scheinbarem "Neue Stelle"-Pfad, der erst spaeter am Login
-// scheitert (gehostete Testerstellung bleibt anmeldepflichtig, hostedNeedsLogin()).
+// Hosted-Besucher kehrt zum Investment-first-Einstieg (Stellen-Eingabe mit
+// Wertversprechen und Anmelde-Hinweis) zurueck — nicht in die volle App-Shell und
+// nicht mehr ans blanke Login-Gate (die gehostete Testerstellung selbst bleibt
+// anmeldepflichtig, hostedNeedsLogin()).
 function leavePractice() {
-  if (hostedNeedsLogin()) promptHostedLogin();
+  if (hostedNeedsLogin()) showView("view-input");
   else goHome();
 }
 
@@ -9424,7 +9540,15 @@ async function renderAccountSection() {
 // --- Login-Screen (view-login) -------------------------------------------
 
 // Fuehrt zum Anmelde-Screen und zeigt optional eine Meldung (z. B. "erneut anmelden").
+// Framing je nach Kontext: liegt eine gesicherte Stellen-Eingabe vor (Investment-first,
+// der Besucher hat schon investiert), traegt das Gate "Dein Test ist gleich fertig"
+// statt des generischen Titels — die Eingabe wird nach der Anmeldung wiederhergestellt.
 function promptHostedLogin(msg) {
+  const pending = !!readPendingJobInput();
+  $("login-title-default").classList.toggle("hidden", pending);
+  $("login-title-pending").classList.toggle("hidden", !pending);
+  $("login-intro-default").classList.toggle("hidden", pending);
+  $("login-intro-pending").classList.toggle("hidden", !pending);
   $("login-email").value = "";
   $("login-msg").textContent = msg || "";
   showView("view-login");
@@ -9507,6 +9631,16 @@ $("btn-login-google").addEventListener("click", async () => {
 
 // Escape-Pfad: ohne Konto weiter mit eigenem Schluessel / lokal.
 $("link-login-settings").addEventListener("click", (e) => {
+  e.preventDefault();
+  settingsOrigin = "gate";
+  initSettingsForm();
+  showView("view-settings");
+});
+
+// Investment-first-Einstieg: dieselben No-Login-Wege wie am Anmelde-Gate, direkt auf
+// der Stellen-Eingabe fuer ausgeloggte Besucher (Sichtbarkeit: updateGuestInputUi).
+$("btn-guest-practice").addEventListener("click", () => openPracticePicker());
+$("link-guest-settings").addEventListener("click", (e) => {
   e.preventDefault();
   settingsOrigin = "gate";
   initSettingsForm();
@@ -10140,6 +10274,7 @@ $("btn-fetch-url").addEventListener("click", async () => {
   // erklaerender Inline-Hinweis (Anmelden ODER manuell einfuegen) + Login-Dialog.
   if ((settings.provider || "hosted") === "hosted" && hostedNeedsLogin()) {
     showImportStatus("Zum Laden per URL bitte anmelden – oder die Stellenbeschreibung über „Text einfügen“ manuell einfügen.", "error");
+    savePendingJobInput(); // Eingabe (URL/Tab) sichern, damit sie den Login uebersteht
     promptHostedLogin();
     return;
   }
@@ -10796,11 +10931,27 @@ function routeInitialView() {
   if (consumeUebenDeepLink()) return; // Uebungs-Deep-Link hat Vorrang (lokal, ohne Gate)
   const provider0 = settings.provider || "hosted";
   if (provider0 === "hosted" && !settings.authToken) {
-    promptHostedLogin(_authRedirectMsg || ""); // _authRedirectMsg: evtl. Fehler aus dem Redirect
-    _authRedirectMsg = "";
+    // Investment-first: Erstbesucher sehen zuerst die Stellen-Eingabe mit Wertversprechen
+    // und den No-Login-Wegen statt einer Login-Wand; die Anmeldung kommt erst beim Klick
+    // auf "Test erstellen" bzw. "Laden" (generateQuiz/URL-Import sichern die Eingabe).
+    // Nur wenn gerade ein Login-Redirect mit Meldung zurueckkam (Fehler, abgebrochene
+    // oder abgelaufene Anmeldung), weiter das Login-Gate zeigen, damit die Meldung
+    // sichtbar ist und der Nutzer es direkt erneut versuchen kann.
+    if (_authRedirectMsg) {
+      promptHostedLogin(_authRedirectMsg);
+      _authRedirectMsg = "";
+      return;
+    }
+    showView("view-input");
     return;
   }
   _authRedirectMsg = "";
+  // Frisch angemeldet mit gesicherter Stellen-Eingabe (Investment-first): VOR jeder
+  // weiteren Weiche (auch vor dem Onboarding-Gate) die vorbefuellte Eingabe-Ansicht
+  // zeigen — der Nutzer bestaetigt mit EINEM Klick auf "Test erstellen". Bewusst KEIN
+  // automatischer Start (keine unbeabsichtigten API-Kosten). Nur im gehosteten Modus mit
+  // Token relevant; savePendingJobInput schreibt ausschliesslich auf diesem Pfad.
+  if (provider0 === "hosted" && settings.authToken && consumePendingJobInputIntoForm()) return;
   const isConfigured = provider0 === "local" ? !!settings.model
     : provider0 === "hosted" ? true
     : !!settings.apiKey;
