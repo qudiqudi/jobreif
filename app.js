@@ -4,9 +4,18 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.30.0";
+const APP_VERSION = "1.30.1";
 
 const CHANGELOG = [
+  {
+    version: "1.30.1",
+    date: "04.07.2026",
+    items: [
+      "Fehler behoben: Auf „Meine Stellen“ zeigte eine Stellenkarte nach einem gerade ausgewerteten Test mitunter noch die alte Versuchszahl und Stufe, und der „Test fortsetzen“-Hinweis blieb dort stehen, obwohl der Test bereits ausgewertet war. Die Startliste wird jetzt zuverlässig aktualisiert.",
+      "Treffsichere Vertiefung: Die Themenfelder markieren einen Schwerpunkt jetzt nur noch dort, wo du zuletzt wirklich schwächer warst – ein einzelner alter Durchgang zieht die Empfehlung nicht mehr dauerhaft nach unten, wenn du dich längst verbessert hast.",
+      "Fehler behoben: Ein Vertiefungstest überschrieb nicht mehr die gemerkten Einstellungen deiner Stelle – „Test wiederholen“ startet wieder mit deiner zuletzt genutzten Schwierigkeit und Fragenzahl.",
+    ],
+  },
   {
     version: "1.30.0",
     date: "04.07.2026",
@@ -4630,25 +4639,64 @@ const THEMENFELDER_SCHEMA = {
   additionalProperties: false,
 };
 
-// Kompakte Schwachstellen-Liste aus den bisherigen Versuchen: je bewerteter
-// Frage die erreichten Punkte (0-10), schwaechste zuerst. Defensiv gegen alte
-// Versuche ohne ergebnisse/quiz. Dient als Input fuer die Themenfeld-Ableitung,
-// damit das Modell Schwerpunkte dort setzt, wo der Bewerber schlecht war.
+// Punkte-Schwelle, ab der eine Antwort als "solide" gilt (< SCHWELLE = Schwaeche).
+// An der Prompt-Sprache orientiert ("solide Fachfragen"); deckt sich grob mit
+// weakThemesFromAttempt (dort < 6 fuer die reine Anzeige).
+const SCHWAECHE_SCHWELLE = 7;
+
+// Kompakte Schwachstellen-Liste fuer die Themenfeld-Ableitung, aggregiert je THEMA
+// (kategorie) und NUR aus dem juengsten Versuch, in dem das Thema vorkam.
+//
+// Frueher gingen die 12 punktschwaechsten EINZELFRAGEN ALLER Versuche ohne Schwelle
+// ins Prompt. Ein einzelner alter Schwach-Lauf (z. B. 14 %) dominierte die Liste
+// dann dauerhaft und markierte fast alle Felder als "Schwerpunkt", selbst nachdem
+// der Bewerber laengst mehrere 100-%-Laeufe hingelegt hatte. Jetzt zaehlt pro Thema
+// nur der letzte Stand (juengster Versuch mit diesem Thema), und nur Themen im
+// Schnitt unter der Schwelle gelten als Schwaeche - ein Thema verschwindet aus der
+// Liste, sobald es zuletzt gut lief. Defensiv gegen alte Versuche ohne
+// ergebnisse/quiz/kategorie.
 function buildSchwaechenSummary(job) {
-  const rows = [];
-  (job && Array.isArray(job.attempts) ? job.attempts : []).filter(Boolean).forEach((att) => {
+  const attempts = (job && Array.isArray(job.attempts) ? job.attempts : []).filter(Boolean);
+  // Von NEU nach ALT laufen: die erste Begegnung mit einem Thema ist sein juengster
+  // Stand; aeltere Versuche desselben Themas werden dann ignoriert (claimed-Set).
+  const claimed = new Set();
+  const byCat = new Map(); // katKey -> { label, sum, count, worstFrage, worstPunkte }
+  for (let a = attempts.length - 1; a >= 0; a--) {
+    const att = attempts[a];
     const fragen = att.quiz && Array.isArray(att.quiz.fragen) ? att.quiz.fragen : [];
     const erg = att.result && Array.isArray(att.result.ergebnisse) ? att.result.ergebnisse : [];
+    const touchedHere = new Set(); // Themen, die DIESER Versuch neu belegt
     fragen.forEach((f, i) => {
+      const label = f && typeof f.kategorie === "string" ? f.kategorie.trim() : "";
+      if (!label) return;
+      const key = label.toLowerCase();
+      if (claimed.has(key)) return; // schon von einem juengeren Versuch belegt
       const e = erg[i] || erg.find((x) => x && Number(x.id) === Number(f.id));
       const p = e && Number.isFinite(Number(e.punkte)) ? Number(e.punkte) : null;
-      if (p !== null) rows.push({ kategorie: f.kategorie || "", frage: f.frage || "", punkte: p });
+      if (p === null) return;
+      touchedHere.add(key);
+      const rec = byCat.get(key) || { label, sum: 0, count: 0, worstFrage: "", worstPunkte: Infinity };
+      rec.sum += p;
+      rec.count += 1;
+      if (p < rec.worstPunkte) { rec.worstPunkte = p; rec.worstFrage = f.frage || ""; }
+      byCat.set(key, rec);
     });
-  });
-  rows.sort((a, b) => a.punkte - b.punkte);
-  const worst = rows.slice(0, 12);
-  if (!worst.length) return "Keine bewerteten Einzelfragen vorhanden.";
-  return worst.map((r) => `- [${r.punkte}/10] ${r.kategorie ? r.kategorie + ": " : ""}${r.frage}`).join("\n");
+    touchedHere.forEach((k) => claimed.add(k));
+  }
+  const weak = [...byCat.values()]
+    .map((r) => ({ label: r.label, avg: r.sum / r.count, worstFrage: r.worstFrage, worstPunkte: r.worstPunkte }))
+    .filter((r) => r.avg < SCHWAECHE_SCHWELLE)
+    .sort((a, b) => a.avg - b.avg)
+    .slice(0, 8);
+  if (!weak.length) {
+    // Ausdruecklich mitgeben, damit das Modell NICHT jedes Feld als Schwerpunkt
+    // markiert, wenn es gar keine belastbare Schwaeche mehr gibt.
+    return "Keine nennenswerten Schwaechen: Der Bewerber war zuletzt in allen bewerteten Themen solide (>= " +
+      SCHWAECHE_SCHWELLE + "/10). Markiere KEIN Feld allein aus dieser Liste als Schwerpunkt; verteile die Vertiefung breit ueber die Kernthemen der Stelle.";
+  }
+  return weak
+    .map((r) => `- [Schnitt ${r.avg.toFixed(1)}/10${r.worstFrage ? `, schwaechste Frage ${r.worstPunkte}/10` : ""}] ${r.label}${r.worstFrage ? `: ${r.worstFrage}` : ""}`)
+    .join("\n");
 }
 
 // Leitet aus Stellentext + Schwachstellen 4-6 Themenfelder ab. Ein Cloud-Aufruf,
@@ -4660,11 +4708,12 @@ async function deriveThemenfelder(job) {
     "Du bist ein erfahrener Recruiter und Fachexperte. Leite aus einer Stellenausschreibung " +
     "4 bis 6 trennscharfe, stellenspezifische Themenfelder ab, in denen sich ein Bewerber gezielt " +
     "vertiefen kann. Die Felder muessen sich klar voneinander abgrenzen und konkret zur Stelle passen " +
-    "- keine generischen Floskeln. Markiere ein Feld als Schwerpunkt (schwerpunkt=true), wenn der " +
-    "Bewerber laut der Schwachstellen-Liste dort bisher schwach war. Antworte auf Deutsch.";
+    "- keine generischen Floskeln. Markiere ein Feld als Schwerpunkt (schwerpunkt=true) NUR, wenn der " +
+    "Bewerber laut der Schwachstellen-Liste in einem verwandten Thema zuletzt schwach war; gibt die " +
+    "Liste keine nennenswerten Schwaechen an, markiere KEIN Feld als Schwerpunkt. Antworte auf Deutsch.";
   const user =
     `Stellenausschreibung:\n\n${(job.jobText || "").slice(0, 30000)}\n\n` +
-    `Bisherige Schwachstellen des Bewerbers (Punkte je Frage, 0-10, schwaechste zuerst):\n${buildSchwaechenSummary(job)}`;
+    `Bisherige Schwachstellen des Bewerbers (je Thema der letzte Stand, schwaechste zuerst):\n${buildSchwaechenSummary(job)}`;
   const { data, cost, tokens } = await callLLM(system, user, THEMENFELDER_SCHEMA, undefined, {
     // Phase B: jobId des aktuellen (ggf. bezahlten) Tests mitschicken → Vertiefen laeuft bei
     // "beste" ueber das Follow-up-Entitlement statt eines erneuten Credit-Abzugs. Nur wenn vorhanden.
@@ -5262,8 +5311,13 @@ async function startHostedGeneration(ctx) {
     markCreditsDirtyIfPaid(tierSent);
     if (paidOverflow || creditsState.creditsEnabled) refreshBalance();
     hideLoading();
+    // Startliste frisch AUFBAUEN, nicht nur einblenden: dies ist der einzige Pfad, der
+    // view-home ohne renderHome zeigte. Sonst behaelt die Liste nach der Rueckkehr aus
+    // einem gerade ausgewerteten Test veraltete Versuchszahlen/Level UND einen bereits
+    // erledigten "Test fortsetzen"-Banner (Stale-UI). renderHome() stellt die pending
+    // Aktiv-Job-Karte gleich mit her (loadActiveJob wurde oben soeben gesichert).
+    renderHome();
     showView("view-home");
-    renderActiveJobCard("pending");
     // Konnte der Zeiger nicht dauerhaft gespeichert werden (Speicher voll/blockiert),
     // laeuft der Job dank In-Memory-Spiegel im aktuellen Tab weiter — ein Reload oder
     // Tabwechsel wuerde ihn aber verlieren. Den Nutzer darauf hinweisen.
@@ -5472,8 +5526,18 @@ function renderActiveJobCard(state) {
       let titel = "";
       try {
         const aj = loadActiveJob();
-        const t = aj && aj.quiz && typeof aj.quiz.titel === "string" ? aj.quiz.titel.trim() : "";
-        if (t) titel = t;
+        const felder = aj && aj.ctx && Array.isArray(aj.ctx.vertiefungFelder) ? aj.ctx.vertiefungFelder : null;
+        if (felder && felder.length) {
+          // Vertiefungsbogen DETERMINISTISCH aus den gewaehlten Themenfeldern benennen,
+          // NICHT aus dem vom LLM erzeugten quiz.titel: der schwankte von Lauf zu Lauf
+          // zwischen einem erfundenen Bogen-Namen und dem blossen Jobtitel.
+          const labels = felder.map((f) => (f && typeof f.label === "string" ? f.label.trim() : "")).filter(Boolean);
+          if (labels.length) titel = "Vertiefungsbogen: " + labels.join(", ");
+        } else {
+          // Normaler Test: der aus der Anzeige extrahierte Stellentitel ist stabil genug.
+          const t = aj && aj.quiz && typeof aj.quiz.titel === "string" ? aj.quiz.titel.trim() : "";
+          if (t) titel = t;
+        }
       } catch { /* defensiv: kein Titel verfuegbar */ }
       if (titel) readyMsg = "Dein Test ist fertig: " + titel;
     }
@@ -8107,13 +8171,20 @@ async function saveAttempt(result, durationMs, evalCost, evalTokens) {
   if (jobIKey) job.identityKey = jobIKey;
   // Zuletzt genutzte Test-Einstellungen merken, damit die Stellen-Subpage einen
   // Test mit denselben Optionen per Tipp wiederholen kann (One-Tap-Repeat).
-  job.lastTestConfig = {
-    mode,
-    difficulty: quiz.schwierigkeitsgrad || "",
-    // Die clientseitig angehaengte Figural-Aufgabe NICHT mitzaehlen - sonst wuerde
-    // "Test wiederholen" die angeforderte Fragenzahl bei jedem Lauf um eins hochtreiben.
-    num: quiz.fragen.filter((f) => f && f.typ !== "figural").length,
-  };
+  // NUR aus normalen Tests: ein Vertiefungsbogen erzwingt difficulty="schwer" und
+  // eine eigene (kleinere) Fragenzahl - wuerde er hier hineinschreiben, stuende die
+  // gespeicherte Standard-Konfig der Stelle (z. B. Mittel/10) danach dauerhaft auf
+  // Schwer/8 (Config-Bleed). startVertiefungForJob setzt zwar die geteilten
+  // Eingabe-Controls, die persistierte Konfig bleibt so aber unberuehrt.
+  if (!istVertiefung) {
+    job.lastTestConfig = {
+      mode,
+      difficulty: quiz.schwierigkeitsgrad || "",
+      // Die clientseitig angehaengte Figural-Aufgabe NICHT mitzaehlen - sonst wuerde
+      // "Test wiederholen" die angeforderte Fragenzahl bei jedem Lauf um eins hochtreiben.
+      num: quiz.fragen.filter((f) => f && f.typ !== "figural").length,
+    };
+  }
 
   // Vertiefung: die Themenfeld-Ableitung war ein eigener bezahlter Aufruf. Ihre
   // Kosten/Tokens genau EINMAL in den ersten Vertiefungs-Versuch einrechnen, der
