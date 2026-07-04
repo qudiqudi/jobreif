@@ -262,6 +262,18 @@
             <p id="topup-bonus" class="hint hidden"></p>
             <p id="topup-msg" class="hint" role="status"></p>
           </div>
+          <!-- Guthaben-Verlauf (Audit 2026-07): der serverseitige ledger, endlich einsehbar.
+               Lazy — geladen erst beim Öffnen (GET /api/ledger, auth-pflichtig). -->
+          <div id="ledger-section" class="hidden">
+            <div class="row wrap">
+              <button id="btn-ledger-toggle" type="button" class="ghost">Guthaben-Verlauf anzeigen</button>
+            </div>
+            <div id="ledger-list" class="hidden" aria-live="polite"></div>
+            <div class="row wrap">
+              <button id="btn-ledger-more" type="button" class="ghost hidden">Ältere Einträge anzeigen</button>
+            </div>
+            <p id="ledger-msg" class="hint" role="status"></p>
+          </div>
         </div>
         <div id="account-loggedout" class="hidden">
           <div class="row wrap">
