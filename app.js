@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.31.0";
+const APP_VERSION = "1.31.1";
 
 const CHANGELOG = [
+  {
+    version: "1.31.1",
+    date: "04.07.2026",
+    items: [
+      "Fehler behoben: Der Willkommens-Schritt schloss sich sofort bei der ersten Auswahl – die optionale Angabe zur Berufserfahrung darunter ließ sich so leicht übersehen. Jetzt wählst du in Ruhe aus und bestätigst mit „Los geht’s“.",
+    ],
+  },
   {
     version: "1.31.0",
     date: "04.07.2026",
@@ -11930,6 +11937,7 @@ function maybeShowWelcome() {
   if (Object.keys(loadProfile()).length) return;
   const sel = $("welcome-erfahrung");
   if (sel) sel.value = "";
+  resetWelcomeSelection();
   $("welcome-modal").classList.remove("hidden");
   const first = document.querySelector("#welcome-modal .welcome-choice");
   if (first) first.focus({ preventScroll: true });
@@ -11941,17 +11949,46 @@ function closeWelcome() {
   goHome();
 }
 
-// Auswahl-Buttons: schreiben Trajectory + (optional) Erfahrung ueber saveProfile
-// (validiert per Enum, unbekannte Werte werden verworfen) und schliessen direkt.
+// Zwei-Schritt-Muster (Fix 1.31.1): Klick auf eine Trajectory-Karte WÄHLT nur aus,
+// gespeichert wird erst mit „Los geht’s“. Vorher schloss der ERSTE Klick das Modal sofort
+// (saveProfile + closeWelcome) — wer in Lesereihenfolge zuerst seine Trajectory klickte,
+// bekam das optionale Erfahrungs-Dropdown DARUNTER nie zu Gesicht; da der Schritt einmalig
+// ist (welcomeSeen beim Anzeigen), gab es keine zweite Chance. Auswahl-Zustand lebt nur im
+// Modal (kein Storage); erst der Bestaetigen-Klick schreibt ueber den bestehenden
+// saveProfile-Pfad (Enum-validiert, wie die Einstellungen).
+let _welcomeTrajectory = null;
+function resetWelcomeSelection() {
+  _welcomeTrajectory = null;
+  document.querySelectorAll("#welcome-modal .welcome-choice").forEach((b) => {
+    b.classList.remove("selected");
+    b.setAttribute("aria-pressed", "false");
+  });
+  const confirm = $("btn-welcome-confirm");
+  if (confirm) confirm.disabled = true;
+}
 document.querySelectorAll("#welcome-modal .welcome-choice").forEach((btn) => {
   btn.addEventListener("click", () => {
+    _welcomeTrajectory = btn.dataset.trajectory;
+    document.querySelectorAll("#welcome-modal .welcome-choice").forEach((b) => {
+      const chosen = b === btn;
+      b.classList.toggle("selected", chosen);
+      b.setAttribute("aria-pressed", chosen ? "true" : "false");
+    });
+    const confirm = $("btn-welcome-confirm");
+    if (confirm) confirm.disabled = false;
+  });
+});
+{
+  const confirm = $("btn-welcome-confirm");
+  if (confirm) confirm.addEventListener("click", () => {
+    if (!_welcomeTrajectory) return; // Button ist bis zur Auswahl disabled (Defensiv-Guard)
     saveProfile({
-      trajectory: btn.dataset.trajectory,
+      trajectory: _welcomeTrajectory,
       erfahrung: $("welcome-erfahrung") ? $("welcome-erfahrung").value : "",
     });
     closeWelcome();
   });
-});
+}
 $("btn-welcome-skip").addEventListener("click", closeWelcome);
 // Klick auf den abgedunkelten Hintergrund (nicht aufs Panel) = Ueberspringen.
 $("welcome-modal").addEventListener("click", (e) => {

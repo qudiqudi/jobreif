@@ -1315,8 +1315,15 @@ button.ghost {
 }
 .welcome-choice strong { font-size: 0.98rem; color: var(--text-strong); }
 .welcome-choice span { font-size: 0.85rem; color: var(--muted); font-weight: 400; }
-/* Ueberspringen gleichwertig prominent: volle Breite wie die Auswahl-Karten. */
-.welcome-skip { width: 100%; }
+/* Zwei-Schritt-Muster (1.31.1): gewaehlte Karte deutlich markieren (Klick schliesst nicht mehr). */
+.welcome-choice.selected {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+/* Bestaetigen + Ueberspringen teilen sich die Zeile in voller Breite. */
+.welcome-actions { display: flex; gap: 0.6rem; }
+.welcome-confirm, .welcome-skip { flex: 1; }
 
 .changelog-entry:last-child ul { margin-bottom: 0.4rem; }
 
