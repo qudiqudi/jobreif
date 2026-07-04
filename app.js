@@ -3058,8 +3058,12 @@ const PADDLE_CONFIG = {
     },
   },
   production: {
-    token: "", // TODO Go-Live: live client-side Token eintragen
-    prices: { 3: "", 5: "", 10: "" }, // TODO Go-Live: prod price-IDs eintragen
+    token: "live_b18ed8bdf56e62e410b3cfa3624",
+    prices: {
+      3: "pri_01kwps1z74393d2d4t5tb61x7n",
+      5: "pri_01kwps2fark4th2pr7swfx33my",
+      10: "pri_01kwps32her8jt14fz8vafqae6",
+    },
   },
 };
 
