@@ -4,9 +4,18 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.30.1";
+const APP_VERSION = "1.31.0";
 
 const CHANGELOG = [
+  {
+    version: "1.31.0",
+    date: "04.07.2026",
+    items: [
+      "Neuer Guthaben-Verlauf: In den Einstellungen siehst du jetzt alle Buchungen deines Guthabens – Aufladungen, bezahlte Tests, Bonus und Erstattungen – übersichtlich mit Datum und Betrag.",
+      "Auswerten und Vertiefen sind bei jedem bezahlten Test verlässlich inklusive – auch wenn dein Tageskontingent bereits aufgebraucht ist.",
+      "Mehr Klarheit beim Bezahlen: Der Bestätigungsdialog erklärt jetzt dein Widerrufsrecht, und ein durch eine Erstattung negativer Guthaben-Stand wird verständlich erläutert.",
+    ],
+  },
   {
     version: "1.30.1",
     date: "04.07.2026",
