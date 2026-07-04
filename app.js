@@ -3085,12 +3085,25 @@ const PADDLE_CONFIG = {
   },
 };
 
+// Dev-Host = lokale Entwicklung. Nur dort darf der Sandbox-Schalter ueberhaupt wirken.
+function paddleDevHost() {
+  const h = (location && location.hostname) || "";
+  return h === "localhost" || h === "127.0.0.1" || h.endsWith(".localhost");
+}
+
 // Umgebung: sobald das prod-Token eingetragen ist (Go-Live konfiguriert), automatisch
 // "production" — das Befuellen des Tokens genuegt, kein separater Code-Edit. Solange prod
-// UNkonfiguriert ist (leeres Token), bleibt sandbox der Default. Der localStorage-Override
-// gewinnt immer (manuelle Eskalation/Test-Schalter).
+// UNkonfiguriert ist (leeres Token), bleibt sandbox der Default.
+//
+// Der localStorage-Override (bewerbungstool.paddleEnv) ist ein reiner Dev-/Test-Schalter
+// und wird NUR auf Dev-Hosts (localhost/127.*) honoriert (Audit 2026-07): auf jobreif.de
+// konnte er bisher einen "Kauf" in die Paddle-Sandbox lenken, der mit Testkarten
+// durchlaeuft, aber NIE gutgeschrieben wird (der Sandbox-Webhook verifiziert am
+// Prod-Endpoint-Secret nicht) — ein Support-/Chargeback-Fall ohne jeden Nutzen.
 function paddleEnv() {
-  try { const o = localStorage.getItem("bewerbungstool.paddleEnv"); if (o === "production" || o === "sandbox") return o; } catch {}
+  if (paddleDevHost()) {
+    try { const o = localStorage.getItem("bewerbungstool.paddleEnv"); if (o === "production" || o === "sandbox") return o; } catch {}
+  }
   return PADDLE_CONFIG.production && PADDLE_CONFIG.production.token ? "production" : "sandbox";
 }
 function paddleConfig() { return PADDLE_CONFIG[paddleEnv()] || PADDLE_CONFIG.sandbox; }
