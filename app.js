@@ -4,16 +4,25 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.29.2";
+const APP_VERSION = "1.30.1";
 
 const CHANGELOG = [
   {
-    version: "1.29.2",
-    date: "03.07.2026",
+    version: "1.30.1",
+    date: "04.07.2026",
     items: [
       "Fehler behoben: Auf „Meine Stellen“ zeigte eine Stellenkarte nach einem gerade ausgewerteten Test mitunter noch die alte Versuchszahl und Stufe, und der „Test fortsetzen“-Hinweis blieb dort stehen, obwohl der Test bereits ausgewertet war. Die Startliste wird jetzt zuverlässig aktualisiert.",
       "Treffsichere Vertiefung: Die Themenfelder markieren einen Schwerpunkt jetzt nur noch dort, wo du zuletzt wirklich schwächer warst – ein einzelner alter Durchgang zieht die Empfehlung nicht mehr dauerhaft nach unten, wenn du dich längst verbessert hast.",
       "Fehler behoben: Ein Vertiefungstest überschrieb nicht mehr die gemerkten Einstellungen deiner Stelle – „Test wiederholen“ startet wieder mit deiner zuletzt genutzten Schwierigkeit und Fragenzahl.",
+    ],
+  },
+  {
+    version: "1.30.0",
+    date: "04.07.2026",
+    items: [
+      "Guthaben & Aufladen: Das tägliche Gratis-Kontingent bleibt wie gewohnt. Wer darüber hinaus üben möchte, kann jetzt Guthaben aufladen und pro Test einen kleinen, festen Preis zahlen – abgebucht wird immer erst nach deiner ausdrücklichen Bestätigung.",
+      "Neue Qualitätsstufe „beste“ (Opus): für besonders anspruchsvolle, realitätsnahe Tests. Sie wird aus deinem Guthaben bezahlt; „standard“ und „günstig“ bleiben im Rahmen des Tageskontingents kostenlos.",
+      "Zum Start geschenkt: Beim ersten Aufladen bekommst du einmalig 50 Bonus-Credits (0,50 €) obendrauf.",
     ],
   },
   {
@@ -3067,8 +3076,12 @@ const PADDLE_CONFIG = {
     },
   },
   production: {
-    token: "", // TODO Go-Live: live client-side Token eintragen
-    prices: { 3: "", 5: "", 10: "" }, // TODO Go-Live: prod price-IDs eintragen
+    token: "live_b18ed8bdf56e62e410b3cfa3624",
+    prices: {
+      3: "pri_01kwps1z74393d2d4t5tb61x7n",
+      5: "pri_01kwps2fark4th2pr7swfx33my",
+      10: "pri_01kwps32her8jt14fz8vafqae6",
+    },
   },
 };
 
