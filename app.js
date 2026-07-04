@@ -2623,6 +2623,10 @@ let creditsState = { credits: null, creditsEnabled: false, opusTestCredits: null
 
 function resetCreditsState() {
   creditsState = { credits: null, creditsEnabled: false, opusTestCredits: null, freeRemaining: null, firstTopupBonus: null, loaded: false, dirty: false };
+  // Konto-Uebergang (Logout/401/Wechsel): auch den Guthaben-Verlauf zuruecksetzen — gerenderte
+  // Zeilen des alten Kontos duerfen dem naechsten nicht angezeigt werden (Codex-Finding, s.
+  // resetLedgerUI). Hoisting: die Funktion ist eine Declaration weiter unten im Credits-Block.
+  resetLedgerUI();
 }
 
 // Defensiv: das optionale Server-Feld firstTopupBonus nur akzeptieren, wenn es AKTIV einen Bonus
@@ -3024,6 +3028,9 @@ function renderCreditsUI() {
   // Login-Zustand (Block liegt in #account-loggedin).
   const topup = $("topup");
   if (topup) topup.classList.toggle("hidden", !creditsState.creditsEnabled);
+  // Guthaben-Verlauf: gleiche Sichtbarkeitsregel wie der Aufladen-Block (Flag an + eingeloggt).
+  const ledgerSec = $("ledger-section");
+  if (ledgerSec) ledgerSec.classList.toggle("hidden", !creditsState.creditsEnabled);
   // Erstkauf-Bonus-Hinweis (P9): nur bei aktivem Credits-Flag UND wenn der Server einen Bonus
   // bewirbt (firstTopupBonus.eligible + credits). Die Zahl stammt ausschliesslich vom Server.
   // Fehlt das Signal → Hinweis verborgen (kein Bruch fuer alt-Server/Feature aus). Nach dem
@@ -3258,6 +3265,127 @@ function openTopupDialog() {
   showView("view-settings");
   const t = $("topup");
   if (t && !t.classList.contains("hidden")) { try { t.scrollIntoView({ behavior: "smooth", block: "center" }); } catch {} }
+}
+
+// --- Guthaben-Verlauf (Audit 2026-07) --------------------------------------
+// Der serverseitige ledger (GET /api/ledger) als einsehbare Liste im Konto-Bereich.
+// Lazy: geladen erst beim Oeffnen; JEDES Oeffnen laedt frisch (kein staler Stand ueber
+// einen Konto-Wechsel hinweg). "Aeltere Eintraege" blaettert per before-Cursor weiter.
+// Defensiv gegen ein noch nicht deploytes Backend (404 → freundliche Meldung).
+const LEDGER_REASON_LABELS = {
+  "topup": "Aufladung",
+  "first-topup-bonus": "Startbonus",
+  "spend": "Kostenpflichtiger Test",
+  "refund": "Rückerstattung (Test nicht geliefert)",
+  "refund-clawback": "Rückbuchung (Kauf erstattet)",
+  "chargeback": "Rückbuchung (Chargeback)",
+  "admin-grant": "Gutschrift (Support)",
+  "credit": "Gutschrift",
+};
+let _ledgerOpen = false;
+let _ledgerBusy = false;
+let _ledgerOldest = null; // created_at des aeltesten gerenderten Eintrags (Fallback-Cursor)
+// Server-gelieferter next-Cursor (before + beforeId): created_at hat Sekunden-Aufloesung,
+// mehrere Buchungen koennen denselben Timestamp tragen (z. B. Aufladung + Startbonus) — der
+// Tupel-Cursor verhindert, dass beim Blaettern gleich-sekuendige Eintraege verloren gehen
+// (Codex-Finding, Server-Haelfte in jobreif-backend#88). Fehlt next (aelteres Backend),
+// greift der reine Zeit-Fallback ueber _ledgerOldest.
+let _ledgerNext = null;
+
+function ledgerMsg(text) { const el = $("ledger-msg"); if (el) el.textContent = text || ""; }
+
+// Verlauf-UI komplett zuruecksetzen (zu + leer). Wird bei JEDEM Konto-Uebergang gerufen
+// (resetCreditsState: Logout, 401, Konto-Wechsel) — sonst saehe Konto B die bereits
+// gerenderten Zeilen von Konto A, sobald die Sektion wieder sichtbar wird (Codex-Finding).
+function resetLedgerUI() {
+  _ledgerOpen = false;
+  _ledgerOldest = null;
+  _ledgerNext = null;
+  const list = $("ledger-list");
+  if (list) { list.textContent = ""; list.classList.add("hidden"); }
+  const more = $("btn-ledger-more");
+  if (more) more.classList.add("hidden");
+  const toggle = $("btn-ledger-toggle");
+  if (toggle) toggle.textContent = "Guthaben-Verlauf anzeigen";
+  ledgerMsg("");
+}
+
+// Rendert Eintraege ausschliesslich ueber textContent (Server-Daten nie als HTML
+// interpretieren — ref/reason koennten theoretisch beliebige Strings sein).
+function renderLedgerEntries(entries, { append }) {
+  const list = $("ledger-list");
+  if (!list) return;
+  if (!append) { list.textContent = ""; _ledgerOldest = null; }
+  for (const e of entries) {
+    if (!e || !Number.isFinite(e.delta) || !Number.isFinite(e.created_at)) continue; // defensiv
+    const row = document.createElement("p");
+    row.className = "hint";
+    const when = new Date(e.created_at * 1000).toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" });
+    const label = LEDGER_REASON_LABELS[e.reason] || (typeof e.reason === "string" && e.reason ? e.reason : "Buchung");
+    const amount = (e.delta > 0 ? "+" : "") + formatGuthabenEuro(e.delta);
+    row.textContent = `${when} – ${label}: ${amount}`;
+    list.appendChild(row);
+    _ledgerOldest = Number.isFinite(_ledgerOldest) ? Math.min(_ledgerOldest, e.created_at) : e.created_at;
+  }
+  if (!list.childElementCount) {
+    const empty = document.createElement("p");
+    empty.className = "hint";
+    empty.textContent = "Noch keine Buchungen.";
+    list.appendChild(empty);
+  }
+}
+
+async function loadLedger({ append } = {}) {
+  if (_ledgerBusy) return;
+  if (!settings.authToken) { promptHostedLogin(); return; }
+  _ledgerBusy = true;
+  // Token-Snapshot wie pollBalanceAfterPurchase (Codex-Finding): nach JEDEM await pruefen,
+  // ob noch dasselbe Konto aktiv ist. Sonst rendert eine spaete Antwort von Konto A den
+  // Verlauf ins UI von Konto B (Logout/Wechsel waehrend des fetch). resetCreditsState hat
+  // die UI dann bereits zurueckgesetzt — hier NICHTS mehr anfassen, nur still aussteigen.
+  const tok = settings.authToken;
+  ledgerMsg("Verlauf wird geladen …");
+  try {
+    // Beim Blaettern den Server-Cursor bevorzugen (Tupel: before + beforeId, verliert keine
+    // gleich-sekuendigen Eintraege); Zeit-Fallback nur fuer ein aelteres Backend ohne next.
+    let cursor = "";
+    if (append) {
+      if (_ledgerNext) cursor = `?before=${_ledgerNext.before}&beforeId=${encodeURIComponent(_ledgerNext.beforeId)}`;
+      else if (Number.isFinite(_ledgerOldest)) cursor = `?before=${_ledgerOldest}`;
+    }
+    let r;
+    try { r = await fetch(hostedBase() + "/api/ledger" + cursor, { headers: authHeaders() }); }
+    catch { if (settings.authToken === tok) ledgerMsg("Keine Verbindung. Bitte Internetverbindung prüfen und erneut versuchen."); return; }
+    if (settings.authToken !== tok) return; // Konto gewechselt/Logout → Antwort verwerfen
+    if (r.status === 401) { handleHostedUnauthorized(); return; }
+    // 404 = Backend-Haelfte noch nicht deployt (der Client darf dem Deploy vorauslaufen).
+    if (r.status === 404) { ledgerMsg("Der Verlauf ist noch nicht verfügbar."); return; }
+    if (!r.ok) { ledgerMsg("Der Verlauf ist gerade nicht verfügbar. Bitte später erneut versuchen."); return; }
+    let d = null;
+    try { d = await r.json(); } catch { d = null; }
+    if (settings.authToken !== tok) return; // dito nach dem Body-Read (zweites await)
+    const entries = d && Array.isArray(d.entries) ? d.entries : [];
+    renderLedgerEntries(entries, { append: !!append });
+    // next-Cursor defensiv uebernehmen (nur plausible Form), sonst Zeit-Fallback.
+    _ledgerNext = d && d.next && Number.isFinite(d.next.before) && typeof d.next.beforeId === "string" && d.next.beforeId
+      ? { before: d.next.before, beforeId: d.next.beforeId } : null;
+    const more = $("btn-ledger-more");
+    if (more) more.classList.toggle("hidden", !(d && d.more === true));
+    ledgerMsg("");
+  } finally {
+    _ledgerBusy = false;
+  }
+}
+
+function toggleLedger() {
+  const list = $("ledger-list");
+  const toggle = $("btn-ledger-toggle");
+  const more = $("btn-ledger-more");
+  _ledgerOpen = !_ledgerOpen;
+  if (list) list.classList.toggle("hidden", !_ledgerOpen);
+  if (toggle) toggle.textContent = _ledgerOpen ? "Guthaben-Verlauf verbergen" : "Guthaben-Verlauf anzeigen";
+  if (!_ledgerOpen) { if (more) more.classList.add("hidden"); ledgerMsg(""); return; }
+  loadLedger();
 }
 
 // Zeichnet die Guthaben-Zeile aus dem aktuellen creditsState. Nur sichtbar, wenn das Flag an
@@ -10385,6 +10513,15 @@ $("create-tier").addEventListener("change", () => {
 document.querySelectorAll(".btn-topup").forEach((b) => {
   b.addEventListener("click", () => startTopup(Number(b.dataset.eur)));
 });
+
+// Guthaben-Verlauf (Audit 2026-07): Toggle laedt beim Oeffnen frisch; "Aeltere Eintraege"
+// blaettert per before-Cursor weiter (loadLedger append).
+{
+  const t = $("btn-ledger-toggle");
+  if (t) t.addEventListener("click", toggleLedger);
+  const m = $("btn-ledger-more");
+  if (m) m.addEventListener("click", () => loadLedger({ append: true }));
+}
 
 // Kompakter Aufladen-CTA direkt am Qualitaets-Select (sichtbar nur, wenn Opus mangels
 // Guthaben gesperrt ist) → bestehender Aufladen-Flow in den Einstellungen.
