@@ -3256,7 +3256,14 @@ function renderBalanceLine() {
     const euro = formatGuthabenEuro(creditsState.credits);
     const cr = creditsState.credits.toLocaleString("de-DE");
     // euro/cr sind aus Zahlen formatiert (keine Nutzereingabe) → kein XSS-Risiko.
-    el.innerHTML = `Guthaben: <strong>${euro}</strong> <span class="balance-credits">(${cr} Credits)</span>`;
+    // Negativ-Saldo entsteht NUR durch eine Erstattung/Rueckbuchung (Paddle-Refund/
+    // Chargeback-Clawback, Storno-Semantik serverseitig): der Nutzer hat mehr verbraucht
+    // als nach der Erstattung gedeckt war. Kommentarlos "-0,35 €" anzuzeigen verwirrt genau
+    // die Nutzer, die ohnehin gerade unzufrieden waren (Audit 2026-07) → kurz erklaeren.
+    const negHint = creditsState.credits < 0
+      ? `<br><span class="hint">Der Stand ist durch eine Erstattung negativ – er wird mit der nächsten Aufladung verrechnet.</span>`
+      : "";
+    el.innerHTML = `Guthaben: <strong>${euro}</strong> <span class="balance-credits">(${cr} Credits)</span>${negHint}`;
     el.classList.remove("hidden");
   } else {
     el.textContent = "";
@@ -11246,9 +11253,12 @@ function renderOverflowConfirmState() {
   const balEl = $("overflow-balance");
   if (balEl) {
     if (have !== null) {
-      balEl.textContent = affordable
+      // Negativ-Saldo (nach Erstattung/Rueckbuchung) im Dialog kurz erklaeren — hier trifft
+      // ihn der Nutzer sonst am irritierendsten ("warum ist mein Guthaben unter Null?").
+      const negNote = have < 0 ? " Der Stand ist durch eine Erstattung negativ – er wird mit der nächsten Aufladung verrechnet." : "";
+      balEl.textContent = (affordable
         ? `Guthaben danach: ${formatGuthabenEuro(have - price)} (aktuell ${formatGuthabenEuro(have)}).`
-        : `Aktuelles Guthaben: ${formatGuthabenEuro(have)}.`;
+        : `Aktuelles Guthaben: ${formatGuthabenEuro(have)}.`) + negNote;
       balEl.classList.remove("hidden");
     } else {
       balEl.textContent = "";
