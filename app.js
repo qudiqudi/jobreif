@@ -11260,6 +11260,11 @@ function renderOverflowConfirmState() {
   if (topupEl) topupEl.classList.toggle("hidden", affordable);
   const confirmBtn = $("btn-overflow-confirm");
   if (confirmBtn) confirmBtn.classList.toggle("hidden", !affordable);
+  // Widerrufs-Einwilligung (§ 356 Abs. 5 BGB) haengt am Bestaetigen-Klick → nur sichtbar,
+  // wenn der Bestaetigen-Button sichtbar ist (gedeckter Zustand). Im Aufladen-Zustand ist
+  // noch keine Ausfuehrung im Spiel (der Kauf selbst behaelt sein Widerrufsrecht).
+  const consentEl = $("overflow-consent");
+  if (consentEl) consentEl.classList.toggle("hidden", !affordable);
   // Opt-in "automatisch Guthaben verwenden": dezente Checkbox mit EXAKT der Semantik der
   // Einstellungen (settings.autoUseCredits). Nur im gedeckten Gratis-Overflow-Zustand zeigen
   // (im Opus-Dialog wuerde der Kontingent-Wortlaut nicht passen). Uebernommen wird der Haken
