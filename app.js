@@ -4,9 +4,18 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.29.1";
+const APP_VERSION = "1.30.0";
 
 const CHANGELOG = [
+  {
+    version: "1.30.0",
+    date: "04.07.2026",
+    items: [
+      "Guthaben & Aufladen: Das tägliche Gratis-Kontingent bleibt wie gewohnt. Wer darüber hinaus üben möchte, kann jetzt Guthaben aufladen und pro Test einen kleinen, festen Preis zahlen – abgebucht wird immer erst nach deiner ausdrücklichen Bestätigung.",
+      "Neue Qualitätsstufe „beste“ (Opus): für besonders anspruchsvolle, realitätsnahe Tests. Sie wird aus deinem Guthaben bezahlt; „standard“ und „günstig“ bleiben im Rahmen des Tageskontingents kostenlos.",
+      "Zum Start geschenkt: Beim ersten Aufladen bekommst du einmalig 50 Bonus-Credits (0,50 €) obendrauf.",
+    ],
+  },
   {
     version: "1.29.1",
     date: "03.07.2026",
