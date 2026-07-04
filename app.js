@@ -3284,7 +3284,13 @@ const LEDGER_REASON_LABELS = {
 };
 let _ledgerOpen = false;
 let _ledgerBusy = false;
-let _ledgerOldest = null; // created_at des aeltesten gerenderten Eintrags (Blaetter-Cursor)
+let _ledgerOldest = null; // created_at des aeltesten gerenderten Eintrags (Fallback-Cursor)
+// Server-gelieferter next-Cursor (before + beforeId): created_at hat Sekunden-Aufloesung,
+// mehrere Buchungen koennen denselben Timestamp tragen (z. B. Aufladung + Startbonus) — der
+// Tupel-Cursor verhindert, dass beim Blaettern gleich-sekuendige Eintraege verloren gehen
+// (Codex-Finding, Server-Haelfte in jobreif-backend#88). Fehlt next (aelteres Backend),
+// greift der reine Zeit-Fallback ueber _ledgerOldest.
+let _ledgerNext = null;
 
 function ledgerMsg(text) { const el = $("ledger-msg"); if (el) el.textContent = text || ""; }
 
@@ -3294,6 +3300,7 @@ function ledgerMsg(text) { const el = $("ledger-msg"); if (el) el.textContent = 
 function resetLedgerUI() {
   _ledgerOpen = false;
   _ledgerOldest = null;
+  _ledgerNext = null;
   const list = $("ledger-list");
   if (list) { list.textContent = ""; list.classList.add("hidden"); }
   const more = $("btn-ledger-more");
@@ -3339,7 +3346,13 @@ async function loadLedger({ append } = {}) {
   const tok = settings.authToken;
   ledgerMsg("Verlauf wird geladen …");
   try {
-    const cursor = append && Number.isFinite(_ledgerOldest) ? `?before=${_ledgerOldest}` : "";
+    // Beim Blaettern den Server-Cursor bevorzugen (Tupel: before + beforeId, verliert keine
+    // gleich-sekuendigen Eintraege); Zeit-Fallback nur fuer ein aelteres Backend ohne next.
+    let cursor = "";
+    if (append) {
+      if (_ledgerNext) cursor = `?before=${_ledgerNext.before}&beforeId=${encodeURIComponent(_ledgerNext.beforeId)}`;
+      else if (Number.isFinite(_ledgerOldest)) cursor = `?before=${_ledgerOldest}`;
+    }
     let r;
     try { r = await fetch(hostedBase() + "/api/ledger" + cursor, { headers: authHeaders() }); }
     catch { if (settings.authToken === tok) ledgerMsg("Keine Verbindung. Bitte Internetverbindung prüfen und erneut versuchen."); return; }
@@ -3353,6 +3366,9 @@ async function loadLedger({ append } = {}) {
     if (settings.authToken !== tok) return; // dito nach dem Body-Read (zweites await)
     const entries = d && Array.isArray(d.entries) ? d.entries : [];
     renderLedgerEntries(entries, { append: !!append });
+    // next-Cursor defensiv uebernehmen (nur plausible Form), sonst Zeit-Fallback.
+    _ledgerNext = d && d.next && Number.isFinite(d.next.before) && typeof d.next.beforeId === "string" && d.next.beforeId
+      ? { before: d.next.before, beforeId: d.next.beforeId } : null;
     const more = $("btn-ledger-more");
     if (more) more.classList.toggle("hidden", !(d && d.more === true));
     ledgerMsg("");
