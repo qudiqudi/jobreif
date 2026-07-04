@@ -2623,6 +2623,10 @@ let creditsState = { credits: null, creditsEnabled: false, opusTestCredits: null
 
 function resetCreditsState() {
   creditsState = { credits: null, creditsEnabled: false, opusTestCredits: null, freeRemaining: null, firstTopupBonus: null, loaded: false, dirty: false };
+  // Konto-Uebergang (Logout/401/Wechsel): auch den Guthaben-Verlauf zuruecksetzen — gerenderte
+  // Zeilen des alten Kontos duerfen dem naechsten nicht angezeigt werden (Codex-Finding, s.
+  // resetLedgerUI). Hoisting: die Funktion ist eine Declaration weiter unten im Credits-Block.
+  resetLedgerUI();
 }
 
 // Defensiv: das optionale Server-Feld firstTopupBonus nur akzeptieren, wenn es AKTIV einen Bonus
@@ -3284,6 +3288,21 @@ let _ledgerOldest = null; // created_at des aeltesten gerenderten Eintrags (Blae
 
 function ledgerMsg(text) { const el = $("ledger-msg"); if (el) el.textContent = text || ""; }
 
+// Verlauf-UI komplett zuruecksetzen (zu + leer). Wird bei JEDEM Konto-Uebergang gerufen
+// (resetCreditsState: Logout, 401, Konto-Wechsel) — sonst saehe Konto B die bereits
+// gerenderten Zeilen von Konto A, sobald die Sektion wieder sichtbar wird (Codex-Finding).
+function resetLedgerUI() {
+  _ledgerOpen = false;
+  _ledgerOldest = null;
+  const list = $("ledger-list");
+  if (list) { list.textContent = ""; list.classList.add("hidden"); }
+  const more = $("btn-ledger-more");
+  if (more) more.classList.add("hidden");
+  const toggle = $("btn-ledger-toggle");
+  if (toggle) toggle.textContent = "Guthaben-Verlauf anzeigen";
+  ledgerMsg("");
+}
+
 // Rendert Eintraege ausschliesslich ueber textContent (Server-Daten nie als HTML
 // interpretieren — ref/reason koennten theoretisch beliebige Strings sein).
 function renderLedgerEntries(entries, { append }) {
@@ -3313,18 +3332,25 @@ async function loadLedger({ append } = {}) {
   if (_ledgerBusy) return;
   if (!settings.authToken) { promptHostedLogin(); return; }
   _ledgerBusy = true;
+  // Token-Snapshot wie pollBalanceAfterPurchase (Codex-Finding): nach JEDEM await pruefen,
+  // ob noch dasselbe Konto aktiv ist. Sonst rendert eine spaete Antwort von Konto A den
+  // Verlauf ins UI von Konto B (Logout/Wechsel waehrend des fetch). resetCreditsState hat
+  // die UI dann bereits zurueckgesetzt — hier NICHTS mehr anfassen, nur still aussteigen.
+  const tok = settings.authToken;
   ledgerMsg("Verlauf wird geladen …");
   try {
     const cursor = append && Number.isFinite(_ledgerOldest) ? `?before=${_ledgerOldest}` : "";
     let r;
     try { r = await fetch(hostedBase() + "/api/ledger" + cursor, { headers: authHeaders() }); }
-    catch { ledgerMsg("Keine Verbindung. Bitte Internetverbindung prüfen und erneut versuchen."); return; }
+    catch { if (settings.authToken === tok) ledgerMsg("Keine Verbindung. Bitte Internetverbindung prüfen und erneut versuchen."); return; }
+    if (settings.authToken !== tok) return; // Konto gewechselt/Logout → Antwort verwerfen
     if (r.status === 401) { handleHostedUnauthorized(); return; }
     // 404 = Backend-Haelfte noch nicht deployt (der Client darf dem Deploy vorauslaufen).
     if (r.status === 404) { ledgerMsg("Der Verlauf ist noch nicht verfügbar."); return; }
     if (!r.ok) { ledgerMsg("Der Verlauf ist gerade nicht verfügbar. Bitte später erneut versuchen."); return; }
     let d = null;
     try { d = await r.json(); } catch { d = null; }
+    if (settings.authToken !== tok) return; // dito nach dem Body-Read (zweites await)
     const entries = d && Array.isArray(d.entries) ? d.entries : [];
     renderLedgerEntries(entries, { append: !!append });
     const more = $("btn-ledger-more");
