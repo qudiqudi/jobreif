@@ -1859,6 +1859,8 @@ button.danger:hover { background: var(--red-soft); border-color: var(--red); }
 .start-panel { margin: 0.4rem 0 1rem; }
 .start-buttons { display: flex; flex-direction: column; gap: 0.5rem; }
 .start-buttons .primary { width: 100%; }
+/* Preis-Reminder unter den Start-Buttons (bezahlte Stufe / Auto-Zahlen) */
+.start-price-hint { margin: 0.5rem 0 0; text-align: center; }
 .start-controls {
   display: flex;
   flex-direction: column;

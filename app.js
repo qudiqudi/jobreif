@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.33.1";
+const APP_VERSION = "1.33.2";
 
 const CHANGELOG = [
+  {
+    version: "1.33.2",
+    date: "05.07.2026",
+    items: [
+      "Mehr Transparenz: Wenn „automatisch Guthaben verwenden“ aktiv ist, siehst du jetzt schon direkt an den Start-Buttons einer Stelle, was ein Test in der gewählten Qualität kostet – bevor du ihn startest.",
+    ],
+  },
   {
     version: "1.33.1",
     date: "05.07.2026",
@@ -2843,7 +2850,7 @@ function renderTierControls() {
 // frisch aus der Basis aufgebaut — nie aus dem DOM weitergereicht (idempotent bei Flag-Wechsel).
 const TIER_OPTION_LABELS = {
   standard: "Standard – empfohlen",
-  guenstig: "Günstig – schneller und sparsamer",
+  guenstig: "Günstig – kostenlos zum Ausprobieren",
   beste: "Beste (Opus) – höchste Qualität",
 };
 
@@ -7645,11 +7652,36 @@ function buildNudgeCreditHint() {
   const r = creditsState.freeRemaining;
   if (r > 0) {
     p.textContent = r === 1
-      ? "Ein weiterer Test nutzt heute deinen letzten kostenlosen Test in dieser Qualität."
-      : `Ein weiterer Test nutzt einen deiner heute noch ${r} kostenlosen Tests in dieser Qualität.`;
+      ? "Ein weiterer Test nutzt deinen letzten kostenlosen Test in dieser Qualität."
+      : `Ein weiterer Test nutzt einen deiner noch ${r} kostenlosen Tests in dieser Qualität.`;
   } else {
     const euro = formatGuthabenEuro(tierPriceCredits(tier));
-    p.textContent = `Dein kostenloses Tageskontingent ist aufgebraucht - ein weiterer Test kostet ${euro} aus deinem Guthaben.`;
+    p.textContent = `Deine kostenlosen Tests sind aufgebraucht - ein weiterer Test kostet ${euro} aus deinem Guthaben.`;
+  }
+  return p;
+}
+
+// Preis-Reminder unter den Start-Buttons einer Stelle, wenn die aktuell gewaehlte Stufe abbucht
+// (standard/beste bei aktivem Flag). Wichtig fuer den Auto-Zahlen-Fall: dann startet der Button
+// OHNE Rueckfrage direkt eine bezahlte Generierung — der Preis muss VOR dem Klick sichtbar sein,
+// sonst waere er nur auf dem Einstellungs-/Erstell-Screen zu sehen (Codex-Finding). Startet nie
+// selbst etwas. beste-Preis NUR aus dem Server-Wert (F-2: nie geraten), standard aus dem Festpreis.
+function buildStartPriceHint() {
+  const tier = settings.tier || DEFAULT_TIER;
+  if (!tierChargesNow(tier)) return null; // guenstig/Trial oder Flag aus → kein Preis-Reminder
+  const credits = tier === "beste" ? serverOpusCredits() : tierPriceCredits(tier);
+  const p = document.createElement("p");
+  p.className = "start-price-hint hint";
+  if (credits === null) {
+    // beste-Preis (noch) nicht vom Server bestaetigt → generisch, ohne geratenen Betrag (F-2).
+    p.textContent = settings.autoUseCredits
+      ? "Dieser Test wird ohne Rückfrage aus deinem Guthaben bezahlt (Auto-Zahlen aktiv)."
+      : "Dieser Test wird aus deinem Guthaben bezahlt — wir fragen vor dem Start nach.";
+  } else {
+    const euro = formatGuthabenEuro(credits);
+    p.textContent = settings.autoUseCredits
+      ? `Dieser Test kostet ${euro} und wird ohne Rückfrage aus deinem Guthaben bezahlt (Auto-Zahlen aktiv).`
+      : `Dieser Test kostet ${euro} aus deinem Guthaben — wir fragen vor dem Start nach.`;
   }
   return p;
 }
@@ -9809,6 +9841,10 @@ function buildStartPanel(job) {
   btnRow.appendChild(pruefBtn);
   panel.appendChild(btnRow);
 
+  // Preis-Reminder fuer bezahlte Stufen (v. a. Auto-Zahlen: kein Confirm vor dem Charge).
+  const startPriceHint = buildStartPriceHint();
+  if (startPriceHint) panel.appendChild(startPriceHint);
+
   // Vertiefungen: gesperrter Teaser (Stufe < 3 bzw. lokaler Anbieter) oder die
   // Auswahl, sobald freigeschaltet. Eigene Funktion, damit das Panel kompakt
   // bleibt.
@@ -9983,6 +10019,10 @@ function buildVertiefungPicker(job) {
   btnRow.appendChild(lernBtn);
   btnRow.appendChild(pruefBtn);
   box.appendChild(btnRow);
+
+  // Preis-Reminder fuer bezahlte Stufen (auch die Vertiefung erzeugt einen abbuchenden Test).
+  const startPriceHint = buildStartPriceHint();
+  if (startPriceHint) box.appendChild(startPriceHint);
 
   function updateState() {
     const n = selected.size;
