@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.33.3";
+const APP_VERSION = "1.33.4";
 
 const CHANGELOG = [
+  {
+    version: "1.33.4",
+    date: "05.07.2026",
+    items: [
+      "Du kannst dein Konto jetzt selbst löschen – in den Einstellungen unter „Konto“. Dabei werden alle personenbezogenen Daten auf unseren Servern unwiderruflich entfernt. Aufzeichnungen zu Käufen bewahren wir aus gesetzlichen Gründen weiter auf – dann aber pseudonymisiert, ohne direkten Bezug zu dir; ein etwaiges Restguthaben verfällt. Dein lokaler Trainingsstand auf diesem Gerät bleibt erhalten.",
+    ],
+  },
   {
     version: "1.33.3",
     date: "05.07.2026",
@@ -2665,6 +2672,10 @@ function hostedNeedsLogin() {
   return (settings.provider || "hosted") === "hosted" && !settings.authToken;
 }
 
+// E-Mail des angemeldeten Kontos (aus /auth/me), gegen die die getippte Löschbestätigung geprüft
+// wird. Früh deklariert, damit clearAuthToken sie ohne TDZ-Risiko nullen kann.
+let accountEmail = null;
+
 function setAuthToken(token) {
   settings = { ...settings, authToken: token };
   saveSettings(settings);
@@ -2675,6 +2686,9 @@ function clearAuthToken() {
   const { authToken, ...rest } = settings;
   settings = rest;
   saveSettings(settings);
+  // Konto-Bestaetigungs-E-Mail (Löschen-Karte) mit dem Token fallen lassen — auch auf Pfaden, die
+  // den Token OHNE renderAccountSection verwerfen (401-Handler), damit sie nicht stale bleibt.
+  accountEmail = null;
   // Ein noch offener Aufladen-Detour (pendingCreateBesteIntent, P7) gehoert zwingend zum
   // GERADE abgemeldeten Konto. Ohne diesen Reset koennte er ueber Logout/Login hinweg auf ein
   // ANDERES Konto anwenden und dort die teure Opus-Stufe voraus waehlen, ohne dass die neue
@@ -10529,6 +10543,64 @@ function initSettingsForm() {
 // Spiegelt den Anmeldezustand im Settings-Konto-Bereich (nur Status + Abmelden/Anmelden;
 // die eigentlichen Login-Controls leben im view-login). Mit Token wird best-effort
 // /auth/me abgefragt; ein 401 verwirft das (abgelaufene) Token still.
+// Konto-Loeschung (F5): der Löschen-Button ist nur aktiv, wenn die Eingabe exakt der Konto-E-Mail
+// (accountEmail, oben deklariert) entspricht — so kann ein Fehlklick nichts ausloesen (das Backend
+// prueft zusaetzlich).
+function updateAccountDeleteBtn() {
+  const btn = $("btn-account-delete");
+  if (!btn) return;
+  const input = $("account-delete-confirm");
+  const typed = input ? input.value.trim().toLowerCase() : "";
+  btn.disabled = !(accountEmail && typed && typed === String(accountEmail).toLowerCase());
+}
+
+// Fuehrt die unwiderrufliche Loeschung aus: DELETE /auth/account mit der getippten E-Mail; bei
+// Erfolg lokal abmelden und die Sync-Credentials/-Metadaten dieses (gel.) Kontos entfernen. Der
+// lokale Trainingsstand (Profil/Historie/BYOK) bleibt bewusst erhalten.
+async function deleteAccountFlow() {
+  const err = $("account-delete-err");
+  if (err) err.classList.add("hidden");
+  const input = $("account-delete-confirm");
+  const typed = input ? input.value.trim().toLowerCase() : "";
+  if (!accountEmail || typed !== String(accountEmail).toLowerCase()) {
+    if (err) { err.textContent = "Bitte gib deine Konto-E-Mail exakt so ein, wie sie oben steht."; err.classList.remove("hidden"); }
+    return;
+  }
+  const btn = $("btn-account-delete");
+  if (btn) btn.disabled = true;
+  const tok = settings.authToken; // gegen Konto-Wechsel waehrend des Requests absichern
+  let ok = false;
+  try {
+    const r = await fetch(hostedBase() + "/auth/account", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ email: accountEmail }),
+    });
+    ok = r.ok;
+  } catch { ok = false; }
+  if (settings.authToken !== tok) return; // Konto waehrend des Requests gewechselt → fremden Zustand nicht anfassen
+  if (!ok) {
+    if (err) { err.textContent = "Die Löschung ist gerade fehlgeschlagen. Bitte später erneut versuchen."; err.classList.remove("hidden"); }
+    updateAccountDeleteBtn(); // Button-Zustand aus der aktuellen Eingabe (nicht blind aktivieren)
+    return;
+  }
+  // Erfolg: lokal abmelden + Job-Zeiger + Sync-CREDENTIALS dieses Kontos entfernen. Der lokale
+  // Trainingsstand (Profil/Historie/BYOK) bleibt bewusst erhalten — daher profileUpdatedAt NICHT
+  // löschen (das ist lokale Profil-Metadatik, kein Konto-Credential; sonst könnte ein späterer
+  // Sync unter einem neuen Konto den behaltenen Stand per LWW überschreiben; Fable-Finding).
+  clearAuthToken();
+  clearActiveJob();
+  renderActiveJobCard(null);
+  try {
+    if (window.SyncCrypto && window.SyncCrypto.clearStoredCode) window.SyncCrypto.clearStoredCode();
+    localStorage.removeItem(SYNC_OWNER_KEY);
+    localStorage.removeItem(SYNC_META_KEY);
+  } catch { /* Sync evtl. nicht geladen */ }
+  if (input) input.value = "";
+  $("account-msg").textContent = "Dein Konto wurde gelöscht. Dein lokaler Stand auf diesem Gerät bleibt erhalten.";
+  renderAccountSection();
+}
+
 async function renderAccountSection() {
   const status = $("account-status");
   const avatar = $("acct-avatar");
@@ -10544,6 +10616,13 @@ async function renderAccountSection() {
     // neutralen „Angemeldet“.
     status.textContent = email || "Angemeldet";
     setAvatar(email);
+    // Konto-Loeschung (nur angemeldet). accountEmail treibt die getippte Bestaetigung; erst nach
+    // /auth/me bekannt (optimistisch null → Button gesperrt). BEWUSST kein „|| accountEmail": ein
+    // frueherer Konto-Wert darf nicht stehen bleiben (sonst passte die Bestaetigung eines anderen
+    // Kontos; Fable-Finding). Der optimistische null-Aufruf sperrt den Button bis /auth/me.
+    accountEmail = email || null;
+    const danger = $("account-danger"); if (danger) danger.classList.remove("hidden");
+    updateAccountDeleteBtn();
   };
   const showLoggedOut = () => {
     $("account-loggedin").classList.add("hidden");
@@ -10555,6 +10634,13 @@ async function renderAccountSection() {
     syncEnabled = false;
     syncUserId = null; // abgemeldet: kein Konto → Karte aus (Seed bleibt lokal, an Besitzer gebunden)
     renderSyncUI();
+    // Loesch-Karte verbergen + einklappen + Eingabe/Fehler zuruecksetzen.
+    accountEmail = null;
+    const danger = $("account-danger");
+    if (danger) { danger.classList.add("hidden"); danger.open = false; }
+    const ci = $("account-delete-confirm"); if (ci) ci.value = "";
+    const de = $("account-delete-err"); if (de) de.classList.add("hidden");
+    updateAccountDeleteBtn();
   };
   const tok = settings.authToken;
   if (!tok) { showLoggedOut(); return; }
@@ -10751,6 +10837,10 @@ $("btn-account-logout").addEventListener("click", async () => {
   $("account-msg").textContent = "Abgemeldet.";
   renderAccountSection();
 });
+
+// Konto-Loeschung (F5): Button erst aktiv, wenn die getippte E-Mail passt; Klick loescht endgueltig.
+if ($("account-delete-confirm")) $("account-delete-confirm").addEventListener("input", updateAccountDeleteBtn);
+if ($("btn-account-delete")) $("btn-account-delete").addEventListener("click", deleteAccountFlow);
 
 $("btn-settings").addEventListener("click", () => {
   settingsOrigin = "app";
