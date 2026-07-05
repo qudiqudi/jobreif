@@ -11,7 +11,7 @@ const CHANGELOG = [
     version: "1.33.5",
     date: "05.07.2026",
     items: [
-      "Neu: Geräte-Sync. Deinen Trainingsstand – dein Profil und die gewählte Qualitätsstufe – kannst du jetzt zwischen deinen Geräten synchronisieren. Das läuft Ende-zu-Ende verschlüsselt: Auf unseren Servern liegen nur verschlüsselte Daten, den Schlüssel hast nur du. Aktivieren und das zweite Gerät koppeln (per QR-Code oder Sync-Code) kannst du in den Einstellungen unter „Geräte-Sync“.",
+      "Neu: Geräte-Sync. Deinen Trainingsstand – dein Profil und die gewählte Qualitätsstufe – kannst du jetzt zwischen deinen Geräten synchronisieren. Das läuft Ende-zu-Ende verschlüsselt: Auf unseren Servern liegen nur verschlüsselte Daten, den Schlüssel hast nur du. (Zur Fragen-Erstellung wird die Stellenanzeige wie bisher verarbeitet, aber nicht gespeichert.) Aktivieren und das zweite Gerät koppeln (per QR-Code oder Sync-Code) kannst du in den Einstellungen unter „Geräte-Sync“.",
     ],
   },
   {
