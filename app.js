@@ -940,6 +940,9 @@ function saveProfile(p) {
     else localStorage.removeItem(PROFILE_KEY); // komplett leer → Key entfernen statt {}
   } catch { /* voll/blockiert: Profil ist optional, kein harter Fehler */ }
   profile = clean;
+  // Geräte-Sync (F2): lokale Profiländerung → debounced Push (no-op ohne Seed/Flag; kein Echo
+  // während ein Pull anwendet). Defensiv: die Engine ist weiter unten definiert (hoisted).
+  try { if (typeof noteLocalProfileChange === "function") noteLocalProfileChange(); } catch { /* Engine evtl. nicht geladen */ }
   return clean;
 }
 // Payload fuer den Hosted-Request: das validierte Profil oder undefined (Feld dann
@@ -2861,7 +2864,7 @@ const TIER_CONTROLS = {
   settings: {
     sel: "tier", besteHint: "tier-beste-hint", freeHint: "tier-free-hint", topupCta: "tier-topup-cta",
     read: () => settings.tier || DEFAULT_TIER,
-    write: (t) => { if (settings.tier !== t) { settings = { ...settings, tier: t }; saveSettings(settings); } },
+    write: (t) => { if (settings.tier !== t) { settings = { ...settings, tier: t }; saveSettings(settings); try { if (typeof noteLocalProfileChange === "function") noteLocalProfileChange(); } catch { /* Engine evtl. nicht geladen */ } } },
   },
   create: {
     sel: "create-tier", besteHint: "create-tier-beste-hint", freeHint: "create-tier-free-hint", topupCta: "create-tier-topup-cta",
@@ -10896,6 +10899,9 @@ function persistSettingsFromForm() {
   // Kontingent-Badges an den (evtl. gewechselten) Anbieter/Stufe anpassen: bei einem Wechsel
   // weg vom Hosted-Modus muessen sie sofort verschwinden (Badge ist ein Hosted-Feature).
   renderFreeQuotaBadges();
+  // Geräte-Sync (F2): eine hier evtl. geänderte Stufe (settings.tier) mitsyncen (dedup über die
+  // Signatur → ein reiner apiKey-/Provider-Save löst nichts aus).
+  try { if (typeof noteLocalProfileChange === "function") noteLocalProfileChange(); } catch { /* Engine evtl. nicht geladen */ }
 }
 
 // Profil unabhaengig von settings in seinem eigenen Key sichern (leere Auswahl → entfernt).
@@ -12530,8 +12536,12 @@ function syncActivate() {
   if (!window.SyncCrypto) return;
   window.SyncCrypto.storeCode(window.SyncCrypto.seedToCode(window.SyncCrypto.generateSeed()));
   bindSyncOwner();
+  _syncKidCache = { code: null, kid: null };
+  setKidMismatch(false);
+  setProfileMeta({ rev: 0, updatedAt: Date.now() }); // frischer Seed → lokalen Stand als Basis hochladen
   renderSyncUI();
   syncShowCouple();
+  scheduleProfilePush(); // initialer Push (Insert), sobald der Seed steht
 }
 
 // Zurücksetzen: neuer Seed (überschreibt den bisherigen). F2 lädt danach alle Kinds unter der
@@ -12540,8 +12550,12 @@ function syncReset() {
   if (!window.SyncCrypto) return;
   window.SyncCrypto.storeCode(window.SyncCrypto.seedToCode(window.SyncCrypto.generateSeed()));
   bindSyncOwner();
+  _syncKidCache = { code: null, kid: null };
+  setKidMismatch(false);
+  setProfileMeta({ rev: 0, updatedAt: Date.now() });
   renderSyncUI();
   syncShowCouple();
+  syncForceOverwrite().catch(() => {}); // Server mit dem Stand dieses Geräts (neuer Schlüssel) überschreiben
 }
 
 // Bestehendes Gerät koppeln: Code aus dem Eingabefeld übernehmen (format-tolerant: Groß/klein,
@@ -12558,9 +12572,12 @@ function syncJoinFromCode() {
   if (err) err.classList.add("hidden");
   window.SyncCrypto.storeCode(canon);
   bindSyncOwner();
+  _syncKidCache = { code: null, kid: null };
+  setKidMismatch(false);
+  setProfileMeta({ rev: 0 }); // Server-rev unbekannt; syncPull setzt sie
   if (input) input.value = "";
   renderSyncUI();
-  // F2: beim nächsten Start/Trigger Pull + Merge unter der gekoppelten kid.
+  syncPull().catch(() => {}); // Stand des anderen Geräts holen + LWW-mergen
 }
 
 // Deaktivieren: lokal den Seed löschen (Standard). Optional zusätzlich die verschlüsselten
@@ -12585,6 +12602,9 @@ async function syncDisableConfirmed() {
   }
   if (window.SyncCrypto) window.SyncCrypto.clearStoredCode();
   localStorage.removeItem(SYNC_OWNER_KEY);
+  localStorage.removeItem(SYNC_META_KEY); // rev/updatedAt vergessen → Re-Aktivieren startet frisch
+  _syncKidCache = { code: null, kid: null };
+  setKidMismatch(false);
   const cb = $("sync-delete-server"); if (cb) cb.checked = false;
   renderSyncUI();
 }
@@ -12601,6 +12621,201 @@ async function syncDisableConfirmed() {
   on("sync-disable-cancel", "click", () => { const c = $("sync-disable-confirm"); if (c) c.classList.add("hidden"); });
   on("sync-disable-do", "click", syncDisableConfirmed);
 })();
+
+/* ---------- Geräte-Sync F2: Engine (Pull/Merge/Push für Kind `profile`) ---------- */
+// Kind `profile` = { profile:{…}, tier, updatedAt(ms) }. Merge = Last-Write-Wins über updatedAt;
+// Nebenläufigkeit per optimistischem CAS (rev/If-Match) + Web-Lock (Tabs überholen sich nicht);
+// Push debounced (~2s). Kid-Mismatch (Server-Blob unter anderem Seed) → nicht entschlüsseln,
+// Kopplungs-Hinweis. Engine ist inert, solange nicht (hosted + Token + gespeicherter Seed) —
+// pre-launch gibt es keinen Seed (dormante Karte), also passiert nichts.
+
+const SYNC_META_KEY = "bewerbungstool.syncMeta";
+const SYNC_PUSH_DEBOUNCE_MS = 2000;
+const SYNC_LOCK = "bewerbungstool.sync.profile";
+let _syncApplying = false;   // unterdrückt den Push-Trigger, während ein Pull lokal anwendet (kein Echo)
+let _syncPushTimer = null;
+let _syncLastSig = null;     // Signatur des zuletzt vermerkten profile+tier-Stands (Dedup)
+let _syncKidCache = { code: null, kid: null };
+
+function loadSyncMeta() {
+  try { const m = JSON.parse(localStorage.getItem(SYNC_META_KEY)); return (m && typeof m === "object") ? m : {}; }
+  catch { return {}; }
+}
+function saveSyncMeta(m) { try { localStorage.setItem(SYNC_META_KEY, JSON.stringify(m)); } catch { /* voll/blockiert */ } }
+function profileMeta() { const m = loadSyncMeta(); return (m.profile && typeof m.profile === "object") ? m.profile : {}; }
+function setProfileMeta(patch) { const m = loadSyncMeta(); m.profile = { ...(m.profile || {}), ...patch }; saveSyncMeta(m); }
+
+function syncCurrentTier() { return settings.tier || DEFAULT_TIER; }
+function profileSig() { return JSON.stringify({ p: loadProfile(), t: syncCurrentTier() }); }
+function profileKindPayload() {
+  return { profile: loadProfile(), tier: syncCurrentTier(), updatedAt: Number(profileMeta().updatedAt) || 0 };
+}
+function syncEligible() {
+  return (settings.provider || "hosted") === "hosted" && !!settings.authToken
+    && !!window.SyncCrypto && !!window.SyncCrypto.storedCode();
+}
+
+// Lokale Profil-/Stufen-Änderung vermerken → updatedAt hochsetzen + debounced Push. Dedup über
+// die Inhalts-Signatur (ein Settings-Save ohne Profil-/Stufen-Diff löst nichts aus). Während ein
+// Pull anwendet (_syncApplying) NICHT feuern.
+function noteLocalProfileChange() {
+  if (_syncApplying) return;
+  const sig = profileSig();
+  if (sig === _syncLastSig) return;
+  _syncLastSig = sig;
+  if (!syncEligible()) return;
+  setProfileMeta({ updatedAt: Date.now() });
+  scheduleProfilePush();
+}
+function scheduleProfilePush() {
+  if (_syncPushTimer) clearTimeout(_syncPushTimer);
+  _syncPushTimer = setTimeout(() => { _syncPushTimer = null; syncPushProfile().catch(() => {}); }, SYNC_PUSH_DEBOUNCE_MS);
+}
+
+// Serialisierung: Push/Pull des Kinds laufen unter EINEM Web-Lock (Muster mutateHistory).
+async function withSyncLock(fn) {
+  const locks = typeof navigator !== "undefined" && navigator.locks;
+  if (locks && typeof locks.request === "function") {
+    try { return await locks.request(SYNC_LOCK, fn); } catch { return fn(); }
+  }
+  return fn();
+}
+
+async function apiSyncGet() {
+  let r;
+  try { r = await fetch(hostedBase() + "/api/sync", { headers: authHeaders() }); } catch { return null; }
+  if (!r.ok) return null; // 404 disabled / 401 / 5xx → still lassen
+  try { return await r.json(); } catch { return null; }
+}
+function apiSyncPut(kind, rev, envelope) {
+  return fetch(hostedBase() + "/api/sync/" + kind, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", "If-Match": String(rev), ...authHeaders() },
+    body: JSON.stringify(envelope),
+  });
+}
+
+// Kid des lokalen Schlüssels (memoisiert je Code).
+async function currentKid() {
+  const code = window.SyncCrypto && window.SyncCrypto.storedCode();
+  if (!code) return null;
+  if (_syncKidCache.code === code) return _syncKidCache.kid;
+  const { kid } = await window.SyncCrypto.deriveKey(code);
+  _syncKidCache = { code, kid };
+  return kid;
+}
+function setKidMismatch(v) {
+  const hint = $("sync-mismatch-hint");
+  if (hint) hint.classList.toggle("hidden", !v);
+}
+
+// Remote-Stand des Kinds `profile` lokal anwenden (LWW hat entschieden). Ohne Echo-Push.
+function applyProfileKind(remote) {
+  _syncApplying = true;
+  try {
+    saveProfile(remote && remote.profile ? remote.profile : {}); // sanitized + persistiert + global `profile`
+    const t = remote && remote.tier;
+    if (typeof t === "string" && settings.tier !== t) { settings = { ...settings, tier: t }; saveSettings(settings); }
+    setProfileMeta({ updatedAt: Number(remote && remote.updatedAt) || 0 });
+    _syncLastSig = profileSig();
+    refreshProfileTierUIIfOpen();
+  } finally { _syncApplying = false; }
+}
+function refreshProfileTierUIIfOpen() {
+  if (typeof currentView === "function" && currentView() !== "view-settings") return;
+  const set = (id, v) => { const el = $(id); if (el) el.value = v || ""; };
+  set("profile-trajectory", profile.trajectory);
+  set("profile-erfahrung", profile.erfahrung);
+  set("profile-ausbildung", profile.ausbildung);
+  set("profile-branche", profile.branche);
+  const tierSel = $("tier"); if (tierSel) tierSel.value = settings.tier || DEFAULT_TIER;
+  try { renderTierControls(); } catch { /* Tier-UI evtl. nicht bereit */ }
+}
+
+// PULL: Server-Stand holen, Kind `profile` LWW-mergen. Kid-Mismatch → Hinweis, kein Entschlüsseln.
+// Server leer + lokal Inhalt → hochladen. Alles unter Web-Lock; Fehler bleiben still.
+async function syncPull() {
+  if (!syncEligible()) return;
+  return withSyncLock(async () => {
+    const data = await apiSyncGet();
+    if (!data || typeof data !== "object") return;
+    const blob = (data.blobs || {}).profile;
+    if (!blob || !blob.envelope) {
+      setProfileMeta({ rev: 0 });
+      if (Object.keys(loadProfile()).length || syncCurrentTier() !== DEFAULT_TIER) await pushProfileLocked(0);
+      return;
+    }
+    const kid = await currentKid();
+    if (blob.envelope.kid && kid && blob.envelope.kid !== kid) { setKidMismatch(true); return; }
+    let remote;
+    try {
+      const { key } = await window.SyncCrypto.deriveKey(window.SyncCrypto.storedCode());
+      remote = await window.SyncCrypto.decrypt(key, blob.envelope);
+    } catch { setKidMismatch(true); return; } // GCM-Auth-Fehler = falscher Schlüssel
+    setKidMismatch(false);
+    setProfileMeta({ rev: Number(blob.rev) || 0 });
+    const localAt = Number(profileMeta().updatedAt) || 0;
+    const remoteAt = Number(remote.updatedAt) || 0;
+    if (remoteAt > localAt) applyProfileKind(remote);
+    else if (localAt > remoteAt) await pushProfileLocked(Number(blob.rev) || 0);
+    // gleich → in sync
+  });
+}
+
+// PUSH (öffentlich, nimmt den Lock). Debounce-Ziel.
+async function syncPushProfile() {
+  if (!syncEligible()) return;
+  return withSyncLock(() => pushProfileLocked(Number(profileMeta().rev) || 0));
+}
+
+// „Server mit diesem Gerät überschreiben" (Sync zurücksetzen bei neuem Seed / Kid-Mismatch-Ausweg):
+// aktuelle Server-rev holen, dann forciert schreiben (409 → mit neuer rev erneut, ohne LWW/kid-Check).
+async function syncForceOverwrite() {
+  if (!syncEligible()) return;
+  return withSyncLock(async () => {
+    const data = await apiSyncGet();
+    const rev = Number(data && data.blobs && data.blobs.profile && data.blobs.profile.rev) || 0;
+    setProfileMeta({ rev, updatedAt: Date.now() });
+    setKidMismatch(false);
+    await pushProfileLocked(rev, 0, true);
+  });
+}
+
+// PUSH-Kern (Lock muss gehalten werden). CAS über rev; 409 → Server-Envelope entschlüsseln,
+// LWW mergen, erneut versuchen (bounded). force=true überschreibt ohne LWW/kid-Check.
+async function pushProfileLocked(rev, attempt = 0, force = false) {
+  if (!syncEligible()) return;
+  const code = window.SyncCrypto.storedCode();
+  const { key, kid } = await window.SyncCrypto.deriveKey(code);
+  const envelope = await window.SyncCrypto.encrypt(key, kid, profileKindPayload());
+  let r;
+  try { r = await apiSyncPut("profile", rev, envelope); } catch { return; } // offline → nächster Trigger
+  if (r.status === 200) {
+    let body = {}; try { body = await r.json(); } catch { /* leer */ }
+    setProfileMeta({ rev: Number(body.rev) || rev + 1 });
+    _syncLastSig = profileSig();
+    return;
+  }
+  if (r.status === 409 && attempt < 3) {
+    let body = {}; try { body = await r.json(); } catch { /* leer */ }
+    const serverRev = Number(body.rev) || 0;
+    if (!force && body.envelope) {
+      const bkid = body.envelope.kid;
+      if (bkid && kid && bkid !== kid) { setKidMismatch(true); return; }
+      try {
+        const remote = await window.SyncCrypto.decrypt(key, body.envelope);
+        setProfileMeta({ rev: serverRev });
+        if ((Number(remote.updatedAt) || 0) > (Number(profileMeta().updatedAt) || 0)) { applyProfileKind(remote); return; }
+      } catch { setKidMismatch(true); return; }
+    }
+    return pushProfileLocked(serverRev, attempt + 1, force); // lokal gewinnt / force → neu schreiben
+  }
+  // sonstige 4xx/5xx (disabled/auth/rate) → still; nächster Trigger retryt.
+}
+
+// Signatur mit dem geladenen Stand initialisieren, damit die erste echte Änderung (nicht der
+// Load) den Push auslöst.
+_syncLastSig = profileSig();
 
 // Startup: einen evtl. per QR gescannten Seed (#sync=v1.…) SOFORT übernehmen und das Fragment
 // aus URL/History entfernen (der Seed darf nicht in der Adressleiste/History hängen bleiben).
@@ -12624,6 +12839,9 @@ consumeAuthRedirect().then(() => {
   // creditsState frueh laden (hosted + angemeldet), damit die Opus-Stufe nach einem Reload
   // sofort korrekt verfuegbar ist und effectiveTier sie nicht still auf standard herabstuft.
   if ((settings.provider || "hosted") === "hosted" && settings.authToken) refreshBalance();
+  // Geräte-Sync (F2): angemeldet + gekoppelt → Profil/Stufe vom Server ziehen und mergen
+  // (LWW). No-op ohne Seed/Flag. Fehler bleiben still; lokal bleibt immer nutzbar.
+  syncPull().catch(() => {});
 });
 
 /* ---------- Service Worker (PWA) ---------- */
