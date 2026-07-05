@@ -5147,18 +5147,22 @@ async function generateQuiz(opts = {}) {
   // frischen tierChargesNow entschieden. Nur mit Token (ohne Anmeldung uebernimmt
   // startHostedGeneration den Login-Prompt).
   if (isHosted && !tierIsFree(selectedTier()) && settings.authToken) {
-    // Frisch nachladen, wenn unbekannt ODER moeglicherweise veraltet (nach einer Abbuchung) —
-    // sonst startet ein zweiter bezahlter Test auf stale Guthaben (und der Flag-Stand ist frisch).
-    if (!creditsState.loaded || creditsState.dirty) await refreshBalance();
+    // Fuer eine bezahlte Stufe den Stand IMMER frisch bestaetigen (nicht nur bei !loaded/dirty):
+    // ein lokal stale-false creditsEnabled (Flag war beim letzten Laden aus, Backend inzwischen an)
+    // taeuschte sonst „gratis" vor → tierChargesNow=false → kein Confirm → Silent Charge. dirty=true
+    // VOR dem Refresh erzwingt die Bestaetigung UND macht einen fehlgeschlagenen Refresh erkennbar:
+    // refreshBalance setzt dirty=false NUR bei Erfolg (bei 5xx/offline bleibt dirty true).
+    creditsState.dirty = true;
+    await refreshBalance();
     const t = selectedTier();
     // Innerer Gate an !tierIsFree (nicht tierChargesNow): so greift der „nicht bestaetigt"-Abbruch
-    // AUCH, wenn der Refresh fehlschlug und creditsEnabled unbekannt (loaded=false) blieb — sonst
-    // liefe ein offline nicht bestaetigter Standard-Test in eine stille Backend-Abbuchung. Nur der
+    // AUCH, wenn der Refresh fehlschlug und der Flag-/Deckungsstand nicht FRISCH bestaetigt ist —
+    // sonst liefe ein nicht bestaetigter Standard-Test in eine stille Backend-Abbuchung. Nur der
     // 401-Fall (Token verworfen) faellt raus → Login-Pfad.
     if (settings.authToken && !tierIsFree(t)) {
-      if (!creditsState.loaded) {
-        // Deckung/Flag liess sich nicht bestaetigen (Balance-Abruf fehlgeschlagen/offline) → NICHT
-        // dispatchen (das Backend koennte bei aktivem Flag abbuchen). Fail-closed.
+      if (!creditsState.loaded || creditsState.dirty) {
+        // Flag/Deckung nicht FRISCH bestaetigt (offline/5xx: dirty blieb true, oder loaded=false)
+        // → NICHT dispatchen (das Backend koennte bei aktivem Flag abbuchen). Fail-closed.
         showError(`Die Qualitätsstufe „${tierLabelFor(t)}“ konnte gerade nicht bestätigt werden. Bitte Verbindung prüfen und erneut versuchen, oder eine andere Stufe wählen.`);
         return;
       }
