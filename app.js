@@ -2704,6 +2704,12 @@ let creditsState = { credits: null, creditsEnabled: false, opusTestCredits: null
 // Geräte-Sync-Karte, entkoppelt so den Client-Deploy vom Flag-Flip (Flag aus → Karte aus).
 // Früh deklariert (kein TDZ), falls renderAccountSection vor dem Sync-Block läuft.
 let syncEnabled = false;
+// Der Sync-Seed ist der E2E-Schlüssel und wird an das Konto gebunden, unter dem er aktiviert
+// wurde: auf einem geteilten Browser darf ein zweiter Nutzer NICHT den Schlüssel/QR des ersten
+// sehen (Codex-Finding). syncUserId = aktuell angemeldete user.id (aus /auth/me); der Besitzer
+// des lokalen Seeds steht in bewerbungstool.syncOwner.
+let syncUserId = null;
+const SYNC_OWNER_KEY = "bewerbungstool.syncOwner";
 
 function resetCreditsState() {
   creditsState = { credits: null, creditsEnabled: false, opusTestCredits: null, freeRemaining: null, firstTopupBonus: null, loaded: false, dirty: false };
@@ -10479,6 +10485,9 @@ function updateSettingsProviderUI() {
   if (advStatus) advStatus.textContent = "Aktiv: " + (PROVIDER_STATUS_LABELS[provider] || provider);
   const adv = $("adv-provider");
   if (adv) adv.open = !isHosted;
+  // Geräte-Sync-Karte mit re-rendern: der Wechsel WEG von hosted muss die Karte ausblenden
+  // (renderSyncUI gated auf hosted) — sonst bliebe sie sichtbar/bedienbar (Codex-Finding).
+  renderSyncUI();
 }
 
 function initSettingsForm() {
@@ -10541,6 +10550,7 @@ async function renderAccountSection() {
     resetCreditsState();
     renderCreditsUI();
     syncEnabled = false;
+    syncUserId = null; // abgemeldet: kein Konto → Karte aus (Seed bleibt lokal, an Besitzer gebunden)
     renderSyncUI();
   };
   const tok = settings.authToken;
@@ -10577,6 +10587,8 @@ async function renderAccountSection() {
       if (creditsState.creditsEnabled) refreshBalance(); // freeRemaining (+ frisches Guthaben) holen
       // Geräte-Sync-Karte gaten (additiv, defensiv: alt-Server liefert das Feld nicht → false).
       syncEnabled = d.syncEnabled === true;
+      syncUserId = d.user && d.user.id ? d.user.id : null;
+      reconcileSyncOwner(); // fremden Seed (anderes Konto, geteilter Browser) verwerfen / eigenen adoptieren
       renderSyncUI();
     }
   } catch { /* offline: optimistischer Zustand bleibt */ }
@@ -12406,7 +12418,32 @@ function routeInitialView() {
 // app.js geladen; der QR-Encoder (window.SyncQR + Vendor-Lib) wird bei Bedarf lazy nachgeladen.
 
 function syncActive() {
-  return !!(window.SyncCrypto && window.SyncCrypto.storedCode());
+  if (!(window.SyncCrypto && window.SyncCrypto.storedCode())) return false;
+  // Ungebunden (per QR/Aktivierung vor Login gespeichert) zählt als aktiv; gebunden nur für
+  // dasselbe Konto — ein fremder Seed (anderer Nutzer auf geteiltem Browser) gilt als nicht aktiv.
+  const owner = localStorage.getItem(SYNC_OWNER_KEY);
+  return !owner || owner === syncUserId;
+}
+
+// Seed an das aktuell angemeldete Konto binden (nach Aktivieren/Koppeln/Zurücksetzen). Ohne
+// bekanntes Konto (z. B. QR-Scan vor Login) bleibt er ungebunden und wird beim nächsten
+// /auth/me adoptiert.
+function bindSyncOwner() {
+  if (syncUserId) localStorage.setItem(SYNC_OWNER_KEY, syncUserId);
+  else localStorage.removeItem(SYNC_OWNER_KEY);
+}
+
+// Beim Login (/auth/me): einen fremden Seed (Besitzer != aktuelles Konto) lokal verwerfen, damit
+// ein zweiter Nutzer auf demselben Browser NICHT Schlüssel/QR des ersten sieht; einen noch
+// ungebundenen eigenen Seed (QR-Scan vor Login) an dieses Konto binden.
+function reconcileSyncOwner() {
+  if (!window.SyncCrypto || !window.SyncCrypto.storedCode()) return;
+  const owner = localStorage.getItem(SYNC_OWNER_KEY);
+  if (!owner) { if (syncUserId) localStorage.setItem(SYNC_OWNER_KEY, syncUserId); return; }
+  if (syncUserId && owner !== syncUserId) {
+    window.SyncCrypto.clearStoredCode();
+    localStorage.removeItem(SYNC_OWNER_KEY);
+  }
 }
 
 // Sichtbarkeit + Zustand der Karte. Nur gehostet + angemeldet + Server-Flag (syncEnabled) UND
@@ -12415,7 +12452,11 @@ function syncActive() {
 function renderSyncUI() {
   const card = $("sync-card");
   if (!card) return;
-  const hosted = (settings.provider || "hosted") === "hosted";
+  // Anbieter aus dem Formular-Select lesen, wenn vorhanden (spiegelt einen laufenden Wechsel
+  // SOFORT, bevor er persistiert ist — settings.provider hinkt im change-Handler noch hinterher).
+  // Die Karte lebt ohnehin nur in der Einstellungs-Ansicht, daher ist der Select maßgeblich.
+  const providerEl = $("provider");
+  const hosted = (providerEl ? providerEl.value : (settings.provider || "hosted")) === "hosted";
   const show = hosted && !!settings.authToken && syncEnabled && !!window.SyncCrypto;
   card.classList.toggle("hidden", !show);
   if (!show) return;
@@ -12425,7 +12466,8 @@ function renderSyncUI() {
   if (on) on.classList.toggle("hidden", !active);
   const couple = $("sync-couple"); if (couple) couple.classList.add("hidden");
   const conf = $("sync-disable-confirm"); if (conf) conf.classList.add("hidden");
-  const err = $("sync-join-err"); if (err) err.classList.add("hidden");
+  const jerr = $("sync-join-err"); if (jerr) jerr.classList.add("hidden");
+  const derr = $("sync-disable-err"); if (derr) derr.classList.add("hidden");
 }
 
 // Lazy-Load des QR-Encoders + Renderers (nur wenn eine Kopplungsansicht geöffnet wird). Der
@@ -12477,6 +12519,7 @@ async function syncShowCouple() {
 function syncActivate() {
   if (!window.SyncCrypto) return;
   window.SyncCrypto.storeCode(window.SyncCrypto.seedToCode(window.SyncCrypto.generateSeed()));
+  bindSyncOwner();
   renderSyncUI();
   syncShowCouple();
 }
@@ -12486,6 +12529,7 @@ function syncActivate() {
 function syncReset() {
   if (!window.SyncCrypto) return;
   window.SyncCrypto.storeCode(window.SyncCrypto.seedToCode(window.SyncCrypto.generateSeed()));
+  bindSyncOwner();
   renderSyncUI();
   syncShowCouple();
 }
@@ -12503,6 +12547,7 @@ function syncJoinFromCode() {
   }
   if (err) err.classList.add("hidden");
   window.SyncCrypto.storeCode(canon);
+  bindSyncOwner();
   if (input) input.value = "";
   renderSyncUI();
   // F2: beim nächsten Start/Trigger Pull + Merge unter der gekoppelten kid.
@@ -12511,14 +12556,25 @@ function syncJoinFromCode() {
 // Deaktivieren: lokal den Seed löschen (Standard). Optional zusätzlich die verschlüsselten
 // Serverdaten löschen (DELETE /api/sync). Der lokale Trainingsstand bleibt in beiden Fällen.
 async function syncDisableConfirmed() {
+  const err = $("sync-disable-err");
+  if (err) err.classList.add("hidden");
   const alsoServer = !!($("sync-delete-server") && $("sync-delete-server").checked);
   if (alsoServer && settings.authToken) {
     const tok = settings.authToken;
-    try { await fetch(hostedBase() + "/api/sync", { method: "DELETE", headers: authHeaders() }); }
-    catch { /* Netzfehler ignorieren — das lokale Deaktivieren ist maßgeblich */ }
+    let okResp = false;
+    // fetch wirft NUR bei Netzfehlern — einen 4xx/5xx muss man über r.ok prüfen (Codex-Finding).
+    try { const r = await fetch(hostedBase() + "/api/sync", { method: "DELETE", headers: authHeaders() }); okResp = r.ok; }
+    catch { okResp = false; }
     if (settings.authToken !== tok) return; // Konto während des Requests gewechselt
+    // Server-Löschung fehlgeschlagen: NICHT lokal löschen (sonst wäre der Schlüssel weg UND die
+    // Serverdaten blieben). Fehler zeigen, Nutzer kann erneut versuchen.
+    if (!okResp) {
+      if (err) { err.textContent = "Die Serverdaten konnten gerade nicht gelöscht werden. Bitte später erneut versuchen."; err.classList.remove("hidden"); }
+      return;
+    }
   }
   if (window.SyncCrypto) window.SyncCrypto.clearStoredCode();
+  localStorage.removeItem(SYNC_OWNER_KEY);
   const cb = $("sync-delete-server"); if (cb) cb.checked = false;
   renderSyncUI();
 }
