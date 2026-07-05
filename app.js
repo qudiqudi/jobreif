@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.33.5";
+const APP_VERSION = "1.34.0";
 
 const CHANGELOG = [
+  {
+    version: "1.34.0",
+    date: "06.07.2026",
+    items: [
+      "Der Geräte-Sync umfasst jetzt auch deinen Trainingsverlauf: deine Test-Historie mit allen Versuchen, dein Übungs-Stapel (die fälligen Wiederholungen) und dein Übungs-Fortschritt wandern jetzt ebenfalls Ende-zu-Ende verschlüsselt auf deine gekoppelten Geräte – zusammengeführt, nicht überschrieben, sodass Versuche von beiden Geräten erhalten bleiben. Löschst du eine Stelle auf einem Gerät, verschwindet sie auch auf den anderen.",
+    ],
+  },
   {
     version: "1.33.5",
     date: "05.07.2026",
