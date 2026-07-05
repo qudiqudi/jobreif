@@ -8102,6 +8102,20 @@ function restoreLevelUpFocus() {
 const HISTORY_MAX_JOBS = 20;
 const HISTORY_MAX_ATTEMPTS = 20;
 
+// Stabile Versuchs-id (F3). crypto.randomUUID braucht Chrome 92 / Safari 15.4 / secure context —
+// dieselbe Browser-Untergrenze, für die mutateHistory schon einen navigator.locks-Fallback hat.
+// Darum NIE roh aufrufen (sonst TypeError → Versuch geht beim Speichern verloren; Fable-Finding):
+// Fallback auf getRandomValues-v4, letzter Notnagel date+random. Wirft nie.
+function newAttemptId() {
+  try { if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID(); } catch { /* weiter */ }
+  try {
+    const b = crypto.getRandomValues(new Uint8Array(16));
+    b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+    const h = [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
+    return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+  } catch { return "a" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); }
+}
+
 function loadHistory() {
   try {
     return JSON.parse(localStorage.getItem("bewerbungstool.history")) || { jobs: [] };
@@ -8133,6 +8147,9 @@ function saveHistory(h) {
   for (let i = 0; i < 6; i++) {
     try {
       localStorage.setItem("bewerbungstool.history", JSON.stringify(h));
+      // Geräte-Sync (F3): lokale Historie-Änderung → debounced Push (no-op ohne Seed/Flag; kein
+      // Echo während eines Pull). Defensiv: die Engine ist weiter unten definiert (TDZ → catch).
+      try { if (typeof noteMergeKindChange === "function") noteMergeKindChange("history"); } catch { /* Engine evtl. nicht geladen */ }
       return true;
     } catch {
       // ZUERST den entbehrlichen Komfort-Cache (Kernpunkte-Vorschau) opfern, BEVOR
@@ -8640,7 +8657,7 @@ async function saveAttempt(result, durationMs, evalCost, evalTokens) {
   const attempt = {
     // Stabile id (additiv, F3): identifiziert den Versuch geräteübergreifend für den Union-Merge
     // des Sync (history). Alt-Versuche ohne id werden defensiv über (jobKey, date) identifiziert.
-    id: crypto.randomUUID(),
+    id: newAttemptId(),
     date: Date.now(),
     mode,
     schwierigkeitsgrad: quiz.schwierigkeitsgrad || "",
@@ -8854,8 +8871,14 @@ async function deleteJob(job) {
     // GC nach 90 Tagen (saveHistory). Über jobKey UND urlKey merken (beides kann die Stelle ident.).
     if (!Array.isArray(h.deleted)) h.deleted = [];
     const ts = Date.now();
+    // Alle drei Job-Identitäten merken (urlKey → identityKey → Text-key), damit der Union-Merge die
+    // Löschung auch dann greift, wenn dieselbe Stelle auf dem anderen Gerät unter einem ANDEREN key
+    // liegt (neu eingefügter Text → anderer Text-key, evtl. kein urlKey) — Fable-Finding, spiegelt
+    // das Report-Cleanup unten.
+    const iKey = identityKeyOf(job.titel, job.arbeitgeber, job.arbeitsort);
     if (job.key) h.deleted.push({ jobKey: job.key, ts });
     if (job.urlKey) h.deleted.push({ urlKey: job.urlKey, ts });
+    if (iKey) h.deleted.push({ identityKey: iKey, ts });
   });
   // Komfort-Cache-Eintrag der Stelle mitloeschen, sonst bliebe er verwaist liegen.
   if (job.key) dropKpCache(job.key);
@@ -12659,6 +12682,7 @@ function syncActivate() {
   renderSyncUI();
   syncShowCouple();
   scheduleProfilePush(); // initialer Push (Insert), sobald der Seed steht
+  for (const name of Object.keys(MERGE_KINDS)) { setKindMeta(name, { rev: 0 }); mergeState(name).sig = null; pushMergeKind(name).catch(() => {}); }
 }
 
 // Zurücksetzen: neuer Seed (überschreibt den bisherigen). F2 lädt danach alle Kinds unter der
@@ -12693,9 +12717,10 @@ function syncJoinFromCode() {
   _syncKidCache = { code: null, kid: null };
   setKidMismatch(false);
   setProfileMeta({ rev: 0 }); // Server-rev unbekannt; syncPull setzt sie
+  for (const name of Object.keys(MERGE_KINDS)) { setKindMeta(name, { rev: 0 }); mergeState(name).sig = null; }
   if (input) input.value = "";
   renderSyncUI();
-  syncPull().catch(() => {}); // Stand des anderen Geräts holen + LWW-mergen
+  syncPull().catch(() => {}); // Stand des anderen Geräts holen + mergen (LWW profile, Union history)
 }
 
 // Deaktivieren: lokal den Seed löschen (Standard). Optional zusätzlich die verschlüsselten
@@ -12720,8 +12745,10 @@ async function syncDisableConfirmed() {
   }
   if (window.SyncCrypto) window.SyncCrypto.clearStoredCode();
   localStorage.removeItem(SYNC_OWNER_KEY);
-  localStorage.removeItem(SYNC_META_KEY); // rev/updatedAt vergessen → Re-Aktivieren startet frisch
+  localStorage.removeItem(SYNC_META_KEY); // rev/updatedAt (aller Kinds) vergessen → Re-Aktivieren startet frisch
   _syncKidCache = { code: null, kid: null };
+  // ausstehende Merge-Kind-Pushes abbrechen + Signaturen zurücksetzen
+  for (const name of Object.keys(MERGE_KINDS)) { const st = mergeState(name); if (st.timer) clearTimeout(st.timer); st.timer = null; st.sig = null; }
   setKidMismatch(false);
   const cb = $("sync-delete-server"); if (cb) cb.checked = false;
   renderSyncUI();
@@ -12799,14 +12826,15 @@ function scheduleProfilePush() {
   _syncPushTimer = setTimeout(() => { _syncPushTimer = null; syncPushProfile().catch(() => {}); }, SYNC_PUSH_DEBOUNCE_MS);
 }
 
-// Serialisierung: Push/Pull des Kinds laufen unter EINEM Web-Lock (Muster mutateHistory).
-async function withSyncLock(fn) {
+// Serialisierung: Push/Pull EINES Kinds laufen unter dessen Web-Lock (Muster mutateHistory).
+// lockName default = profile-Lock (abwärtskompatibel); Merge-Kinds übergeben ihren eigenen.
+async function withSyncLock(fn, lockName = SYNC_LOCK) {
   const locks = typeof navigator !== "undefined" && navigator.locks;
   if (locks && typeof locks.request === "function") {
     let started = false;
     // Fallback OHNE Lock NUR, wenn die Lock-Mechanik selbst scheitert (SecurityError o. ä.) —
     // nicht, wenn fn im Lock wirft (sonst zweite, ungesperrte Ausführung; Fable-Finding).
-    try { return await locks.request(SYNC_LOCK, () => { started = true; return fn(); }); }
+    try { return await locks.request(lockName, () => { started = true; return fn(); }); }
     catch (e) { if (started) throw e; return fn(); }
   }
   return fn();
@@ -12867,10 +12895,19 @@ function refreshProfileTierUIIfOpen() {
 // Server leer + lokal Inhalt → hochladen. Alles unter Web-Lock; Fehler bleiben still.
 async function syncPull() {
   if (!syncEligible()) return;
+  const data = await apiSyncGet(); // EIN Roundtrip für alle Kinds
+  if (!data || typeof data !== "object") return;
+  const blobs = data.blobs || {};
+  await pullProfileBlob(blobs.profile); // profile (LWW) unter dem profile-Lock
+  for (const name of Object.keys(MERGE_KINDS)) { // history etc. je unter eigenem Lock
+    await withSyncLock(() => pullMergeKind(name, blobs[name]), MERGE_KINDS[name].lock);
+  }
+}
+
+// profile (LWW) unter dem profile-Lock — Logik unverändert; nur der GET liegt jetzt in syncPull
+// (die kurze Lücke zwischen GET und Push deckt das CAS/If-Match ab → 409 → Re-Merge).
+async function pullProfileBlob(blob) {
   return withSyncLock(async () => {
-    const data = await apiSyncGet();
-    if (!data || typeof data !== "object") return;
-    const blob = (data.blobs || {}).profile;
     if (!blob || !blob.envelope) {
       setProfileMeta({ rev: 0 });
       if (Object.keys(loadProfile()).length || syncCurrentTier() !== DEFAULT_TIER) await pushProfileLocked(0);
@@ -12903,13 +12940,18 @@ async function syncPushProfile() {
 // aktuelle Server-rev holen, dann forciert schreiben (409 → mit neuer rev erneut, ohne LWW/kid-Check).
 async function syncForceOverwrite() {
   if (!syncEligible()) return;
-  return withSyncLock(async () => {
-    const data = await apiSyncGet();
-    const rev = Number(data && data.blobs && data.blobs.profile && data.blobs.profile.rev) || 0;
+  const data = await apiSyncGet(); // aktuelle rev je Kind lernen (ein Roundtrip)
+  const blobs = (data && data.blobs) || {};
+  await withSyncLock(async () => {
+    const rev = Number(blobs.profile && blobs.profile.rev) || 0;
     setProfileMeta({ rev });
     setKidMismatch(false);
     await pushProfileLocked(rev, 0, true); // updatedAt kommt aus getProfileUpdatedAt (der Caller hat gestempelt)
   });
+  // Merge-Kinds ebenfalls forciert überschreiben (neuer Schlüssel gewinnt), je unter eigenem Lock.
+  for (const name of Object.keys(MERGE_KINDS)) {
+    await withSyncLock(() => forceOverwriteMergeKind(name, Number(blobs[name] && blobs[name].rev) || 0), MERGE_KINDS[name].lock);
+  }
 }
 
 // PUSH-Kern (Lock muss gehalten werden). CAS über rev; 409 → Server-Envelope entschlüsseln,
@@ -12945,10 +12987,189 @@ async function pushProfileLocked(rev, attempt = 0, force = false) {
   // sonstige 4xx/5xx (disabled/auth/rate) → still; nächster Trigger retryt.
 }
 
+/* ---------- Sync F3: generische „Merge-Kinds" (history; deck/stats folgen in F4) ---------- */
+// Diese Kinds mergen NICHT per Last-Write-Wins, sondern kind-spezifisch (history = Union). Uniform:
+// merge(local, remote) → result; result≠local ⇒ lokal anwenden, result≠remote ⇒ pushen. merge ist
+// idempotent + deterministisch (kanonische Ordnung), daher ist der JSON-Vergleich stabil. Der
+// profile-Pfad (LWW) bleibt separat und unangetastet.
+const _mergeState = {}; // kind → { sig, timer }
+function mergeState(name) { return _mergeState[name] || (_mergeState[name] = { sig: null, timer: null }); }
+function kindMeta(name) { const m = loadSyncMeta(); return (m[name] && typeof m[name] === "object") ? m[name] : {}; }
+function setKindMeta(name, patch) { const m = loadSyncMeta(); m[name] = { ...(m[name] || {}), ...patch }; saveSyncMeta(m); }
+const _jsonEq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+// Lokale Änderung eines Merge-Kinds → debounced Push. Dedup über die kanonische Signatur; während
+// ein Pull anwendet (_syncApplying) NICHT feuern (kein Echo).
+function noteMergeKindChange(name) {
+  if (_syncApplying) return;
+  const kind = MERGE_KINDS[name]; if (!kind) return;
+  const st = mergeState(name);
+  const sig = JSON.stringify(kind.payload());
+  if (sig === st.sig) return;
+  st.sig = sig;
+  if (!syncEligible()) return;
+  if (st.timer) clearTimeout(st.timer);
+  st.timer = setTimeout(() => { st.timer = null; pushMergeKind(name).catch(() => {}); }, SYNC_PUSH_DEBOUNCE_MS);
+}
+async function pushMergeKind(name) {
+  if (!syncEligible()) return;
+  const kind = MERGE_KINDS[name]; if (!kind) return;
+  return withSyncLock(() => pushMergeKindLocked(name, Number(kindMeta(name).rev) || 0), kind.lock);
+}
+// PUSH-Kern (Lock gehalten). CAS über rev; 409 → Server entschlüsseln, mergen, lokal anwenden,
+// mit Server-rev erneut schreiben (bounded). force=true überschreibt ohne Merge/kid-Check.
+async function pushMergeKindLocked(name, rev, attempt = 0, force = false) {
+  if (!syncEligible()) return;
+  const kind = MERGE_KINDS[name];
+  const { key, kid } = await window.SyncCrypto.deriveKey(window.SyncCrypto.storedCode());
+  const envelope = await window.SyncCrypto.encrypt(key, kid, kind.payload());
+  let r;
+  try { r = await apiSyncPut(name, rev, envelope); } catch { return; }
+  if (r.status === 200) {
+    let body = {}; try { body = await r.json(); } catch { /* leer */ }
+    setKindMeta(name, { rev: Number(body.rev) || rev + 1 });
+    mergeState(name).sig = JSON.stringify(kind.payload());
+    setKidMismatch(false);
+    return;
+  }
+  if (r.status === 409 && attempt < 3) {
+    let body = {}; try { body = await r.json(); } catch { /* leer */ }
+    const serverRev = Number(body.rev) || 0;
+    if (!force && body.envelope) {
+      const bkid = body.envelope.kid;
+      if (bkid && kid && bkid !== kid) { setKidMismatch(true); return; }
+      try {
+        const remote = await window.SyncCrypto.decrypt(key, body.envelope);
+        setKindMeta(name, { rev: serverRev });
+        const merged = kind.merge(kind.payload(), remote);
+        if (!_jsonEq(merged, kind.payload())) kind.apply(merged); // lokal konvergieren, dann neu pushen
+      } catch { setKidMismatch(true); return; }
+    }
+    return pushMergeKindLocked(name, serverRev, attempt + 1, force);
+  }
+  // 413 (zu groß) / sonstige 4xx/5xx → still; nächster Trigger versucht erneut.
+}
+// PULL eines Merge-Kind-Blobs (aus syncPull, unter dem Kind-Lock). Server leer + lokal Inhalt →
+// push. Sonst mergen: result≠local ⇒ anwenden, result≠remote ⇒ push (Server bekommt die Union).
+async function pullMergeKind(name, blob) {
+  const kind = MERGE_KINDS[name];
+  if (!blob || !blob.envelope) {
+    setKindMeta(name, { rev: 0 });
+    if (!kind.isEmpty(kind.payload())) await pushMergeKindLocked(name, 0);
+    return;
+  }
+  const kid = await currentKid();
+  if (blob.envelope.kid && kid && blob.envelope.kid !== kid) { setKidMismatch(true); return; }
+  let remote;
+  try {
+    const { key } = await window.SyncCrypto.deriveKey(window.SyncCrypto.storedCode());
+    remote = await window.SyncCrypto.decrypt(key, blob.envelope);
+  } catch { setKidMismatch(true); return; }
+  setKidMismatch(false);
+  setKindMeta(name, { rev: Number(blob.rev) || 0 });
+  const local = kind.payload();
+  const merged = kind.merge(local, remote);
+  if (!_jsonEq(merged, local)) kind.apply(merged);
+  if (!_jsonEq(merged, kind.merge(remote, remote))) await pushMergeKindLocked(name, Number(blob.rev) || 0);
+}
+async function forceOverwriteMergeKind(name, serverRev) {
+  const kind = MERGE_KINDS[name]; if (!kind) return;
+  setKindMeta(name, { rev: serverRev });
+  await pushMergeKindLocked(name, serverRev, 0, true);
+}
+
+// --- Kind `history` = { jobs, deleted }: Union der Versuche + Tombstones, Caps NACH dem Merge ---
+function historyLocal() { const h = loadHistory(); return { jobs: Array.isArray(h.jobs) ? h.jobs : [], deleted: Array.isArray(h.deleted) ? h.deleted : [] }; }
+function jobRecency(j) { let m = 0; for (const a of (j && j.attempts) || []) if ((a && a.date || 0) > m) m = a.date || 0; return m; }
+function dedupeTombstones(list) {
+  const seen = new Set(); const out = [];
+  for (const t of (list || [])) {
+    if (!t || !Number.isFinite(t.ts)) continue;
+    const k = (t.jobKey ? "j:" + t.jobKey : "") + "|" + (t.urlKey ? "u:" + t.urlKey : "") + "|" + (t.identityKey ? "i:" + t.identityKey : "") + "|" + t.ts;
+    if (seen.has(k)) continue; seen.add(k);
+    out.push({ ...(t.jobKey ? { jobKey: t.jobKey } : {}), ...(t.urlKey ? { urlKey: t.urlKey } : {}), ...(t.identityKey ? { identityKey: t.identityKey } : {}), ts: t.ts });
+  }
+  out.sort((a, b) => (a.ts - b.ts) || String(a.jobKey || a.urlKey || a.identityKey || "").localeCompare(String(b.jobKey || b.urlKey || b.identityKey || "")));
+  return out;
+}
+function dedupeAttempts(list) {
+  const seen = new Map();
+  for (const at of (list || [])) {
+    if (!at) continue;
+    const k = at.id ? "id:" + at.id : "d:" + (at.date || 0); // Alt-Versuche ohne id über date
+    if (!seen.has(k)) seen.set(k, at);
+    else if (!seen.get(k).id && at.id) seen.set(k, at);
+  }
+  const arr = [...seen.values()];
+  arr.sort((x, y) => (x.date || 0) - (y.date || 0) || String(x.id || "").localeCompare(String(y.id || "")));
+  return arr;
+}
+function mergeTwoJobs(a, b) {
+  const attempts = dedupeAttempts([...(a.attempts || []), ...(b.attempts || [])]);
+  const primary = jobRecency(b) > jobRecency(a) ? b : a; // neuester Stand gewinnt für Titel/JobText
+  return { ...(primary === a ? b : a), ...primary, key: a.key, attempts };
+}
+function mergeHistory(a, b) {
+  const tombTs = new Map();
+  const allDel = [...(a && Array.isArray(a.deleted) ? a.deleted : []), ...(b && Array.isArray(b.deleted) ? b.deleted : [])].filter(t => t && Number.isFinite(t.ts));
+  for (const t of allDel) {
+    if (t.jobKey) tombTs.set("j:" + t.jobKey, Math.max(tombTs.get("j:" + t.jobKey) || 0, t.ts));
+    if (t.urlKey) tombTs.set("u:" + t.urlKey, Math.max(tombTs.get("u:" + t.urlKey) || 0, t.ts));
+    if (t.identityKey) tombTs.set("i:" + t.identityKey, Math.max(tombTs.get("i:" + t.identityKey) || 0, t.ts));
+  }
+  const byKey = new Map();
+  for (const src of [a, b]) for (const j of (src && Array.isArray(src.jobs) ? src.jobs : [])) {
+    if (!j || !j.key) continue;
+    const ex = byKey.get(j.key);
+    byKey.set(j.key, ex ? mergeTwoJobs(ex, j) : { ...j, attempts: dedupeAttempts(j.attempts) });
+  }
+  for (const [key, j] of [...byKey]) {
+    let ts = tombTs.get("j:" + key) || 0;
+    if (j.urlKey) ts = Math.max(ts, tombTs.get("u:" + j.urlKey) || 0);
+    const iKey = (typeof identityKeyOf === "function") ? identityKeyOf(j.titel, j.arbeitgeber, j.arbeitsort) : "";
+    if (iKey) ts = Math.max(ts, tombTs.get("i:" + iKey) || 0); // auch die Identitäts-Tombstone greift
+    if (ts) j.attempts = j.attempts.filter(at => (at && at.date || 0) > ts); // Tombstone gewinnt über ältere; neuere überleben
+    if (!j.attempts.length) byKey.delete(key);
+  }
+  let jobs = [...byKey.values()];
+  for (const j of jobs) if (j.attempts.length > HISTORY_MAX_ATTEMPTS) j.attempts = j.attempts.slice(-HISTORY_MAX_ATTEMPTS);
+  jobs.sort((x, y) => (jobRecency(y) - jobRecency(x)) || String(x.key).localeCompare(String(y.key)));
+  if (jobs.length > HISTORY_MAX_JOBS) jobs = jobs.slice(0, HISTORY_MAX_JOBS);
+  const cutoff = Date.now() - 90 * 24 * 3600 * 1000;
+  return { jobs, deleted: dedupeTombstones(allDel.filter(t => t.ts >= cutoff)) };
+}
+function applyHistory(merged) {
+  _syncApplying = true;
+  try {
+    const h = loadHistory();
+    h.jobs = merged.jobs;
+    h.deleted = merged.deleted;
+    saveHistory(h);
+    mergeState("history").sig = JSON.stringify(MERGE_KINDS.history.payload());
+    try {
+      const v = typeof currentView === "function" ? currentView() : "";
+      if (v === "view-home" && typeof renderHome === "function") renderHome();
+      else if (v === "view-history" && typeof renderHistory === "function") renderHistory();
+    } catch { /* View-Refresh best-effort */ }
+  } finally { _syncApplying = false; }
+}
+
+const MERGE_KINDS = {
+  history: {
+    lock: "bewerbungstool.sync.history",
+    payload: () => mergeHistory(historyLocal(), historyLocal()), // kanonisch + dedup + Caps
+    merge: (local, remote) => mergeHistory(local, remote),
+    apply: applyHistory,
+    isEmpty: (p) => !p || !Array.isArray(p.jobs) || p.jobs.length === 0,
+  },
+};
+
 // Bestehendes Profil ohne Zeitstempel (Alt-Stand vor F2 / vor dem eigenen Key) einmalig stempeln,
 // damit es in der LWW gegen ein leeres Gerät (updatedAt 0) gewinnt statt überschrieben zu werden
 // (Fable-Finding: Upgrade-Fall).
 if (getProfileUpdatedAt() === 0 && Object.keys(loadProfile()).length) setProfileUpdatedAt(Date.now());
+// Signatur der Merge-Kinds mit dem geladenen Stand initialisieren (kein Push nur wegen Load).
+for (const _k of Object.keys(MERGE_KINDS)) mergeState(_k).sig = JSON.stringify(MERGE_KINDS[_k].payload());
 // Signatur mit dem geladenen Stand initialisieren, damit die erste echte Änderung (nicht der
 // Load) den Push auslöst.
 _syncLastSig = profileSig();
