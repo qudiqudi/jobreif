@@ -4,9 +4,17 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.32.1";
+const APP_VERSION = "1.33.0";
 
 const CHANGELOG = [
+  {
+    version: "1.33.0",
+    date: "05.07.2026",
+    items: [
+      "Neues kostenloses Angebot: Zum Kennenlernen bekommst du 3 kostenlose Tests in der Günstig-Qualität – zum Ausprobieren, ganz ohne Guthaben.",
+      "„Standard“ und „Beste (Opus)“ sind bezahlte Qualitätsstufen. Ihr Preis pro Test steht direkt auf der Auswahl, und abgebucht wird immer erst nach deiner ausdrücklichen Bestätigung – nie unbeabsichtigt.",
+    ],
+  },
   {
     version: "1.32.1",
     date: "05.07.2026",
@@ -2674,11 +2682,27 @@ function parseFirstTopupBonus(v) {
 // Festpreis je Test und Stufe (Credits). Forward-kompatible Fallback-Werte fuer den
 // Kostenhinweis VOR dem Server-402; massgeblich bleibt der Server (er liefert priceCredits im
 // 402 quota-exhausted-Body und bucht ohnehin selbst ab). beste nutzt den gemeldeten Server-Wert.
-const TIER_TEST_CREDITS = { standard: 25, guenstig: 5, beste: 60 };
+const TIER_TEST_CREDITS = { standard: 39, guenstig: 8, beste: 89 };
 function tierPriceCredits(tier) {
   if (tier === "beste") return requiredOpusCredits();
   return Number.isFinite(TIER_TEST_CREDITS[tier]) ? TIER_TEST_CREDITS[tier] : 0;
 }
+
+// Seit dem Trial-Modell (2026-07): NUR guenstig ist gratis (einmaliges 3er-Trial); standard und
+// beste sind BEZAHLTE Stufen (Festpreis-Abbuchung, Bestaetigung noetig wie bei Opus). Diese eine
+// Quelle vermeidet verstreute `=== "beste"`-Checks fuer die „ist das eine Bezahl-Stufe?"-Frage.
+function tierIsFree(tier) { return tier === "guenstig"; }
+
+// Wird diese Stufe bei einer hosted-Generierung JETZT abgebucht? Nur bezahlte Stufen (standard/
+// beste) UND nur bei aktivem Credits-Flag — ohne Flag nimmt der Backend-Gratis-Zweig (dann laeuft
+// auch standard gratis). guenstig nie. Massgeblich fuer Preis-Anzeige, Deckungs-Vorpruefung und
+// die Abbuchungs-Bestaetigung (kein unbeabsichtigter Charge, CLAUDE.md).
+function tierChargesNow(tier) { return !tierIsFree(tier) && creditsState.creditsEnabled; }
+
+// Voreingestellte Stufe fuer NEUE/ungesetzte Nutzer: seit dem Trial-Modell die Gratis-Stufe
+// guenstig (damit der erste Test ins kostenlose Trial faellt, nicht in eine bezahlte Stufe).
+// Bestehende Nutzer behalten ihre gespeicherte settings.tier — der Fallback greift nur bei leer.
+const DEFAULT_TIER = "guenstig";
 function tierLabelFor(tier) {
   return tier === "beste" ? "Beste (Opus)" : tier === "guenstig" ? "Günstig" : "Standard";
 }
@@ -2691,7 +2715,7 @@ function formatGuthabenEuro(credits) {
 
 // Fallback-Richtwert fuer die Opus-Testkosten, falls der Server (noch) keinen Wert liefert.
 // Die Abrechnung macht serverseitig der Worker; maßgeblich ist creditsState.opusTestCredits.
-const OPUS_TEST_CREDITS = 60;
+const OPUS_TEST_CREDITS = 89;
 
 // Maßgebliche Opus-Testkosten: Server-Wert, sonst Fallback-Konstante.
 function requiredOpusCredits() {
@@ -2710,12 +2734,18 @@ function serverOpusCredits() {
 // Ist die Opus-Stufe fuer das aktuelle Konto gedeckt? Bestaetigter Flag-an-Zustand UND
 // mindestens die Testkosten (nicht nur > 0 — mit 1..59 Credits liefe der Nutzer sonst in ein
 // Server-402). Der Server bleibt die letzte Instanz; das hier ist die ehrliche Vorpruefung.
-function canAffordBeste() {
+// Deckt das Guthaben eine bezahlte Stufe? Fuer guenstig (gratis/Trial) immer true. Fuer standard/
+// beste: bestaetigter Flag-an-Zustand UND Guthaben >= Stufenpreis (beste: Server-Opus-Preis mit
+// Fallback; standard: Client-Konstante = Backend-Festpreis). Der Server bleibt letzte Instanz.
+function canAffordTier(tier) {
+  if (tierIsFree(tier)) return true;
   return creditsState.loaded
     && creditsState.creditsEnabled
     && Number.isFinite(creditsState.credits)
-    && creditsState.credits >= requiredOpusCredits();
+    && creditsState.credits >= tierPriceCredits(tier);
 }
+// Rueckwaertskompatibler Alias (viele Aufrufer) — Opus-Deckung = canAffordTier("beste").
+function canAffordBeste() { return canAffordTier("beste"); }
 
 // Pro-Test-Override der Qualitaetsstufe aus der Erstell-Maske. TRANSIENT (nie persistiert):
 // null => es gilt der globale settings.tier (Default). Wird nur im Eingabe-Bildschirm gesetzt
@@ -2736,7 +2766,7 @@ let pendingCreateBesteIntent = false;
 // (Guenstig-Cap), das Opus-Gate, effectiveTier, Analytics und die /api/jobs-Payload — so laeuft
 // eine Pro-Test-Wahl durch GENAU DIESELBEN Checks wie die globale, nicht daran vorbei.
 function selectedTier() {
-  return formTierOverride || settings.tier || "standard";
+  return formTierOverride || settings.tier || DEFAULT_TIER;
 }
 
 // Tatsaechlich verwendbare Qualitaetsstufe. "beste" (Opus) wird auf "standard" heruntergestuft,
@@ -2748,7 +2778,9 @@ function selectedTier() {
 function effectiveTier() {
   const t = selectedTier();
   if (t !== "beste") return t;
-  return canAffordBeste() ? "beste" : "standard";
+  // Unaffordable beste faellt auf die GRATIS-Stufe zurueck (nicht auf das ebenfalls bezahlte
+  // standard) — defensive Untergrenze; der Pre-Check in generateQuiz faengt den Fall ohnehin klar ab.
+  return canAffordBeste() ? "beste" : DEFAULT_TIER;
 }
 
 // Stufe fuer einen Hosted-Call. Ein Follow-up MIT jobId (Auswerten/Vertiefen eines bestimmten,
@@ -2778,7 +2810,7 @@ function tierForHostedCall(payload) {
 const TIER_CONTROLS = {
   settings: {
     sel: "tier", besteHint: "tier-beste-hint", freeHint: "tier-free-hint", topupCta: "tier-topup-cta",
-    read: () => settings.tier || "standard",
+    read: () => settings.tier || DEFAULT_TIER,
     write: (t) => { if (settings.tier !== t) { settings = { ...settings, tier: t }; saveSettings(settings); } },
   },
   create: {
@@ -2857,31 +2889,32 @@ function setTierOptionDisabled(el, optEl, dis) {
 // eine zweite (client-konstanten-)Preisflaeche. Ohne Flag (dormant) exakt die Basis-Labels.
 function applyTierOptionPriceLabels(el) {
   const priced = creditsState.loaded && creditsState.creditsEnabled;
-  // Radio-Karten-Pfad: Preis-Chip je Stufe. Standard/Guenstig = „Kostenlos“ (ihr Overflow-Preis
-  // bei leerem Kontingent traegt weiterhin ALLEIN updateFreeTierHint — keine zweite Preisflaeche).
-  // beste = Server-Preis (serverOpusCredits); liegt er nicht vor, neutraler Platzhalter statt
-  // einer geratenen Client-Konstante (F-2).
+  // Preis-Anzeige je Stufe. Seit dem Trial-Modell sind standard UND beste bezahlt (bei aktivem
+  // Flag) → Preis-Chip; nur guenstig ist gratis („Kostenlos“ + proaktiver Overflow-Preis). Ohne
+  // Flag (nicht priced) nimmt der Backend-Gratis-Zweig auch fuer standard → dann „Kostenlos“.
+  // Preis-Quelle: beste = Server-Preis (serverOpusCredits, F-2: nie geraten); standard = der
+  // Festpreis aus tierPriceCredits (Client-Konstante = Backend-TIER_PRICE_CREDITS, gehalten synchron).
+  const paidChipCredits = (v) => (v === "beste" ? serverOpusCredits() : tierPriceCredits(v));
   if (tierIsRadio(el)) {
     el.querySelectorAll("[data-value]").forEach((card) => {
+      const v = card.dataset.value;
       const chip = card.querySelector("[data-chip]");
       const after = card.querySelector("[data-after]");
-      if (card.dataset.value === "beste") {
+      if (priced && !tierIsFree(v)) {
+        // Bezahlte Stufe: Preis-Chip, keine „danach“-Zeile.
         if (chip) {
-          const c = priced ? serverOpusCredits() : null;
+          const c = paidChipCredits(v);
           chip.textContent = c !== null ? formatGuthabenEuro(c) + "/Test" : "Guthaben";
           chip.className = "tier-card-chip tier-chip-paid";
         }
-        if (after) { after.textContent = ""; after.hidden = true; } // beste kostet immer → keine „danach“-Zeile
+        if (after) { after.textContent = ""; after.hidden = true; }
       } else {
+        // Gratis-(Trial-)Stufe guenstig (oder standard bei Flag aus): „Kostenlos“ + proaktiver
+        // Overflow-Preis (gleiche Bedingung/Quelle wie updateFreeTierHint, nur frueher sichtbar).
         if (chip) { chip.textContent = "Kostenlos"; chip.className = "tier-card-chip tier-chip-free"; }
-        // Proaktiver Overflow-Preis: was ein Test dieser Gratis-Stufe NACH dem Tageskontingent
-        // kostet, schon bevor das Kontingent leer ist. Gleiche Bedingung (freeQuotaVisible) UND
-        // dieselbe Preis-Quelle (freeTierOverflowEuro → tierPriceCredits) wie der aufgebraucht-
-        // Hinweis in updateFreeTierHint — keine zweite/neue Preisflaeche, nur frueher sichtbar.
-        // Als Schaetzung markiert („ca.“); massgeblich bleibt der Server.
         if (after) {
-          if (freeQuotaVisible()) {
-            after.textContent = "danach ca. " + freeTierOverflowEuro(card.dataset.value) + "/Test";
+          if (freeQuotaVisible() && tierIsFree(v)) {
+            after.textContent = "danach ca. " + freeTierOverflowEuro(v) + "/Test";
             after.hidden = false;
           } else {
             after.textContent = "";
@@ -2896,8 +2929,8 @@ function applyTierOptionPriceLabels(el) {
     const base = TIER_OPTION_LABELS[opt.value];
     if (!base) continue; // unbekannte/zukuenftige Option: nie anfassen
     let label = base;
-    if (priced && opt.value === "beste") {
-      const c = serverOpusCredits();
+    if (priced && !tierIsFree(opt.value)) {
+      const c = paidChipCredits(opt.value); // beste: Server-Preis (kann null sein); standard: Festpreis
       if (c !== null) label = `${base} · ${formatGuthabenEuro(c)}`;
     }
     if (opt.textContent !== label) opt.textContent = label;
@@ -3015,19 +3048,19 @@ function updateFreeTierHint(group) {
   if (!hint) return;
   const tier = el ? tierGetValue(el) : group.read();
   const remaining = creditsState.freeRemaining;
-  if (!freeQuotaVisible() || tier === "beste") {
+  if (!freeQuotaVisible() || !tierIsFree(tier)) {
     hint.classList.add("hidden"); hint.textContent = ""; return;
   }
   if (remaining > 0) {
     hint.textContent = remaining === 1
-      ? "Heute noch 1 kostenloser Test in dieser Qualität."
-      : `Heute noch ${remaining} kostenlose Tests in dieser Qualität.`;
+      ? "Noch 1 kostenloser Test zum Ausprobieren."
+      : `Noch ${remaining} kostenlose Tests zum Ausprobieren.`;
   } else {
     // euro aus einer Zahl formatiert (keine Nutzereingabe) → kein XSS.
     const euro = freeTierOverflowEuro(tier);
     hint.innerHTML = settings.autoUseCredits
-      ? `Dein kostenloses Tageskontingent ist aufgebraucht. Jeder weitere Test in dieser Qualität wird automatisch mit <strong>${euro}</strong> aus deinem Guthaben bezahlt.`
-      : `Dein kostenloses Tageskontingent ist aufgebraucht. Jeder weitere Test in dieser Qualität kostet <strong>${euro}</strong> aus deinem Guthaben (mit Bestätigung).`;
+      ? `Deine kostenlosen Tests sind aufgebraucht. Jeder weitere Test in dieser Qualität wird automatisch mit <strong>${euro}</strong> aus deinem Guthaben bezahlt.`
+      : `Deine kostenlosen Tests sind aufgebraucht. Jeder weitere Test in dieser Qualität kostet <strong>${euro}</strong> aus deinem Guthaben (mit Bestätigung).`;
   }
   hint.classList.remove("hidden");
 }
@@ -3048,7 +3081,7 @@ function renderFreeQuotaBadges() {
   // Pro-Test-Wahl (z. B. Günstig) ihren guenstigeren Preis ins Home-Badge und bliebe dort nach
   // dem Verlassen der Maske stehen, obwohl der transiente Override laengst geleert ist.
   const badges = [
-    { id: "home-free-badge", tier: settings.tier || "standard" },
+    { id: "home-free-badge", tier: settings.tier || DEFAULT_TIER },
     { id: "create-free-badge", tier: selectedTier() },
   ];
   for (const { id, tier } of badges) {
@@ -3056,13 +3089,13 @@ function renderFreeQuotaBadges() {
     if (!el) continue;
     // "beste" (Opus) gehoert NICHT zum Gratis-Kontingent — es ist separat bepreist/gegated.
     // Wie updateFreeTierHint das Gratis-Signal fuer beste ausblendet, blendet auch das Badge
-    // fuer beste aus: sonst zeigte der aufgebraucht-Zustand faelschlich den Standard-Preis,
-    // obwohl der naechste Opus-Test anders (teurer) abgerechnet wird.
-    if (!show || tier === "beste") { el.classList.add("hidden"); el.textContent = ""; continue; }
+    // fuer bezahlte Stufen (standard/beste) aus: die haben kein Gratis-Kontingent — das Badge
+    // gilt nur der Gratis-(Trial-)Stufe guenstig.
+    if (!show || !tierIsFree(tier)) { el.classList.add("hidden"); el.textContent = ""; continue; }
     if (remaining > 0) {
       el.textContent = remaining === 1
-        ? "Heute noch 1 kostenloser Test"
-        : `Heute noch ${remaining} kostenlose Tests`;
+        ? "Noch 1 kostenloser Test zum Ausprobieren"
+        : `Noch ${remaining} kostenlose Tests zum Ausprobieren`;
     } else {
       // Aufgebraucht: kein Dead-End — weiter testen geht per Guthaben. euro aus einer Zahl
       // formatiert (kein XSS); Preis der stufenspezifischen Quelle, derselbe Helper wie im
@@ -3169,10 +3202,11 @@ function renderCreditsUI() {
 }
 
 // Nach einer (moeglichen) Guthaben-Aenderung durch einen bezahlten Opus-Job: Cache als
-// veraltet markieren und im Hintergrund auffrischen (Anzeige + naechste Opus-Pruefung). Nur
-// fuer "beste" relevant; standard/guenstig sind gratis und beruehren das Guthaben nicht.
+// veraltet markieren und im Hintergrund auffrischen (Anzeige + naechste Deckungs-Pruefung). Fuer
+// JEDE bezahlte Stufe (standard/beste) relevant; nur guenstig ist gratis und beruehrt das Guthaben
+// nicht. (tierChargesNow nicht noetig: ein Test lief nur bei Flag an; die Stufe allein genuegt.)
 function markCreditsDirtyIfPaid(tier) {
-  if (tier === "beste") { creditsState.dirty = true; refreshBalance(); }
+  if (!tierIsFree(tier)) { creditsState.dirty = true; refreshBalance(); }
 }
 
 // Guthaben nach einem terminalen (asynchronen) Job nachziehen: Opus ueber markCreditsDirtyIfPaid,
@@ -3786,10 +3820,10 @@ function hostedErrorMessage(status, code) {
   if (status === 402) {
     switch (code) {
       case "quota-exhausted":
-        // Gratis-Tageskontingent aufgebraucht. Der Generierungs-Pfad (startHostedGeneration)
+        // Kostenlose Tests (Trial) aufgebraucht. Der Generierungs-Pfad (startHostedGeneration)
         // faengt das ab und bietet den bezahlten Overflow per Dialog an; diese Meldung ist nur
         // ein defensiver Fallback, falls der Code anderswo durchschlaegt.
-        return "Dein kostenloses Tageskontingent ist für heute aufgebraucht. Du kannst mit Guthaben weitermachen (in den Einstellungen aufladen) oder morgen kostenlos weiterüben.";
+        return "Deine kostenlosen Tests sind aufgebraucht. Du kannst mit Guthaben weitermachen (in den Einstellungen aufladen).";
       case "no-credits":
         // Guthaben deckt den Test nicht (Opus oder — nach einer Race, z. B. anderswo
         // verbraucht — ein bestaetigter Gratis-Stufen-Overflow). Stufen-neutral formulieren.
@@ -3807,9 +3841,9 @@ function hostedErrorMessage(status, code) {
     case 403:
       return "Sicherheitsprüfung fehlgeschlagen. Bitte die Seite neu laden und erneut versuchen.";
     case 429:
-      return "Gerade sind viele Anfragen unterwegs (oder dein Tageskontingent ist erreicht). Bitte kurz warten und erneut versuchen.";
+      return "Gerade sind viele Anfragen unterwegs. Bitte kurz warten und erneut versuchen.";
     case 503:
-      return "Das kostenlose Tageskontingent ist für heute erschöpft – morgen ist es wieder verfügbar. Wenn du sofort weitermachen möchtest, kannst du in den Einstellungen unter „Anbieter“ einen eigenen API-Schlüssel hinterlegen.";
+      return "Der kostenlose Modus ist gerade ausgelastet. Bitte kurz warten und erneut versuchen. Wenn du sofort weitermachen möchtest, kannst du in den Einstellungen unter „Anbieter“ einen eigenen API-Schlüssel hinterlegen.";
     case 400:
       return "Die Anfrage war ungültig. Bitte die Stellenanzeige prüfen.";
     default:
@@ -5104,33 +5138,43 @@ async function generateQuiz(opts = {}) {
   }
   const vertiefungFelder = vertiefung ? vertiefung.felder.map((f) => ({ id: f.id, label: f.label })) : null;
 
-  // Opus gewuenscht? Vor dem Dispatch FAIL-CLOSED pruefen: eine bewusst bezahlte Auswahl darf
-  // nie still als standard durchrutschen. Nur weiter, wenn frisch bestaetigt ist, dass Opus
-  // gedeckt ist; sonst mit klarer Meldung abbrechen (statt heimlich downzugraden).
-  // Nur pruefen, wenn ueberhaupt ein Token da ist: ohne Anmeldung uebernimmt
-  // startHostedGeneration den Login-Prompt — der Opus-Gate darf den NICHT mit einem
-  // Guthaben-/Offline-Fehler verdecken.
-  if (isHosted && selectedTier() === "beste" && settings.authToken) {
-    // Frisch nachladen, wenn unbekannt ODER moeglicherweise veraltet (nach einer Abbuchung) —
-    // sonst koennte ein zweiter Opus-Test auf stale Guthaben gestartet werden.
-    if (!creditsState.loaded || creditsState.dirty) await refreshBalance();
-    // refreshBalance() kann (a) settings.tier ueber updateTierOptions auf standard normalisiert
-    // haben (Flag bestaetigt aus) oder (b) bei 401 das Token verworfen haben. In beiden Faellen
-    // hier NICHT blockieren: dann greift entweder normale standard-Generierung oder der
-    // Login-Pfad in startHostedGeneration.
-    if (settings.authToken && selectedTier() === "beste") {
-      if (!creditsState.loaded) {
-        // Entitlement liess sich nicht bestaetigen (Balance-Abruf fehlgeschlagen/offline).
-        showError("Die beste Qualität (Opus) konnte gerade nicht bestätigt werden. Bitte Verbindung prüfen und erneut versuchen, oder in den Einstellungen eine andere Qualitätsstufe wählen.");
+  // Bezahlte Stufe (standard/beste) gewuenscht? Vor dem Dispatch FAIL-CLOSED pruefen, dass sie
+  // gedeckt ist — eine bewusst bezahlte Auswahl darf nie still durchrutschen und der Nutzer nie
+  // unbeabsichtigt in eine Abbuchung laufen. WICHTIG: der Eintritt haengt an !tierIsFree, NICHT an
+  // tierChargesNow — sonst wuerde bei noch-nicht-geladenem creditsState (creditsEnabled=false,
+  // direkt nach Load/Refresh) der Block uebersprungen und der Refresh/Confirm ausgelassen → Silent
+  // Charge (das Backend bucht trotzdem ab). So wird IMMER erst frisch geladen und DANN mit dem
+  // frischen tierChargesNow entschieden. Nur mit Token (ohne Anmeldung uebernimmt
+  // startHostedGeneration den Login-Prompt).
+  if (isHosted && !tierIsFree(selectedTier()) && settings.authToken) {
+    // Fuer eine bezahlte Stufe den Stand IMMER frisch bestaetigen (nicht nur bei !loaded/dirty):
+    // ein lokal stale-false creditsEnabled (Flag war beim letzten Laden aus, Backend inzwischen an)
+    // taeuschte sonst „gratis" vor → tierChargesNow=false → kein Confirm → Silent Charge. dirty=true
+    // VOR dem Refresh erzwingt die Bestaetigung UND macht einen fehlgeschlagenen Refresh erkennbar:
+    // refreshBalance setzt dirty=false NUR bei Erfolg (bei 5xx/offline bleibt dirty true).
+    creditsState.dirty = true;
+    await refreshBalance();
+    const t = selectedTier();
+    // Innerer Gate an !tierIsFree (nicht tierChargesNow): so greift der „nicht bestaetigt"-Abbruch
+    // AUCH, wenn der Refresh fehlschlug und der Flag-/Deckungsstand nicht FRISCH bestaetigt ist —
+    // sonst liefe ein nicht bestaetigter Standard-Test in eine stille Backend-Abbuchung. Nur der
+    // 401-Fall (Token verworfen) faellt raus → Login-Pfad.
+    if (settings.authToken && !tierIsFree(t)) {
+      if (!creditsState.loaded || creditsState.dirty) {
+        // Flag/Deckung nicht FRISCH bestaetigt (offline/5xx: dirty blieb true, oder loaded=false)
+        // → NICHT dispatchen (das Backend koennte bei aktivem Flag abbuchen). Fail-closed.
+        showError(`Die Qualitätsstufe „${tierLabelFor(t)}“ konnte gerade nicht bestätigt werden. Bitte Verbindung prüfen und erneut versuchen, oder eine andere Stufe wählen.`);
         return;
       }
-      if (!canAffordBeste()) {
-        // Flag an, aber Guthaben deckt keinen Opus-Test → NICHT still downgraden, sondern
-        // klar aufs Aufladen/eine andere Stufe hinweisen (die Absicht bleibt erhalten). Den Preis
-        // nur nennen, wenn der maßgebliche Server-Wert vorliegt — nie die Client-Konstante (F-2).
-        const opusPrice = serverOpusCredits();
-        const opusPriceHinweis = opusPrice === null ? "" : ` (etwa ${formatGuthabenEuro(opusPrice)} pro Test)`;
-        showError(`Dein Guthaben reicht für die beste Qualität (Opus) nicht aus${opusPriceHinweis}. Du kannst in den Einstellungen aufladen oder eine andere Qualitätsstufe wählen.`);
+      // Flag bestaetigt aus (loaded, !creditsEnabled) → t laeuft gratis (Backend-Gratis-Zweig) →
+      // kein Deckungs-Check, kein Confirm. Nur bei charging die Deckung fail-closed pruefen.
+      if (tierChargesNow(t) && !canAffordTier(t)) {
+        // Flag an, aber Guthaben deckt die Stufe nicht → NICHT still downgraden, sondern klar aufs
+        // Aufladen/eine andere Stufe hinweisen. Preis: beste NUR aus dem Server-Wert (F-2),
+        // standard aus dem Festpreis (Client-Konstante = Backend-Festpreis, synchron gehalten).
+        const p = t === "beste" ? serverOpusCredits() : tierPriceCredits(t);
+        const preisHinweis = p === null ? "" : ` (etwa ${formatGuthabenEuro(p)} pro Test)`;
+        showError(`Dein Guthaben reicht für die Stufe „${tierLabelFor(t)}“ nicht aus${preisHinweis}. Du kannst in den Einstellungen aufladen oder eine andere Qualitätsstufe wählen.`);
         return;
       }
     }
@@ -5494,18 +5538,20 @@ async function startHostedGeneration(ctx) {
     // Vor dem ERSTEN bezahlten Dispatch bestaetigen, ausser der Nutzer hat das Opt-in "automatisch
     // Guthaben verwenden" gesetzt (gleiche Symmetrie wie der Overflow-Pfad). Die Affordability ist
     // in generateQuiz bereits fail-closed geprueft (canAffordBeste).
-    if (tierSent === "beste" && !settings.autoUseCredits) {
-      const price = serverOpusCredits(); // maßgeblicher Server-Preis, NIE die Client-Konstante (F-2)
+    if (tierChargesNow(tierSent) && !settings.autoUseCredits) {
+      // Preis: beste NUR aus dem Server-Wert (F-2: nie geraten, kann null sein); standard aus dem
+      // Festpreis (Client-Konstante = Backend-Festpreis, synchron gehalten, nie null).
+      const price = tierSent === "beste" ? serverOpusCredits() : tierPriceCredits(tierSent);
       if (price === null) {
         // Server-Preis (noch) unbekannt → NICHTS auf Basis eines geratenen Werts abbuchen. Sauber
         // abbrechen, Stand frisch holen und zum erneuten Versuch bitten.
         hideLoading();
         refreshBalance();
-        showError("Der Preis für die beste Qualität (Opus) konnte gerade nicht bestätigt werden. Bitte kurz warten und erneut versuchen.");
+        showError(`Der Preis für die Stufe „${tierLabelFor(tierSent)}“ konnte gerade nicht bestätigt werden. Bitte kurz warten und erneut versuchen.`);
         return;
       }
       hideLoading();
-      const ok = await openOverflowConfirm({ tier: "beste", priceCredits: price, lead: "opus" });
+      const ok = await openOverflowConfirm({ tier: tierSent, priceCredits: price, lead: tierSent === "beste" ? "opus" : "paid" });
       if (!ok) { refreshBalance(); return; } // abgebrochen → kein Test, kein Charge
       showLoading("Test wird gestartet...");
     }
@@ -7581,10 +7627,10 @@ function openJobFocus(job, selector) {
 // die Kosten eines weiteren Tests hin. Rein informativ; der CTA startet nichts.
 function buildNudgeCreditHint() {
   if (!creditsState.creditsEnabled) return null;
-  const tier = settings.tier || "standard";
-  // "beste" (Opus) hat kein freies Kontingent; den Opus-Preis zeigt der
+  const tier = settings.tier || DEFAULT_TIER;
+  // Bezahlte Stufen (standard/beste) haben kein freies Kontingent; ihren Preis zeigt der
   // Erstellungs-Screen, wohin der CTA fuehrt - hier bewusst kein Zusatz.
-  if (tier === "beste" || !Number.isFinite(creditsState.freeRemaining)) return null;
+  if (!tierIsFree(tier) || !Number.isFinite(creditsState.freeRemaining)) return null;
   const p = document.createElement("p");
   p.className = "result-nudge-note hint";
   const r = creditsState.freeRemaining;
@@ -10360,7 +10406,7 @@ function initSettingsForm() {
   $("provider").value = settings.provider || "hosted";
   $("api-key").value = settings.apiKey || "";
   $("base-url").value = settings.baseUrl || "";
-  tierSetValue($("tier"), settings.tier || "standard"); // #tier ist ein Radio-Karten-Block
+  tierSetValue($("tier"), settings.tier || DEFAULT_TIER); // #tier ist ein Radio-Karten-Block
 
   // Die Opus-Option richtet renderAccountSection() unten ein: es setzt creditsState frisch
   // (erst "unbekannt", dann der bestaetigte Server-Stand) und ruft renderCreditsUI →
@@ -10733,7 +10779,7 @@ function persistSettingsFromForm() {
     // der Haken existiert nur bei aktivem Credits-Flag, sonst bleibt der alte Wert erhalten.
     const autoCb = $("auto-use-credits");
     const autoUseCredits = creditsState.creditsEnabled && autoCb ? autoCb.checked : !!settings.autoUseCredits;
-    settings = { ...settings, provider: "hosted", tier: tierGetValue($("tier")) || "standard", autoUseCredits };
+    settings = { ...settings, provider: "hosted", tier: tierGetValue($("tier")) || DEFAULT_TIER, autoUseCredits };
   } else {
     settings = {
       ...settings,
@@ -11629,16 +11675,16 @@ function renderOverflowConfirmState() {
   // Unbekannter Stand (nur im Opus-Pfad moeglich, dort ist die Deckung vorab geprueft) zaehlt
   // als gedeckt; der Server bleibt ohnehin die letzte Instanz und lehnt sonst mit 402 ab.
   const affordable = have === null || have >= price;
-  // lead="opus": die bezahlte Opus-Stufe (F-1) — hier ist kein Gratis-Kontingent im Spiel, daher
-  // ohne die Kontingent-Einleitung (und mit passendem Titel). Sonst der Gratis-Overflow-Fall:
-  // bewusst als Fortschritt formuliert (der Nutzer hat heute alles Kostenlose genutzt), nicht
-  // als Limit. Titel je Aufruf setzen, da das Modal geteilt wird.
-  const opus = ctx.lead === "opus";
+  // lead="opus"/"paid": eine BEZAHLTE Stufe (Opus bzw. Standard) — hier ist kein Gratis-Kontingent
+  // im Spiel, daher ohne die Kontingent-Einleitung und mit stufen-passendem Titel. Sonst der
+  // Gratis-(guenstig-)Overflow-Fall: bewusst als Fortschritt formuliert (der Nutzer hat sein
+  // Trial genutzt), nicht als Limit. Titel je Aufruf setzen, da das Modal geteilt wird.
+  const noQuota = ctx.lead === "opus" || ctx.lead === "paid";
   const titleEl = $("overflow-title");
   if (titleEl) {
-    titleEl.textContent = opus ? "Beste Qualität (Opus) – kostenpflichtig" : "Stark – alle kostenlosen Tests für heute genutzt 💪";
+    titleEl.textContent = noQuota ? `Qualität „${tierLabelFor(ctx.tier)}“ – kostenpflichtig` : "Stark – alle kostenlosen Tests genutzt 💪";
   }
-  const intro = opus ? "" : "Du hast dein kostenloses Tageskontingent voll ausgeschöpft – bleib dran! ";
+  const intro = noQuota ? "" : "Du hast deine kostenlosen Tests voll ausgeschöpft – bleib dran! ";
   const textEl = $("overflow-text");
   if (textEl) {
     textEl.innerHTML = affordable
@@ -11677,7 +11723,7 @@ function renderOverflowConfirmState() {
   // NUR beim expliziten Bestaetigen — nie still.
   const autoRow = $("overflow-auto-row");
   if (autoRow) {
-    const showAuto = affordable && !opus;
+    const showAuto = affordable && !noQuota;
     autoRow.classList.toggle("hidden", !showAuto);
     const cb = $("overflow-auto-credits");
     if (cb && showAuto && ctx.affordable !== affordable) cb.checked = !!settings.autoUseCredits;
