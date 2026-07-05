@@ -245,6 +245,19 @@
           <p class="hint acct-privacy">Für den kostenlosen gehosteten Modus ist eine Anmeldung nötig; wir speichern dabei deine E-Mail (<a href="#" id="link-datenschutz-account">Datenschutz</a>). Ohne Konto kannst du unter „Erweitert“ einen eigenen Schlüssel oder ein lokales Modell wählen.</p>
         </div>
 
+        <!-- Konto löschen: bewusst zurückhaltend (aufklappbar) + getippte E-Mail-Bestätigung, damit
+             nichts versehentlich ausgelöst wird. Sichtbar nur angemeldet (renderAccountSection). -->
+        <details id="account-danger" class="setting-card acct-danger hidden">
+          <summary>Konto löschen</summary>
+          <p class="hint">Löscht dein Konto und alle personenbezogenen Daten auf unseren Servern <strong>unwiderruflich</strong> – inklusive der Ende-zu-Ende-verschlüsselt synchronisierten Daten. Käufe/Rechnungen bewahren wir aus gesetzlichen Gründen anonymisiert (ohne Personenbezug) auf. Dein lokaler Trainingsstand auf diesem Gerät bleibt erhalten. <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutz</a></p>
+          <label for="account-delete-confirm">Zur Bestätigung deine Konto-E-Mail eingeben:</label>
+          <input id="account-delete-confirm" type="email" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="email" placeholder="deine@email.de">
+          <div class="row wrap">
+            <button id="btn-account-delete" type="button" class="danger btn-compact" disabled>Konto endgültig löschen</button>
+          </div>
+          <p id="account-delete-err" class="hint sync-err hidden" role="alert"></p>
+        </details>
+
         <!-- Guthaben-Hero: sichtbar nur bei aktivem Credits-Flag (renderCreditsUI toggelt #guthaben-card) -->
         <div id="guthaben-card" class="setting-card guthaben-card hidden">
           <div class="guthaben-hero">
