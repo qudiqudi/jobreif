@@ -13161,7 +13161,13 @@ function mergeTwoJobs(a, b) {
   const attempts = dedupeAttempts([...(a.attempts || []), ...(b.attempts || [])]);
   const aa = Math.max(Number(a.updatedAt) || 0, jobRecency(a)), ab = Math.max(Number(b.updatedAt) || 0, jobRecency(b));
   const base = aa !== ab ? (aa > ab ? a : b) : (jobMetaJson(a) <= jobMetaJson(b) ? a : b);
-  const out = { ...(base === a ? b : a), ...base, key: a.key, attempts }; // deskriptive Felder: Rahmen-Gewinner, Verlierer füllt Lücken (nie gelöscht → kein Resurrect-Problem)
+  // Deskriptive Felder (Titel/Arbeitgeber/Ort/…): Rahmen-Gewinner, Verlierer füllt Lücken (nie
+  // gelöscht → kein Resurrect-Problem, KEIN Datenverlust). Diese eine Achse ist bewusst NICHT
+  // pro-Feld aufgelöst: bei einem Autoritäts-GLEICHSTAND mit echt divergenten Werten kann ein Feld
+  // beim Mehrgeräte-Settling kurz flackern + wenige Extra-PUTs kosten (nachgewiesen beschränkt/selbst-
+  // heilend, ≤34 Schritte, keine Dauer-Divergenz, kein Ping-Pong). Doppelt selten, weil gleicher
+  // key = gleicher Anzeigetext = gleiche abgeleiteten Felder. Kosmetischer Rest, bewusst belassen.
+  const out = { ...(base === a ? b : a), ...base, key: a.key, attempts };
   const tfa = Number(a.themenfelder && a.themenfelder.generatedAt) || 0, tfb = Number(b.themenfelder && b.themenfelder.generatedAt) || 0;
   if (tfa || tfb) out.themenfelder = (tfa !== tfb ? (tfa > tfb ? a : b) : (JSON.stringify(canonKeys(a.themenfelder)) <= JSON.stringify(canonKeys(b.themenfelder)) ? a : b)).themenfelder;
   const ua = Number(a.updatedAt) || 0, ub = Number(b.updatedAt) || 0;
