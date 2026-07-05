@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.32.0";
+const APP_VERSION = "1.32.1";
 
 const CHANGELOG = [
+  {
+    version: "1.32.1",
+    date: "05.07.2026",
+    items: [
+      "Die Qualitätsstufe wählst du in den Einstellungen jetzt über übersichtliche Karten statt über ein Ausklappmenü – und jede Karte zeigt direkt, was sie kostet: kostenlose Stufen mit dem Preis, den ein weiterer Test nach dem Tageskontingent kostet, und die beste Stufe (Opus) mit ihrem Preis pro Test.",
+    ],
+  },
   {
     version: "1.32.0",
     date: "05.07.2026",
@@ -2801,6 +2808,46 @@ const TIER_OPTION_LABELS = {
   beste: "Beste (Opus) – höchste Qualität",
 };
 
+// --- Tier-Control-Adapter -------------------------------------------------
+// Der Einstellungen-Selektor #tier ist seit v1.32.1 ein Radio-Karten-Block
+// (Attribut data-tier-radio); die Erstell-Maske #create-tier bleibt ein <select>.
+// Damit die bezahl-kritische Tier-Logik (Entitlement, Affordability, Opus-Preise)
+// EINE Implementierung bleibt, kapseln diese Helfer beide DOM-Formen. Fuer den
+// <select>-Pfad ist das Verhalten identisch zum frueheren Direktzugriff
+// (.value / option[value].hidden / option[value].disabled).
+function tierIsRadio(el) { return !!(el && el.dataset && el.dataset.tierRadio !== undefined); }
+function tierGetValue(el) {
+  if (!el) return "";
+  if (tierIsRadio(el)) { const c = el.querySelector('input[type="radio"]:checked'); return c ? c.value : ""; }
+  return el.value;
+}
+function tierSetValue(el, v) {
+  if (!el) return;
+  if (tierIsRadio(el)) { const r = el.querySelector('input[type="radio"][value="' + v + '"]'); if (r) r.checked = true; }
+  else el.value = v;
+}
+// Das Options-/Karten-Element einer Stufe (fuer hidden/disabled). Bei Karten das <label>,
+// beim Select die <option>.
+function tierOptionEl(el, v) {
+  if (!el) return null;
+  return tierIsRadio(el) ? el.querySelector('[data-value="' + v + '"]') : el.querySelector('option[value="' + v + '"]');
+}
+function tierOptionHidden(optEl) { return optEl ? optEl.hidden : true; }
+function setTierOptionHidden(optEl, hide) { if (optEl) optEl.hidden = hide; }
+function tierOptionDisabled(el, optEl) {
+  if (!optEl) return true;
+  if (tierIsRadio(el)) { const inp = optEl.querySelector("input"); return inp ? inp.disabled : true; }
+  return optEl.disabled;
+}
+function setTierOptionDisabled(el, optEl, dis) {
+  if (!optEl) return;
+  if (tierIsRadio(el)) {
+    const inp = optEl.querySelector("input"); if (inp) inp.disabled = dis;
+    optEl.classList.toggle("is-disabled", dis);
+    optEl.setAttribute("aria-disabled", dis ? "true" : "false");
+  } else { optEl.disabled = dis; }
+}
+
 // Preis-Anker direkt in der Opus-Option (P7): bei aktivem Flag zeigt „Beste (Opus)" immer
 // seinen Preis — aber AUSSCHLIESSLICH den vom Server gemeldeten Wert (serverOpusCredits);
 // liegt er (noch) nicht vor, bleibt die Basis-Beschriftung. So steht in einem echten
@@ -2808,9 +2855,44 @@ const TIER_OPTION_LABELS = {
 // Preis-Suffix im Label: ihr Overflow-Preis (Kontingent leer) wird allein in updateFreeTierHint
 // gezeigt — das dort nicht zu duplizieren haelt die eine Preis-Quelle konsistent und vermeidet
 // eine zweite (client-konstanten-)Preisflaeche. Ohne Flag (dormant) exakt die Basis-Labels.
-function applyTierOptionPriceLabels(sel) {
+function applyTierOptionPriceLabels(el) {
   const priced = creditsState.loaded && creditsState.creditsEnabled;
-  for (const opt of sel.options) {
+  // Radio-Karten-Pfad: Preis-Chip je Stufe. Standard/Guenstig = „Kostenlos“ (ihr Overflow-Preis
+  // bei leerem Kontingent traegt weiterhin ALLEIN updateFreeTierHint — keine zweite Preisflaeche).
+  // beste = Server-Preis (serverOpusCredits); liegt er nicht vor, neutraler Platzhalter statt
+  // einer geratenen Client-Konstante (F-2).
+  if (tierIsRadio(el)) {
+    el.querySelectorAll("[data-value]").forEach((card) => {
+      const chip = card.querySelector("[data-chip]");
+      const after = card.querySelector("[data-after]");
+      if (card.dataset.value === "beste") {
+        if (chip) {
+          const c = priced ? serverOpusCredits() : null;
+          chip.textContent = c !== null ? formatGuthabenEuro(c) + "/Test" : "Guthaben";
+          chip.className = "tier-card-chip tier-chip-paid";
+        }
+        if (after) { after.textContent = ""; after.hidden = true; } // beste kostet immer → keine „danach“-Zeile
+      } else {
+        if (chip) { chip.textContent = "Kostenlos"; chip.className = "tier-card-chip tier-chip-free"; }
+        // Proaktiver Overflow-Preis: was ein Test dieser Gratis-Stufe NACH dem Tageskontingent
+        // kostet, schon bevor das Kontingent leer ist. Gleiche Bedingung (freeQuotaVisible) UND
+        // dieselbe Preis-Quelle (freeTierOverflowEuro → tierPriceCredits) wie der aufgebraucht-
+        // Hinweis in updateFreeTierHint — keine zweite/neue Preisflaeche, nur frueher sichtbar.
+        // Als Schaetzung markiert („ca.“); massgeblich bleibt der Server.
+        if (after) {
+          if (freeQuotaVisible()) {
+            after.textContent = "danach ca. " + freeTierOverflowEuro(card.dataset.value) + "/Test";
+            after.hidden = false;
+          } else {
+            after.textContent = "";
+            after.hidden = true;
+          }
+        }
+      }
+    });
+    return;
+  }
+  for (const opt of el.options) {
     const base = TIER_OPTION_LABELS[opt.value];
     if (!base) continue; // unbekannte/zukuenftige Option: nie anfassen
     let label = base;
@@ -2823,18 +2905,18 @@ function applyTierOptionPriceLabels(sel) {
 }
 
 function updateTierOptions(group) {
-  const sel = $(group.sel);
-  if (!sel) return; // Selektor (noch) nicht im DOM (z. B. create-tier vor Erst-Render)
-  const beste = sel.querySelector('option[value="beste"]');
+  const el = $(group.sel);
+  if (!el) return; // Control (noch) nicht im DOM (z. B. create-tier vor Erst-Render)
+  const beste = tierOptionEl(el, "beste");
   if (!beste) return;
-  applyTierOptionPriceLabels(sel); // Preis-Suffixe in den Beschriftungen (nur bei aktivem Flag)
+  applyTierOptionPriceLabels(el); // Preis-Suffixe/Chips (nur bei aktivem Flag)
   const intent = group.read();
   // Entitlement noch unbekannt (kein bestaetigter Server-Stand): NICHTS erzwingen, sonst
   // fiele eine gespeicherte beste-Auswahl beim Oeffnen der Einstellungen still auf standard.
-  // Bei gespeichertem Wunsch "beste" die Option sichtbar lassen, damit das Select sie weiter
+  // Bei gespeichertem Wunsch "beste" die Option sichtbar lassen, damit die Auswahl sie weiter
   // anzeigt; die endgueltige Entscheidung faellt, sobald /auth/me bzw. /api/balance da ist.
   if (!creditsState.loaded) {
-    if (intent === "beste") { beste.hidden = false; beste.disabled = false; }
+    if (intent === "beste") { setTierOptionHidden(beste, false); setTierOptionDisabled(el, beste, false); }
     updateTierHint(group);
     return;
   }
@@ -2843,21 +2925,21 @@ function updateTierOptions(group) {
     // (importierte/veraltete bzw. pro-Test gewaehlte) beste-Absicht auf standard NORMALISIEREN,
     // damit Anzeige und Quelle der Wahrheit uebereinstimmen und die Generierung nicht an einem
     // unsichtbaren beste-Wert haengenbleibt.
-    beste.hidden = true;
-    beste.disabled = true;
+    setTierOptionHidden(beste, true);
+    setTierOptionDisabled(el, beste, true);
     if (intent === "beste") group.write("standard");
-    if (sel.value === "beste") sel.value = "standard";
+    if (tierGetValue(el) === "beste") tierSetValue(el, "standard");
     updateTierHint(group);
     return;
   }
   // Flag an: Option zeigen. Waehlbar nur, wenn das Guthaben mindestens einen Opus-Test deckt
   // (nicht schon ab 1 Credit).
-  beste.hidden = false;
-  beste.disabled = !canAffordBeste();
+  setTierOptionHidden(beste, false);
+  setTierOptionDisabled(el, beste, !canAffordBeste());
   // Bei zu wenig Guthaben die beste-ABSICHT bewusst NICHT verwerfen (anders als beim Flag-aus):
   // die Option bleibt sichtbar und, falls gewaehlt, ausgewaehlt (disabled, mit Aufladen-Hinweis).
   // Die Generierung weist dann klar aufs Aufladen hin, statt still auf standard zu generieren.
-  if (group.read() === "beste" && sel.value !== "beste") sel.value = "beste";
+  if (group.read() === "beste" && tierGetValue(el) !== "beste") tierSetValue(el, "beste");
   updateTierHint(group);
 }
 
@@ -2867,14 +2949,16 @@ function updateTierOptions(group) {
 // erfolgreichen Aufladen zeichnet der Balance-Refresh (renderCreditsUI → renderTierControls)
 // alles neu, die Option wird waehlbar und der Button verschwindet automatisch.
 function updateTierHint(group) {
-  const sel = $(group.sel);
+  const el = $(group.sel);
   const hint = $(group.besteHint);
-  if (!sel || !hint) return;
+  if (!el || !hint) return;
   const cta = $(group.topupCta);
   const showCta = (on) => { if (cta) cta.classList.toggle("hidden", !on); };
-  const beste = sel.querySelector('option[value="beste"]');
-  if (!beste || beste.hidden) { hint.classList.add("hidden"); hint.textContent = ""; showCta(false); return; }
-  if (sel.value === "beste" && !beste.disabled) {
+  const beste = tierOptionEl(el, "beste");
+  if (!beste || tierOptionHidden(beste)) { hint.classList.add("hidden"); hint.textContent = ""; showCta(false); return; }
+  const val = tierGetValue(el);
+  const disabled = tierOptionDisabled(el, beste);
+  if (val === "beste" && !disabled) {
     // Ausgewaehlt und gedeckt → Kostenhinweis. Preis ausschliesslich aus dem Server-Wert; liegt
     // er (noch) nicht vor, einen neutralen Platzhalter zeigen statt der Client-Konstante (F-2).
     const c = serverOpusCredits();
@@ -2883,9 +2967,9 @@ function updateTierHint(group) {
       : `Beste Qualität (Opus) kostet etwa <strong>${formatGuthabenEuro(c)} pro Test</strong>.`;
     hint.classList.remove("hidden");
     showCta(false);
-  } else if (beste.disabled) {
+  } else if (disabled) {
     // Gesperrt (ausgewaehlt oder nur sichtbar) → Guthaben fehlt; Aufladen anbieten. Statt eines
-    // Text-Links uebernimmt der kompakte Aufladen-Button direkt am Select die Aktion (P7).
+    // Text-Links uebernimmt der kompakte Aufladen-Button direkt an der Auswahl die Aktion (P7).
     hint.textContent = "Beste Qualität (Opus) braucht mehr Guthaben.";
     hint.classList.remove("hidden");
     showCta(true);
@@ -2926,10 +3010,10 @@ function freeTierOverflowEuro(tier) {
 // uebrig sind bzw. — wenn aufgebraucht — dass weitere Tests Guthaben kosten (Overflow). Nur
 // bei aktivem Flag und bekanntem freeRemaining; fuer "beste" zeigt updateTierHint den Opus-Preis.
 function updateFreeTierHint(group) {
-  const sel = $(group.sel);
+  const el = $(group.sel);
   const hint = $(group.freeHint);
   if (!hint) return;
-  const tier = sel ? sel.value : group.read();
+  const tier = el ? tierGetValue(el) : group.read();
   const remaining = creditsState.freeRemaining;
   if (!freeQuotaVisible() || tier === "beste") {
     hint.classList.add("hidden"); hint.textContent = ""; return;
@@ -10276,7 +10360,8 @@ function initSettingsForm() {
   $("provider").value = settings.provider || "hosted";
   $("api-key").value = settings.apiKey || "";
   $("base-url").value = settings.baseUrl || "";
-  $("tier").value = settings.tier || "standard";
+  tierSetValue($("tier"), settings.tier || "standard"); // #tier ist ein Radio-Karten-Block
+
   // Die Opus-Option richtet renderAccountSection() unten ein: es setzt creditsState frisch
   // (erst "unbekannt", dann der bestaetigte Server-Stand) und ruft renderCreditsUI →
   // updateTierOptions. Hier NICHT mit einem evtl. veralteten Cache vorgreifen, sonst koennte
@@ -10648,7 +10733,7 @@ function persistSettingsFromForm() {
     // der Haken existiert nur bei aktivem Credits-Flag, sonst bleibt der alte Wert erhalten.
     const autoCb = $("auto-use-credits");
     const autoUseCredits = creditsState.creditsEnabled && autoCb ? autoCb.checked : !!settings.autoUseCredits;
-    settings = { ...settings, provider: "hosted", tier: $("tier").value || "standard", autoUseCredits };
+    settings = { ...settings, provider: "hosted", tier: tierGetValue($("tier")) || "standard", autoUseCredits };
   } else {
     settings = {
       ...settings,

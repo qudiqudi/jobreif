@@ -294,12 +294,37 @@
       <!-- QUALITÄT neuer Tests (nur gehostet; updateSettingsProviderUI toggelt #row-tier) -->
       <div id="row-tier" class="setting-card">
         <span class="cardlabel">Qualität neuer Tests</span>
-        <label for="tier" class="visually-hidden">Qualitätsstufe</label>
-        <select id="tier">
-          <option value="standard">Standard – empfohlen</option>
-          <option value="guenstig">Günstig – schneller und sparsamer</option>
-          <option value="beste" hidden disabled>Beste (Opus) – höchste Qualität</option>
-        </select>
+        <!-- Auswahl-Karten mit Preis-Chip. #tier bleibt der Control-Anker (data-tier-radio),
+             den die Tier-Logik über den Adapter bedient; „beste“ startet verborgen/gesperrt
+             wie zuvor die <option hidden disabled> und wird von updateTierOptions freigegeben. -->
+        <div id="tier" data-tier-radio role="radiogroup" aria-label="Qualitätsstufe" class="tier-cards">
+          <label class="tier-card" data-value="standard">
+            <input type="radio" name="tier-choice" value="standard" checked>
+            <span class="tier-card-body">
+              <span class="tier-card-title">Standard</span>
+              <span class="tier-card-desc">Empfohlen – beste Balance aus Qualität und Tempo.</span>
+              <span class="tier-card-after" data-after hidden></span>
+            </span>
+            <span class="tier-card-chip tier-chip-free" data-chip>Kostenlos</span>
+          </label>
+          <label class="tier-card" data-value="guenstig">
+            <input type="radio" name="tier-choice" value="guenstig">
+            <span class="tier-card-body">
+              <span class="tier-card-title">Günstig</span>
+              <span class="tier-card-desc">Schneller und sparsamer, etwas einfachere Fragen.</span>
+              <span class="tier-card-after" data-after hidden></span>
+            </span>
+            <span class="tier-card-chip tier-chip-free" data-chip>Kostenlos</span>
+          </label>
+          <label class="tier-card" data-value="beste" data-beste hidden>
+            <input type="radio" name="tier-choice" value="beste" disabled>
+            <span class="tier-card-body">
+              <span class="tier-card-title">Beste (Opus)</span>
+              <span class="tier-card-desc">Höchste Qualität, bezahlt aus deinem Guthaben.</span>
+            </span>
+            <span class="tier-card-chip tier-chip-paid" data-chip>Guthaben</span>
+          </label>
+        </div>
         <button id="tier-topup-cta" type="button" class="ghost tier-topup-cta hidden">Guthaben aufladen</button>
         <p id="tier-beste-hint" class="hint hidden"></p>
         <p id="tier-free-hint" class="hint hidden"></p>

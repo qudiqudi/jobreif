@@ -508,6 +508,58 @@ button.btn-topup.pack:hover { border-color: var(--primary); color: var(--accent-
   font-weight: 600;
 }
 
+/* ---- Qualitätsstufe als Auswahl-Karten (Radio) ---- */
+.tier-cards { display: grid; gap: 0.5rem; }
+.tier-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.7rem 0.8rem;
+  margin: 0;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+@media (prefers-reduced-motion: reduce) { .tier-card { transition: none; } }
+.tier-card input {
+  margin: 0.15rem 0 0;
+  accent-color: var(--primary);
+  flex: none;
+}
+.tier-card:has(input:checked) {
+  border-color: var(--primary);
+  border-width: 1.5px;
+  background: var(--primary-soft);
+  padding: calc(0.7rem - 0.5px) calc(0.8rem - 0.5px); /* 1.5px-Rahmen ausgleichen, kein Springen */
+}
+.tier-card-body { flex: 1; min-width: 0; }
+.tier-card-title {
+  display: block;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-strong);
+}
+.tier-card-desc { display: block; font-size: 0.76rem; color: var(--muted); margin-top: 0.1rem; }
+/* Proaktiver Overflow-Preis der Gratis-Stufen („danach ca. X €/Test“) */
+.tier-card-after { display: block; font-size: 0.72rem; font-weight: 600; color: var(--accent-text); margin-top: 0.25rem; }
+.tier-card-chip {
+  flex: none;
+  align-self: center;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.66rem;
+  padding: 0.18rem 0.55rem;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+.tier-chip-free { background: var(--green-soft); color: var(--green); border: 1px solid color-mix(in srgb, var(--green) 35%, transparent); }
+.tier-chip-paid { background: var(--primary-soft); color: var(--accent-text); border: 1px solid var(--primary-soft-border); }
+.tier-card.is-disabled { opacity: 0.6; cursor: default; }
+.tier-card.is-disabled .tier-card-title { color: var(--muted); }
+.tier-card:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
+
 /* ---- Schalter-Zeile (Automatisch zahlen) ---- */
 .setting-toggle-row {
   display: flex;
