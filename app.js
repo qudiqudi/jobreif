@@ -10709,7 +10709,7 @@ $("create-tier").addEventListener("change", () => {
   const ni = $("num-questions"); if (ni && ni.refreshMax) ni.refreshMax();
 });
 
-// Aufladen-Buttons (3/5/10 €) → Paddle-Checkout. Der Selektor erfasst BEIDE Vorkommen:
+// Aufladen-Buttons (5/10/20 €) → Paddle-Checkout. Der Selektor erfasst BEIDE Vorkommen:
 // den Aufladen-Block der Einstellungen UND die Inline-Pakete im Overflow-Dialog (gleiche
 // .btn-topup/data-eur-Semantik) — der Overflow-Dialog braucht daher keine eigene Verdrahtung.
 // Nach erfolgreichem Kauf zieht der Guthaben-Stand ueber den bestehenden Paddle-Pfad nach:
@@ -11636,7 +11636,7 @@ $("btn-confirm-replace-learn-cancel").addEventListener("click", closeConfirmRepl
 //
 // Der Dialog hat zwei Zustaende (renderOverflowConfirmState):
 //  - Guthaben deckt den Preis → Bestaetigen-Button, Preis + Guthaben danach.
-//  - Guthaben reicht nicht → Aufladen inline (3/5/10 €, kleinstes Paket als Default) im SELBEN
+//  - Guthaben reicht nicht → Aufladen inline (5/10/20 €, kleinstes Paket als Default) im SELBEN
 //    Dialog. Nach erfolgreichem Aufladen (Paddle-Callback → refreshBalance → renderCreditsUI)
 //    wechselt der offene Dialog zurueck in die Bestaetigung — der Test startet aber NIE
 //    automatisch, es braucht weiterhin den expliziten Klick.

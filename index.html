@@ -231,7 +231,7 @@
             <span class="acct-avatar" id="acct-avatar" aria-hidden="true">•</span>
             <div class="acct-who">
               <p id="account-status" class="acct-mail">Nicht angemeldet.</p>
-              <p class="acct-mode">Gehosteter Modus &middot; kostenlos mit Tageskontingent</p>
+              <p class="acct-mode">Gehosteter Modus &middot; kostenlos zum Ausprobieren</p>
             </div>
             <!-- Aktion wechselt mit dem Anmeldezustand (renderAccountSection toggelt beide) -->
             <div id="account-loggedin" class="hidden acct-action">
@@ -446,7 +446,7 @@
       <div id="consent-sheet" class="consent-sheet-wrap hidden">
         <div class="consent-sheet" role="dialog" aria-modal="true" aria-labelledby="consent-title">
           <h3 id="consent-title">Automatische Zahlung aktivieren?</h3>
-          <p>Kostenpflichtige Tests – die Überschreitung des Gratis-Tageskontingents und die Stufe „beste“ (Opus) – werden dann ohne Rückfrage sofort aus deinem Guthaben bezahlt.</p>
+          <p>Kostenpflichtige Tests – die Stufen „standard“ und „beste“ (Opus) sowie weitere günstige Tests, sobald deine kostenlosen aufgebraucht sind – werden dann ohne Rückfrage sofort aus deinem Guthaben bezahlt.</p>
           <p>Damit stimmst du der sofortigen Ausführung dieser Tests zu; dein Widerrufsrecht erlischt für verbrauchtes Guthaben (<a href="widerruf.html" target="_blank" rel="noopener">Widerrufsbelehrung</a>).</p>
           <div class="row">
             <button id="consent-cancel" type="button" class="ghost">Abbrechen</button>
@@ -789,12 +789,12 @@
       </div>
     </div>
 
-    <!-- Overflow: Gratis-Tageskontingent aufgebraucht → Test gegen Guthaben (mit Bestätigung).
+    <!-- Overflow: kostenlose Tests aufgebraucht → Test gegen Guthaben (mit Bestätigung).
          Reicht das Guthaben nicht, bietet DERSELBE Dialog das Aufladen inline an; nach dem
          Aufladen wechselt er zurück in die Bestätigung (kein automatisches Erstellen). -->
     <div id="overflow-modal" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="overflow-title">
       <div class="modal card">
-        <h2 id="overflow-title">Kostenloses Tageskontingent aufgebraucht</h2>
+        <h2 id="overflow-title">Kostenlose Tests aufgebraucht</h2>
         <p id="overflow-text"></p>
         <p id="overflow-balance" class="hint hidden"></p>
         <div id="overflow-topup" class="hidden">
@@ -806,7 +806,7 @@
           <p id="overflow-topup-msg" class="hint" role="status"></p>
         </div>
         <div id="overflow-auto-row" class="hidden">
-          <label><input type="checkbox" id="overflow-auto-credits"> Kostenpflichtige Tests automatisch aus dem Guthaben bezahlen – Overflow nach dem Gratis-Tageskontingent und die Stufe „beste“ (Opus) – ohne jedes Mal nachzufragen. Damit stimmst du der sofortigen Ausführung dieser Tests zu; dein Widerrufsrecht erlischt für verbrauchtes Guthaben.</label>
+          <label><input type="checkbox" id="overflow-auto-credits"> Kostenpflichtige Tests automatisch aus dem Guthaben bezahlen – die Stufen „standard“ und „beste“ (Opus) sowie weitere günstige Tests nach deinen kostenlosen – ohne jedes Mal nachzufragen. Damit stimmst du der sofortigen Ausführung dieser Tests zu; dein Widerrufsrecht erlischt für verbrauchtes Guthaben.</label>
         </div>
         <!-- § 356 Abs. 5 BGB: die Erlöschens-Einwilligung fürs Widerrufsrecht muss VOR der
              Ausführung ausdrücklich eingeholt werden. Der Bestätigen-Klick ist genau dieser
@@ -904,7 +904,7 @@
         <p>Wenn wir schreiben, dass wir „keine IP-Adresse“ speichern, betrifft das unsere eigene Anwendung. Cloudflare verarbeitet IP-Adressen technisch unvermeidlich, um die Seite auszuliefern, vor Angriffen zu schützen und den Bot-Schutz durchzuführen.</p>
 
         <h3>Speicherung</h3>
-        <p>Unser Server speichert die Inhalte deiner Anfragen nicht dauerhaft und protokolliert sie nicht; geführt wird nur ein anonymer Zähler für das Tageskontingent (Schutz vor Missbrauch und Kostenausreißern). Wie die genannten Anbieter die Daten behandeln, richtet sich nach deren eigenen Bestimmungen.</p>
+        <p>Unser Server speichert die Inhalte deiner Anfragen nicht dauerhaft und protokolliert sie nicht; geführt wird nur ein anonymer Zähler für das Nutzungskontingent (Schutz vor Missbrauch und Kostenausreißern). Wie die genannten Anbieter die Daten behandeln, richtet sich nach deren eigenen Bestimmungen.</p>
         <p>Dein Verlauf (erstellte Tests, Ergebnisse) und deine Einstellungen werden ausschließlich lokal in deinem Browser gespeichert und nicht an uns übertragen. Du kannst sie jederzeit über die Einstellungen exportieren oder löschen.</p>
 
         <h3>Anonyme Nutzungsstatistik</h3>
@@ -920,7 +920,7 @@
         <p>Soweit personenbezogene Daten verarbeitet werden, geschieht das auf folgenden Grundlagen der DSGVO: zur Bereitstellung der von dir angeforderten Funktionen und des Kontos auf Art. 6 Abs. 1 lit. b (Nutzungsverhältnis); für Bot-Schutz, anonyme Nutzungsstatistik und die Auswertung gemeldeter Fragen auf Art. 6 Abs. 1 lit. f (berechtigtes Interesse an einem stabilen, missbrauchssicheren und besseren Dienst). Gegen die auf berechtigtem Interesse beruhenden Verarbeitungen kannst du jederzeit Widerspruch einlegen (siehe „Deine Rechte“).</p>
 
         <h3>Speicherdauer</h3>
-        <p>Inhalte deiner Anfragen speichern wir nicht (siehe „Speicherung“). Kontodaten (E-Mail und Sitzungsdaten) bleiben gespeichert, solange dein Konto besteht; Sitzungen laufen automatisch ab, und du kannst dein Konto jederzeit über die unten genannte Kontaktadresse löschen lassen. Gemeldete Fragen bewahren wir nur so lange auf, wie wir sie zur Verbesserung der Fragen benötigen, längstens 12 Monate. Der anonyme Zähler fürs Tageskontingent wird laufend zurückgesetzt.</p>
+        <p>Inhalte deiner Anfragen speichern wir nicht (siehe „Speicherung“). Kontodaten (E-Mail und Sitzungsdaten) bleiben gespeichert, solange dein Konto besteht; Sitzungen laufen automatisch ab, und du kannst dein Konto jederzeit über die unten genannte Kontaktadresse löschen lassen. Gemeldete Fragen bewahren wir nur so lange auf, wie wir sie zur Verbesserung der Fragen benötigen, längstens 12 Monate. Der anonyme Zähler fürs Nutzungskontingent wird laufend zurückgesetzt.</p>
 
         <h3>Deine Rechte</h3>
         <p>Du hast nach der DSGVO das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit sowie Widerspruch gegen Verarbeitungen, die auf einem berechtigten Interesse beruhen. Wende dich dafür an die unten genannte Kontaktadresse. Außerdem kannst du dich bei einer Datenschutz-Aufsichtsbehörde beschweren. Die für uns zuständige Behörde ist der Landesbeauftragte für den Datenschutz und die Informationsfreiheit Baden-Württemberg (Lautenschlagerstraße 20, 70173 Stuttgart); du kannst dich aber auch an die Aufsichtsbehörde deines gewöhnlichen Aufenthaltsorts wenden.</p>
