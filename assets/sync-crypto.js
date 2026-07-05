@@ -72,6 +72,9 @@
   // 16 Byte → 26 Crockford-Zeichen (kanonisch, ungruppiert, Grossbuchstaben). Bit-Akkumulator
   // mit Maskierung, damit `value` nie ueber ~13 bit waechst (kein 32-bit-Overflow bei 16 Byte).
   function seedToCode(bytes) {
+    if (!(bytes instanceof Uint8Array) || bytes.length !== SEED_BYTES) {
+      throw new Error("seed: genau " + SEED_BYTES + " Byte erwartet");
+    }
     let bits = 0, value = 0, out = "";
     for (let i = 0; i < bytes.length; i++) {
       value = (value << 8) | bytes[i];
@@ -97,7 +100,11 @@
       bits += 5;
       if (bits >= 8) { out.push((value >>> (bits - 8)) & 255); bits -= 8; value &= (1 << bits) - 1; }
     }
-    return Uint8Array.from(out); // 26*5=130 bit → 16 Byte, 2 Rest-bit (Padding) verworfen
+    // 26*5=130 bit → 16 Byte + 2 Padding-bit. Kanonisch codierte Codes (seedToCode) haben diese
+    // Padding-bit = 0. Nicht-Null-Padding ablehnen: erzwingt eine echte Bijektion Seed↔Code und
+    // erhaelt die Tippfehler-Erkennung im letzten Zeichen (Codex-Adversarial-Finding).
+    if (bits > 0 && value !== 0) throw new Error("sync-code: nicht-kanonische Padding-Bits");
+    return Uint8Array.from(out);
   }
 
   // Anzeige-Form: XXXXX-XXXXX-XXXXX-XXXXX-XXXXXX (5-5-5-5-6).
@@ -119,6 +126,11 @@
   // So bleibt der AES-Schluessel non-extractable und die kid ist trotzdem berechenbar.
   async function deriveKey(seed) {
     const seedBytes = seed instanceof Uint8Array ? seed : codeToSeed(seed);
+    // Invariante 128-bit-Seed fail-closed erzwingen: ein Seed falscher Laenge (Bug/Import)
+    // darf keinen Schluessel aus einem unbeabsichtigten Keyspace ableiten (Codex-Finding).
+    if (!(seedBytes instanceof Uint8Array) || seedBytes.length !== SEED_BYTES) {
+      throw new Error("seed: genau " + SEED_BYTES + " Byte erwartet");
+    }
     const base = await C.subtle.importKey("raw", seedBytes, "HKDF", false, ["deriveBits"]);
     const bits = await C.subtle.deriveBits(
       { name: "HKDF", hash: "SHA-256", salt: new Uint8Array(0), info: TE.encode(HKDF_INFO) },
@@ -148,11 +160,13 @@
     return JSON.parse(TD.decode(pt));
   }
 
-  // Reine Form-Pruefung (spiegelt die Server-Validierung): { v:1, kid:8hex, iv/ct Base64-Strings }.
+  // Form-Vorfilter (der Server validiert autoritativ): v:1, kid=8hex, iv=Base64 von 12 Byte
+  // (16 Zeichen, ohne Padding), ct=nicht-leeres Base64. Inhalte bleiben opak.
   function isEnvelope(e) {
     return !!e && typeof e === "object" && e.v === 1
       && typeof e.kid === "string" && /^[0-9a-f]{8}$/.test(e.kid)
-      && typeof e.iv === "string" && typeof e.ct === "string";
+      && typeof e.iv === "string" && /^[A-Za-z0-9+/]{16}$/.test(e.iv)
+      && typeof e.ct === "string" && /^[A-Za-z0-9+/]{4,}={0,2}$/.test(e.ct);
   }
 
   // --- QR-/Fragment-Kopplung ----------------------------------------------------------------
@@ -187,11 +201,14 @@
     if (!location || typeof location.hash !== "string") return null;
     const code = parseSyncFragment(location.hash);
     if (!code) return null;
-    if (storage) storage.setItem(SYNC_KEY_STORAGE, code);
-    // Fragment entfernen, Rest der URL (Pfad + Query) erhalten.
+    // Seed sichern — aber das Fragment MUSS auch dann aus URL/History verschwinden, wenn das
+    // Speichern scheitert (Privatmodus/Quota/Storage deaktiviert → setItem wirft). Sonst bliebe
+    // der Seed in der Adressleiste/History sichtbar (Codex-Adversarial-Finding). Daher store in
+    // try/catch, der replaceState-Strip laeuft unabhaengig.
+    try { if (storage) storage.setItem(SYNC_KEY_STORAGE, code); } catch { /* Strip trotzdem */ }
     if (history && typeof history.replaceState === "function") {
       const rest = (location.pathname || "/") + (location.search || "");
-      history.replaceState(null, "", rest);
+      try { history.replaceState(null, "", rest); } catch { /* best effort */ }
     }
     return code;
   }

@@ -60,6 +60,19 @@ async function run() {
     await throws(() => { SC.codeToSeed("ABC"); }, "zu kurzer Code wirft");
     await throws(() => { SC.codeToSeed("UUUUUUUUUUUUUUUUUUUUUUUUUU"); }, "U (nicht im Alphabet) wirft");
     await throws(() => { SC.codeToSeed(12345); }, "Nicht-String wirft");
+    // Nicht-kanonische Padding-Bits im letzten Zeichen (Codex-Finding): "0"*25 + "1" dekodiert
+    // zum selben All-Null-Seed, hat aber Padding=01 → jetzt abgelehnt.
+    assert(bytesEq(SC.codeToSeed("0".repeat(26)), new Uint8Array(16)), "kanonischer All-Null-Code ok");
+    await throws(() => { SC.codeToSeed("0".repeat(25) + "1"); }, "nicht-kanonische Padding-Bits werfen");
+    assert(SC.normalizeCode("0".repeat(25) + "1") === null, "normalizeCode: nicht-kanonisch → null");
+  }
+
+  // 3b) Seed-Laengen-Invariante fail-closed (Codex-Finding): falsche Laenge wirft
+  {
+    await throws(() => SC.deriveKey(new Uint8Array(0)), "deriveKey: 0-Byte-Seed wirft");
+    await throws(() => SC.deriveKey(new Uint8Array(15)), "deriveKey: 15-Byte-Seed wirft");
+    await throws(() => SC.deriveKey(new Uint8Array(32)), "deriveKey: 32-Byte-Seed wirft");
+    await throws(() => { SC.seedToCode(new Uint8Array(15)); }, "seedToCode: falsche Laenge wirft");
   }
 
   // 4) kid ist deterministisch fuer denselben Seed, verschieden fuer andere Seeds
@@ -80,6 +93,11 @@ async function run() {
     const payload = { profile: { ort: "Berlin", ziel: "PM" }, tier: "standard", updatedAt: 1720000000000, nested: [1, 2, { a: "ä€\"'" }] };
     const env1 = await SC.encrypt(key, kid, payload);
     assert(SC.isEnvelope(env1), "Envelope hat gueltige Form");
+    // isEnvelope lehnt Formfehler ab (Codex-Finding): falsche iv-Laenge, Nicht-Base64-ct, falsche v/kid
+    assert(!SC.isEnvelope({ v: 1, kid, iv: "AAAA", ct: env1.ct }), "isEnvelope: falsche iv-Laenge → false");
+    assert(!SC.isEnvelope({ v: 1, kid, iv: env1.iv, ct: "nicht base64!" }), "isEnvelope: Nicht-Base64-ct → false");
+    assert(!SC.isEnvelope({ v: 2, kid, iv: env1.iv, ct: env1.ct }), "isEnvelope: falsche v → false");
+    assert(!SC.isEnvelope({ v: 1, kid: "zz", iv: env1.iv, ct: env1.ct }), "isEnvelope: falsche kid → false");
     eq(env1.v, 1, "v=1");
     eq(env1.kid, kid, "Envelope traegt die kid");
     const back = await SC.decrypt(key, env1);
@@ -133,6 +151,16 @@ async function run() {
     eq(replacedTo, "/app?a=1", "Pfad + Query bleiben erhalten, nur Fragment weg");
     // Kein Fragment → null, kein Schreiben
     eq(SC.consumeSyncFragment({ location: { hash: "" }, history, storage }), null, "kein Fragment → null");
+
+    // Fail-safe (Codex-Finding): wirft setItem (Privatmodus/Quota), wird das Fragment TROTZDEM
+    // aus der URL entfernt — der Seed darf nicht in der Adressleiste haengen bleiben.
+    let replaced2 = "SENTINEL";
+    const throwingStorage = { getItem: () => null, setItem: () => { throw new Error("QuotaExceeded"); }, removeItem: () => {} };
+    const history2 = { replaceState: (_s, _t, u) => { replaced2 = u; } };
+    const loc3 = { hash: "#sync=v1." + code, pathname: "/", search: "" };
+    const c3 = SC.consumeSyncFragment({ location: loc3, history: history2, storage: throwingStorage });
+    eq(c3, code, "consumeSyncFragment liefert Code auch bei Storage-Fehler");
+    eq(replaced2, "/", "Fragment auch bei Storage-Fehler aus URL entfernt");
 
     // storedCode / storeCode / clearStoredCode
     eq(SC.storedCode(storage), code, "storedCode liest kanonisch");
