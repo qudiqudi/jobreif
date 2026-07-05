@@ -11,7 +11,7 @@ const CHANGELOG = [
     version: "1.32.1",
     date: "05.07.2026",
     items: [
-      "Die Qualitätsstufe wählst du in den Einstellungen jetzt über übersichtliche Karten mit klarer Preis-Angabe (kostenlos bzw. der Opus-Preis pro Test) statt über ein Ausklappmenü.",
+      "Die Qualitätsstufe wählst du in den Einstellungen jetzt über übersichtliche Karten statt über ein Ausklappmenü – und jede Karte zeigt direkt, was sie kostet: kostenlose Stufen mit dem Preis, den ein weiterer Test nach dem Tageskontingent kostet, und die beste Stufe (Opus) mit ihrem Preis pro Test.",
     ],
   },
   {
@@ -2864,14 +2864,30 @@ function applyTierOptionPriceLabels(el) {
   if (tierIsRadio(el)) {
     el.querySelectorAll("[data-value]").forEach((card) => {
       const chip = card.querySelector("[data-chip]");
-      if (!chip) return;
+      const after = card.querySelector("[data-after]");
       if (card.dataset.value === "beste") {
-        const c = priced ? serverOpusCredits() : null;
-        chip.textContent = c !== null ? formatGuthabenEuro(c) + "/Test" : "Guthaben";
-        chip.className = "tier-card-chip tier-chip-paid";
+        if (chip) {
+          const c = priced ? serverOpusCredits() : null;
+          chip.textContent = c !== null ? formatGuthabenEuro(c) + "/Test" : "Guthaben";
+          chip.className = "tier-card-chip tier-chip-paid";
+        }
+        if (after) { after.textContent = ""; after.hidden = true; } // beste kostet immer → keine „danach“-Zeile
       } else {
-        chip.textContent = "Kostenlos";
-        chip.className = "tier-card-chip tier-chip-free";
+        if (chip) { chip.textContent = "Kostenlos"; chip.className = "tier-card-chip tier-chip-free"; }
+        // Proaktiver Overflow-Preis: was ein Test dieser Gratis-Stufe NACH dem Tageskontingent
+        // kostet, schon bevor das Kontingent leer ist. Gleiche Bedingung (freeQuotaVisible) UND
+        // dieselbe Preis-Quelle (freeTierOverflowEuro → tierPriceCredits) wie der aufgebraucht-
+        // Hinweis in updateFreeTierHint — keine zweite/neue Preisflaeche, nur frueher sichtbar.
+        // Als Schaetzung markiert („ca.“); massgeblich bleibt der Server.
+        if (after) {
+          if (freeQuotaVisible()) {
+            after.textContent = "danach ca. " + freeTierOverflowEuro(card.dataset.value) + "/Test";
+            after.hidden = false;
+          } else {
+            after.textContent = "";
+            after.hidden = true;
+          }
+        }
       }
     });
     return;

@@ -542,6 +542,8 @@ button.btn-topup.pack:hover { border-color: var(--primary); color: var(--accent-
   color: var(--text-strong);
 }
 .tier-card-desc { display: block; font-size: 0.76rem; color: var(--muted); margin-top: 0.1rem; }
+/* Proaktiver Overflow-Preis der Gratis-Stufen („danach ca. X €/Test“) */
+.tier-card-after { display: block; font-size: 0.72rem; font-weight: 600; color: var(--accent-text); margin-top: 0.25rem; }
 .tier-card-chip {
   flex: none;
   align-self: center;
