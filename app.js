@@ -9159,7 +9159,11 @@ function saveSrDeck(deck, protectedIds) {
   };
   trim(deck);
   for (let i = 0; i < 5; i++) {
-    try { localStorage.setItem(SR_DECK_KEY, JSON.stringify(deck)); return true; }
+    try {
+      localStorage.setItem(SR_DECK_KEY, JSON.stringify(deck));
+      try { if (typeof noteMergeKindChange === "function") noteMergeKindChange("deck"); } catch { /* Engine evtl. nicht geladen */ }
+      return true;
+    }
     catch {
       const ids = evictable(deck);
       if (!ids.length) return false; // nur noch geschuetzte Karten -> lieber nicht schreiben
@@ -9330,7 +9334,11 @@ function loadUebenStats() {
   return { v: 1, byType: {} };
 }
 function saveUebenStats(stats) {
-  try { localStorage.setItem(UEBEN_STATS_KEY, JSON.stringify(stats)); return true; } catch { return false; }
+  try {
+    localStorage.setItem(UEBEN_STATS_KEY, JSON.stringify(stats));
+    try { if (typeof noteMergeKindChange === "function") noteMergeKindChange("stats"); } catch { /* Engine evtl. nicht geladen */ }
+    return true;
+  } catch { return false; }
 }
 // Nicht-negative Ganzzahl; nicht-endliche Werte (z. B. Infinity aus 1e309 in einem Import)
 // werden auf 0 abgewiesen - sonst serialisierte JSON.stringify sie als null und korrumpierte
@@ -13154,6 +13162,58 @@ function applyHistory(merged) {
   } finally { _syncApplying = false; }
 }
 
+// Kanonische Schlüsselordnung (rekursiv) → stabiler JSON-Vergleich, Grundlage für Determinismus/
+// Idempotenz der Merges (unterschiedliche Feldreihenfolge zweier Geräte darf nicht zu endlosem
+// gegenseitigem Push führen).
+function canonKeys(x) {
+  if (Array.isArray(x)) return x.map(canonKeys);
+  if (x && typeof x === "object") { const o = {}; for (const k of Object.keys(x).sort()) o[k] = canonKeys(x[k]); return o; }
+  return x;
+}
+
+// --- Kind `deck` = { v, cards:{id:{added,due,reps,lastReviewed?,…}} }: Union je Karte, neuester Stand ---
+function deckLocal() { const d = loadSrDeck(); return { v: 1, cards: (d && d.cards && typeof d.cards === "object") ? d.cards : {} }; }
+const cardTs = (c) => (Number(c && c.lastReviewed) || Number(c && c.added) || 0);
+function pickCard(a, b) { // neuester Stand: lastReviewed(→added) desc, reps desc, dann JSON-Tiebreak
+  const ta = cardTs(a), tb = cardTs(b); if (ta !== tb) return ta > tb ? a : b;
+  const ra = Number(a && a.reps) || 0, rb = Number(b && b.reps) || 0; if (ra !== rb) return ra > rb ? a : b;
+  return JSON.stringify(canonKeys(a)) <= JSON.stringify(canonKeys(b)) ? a : b;
+}
+function mergeDeck(a, b) {
+  const cards = {};
+  for (const src of [a, b]) { const cc = src && src.cards; if (cc && typeof cc === "object") for (const id of Object.keys(cc)) { const c = cc[id]; if (!c || typeof c !== "object") continue; cards[id] = cards[id] ? pickCard(cards[id], c) : c; } }
+  let ids = Object.keys(cards); // Cap SR_DECK_MAX nach dem Merge: kleinstes added zuerst raus (deterministisch)
+  if (ids.length > SR_DECK_MAX) {
+    ids.sort((x, y) => (Number(cards[x].added) || 0) - (Number(cards[y].added) || 0) || (x < y ? -1 : 1));
+    for (const id of ids.slice(0, ids.length - SR_DECK_MAX)) delete cards[id];
+  }
+  return canonKeys({ v: 1, cards });
+}
+function applyDeck(merged) {
+  _syncApplying = true;
+  try { saveSrDeck({ v: 1, cards: { ...(merged && merged.cards) } }); mergeState("deck").sig = JSON.stringify(MERGE_KINDS.deck.payload()); }
+  finally { _syncApplying = false; }
+}
+
+// --- Kind `stats` = { v, byType:{typ:{runs,attempted,correct,bestStreak,lastPlayed}} }: pro Zähler MAX ---
+// MAX ist idempotent (Summe würde bei jedem Re-Merge unbegrenzt wachsen); monoton, kein Doppelzählen.
+function statsLocal() { const s = loadUebenStats(); return { v: 1, byType: (s && s.byType && typeof s.byType === "object") ? s.byType : {} }; }
+function mergeStats(a, b) {
+  const byType = {};
+  for (const src of [a, b]) { const bt = src && src.byType; if (bt && typeof bt === "object") for (const typ of Object.keys(bt)) {
+    const e = bt[typ]; if (!e || typeof e !== "object") continue;
+    const out = { ...(byType[typ] || {}) };
+    for (const f of Object.keys(e)) { const n = Number(e[f]); out[f] = Number.isFinite(n) ? Math.max(Number(out[f]) || 0, n) : (out[f] != null ? out[f] : e[f]); }
+    byType[typ] = out;
+  } }
+  return canonKeys({ v: 1, byType });
+}
+function applyStats(merged) {
+  _syncApplying = true;
+  try { saveUebenStats({ v: 1, byType: { ...(merged && merged.byType) } }); mergeState("stats").sig = JSON.stringify(MERGE_KINDS.stats.payload()); }
+  finally { _syncApplying = false; }
+}
+
 const MERGE_KINDS = {
   history: {
     lock: "bewerbungstool.sync.history",
@@ -13161,6 +13221,20 @@ const MERGE_KINDS = {
     merge: (local, remote) => mergeHistory(local, remote),
     apply: applyHistory,
     isEmpty: (p) => !p || !Array.isArray(p.jobs) || p.jobs.length === 0,
+  },
+  deck: {
+    lock: "bewerbungstool.sync.deck",
+    payload: () => mergeDeck(deckLocal(), deckLocal()),
+    merge: (local, remote) => mergeDeck(local, remote),
+    apply: applyDeck,
+    isEmpty: (p) => !p || !p.cards || Object.keys(p.cards).length === 0,
+  },
+  stats: {
+    lock: "bewerbungstool.sync.stats",
+    payload: () => mergeStats(statsLocal(), statsLocal()),
+    merge: (local, remote) => mergeStats(local, remote),
+    apply: applyStats,
+    isEmpty: (p) => !p || !p.byType || Object.keys(p.byType).length === 0,
   },
 };
 
