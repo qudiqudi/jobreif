@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.33.0";
+const APP_VERSION = "1.33.1";
 
 const CHANGELOG = [
+  {
+    version: "1.33.1",
+    date: "05.07.2026",
+    items: [
+      "Guthaben aufladen jetzt in Paketen von 5, 10 oder 20 € – abgebucht wird weiterhin nur nach deiner Bestätigung.",
+    ],
+  },
   {
     version: "1.33.0",
     date: "05.07.2026",
@@ -3223,18 +3230,20 @@ function refreshCreditsAfterJob(ctx) {
 const PADDLE_CONFIG = {
   sandbox: {
     token: "test_dd28942b6ba0973839ad31d6f08",
+    // Pakete 5/10/20 € (2026-07). Sandbox hat kein eigenes 20-€-Produkt → 20 nutzt zum reinen
+    // Flow-Testen die 10-€-Sandbox-ID (nur Dev; prod hat unten die echte 20-€-ID).
     prices: {
-      3: "pri_01kvthe259wsnywgqbcvjfef0j",
       5: "pri_01kvthd4f8jb73j7905enkga59",
       10: "pri_01kvthefqea9v7p3qxhedj60d8",
+      20: "pri_01kvthefqea9v7p3qxhedj60d8",
     },
   },
   production: {
     token: "live_b18ed8bdf56e62e410b3cfa3624",
     prices: {
-      3: "pri_01kwps1z74393d2d4t5tb61x7n",
       5: "pri_01kwps2fark4th2pr7swfx33my",
       10: "pri_01kwps32her8jt14fz8vafqae6",
+      20: "pri_01kwscza37z15v9rs8m5dd9v8n",
     },
   },
 };
@@ -10700,7 +10709,7 @@ $("create-tier").addEventListener("change", () => {
   const ni = $("num-questions"); if (ni && ni.refreshMax) ni.refreshMax();
 });
 
-// Aufladen-Buttons (3/5/10 €) → Paddle-Checkout. Der Selektor erfasst BEIDE Vorkommen:
+// Aufladen-Buttons (5/10/20 €) → Paddle-Checkout. Der Selektor erfasst BEIDE Vorkommen:
 // den Aufladen-Block der Einstellungen UND die Inline-Pakete im Overflow-Dialog (gleiche
 // .btn-topup/data-eur-Semantik) — der Overflow-Dialog braucht daher keine eigene Verdrahtung.
 // Nach erfolgreichem Kauf zieht der Guthaben-Stand ueber den bestehenden Paddle-Pfad nach:
@@ -11627,7 +11636,7 @@ $("btn-confirm-replace-learn-cancel").addEventListener("click", closeConfirmRepl
 //
 // Der Dialog hat zwei Zustaende (renderOverflowConfirmState):
 //  - Guthaben deckt den Preis → Bestaetigen-Button, Preis + Guthaben danach.
-//  - Guthaben reicht nicht → Aufladen inline (3/5/10 €, kleinstes Paket als Default) im SELBEN
+//  - Guthaben reicht nicht → Aufladen inline (5/10/20 €, kleinstes Paket als Default) im SELBEN
 //    Dialog. Nach erfolgreichem Aufladen (Paddle-Callback → refreshBalance → renderCreditsUI)
 //    wechselt der offene Dialog zurueck in die Bestaetigung — der Test startet aber NIE
 //    automatisch, es braucht weiterhin den expliziten Klick.
