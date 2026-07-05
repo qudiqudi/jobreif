@@ -291,6 +291,52 @@
         </div>
       </div>
 
+      <!-- GERÄTE-SYNC (nur gehostet + angemeldet + Server-Flag SYNC_ENABLED; renderSyncUI toggelt
+           #sync-card. E2E-verschlüsselt: der Schlüssel bleibt auf dem Gerät, der Server sieht nur
+           Chiffrate. QR-Encoder wird bei Bedarf lazy geladen (assets/vendor/qrcodegen.js). -->
+      <div id="sync-card" class="setting-card sync-card hidden">
+        <span class="cardlabel">Geräte-Sync</span>
+        <p class="hint">Dein Trainingsstand wird Ende-zu-Ende verschlüsselt über deine Geräte synchronisiert – auf unseren Servern liegen nur verschlüsselte Daten, den Schlüssel hast nur du. <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutz</a></p>
+
+        <!-- AUS: neu aktivieren ODER ein bereits aktives Gerät per Code koppeln -->
+        <div id="sync-off">
+          <button id="sync-activate" type="button" class="primary">Aktivieren</button>
+          <details id="sync-join" class="setting-adv">
+            <summary>Schon auf einem anderen Gerät aktiv? Code eingeben</summary>
+            <label for="sync-code-input" class="visually-hidden">Sync-Code des anderen Geräts</label>
+            <input id="sync-code-input" type="text" inputmode="latin" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXXX">
+            <div class="row wrap">
+              <button id="sync-join-submit" type="button" class="ghost btn-compact">Gerät koppeln</button>
+            </div>
+            <p id="sync-join-err" class="hint sync-err hidden" role="alert"></p>
+          </details>
+        </div>
+
+        <!-- AN: Status + Kopplungsansicht (QR groß + Code) + Aktionen -->
+        <div id="sync-on" class="hidden">
+          <p class="hint"><strong>Sync ist auf diesem Gerät aktiv.</strong></p>
+          <div id="sync-couple" class="sync-couple hidden">
+            <div id="sync-qr" class="sync-qr" aria-hidden="true"></div>
+            <div class="sync-code-display"><code id="sync-code"></code></div>
+            <p class="hint">Auf dem anderen Gerät scannen oder den Code eingeben.</p>
+            <p class="hint sync-warn">Der Code ist dein Schlüssel. Wir können deine Daten nicht lesen – und auch nicht wiederherstellen, wenn du den Code und alle Geräte verlierst.</p>
+          </div>
+          <div class="row wrap sync-actions">
+            <button id="sync-show" type="button" class="primary btn-compact">Dieses Gerät koppeln</button>
+            <button id="sync-reset" type="button" class="ghost btn-compact">Sync zurücksetzen</button>
+            <button id="sync-disable" type="button" class="linklike">Sync deaktivieren</button>
+          </div>
+          <div id="sync-disable-confirm" class="sync-confirm hidden">
+            <p class="hint">Sync auf diesem Gerät deaktivieren? Dein lokaler Trainingsstand bleibt erhalten.</p>
+            <label class="setting-check"><input type="checkbox" id="sync-delete-server"> Auch die verschlüsselten Daten auf dem Server löschen</label>
+            <div class="row wrap">
+              <button id="sync-disable-do" type="button" class="ghost btn-compact">Deaktivieren</button>
+              <button id="sync-disable-cancel" type="button" class="linklike">Abbrechen</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- QUALITÄT neuer Tests (nur gehostet; updateSettingsProviderUI toggelt #row-tier) -->
       <div id="row-tier" class="setting-card">
         <span class="cardlabel">Qualität neuer Tests</span>
@@ -1072,6 +1118,11 @@
   <!-- Turnstile-Host: meist unsichtbar (interaction-only), erscheint nur, wenn eine
        Challenge eine Interaktion verlangt. -->
   <div id="turnstile-container" class="turnstile-host" aria-hidden="true"></div>
+  <!-- Geräte-Sync: der Krypto-Layer wird VOR app.js geladen (klassisch, in Reihenfolge), damit
+       das Startup das QR-Fragment (#sync=v1.…) sofort aus der URL entfernen kann. Der QR-Encoder
+       (assets/vendor/qrcodegen.js) + Renderer werden erst bei Bedarf (Kopplungsansicht) lazy
+       nachgeladen — kein 45-KB-Encoder auf dem kritischen Pfad. Alles same-origin ('self', CSP-ok). -->
+  <script src="assets/sync-crypto.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
