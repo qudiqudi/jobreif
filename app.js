@@ -8122,6 +8122,13 @@ function saveHistory(h) {
   // also abwaertskompatibel. Vor der Retry-Schleife, damit ein Quota-Retry rev
   // nicht mehrfach hochzaehlt.
   if (h && typeof h === "object") h.rev = (Number.isFinite(h.rev) ? h.rev : 0) + 1;
+  // Tombstone-GC (F3): Löschmarker älter als 90 Tage verwerfen — nach so langer Zeit ist der
+  // Löschvorgang überall angekommen (oder das Gerät war so lange offline, dass ein Re-Merge
+  // ohnehin egal ist). Hält history.deleted klein. Defensiv: nur wenn vorhanden.
+  if (h && Array.isArray(h.deleted)) {
+    const cutoff = Date.now() - 90 * 24 * 60 * 60 * 1000;
+    h.deleted = h.deleted.filter((t) => t && (Number(t.ts) || 0) >= cutoff);
+  }
   // Bei vollem Speicher aelteste Versuche verwerfen und erneut versuchen
   for (let i = 0; i < 6; i++) {
     try {
@@ -8631,6 +8638,9 @@ async function saveAttempt(result, durationMs, evalCost, evalTokens) {
   delete quizCopy.druckpunkte; // liegt am Job (job.druckpunkte), nicht doppelt je Versuch
 
   const attempt = {
+    // Stabile id (additiv, F3): identifiziert den Versuch geräteübergreifend für den Union-Merge
+    // des Sync (history). Alt-Versuche ohne id werden defensiv über (jobKey, date) identifiziert.
+    id: crypto.randomUUID(),
     date: Date.now(),
     mode,
     schwierigkeitsgrad: quiz.schwierigkeitsgrad || "",
@@ -8838,6 +8848,14 @@ async function deleteJob(job) {
     h.jobs = h.jobs.filter((j) =>
       !(job.key && j.key === job.key) &&
       !(job.urlKey && j.urlKey === job.urlKey));
+    // Tombstone (additiv, F3): merkt die Löschung, damit der Union-Merge des Sync die Stelle nicht
+    // von einem anderen Gerät zurückholt, wo sie noch liegt. Der Tombstone gewinnt beim Merge über
+    // Einträge mit älterem Datum; ein NEUERER Versuch (nach der Löschung woanders angelegt) überlebt.
+    // GC nach 90 Tagen (saveHistory). Über jobKey UND urlKey merken (beides kann die Stelle ident.).
+    if (!Array.isArray(h.deleted)) h.deleted = [];
+    const ts = Date.now();
+    if (job.key) h.deleted.push({ jobKey: job.key, ts });
+    if (job.urlKey) h.deleted.push({ urlKey: job.urlKey, ts });
   });
   // Komfort-Cache-Eintrag der Stelle mitloeschen, sonst bliebe er verwaist liegen.
   if (job.key) dropKpCache(job.key);
