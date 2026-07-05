@@ -5141,6 +5141,7 @@ async function saveThemenfelder(job, derived, level) {
       return false;
     }
     target.themenfelder = themenfelder;
+    target.updatedAt = Date.now(); // Metadaten-Änderung datieren → Ordnungs-Autorität für den Sync-Merge (F3)
   });
   job.themenfelder = themenfelder;
   return themenfelder;
@@ -8776,6 +8777,10 @@ async function updateJobCockpit(job, patch) {
       // jobGespraechAm) - kein negativer Wert/String/NaN landet im Job-Objekt.
       if (typeof g === "number" && Number.isFinite(g) && g > 0) j.gespraechAm = g; else delete j.gespraechAm;
     }
+    // Job-Metadaten-Änderung datieren (F3): gibt dieser Änderung Ordnungs-Autorität für den Sync-
+    // Merge. Ohne das gewinnt bei gleichem Versuchs-Stand (der Normalfall nach dem Sync) auf BEIDEN
+    // Geräten die lokale Seite → Status/Termin propagieren nie + Ping-Pong (Fable-Finding).
+    j.updatedAt = Date.now();
   });
 }
 
@@ -11451,6 +11456,24 @@ async function importData(text) {
       if (j.attempts.length > HISTORY_MAX_ATTEMPTS) j.attempts = j.attempts.slice(-HISTORY_MAX_ATTEMPTS);
     });
     if (h.jobs.length > HISTORY_MAX_JOBS) h.jobs.length = HISTORY_MAX_JOBS;
+    // Restore-from-Backup ist ausdrückliche Wiederherstellung: für die importierten Stellen etwaige
+    // Tombstones (frühere Löschung auf einem anderen Gerät) entfernen — sonst würde der Sync-Union-
+    // Merge die gerade importierte Stelle wieder wegräumen (Fable-Finding).
+    if (Array.isArray(h.deleted) && h.deleted.length) {
+      const impIds = new Set();
+      data.history.jobs.forEach((ij) => {
+        if (!ij) return;
+        if (ij.key) impIds.add("j:" + ij.key);
+        if (ij.urlKey) impIds.add("u:" + ij.urlKey);
+        const ik = ij.identityKey || identityKeyOf(ij.titel, ij.arbeitgeber, ij.arbeitsort);
+        if (ik) impIds.add("i:" + ik);
+      });
+      h.deleted = h.deleted.filter((t) => !(
+        (t.jobKey && impIds.has("j:" + t.jobKey)) ||
+        (t.urlKey && impIds.has("u:" + t.urlKey)) ||
+        (t.identityKey && impIds.has("i:" + t.identityKey))
+      ));
+    }
     });
   }
 
@@ -13017,12 +13040,12 @@ const _jsonEq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 // ein Pull anwendet (_syncApplying) NICHT feuern (kein Echo).
 function noteMergeKindChange(name) {
   if (_syncApplying) return;
+  if (!syncEligible()) return; // früh raus für Nicht-Sync-Nutzer, BEVOR das teure kanonische payload() läuft (Fable-Finding); Aktivieren/Koppeln setzt sig ohnehin zurück
   const kind = MERGE_KINDS[name]; if (!kind) return;
   const st = mergeState(name);
   const sig = JSON.stringify(kind.payload());
   if (sig === st.sig) return;
   st.sig = sig;
-  if (!syncEligible()) return;
   if (st.timer) clearTimeout(st.timer);
   st.timer = setTimeout(() => { st.timer = null; pushMergeKind(name).catch(() => {}); }, SYNC_PUSH_DEBOUNCE_MS);
 }
@@ -13057,7 +13080,7 @@ async function pushMergeKindLocked(name, rev, attempt = 0, force = false) {
         const remote = await window.SyncCrypto.decrypt(key, body.envelope);
         setKindMeta(name, { rev: serverRev });
         const merged = kind.merge(kind.payload(), remote);
-        if (!_jsonEq(merged, kind.payload())) kind.apply(merged); // lokal konvergieren, dann neu pushen
+        if (!_jsonEq(merged, kind.payload())) await kind.apply(merged); // lokal konvergieren, dann neu pushen
       } catch { setKidMismatch(true); return; }
     }
     return pushMergeKindLocked(name, serverRev, attempt + 1, force);
@@ -13084,7 +13107,7 @@ async function pullMergeKind(name, blob) {
   setKindMeta(name, { rev: Number(blob.rev) || 0 });
   const local = kind.payload();
   const merged = kind.merge(local, remote);
-  if (!_jsonEq(merged, local)) kind.apply(merged);
+  if (!_jsonEq(merged, local)) await kind.apply(merged);
   if (!_jsonEq(merged, kind.merge(remote, remote))) await pushMergeKindLocked(name, Number(blob.rev) || 0);
 }
 async function forceOverwriteMergeKind(name, serverRev) {
@@ -13094,6 +13117,7 @@ async function forceOverwriteMergeKind(name, serverRev) {
 }
 
 // --- Kind `history` = { jobs, deleted }: Union der Versuche + Tombstones, Caps NACH dem Merge ---
+const cmpStr = (a, b) => (a < b ? -1 : a > b ? 1 : 0); // Code-Unit-Vergleich, locale-UNabhängig → geräteübergreifend deterministisch (Fable-Finding)
 function historyLocal() { const h = loadHistory(); return { jobs: Array.isArray(h.jobs) ? h.jobs : [], deleted: Array.isArray(h.deleted) ? h.deleted : [] }; }
 function jobRecency(j) { let m = 0; for (const a of (j && j.attempts) || []) if ((a && a.date || 0) > m) m = a.date || 0; return m; }
 function dedupeTombstones(list) {
@@ -13104,7 +13128,7 @@ function dedupeTombstones(list) {
     if (seen.has(k)) continue; seen.add(k);
     out.push({ ...(t.jobKey ? { jobKey: t.jobKey } : {}), ...(t.urlKey ? { urlKey: t.urlKey } : {}), ...(t.identityKey ? { identityKey: t.identityKey } : {}), ts: t.ts });
   }
-  out.sort((a, b) => (a.ts - b.ts) || String(a.jobKey || a.urlKey || a.identityKey || "").localeCompare(String(b.jobKey || b.urlKey || b.identityKey || "")));
+  out.sort((a, b) => (a.ts - b.ts) || cmpStr(String(a.jobKey || a.urlKey || a.identityKey || ""), String(b.jobKey || b.urlKey || b.identityKey || "")));
   return out;
 }
 function dedupeAttempts(list) {
@@ -13116,13 +13140,21 @@ function dedupeAttempts(list) {
     else if (!seen.get(k).id && at.id) seen.set(k, at);
   }
   const arr = [...seen.values()];
-  arr.sort((x, y) => (x.date || 0) - (y.date || 0) || String(x.id || "").localeCompare(String(y.id || "")));
+  arr.sort((x, y) => (x.date || 0) - (y.date || 0) || cmpStr(String(x.id || ""), String(y.id || "")));
   return arr;
 }
+function jobAuthorityTs(j) { return Math.max(Number(j && j.updatedAt) || 0, jobRecency(j)); } // jüngere Metadaten-ODER Versuchszeit
 function mergeTwoJobs(a, b) {
   const attempts = dedupeAttempts([...(a.attempts || []), ...(b.attempts || [])]);
-  const primary = jobRecency(b) > jobRecency(a) ? b : a; // neuester Stand gewinnt für Titel/JobText
-  return { ...(primary === a ? b : a), ...primary, key: a.key, attempts };
+  // Der Gewinner liefert die Metadaten GANZ (KEIN Feld-Union → auf einem Gerät gelöschte Felder
+  // bleiben gelöscht; Fable-Findings #1/#2). Autorität = jobAuthorityTs; bei Gleichstand
+  // deterministischer JSON-Tiebreak über die Metadaten (attempts neutralisiert) → beide Geräte
+  // wählen denselben Gewinner, sonst Split-Brain/Ping-Pong. mergeTwoJobs ist damit kommutativ.
+  const ta = jobAuthorityTs(a), tb = jobAuthorityTs(b);
+  let winner;
+  if (ta !== tb) winner = ta > tb ? a : b;
+  else winner = JSON.stringify(canonKeys({ ...a, attempts: 0 })) <= JSON.stringify(canonKeys({ ...b, attempts: 0 })) ? a : b;
+  return { ...winner, key: a.key, attempts };
 }
 function mergeHistory(a, b) {
   const tombTs = new Map();
@@ -13148,18 +13180,23 @@ function mergeHistory(a, b) {
   }
   let jobs = [...byKey.values()];
   for (const j of jobs) if (j.attempts.length > HISTORY_MAX_ATTEMPTS) j.attempts = j.attempts.slice(-HISTORY_MAX_ATTEMPTS);
-  jobs.sort((x, y) => (jobRecency(y) - jobRecency(x)) || String(x.key).localeCompare(String(y.key)));
+  jobs.sort((x, y) => (jobRecency(y) - jobRecency(x)) || cmpStr(String(x.key), String(y.key)));
   if (jobs.length > HISTORY_MAX_JOBS) jobs = jobs.slice(0, HISTORY_MAX_JOBS);
   const cutoff = Date.now() - 90 * 24 * 3600 * 1000;
   return { jobs, deleted: dedupeTombstones(allDel.filter(t => t.ts >= cutoff)) };
 }
-function applyHistory(merged) {
+async function applyHistory(merged) {
   _syncApplying = true;
   try {
-    const h = loadHistory();
-    h.jobs = merged.jobs;
-    h.deleted = merged.deleted;
-    saveHistory(h);
+    // Über mutateHistory (History-Lock „bewerbungstool.history") schreiben und dabei gegen den
+    // FRISCH gelesenen Stand re-mergen — schließt das Cross-Tab-Fenster: ein parallel (in einem
+    // anderen Tab) gespeicherter Versuch geht nicht verloren (Fable-Finding #3). mergeHistory ist
+    // idempotent → das Re-Mergen ist günstig und stabil.
+    await mutateHistory((h) => {
+      const re = mergeHistory({ jobs: h.jobs, deleted: h.deleted }, merged);
+      h.jobs = re.jobs;
+      h.deleted = re.deleted;
+    });
     mergeState("history").sig = JSON.stringify(MERGE_KINDS.history.payload());
     try {
       const v = typeof currentView === "function" ? currentView() : "";
