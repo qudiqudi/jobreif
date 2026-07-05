@@ -12538,7 +12538,9 @@ function syncActivate() {
   bindSyncOwner();
   _syncKidCache = { code: null, kid: null };
   setKidMismatch(false);
-  setProfileMeta({ rev: 0, updatedAt: Date.now() }); // frischer Seed → lokalen Stand als Basis hochladen
+  // Insert-Basis (rev 0). updatedAt NICHT auf now setzen — sonst schlägt ein leeres, gerade
+  // aktiviertes Gerät per LWW ein volles (Fable-Finding); der echte Stand steht in profileUpdatedAt.
+  setProfileMeta({ rev: 0 });
   renderSyncUI();
   syncShowCouple();
   scheduleProfilePush(); // initialer Push (Insert), sobald der Seed steht
@@ -12552,7 +12554,8 @@ function syncReset() {
   bindSyncOwner();
   _syncKidCache = { code: null, kid: null };
   setKidMismatch(false);
-  setProfileMeta({ rev: 0, updatedAt: Date.now() });
+  setProfileMeta({ rev: 0 });
+  setProfileUpdatedAt(Date.now()); // explizites Überschreiben → dieser Stand gewinnt danach die LWW
   renderSyncUI();
   syncShowCouple();
   syncForceOverwrite().catch(() => {}); // Server mit dem Stand dieses Geräts (neuer Schlüssel) überschreiben
@@ -12647,8 +12650,17 @@ function setProfileMeta(patch) { const m = loadSyncMeta(); m.profile = { ...(m.p
 
 function syncCurrentTier() { return settings.tier || DEFAULT_TIER; }
 function profileSig() { return JSON.stringify({ p: loadProfile(), t: syncCurrentTier() }); }
+
+// updatedAt (Zeitstempel der letzten LOKALEN Profil-/Stufen-Änderung) lebt in EIGENEM Key: er
+// wird bei JEDER echten Änderung geführt (auch abgemeldet/BYOK) und überlebt Deaktivieren →
+// unabhängig vom Sync-Zustand. Sonst unterschlägt die LWW echte Nutzerdaten an den Eligibility-
+// Grenzen (stiller Datenverlust; Fable-Finding). rev (Server-Revision) bleibt in syncMeta.
+const PROFILE_UPDATED_KEY = "bewerbungstool.profileUpdatedAt";
+function getProfileUpdatedAt() { const v = Number(localStorage.getItem(PROFILE_UPDATED_KEY)); return Number.isFinite(v) && v > 0 ? v : 0; }
+function setProfileUpdatedAt(ms) { try { localStorage.setItem(PROFILE_UPDATED_KEY, String(Number(ms) || 0)); } catch { /* voll/blockiert */ } }
+
 function profileKindPayload() {
-  return { profile: loadProfile(), tier: syncCurrentTier(), updatedAt: Number(profileMeta().updatedAt) || 0 };
+  return { profile: loadProfile(), tier: syncCurrentTier(), updatedAt: getProfileUpdatedAt() };
 }
 function syncEligible() {
   return (settings.provider || "hosted") === "hosted" && !!settings.authToken
@@ -12663,8 +12675,8 @@ function noteLocalProfileChange() {
   const sig = profileSig();
   if (sig === _syncLastSig) return;
   _syncLastSig = sig;
+  setProfileUpdatedAt(Date.now()); // IMMER stempeln — auch abgemeldet/BYOK, sonst verliert die LWW die Änderung
   if (!syncEligible()) return;
-  setProfileMeta({ updatedAt: Date.now() });
   scheduleProfilePush();
 }
 function scheduleProfilePush() {
@@ -12676,7 +12688,11 @@ function scheduleProfilePush() {
 async function withSyncLock(fn) {
   const locks = typeof navigator !== "undefined" && navigator.locks;
   if (locks && typeof locks.request === "function") {
-    try { return await locks.request(SYNC_LOCK, fn); } catch { return fn(); }
+    let started = false;
+    // Fallback OHNE Lock NUR, wenn die Lock-Mechanik selbst scheitert (SecurityError o. ä.) —
+    // nicht, wenn fn im Lock wirft (sonst zweite, ungesperrte Ausführung; Fable-Finding).
+    try { return await locks.request(SYNC_LOCK, () => { started = true; return fn(); }); }
+    catch (e) { if (started) throw e; return fn(); }
   }
   return fn();
 }
@@ -12716,9 +12732,9 @@ function applyProfileKind(remote) {
     saveProfile(remote && remote.profile ? remote.profile : {}); // sanitized + persistiert + global `profile`
     const t = remote && remote.tier;
     if (typeof t === "string" && settings.tier !== t) { settings = { ...settings, tier: t }; saveSettings(settings); }
-    setProfileMeta({ updatedAt: Number(remote && remote.updatedAt) || 0 });
-    _syncLastSig = profileSig();
-    refreshProfileTierUIIfOpen();
+    setProfileUpdatedAt(Number(remote && remote.updatedAt) || 0);
+    refreshProfileTierUIIfOpen();  // kann settings.tier normalisieren (beste→standard) …
+    _syncLastSig = profileSig();   // … daher die Signatur DANACH festhalten (kein Echo-Push)
   } finally { _syncApplying = false; }
 }
 function refreshProfileTierUIIfOpen() {
@@ -12728,7 +12744,7 @@ function refreshProfileTierUIIfOpen() {
   set("profile-erfahrung", profile.erfahrung);
   set("profile-ausbildung", profile.ausbildung);
   set("profile-branche", profile.branche);
-  const tierSel = $("tier"); if (tierSel) tierSel.value = settings.tier || DEFAULT_TIER;
+  const tierEl = $("tier"); if (tierEl && typeof tierSetValue === "function") tierSetValue(tierEl, settings.tier || DEFAULT_TIER); // #tier = Radio-Karten-Block (kein .value)
   try { renderTierControls(); } catch { /* Tier-UI evtl. nicht bereit */ }
 }
 
@@ -12754,7 +12770,7 @@ async function syncPull() {
     } catch { setKidMismatch(true); return; } // GCM-Auth-Fehler = falscher Schlüssel
     setKidMismatch(false);
     setProfileMeta({ rev: Number(blob.rev) || 0 });
-    const localAt = Number(profileMeta().updatedAt) || 0;
+    const localAt = getProfileUpdatedAt();
     const remoteAt = Number(remote.updatedAt) || 0;
     if (remoteAt > localAt) applyProfileKind(remote);
     else if (localAt > remoteAt) await pushProfileLocked(Number(blob.rev) || 0);
@@ -12775,9 +12791,9 @@ async function syncForceOverwrite() {
   return withSyncLock(async () => {
     const data = await apiSyncGet();
     const rev = Number(data && data.blobs && data.blobs.profile && data.blobs.profile.rev) || 0;
-    setProfileMeta({ rev, updatedAt: Date.now() });
+    setProfileMeta({ rev });
     setKidMismatch(false);
-    await pushProfileLocked(rev, 0, true);
+    await pushProfileLocked(rev, 0, true); // updatedAt kommt aus getProfileUpdatedAt (der Caller hat gestempelt)
   });
 }
 
@@ -12794,6 +12810,7 @@ async function pushProfileLocked(rev, attempt = 0, force = false) {
     let body = {}; try { body = await r.json(); } catch { /* leer */ }
     setProfileMeta({ rev: Number(body.rev) || rev + 1 });
     _syncLastSig = profileSig();
+    setKidMismatch(false); // erfolgreicher eigener Write → evtl. hängenden Mismatch-Hinweis löschen (Fable-Finding)
     return;
   }
   if (r.status === 409 && attempt < 3) {
@@ -12805,7 +12822,7 @@ async function pushProfileLocked(rev, attempt = 0, force = false) {
       try {
         const remote = await window.SyncCrypto.decrypt(key, body.envelope);
         setProfileMeta({ rev: serverRev });
-        if ((Number(remote.updatedAt) || 0) > (Number(profileMeta().updatedAt) || 0)) { applyProfileKind(remote); return; }
+        if ((Number(remote.updatedAt) || 0) > getProfileUpdatedAt()) { applyProfileKind(remote); return; }
       } catch { setKidMismatch(true); return; }
     }
     return pushProfileLocked(serverRev, attempt + 1, force); // lokal gewinnt / force → neu schreiben
@@ -12813,6 +12830,10 @@ async function pushProfileLocked(rev, attempt = 0, force = false) {
   // sonstige 4xx/5xx (disabled/auth/rate) → still; nächster Trigger retryt.
 }
 
+// Bestehendes Profil ohne Zeitstempel (Alt-Stand vor F2 / vor dem eigenen Key) einmalig stempeln,
+// damit es in der LWW gegen ein leeres Gerät (updatedAt 0) gewinnt statt überschrieben zu werden
+// (Fable-Finding: Upgrade-Fall).
+if (getProfileUpdatedAt() === 0 && Object.keys(loadProfile()).length) setProfileUpdatedAt(Date.now());
 // Signatur mit dem geladenen Stand initialisieren, damit die erste echte Änderung (nicht der
 // Load) den Push auslöst.
 _syncLastSig = profileSig();
