@@ -304,7 +304,7 @@
           <details id="sync-join" class="setting-adv">
             <summary>Schon auf einem anderen Gerät aktiv? Code eingeben</summary>
             <label for="sync-code-input" class="visually-hidden">Sync-Code des anderen Geräts</label>
-            <input id="sync-code-input" type="text" inputmode="latin" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXXX">
+            <input id="sync-code-input" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXXX">
             <div class="row wrap">
               <button id="sync-join-submit" type="button" class="ghost btn-compact">Gerät koppeln</button>
             </div>
@@ -328,7 +328,7 @@
           </div>
           <div id="sync-disable-confirm" class="sync-confirm hidden">
             <p class="hint">Sync auf diesem Gerät deaktivieren? Dein lokaler Trainingsstand bleibt erhalten.</p>
-            <label class="setting-check"><input type="checkbox" id="sync-delete-server"> Auch die verschlüsselten Daten auf dem Server löschen</label>
+            <label><input type="checkbox" id="sync-delete-server"> Auch die verschlüsselten Daten auf dem Server löschen</label>
             <div class="row wrap">
               <button id="sync-disable-do" type="button" class="ghost btn-compact">Deaktivieren</button>
               <button id="sync-disable-cancel" type="button" class="linklike">Abbrechen</button>

@@ -10587,7 +10587,9 @@ async function renderAccountSection() {
       if (creditsState.creditsEnabled) refreshBalance(); // freeRemaining (+ frisches Guthaben) holen
       // Geräte-Sync-Karte gaten (additiv, defensiv: alt-Server liefert das Feld nicht → false).
       syncEnabled = d.syncEnabled === true;
-      syncUserId = d.user && d.user.id ? d.user.id : null;
+      // Als String festhalten (Owner-Marke in localStorage ist immer String; ein numerischer
+      // user.id würde sonst per === jeden eigenen Seed als „fremd" verwerfen — Fable-Finding).
+      syncUserId = d.user && d.user.id != null ? String(d.user.id) : null;
       reconcileSyncOwner(); // fremden Seed (anderes Konto, geteilter Browser) verwerfen / eigenen adoptieren
       renderSyncUI();
     }
@@ -12468,6 +12470,11 @@ function renderSyncUI() {
   const conf = $("sync-disable-confirm"); if (conf) conf.classList.add("hidden");
   const jerr = $("sync-join-err"); if (jerr) jerr.classList.add("hidden");
   const derr = $("sync-disable-err"); if (derr) derr.classList.add("hidden");
+  // Schlüssel-Reste NICHT im (versteckten) DOM lassen: sonst bliebe der E2E-Code/QR nach
+  // Deaktivieren oder Konto-Wechsel per devtools lesbar (Fable-Finding). syncShowCouple füllt
+  // beide beim Öffnen frisch aus dem aktuell gespeicherten Seed.
+  const qrHost = $("sync-qr"); if (qrHost) qrHost.textContent = "";
+  const codeHost = $("sync-code"); if (codeHost) codeHost.textContent = "";
 }
 
 // Lazy-Load des QR-Encoders + Renderers (nur wenn eine Kopplungsansicht geöffnet wird). Der
@@ -12504,6 +12511,9 @@ async function syncShowCouple() {
   host.textContent = "…";
   try {
     await loadSyncQr();
+    // Während des Lazy-Loads könnte der Seed gelöscht/gewechselt worden sein (Deaktivieren,
+    // Konto-Wechsel) → nicht den alten Code rendern (Fable-Finding).
+    if (window.SyncCrypto.storedCode() !== code) return;
     const url = window.SyncCrypto.buildSyncUrl(location.origin, code);
     // innerHTML ist hier unkritisch: SyncQR.svg baut den String NUR aus der Modul-Matrix
     // (numerische Koordinaten) + festen Farben + festem, escaptem Titel. Die URL wird in die
@@ -12595,7 +12605,16 @@ async function syncDisableConfirmed() {
 // Startup: einen evtl. per QR gescannten Seed (#sync=v1.…) SOFORT übernehmen und das Fragment
 // aus URL/History entfernen (der Seed darf nicht in der Adressleiste/History hängen bleiben).
 // Läuft vor allem anderen; bei deaktiviertem Feature ist der gespeicherte Seed schlicht ungenutzt.
-try { if (window.SyncCrypto) window.SyncCrypto.consumeSyncFragment(); } catch { /* defensiv */ }
+try {
+  if (window.SyncCrypto) {
+    const scanned = window.SyncCrypto.consumeSyncFragment();
+    // Ein frisch gescannter Seed ist NOCH ungebunden (er ersetzt einen evtl. an ein ANDERES Konto
+    // gebundenen): die Besitzer-Marke löschen, damit reconcileSyncOwner ihn beim nächsten Login dem
+    // dann angemeldeten Konto zuordnet, statt ihn als „fremd" zu verwerfen bzw. fälschlich dem
+    // Alt-Konto zuzurechnen (Fable-Finding). Entspricht dem QR-scannen-dann-einloggen-Flow.
+    if (scanned) localStorage.removeItem(SYNC_OWNER_KEY);
+  }
+} catch { /* defensiv */ }
 
 // Erst einen evtl. Login-Redirect (?auth/?session) verarbeiten (setzt das Token bei
 // Erfolg), dann die Startansicht waehlen und einen offenen Hintergrund-Job aufnehmen.
