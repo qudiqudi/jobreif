@@ -459,6 +459,39 @@ button.linklike:active { transform: none; }
 .acct-privacy { margin-top: 0.75rem; }
 #account-msg:empty { display: none; }
 
+/* ---- Geräte-Sync ---- */
+.sync-couple { text-align: center; margin: 0.7rem 0 0.2rem; }
+/* QR IMMER schwarz auf weiß (auch im Dark-Mode) — invertierte Codes scannen unzuverlässig.
+   Weißer, gerahmter Hintergrund als Ruhezone-Träger. */
+.sync-qr {
+  display: inline-block;
+  background: #fff;
+  padding: 10px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  max-width: 240px;
+  width: 100%;
+}
+.sync-qr svg { display: block; width: 100%; height: auto; }
+.sync-code-display { margin: 0.7rem 0 0.15rem; }
+.sync-code-display code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--text-strong);
+  word-break: break-word;
+}
+.sync-warn { color: var(--accent-text); }
+.sync-actions { margin-top: 0.7rem; gap: 0.5rem; }
+.sync-err { color: var(--red); }
+.sync-confirm { margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px solid var(--border); }
+#sync-code-input {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 /* ---- Guthaben-Hero ---- */
 .guthaben-card { background: var(--card); }
 .guthaben-hero { display: flex; flex-direction: column; gap: 0.1rem; }

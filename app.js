@@ -2700,6 +2700,17 @@ function clearAuthToken() {
 // → der Hinweis verschwindet beim naechsten Balance-Refresh.
 let creditsState = { credits: null, creditsEnabled: false, opusTestCredits: null, freeRemaining: null, firstTopupBonus: null, loaded: false, dirty: false };
 
+// Geräte-Sync-Signal (aus /auth/me: syncEnabled = Server-Flag SYNC_ENABLED). Gated die
+// Geräte-Sync-Karte, entkoppelt so den Client-Deploy vom Flag-Flip (Flag aus → Karte aus).
+// Früh deklariert (kein TDZ), falls renderAccountSection vor dem Sync-Block läuft.
+let syncEnabled = false;
+// Der Sync-Seed ist der E2E-Schlüssel und wird an das Konto gebunden, unter dem er aktiviert
+// wurde: auf einem geteilten Browser darf ein zweiter Nutzer NICHT den Schlüssel/QR des ersten
+// sehen (Codex-Finding). syncUserId = aktuell angemeldete user.id (aus /auth/me); der Besitzer
+// des lokalen Seeds steht in bewerbungstool.syncOwner.
+let syncUserId = null;
+const SYNC_OWNER_KEY = "bewerbungstool.syncOwner";
+
 function resetCreditsState() {
   creditsState = { credits: null, creditsEnabled: false, opusTestCredits: null, freeRemaining: null, firstTopupBonus: null, loaded: false, dirty: false };
   // Konto-Uebergang (Logout/401/Wechsel): auch den Guthaben-Verlauf zuruecksetzen — gerenderte
@@ -10474,6 +10485,9 @@ function updateSettingsProviderUI() {
   if (advStatus) advStatus.textContent = "Aktiv: " + (PROVIDER_STATUS_LABELS[provider] || provider);
   const adv = $("adv-provider");
   if (adv) adv.open = !isHosted;
+  // Geräte-Sync-Karte mit re-rendern: der Wechsel WEG von hosted muss die Karte ausblenden
+  // (renderSyncUI gated auf hosted) — sonst bliebe sie sichtbar/bedienbar (Codex-Finding).
+  renderSyncUI();
 }
 
 function initSettingsForm() {
@@ -10535,6 +10549,9 @@ async function renderAccountSection() {
     setAvatar(null);
     resetCreditsState();
     renderCreditsUI();
+    syncEnabled = false;
+    syncUserId = null; // abgemeldet: kein Konto → Karte aus (Seed bleibt lokal, an Besitzer gebunden)
+    renderSyncUI();
   };
   const tok = settings.authToken;
   if (!tok) { showLoggedOut(); return; }
@@ -10568,6 +10585,13 @@ async function renderAccountSection() {
       };
       renderCreditsUI();
       if (creditsState.creditsEnabled) refreshBalance(); // freeRemaining (+ frisches Guthaben) holen
+      // Geräte-Sync-Karte gaten (additiv, defensiv: alt-Server liefert das Feld nicht → false).
+      syncEnabled = d.syncEnabled === true;
+      // Als String festhalten (Owner-Marke in localStorage ist immer String; ein numerischer
+      // user.id würde sonst per === jeden eigenen Seed als „fremd" verwerfen — Fable-Finding).
+      syncUserId = d.user && d.user.id != null ? String(d.user.id) : null;
+      reconcileSyncOwner(); // fremden Seed (anderes Konto, geteilter Browser) verwerfen / eigenen adoptieren
+      renderSyncUI();
     }
   } catch { /* offline: optimistischer Zustand bleibt */ }
 }
@@ -12388,6 +12412,209 @@ function routeInitialView() {
     maybeShowWelcome(); // einmaliger Welcome-Schritt direkt nach dem ersten Login
   }
 }
+
+/* ---------- Geräte-Sync (F1b): Schlüssel-/Kopplungs-UI ---------- */
+// Erzeugen/Anzeigen/Eingeben/Zurücksetzen/Deaktivieren des E2E-Sync-Schlüssels. Die eigentliche
+// Sync-Engine (Pull/Merge/Push der Datenkinds) kommt in F2 — hier wird nur der Schlüssel
+// verwaltet und die Kopplung (QR/Code) angezeigt. Der Krypto-Layer (window.SyncCrypto) ist vor
+// app.js geladen; der QR-Encoder (window.SyncQR + Vendor-Lib) wird bei Bedarf lazy nachgeladen.
+
+function syncActive() {
+  if (!(window.SyncCrypto && window.SyncCrypto.storedCode())) return false;
+  // Ungebunden (per QR/Aktivierung vor Login gespeichert) zählt als aktiv; gebunden nur für
+  // dasselbe Konto — ein fremder Seed (anderer Nutzer auf geteiltem Browser) gilt als nicht aktiv.
+  const owner = localStorage.getItem(SYNC_OWNER_KEY);
+  return !owner || owner === syncUserId;
+}
+
+// Seed an das aktuell angemeldete Konto binden (nach Aktivieren/Koppeln/Zurücksetzen). Ohne
+// bekanntes Konto (z. B. QR-Scan vor Login) bleibt er ungebunden und wird beim nächsten
+// /auth/me adoptiert.
+function bindSyncOwner() {
+  if (syncUserId) localStorage.setItem(SYNC_OWNER_KEY, syncUserId);
+  else localStorage.removeItem(SYNC_OWNER_KEY);
+}
+
+// Beim Login (/auth/me): einen fremden Seed (Besitzer != aktuelles Konto) lokal verwerfen, damit
+// ein zweiter Nutzer auf demselben Browser NICHT Schlüssel/QR des ersten sieht; einen noch
+// ungebundenen eigenen Seed (QR-Scan vor Login) an dieses Konto binden.
+function reconcileSyncOwner() {
+  if (!window.SyncCrypto || !window.SyncCrypto.storedCode()) return;
+  const owner = localStorage.getItem(SYNC_OWNER_KEY);
+  if (!owner) { if (syncUserId) localStorage.setItem(SYNC_OWNER_KEY, syncUserId); return; }
+  if (syncUserId && owner !== syncUserId) {
+    window.SyncCrypto.clearStoredCode();
+    localStorage.removeItem(SYNC_OWNER_KEY);
+  }
+}
+
+// Sichtbarkeit + Zustand der Karte. Nur gehostet + angemeldet + Server-Flag (syncEnabled) UND
+// nur, wenn der Krypto-Layer geladen ist. Kopplungs-/Bestätigungs-Panels werden bei jedem Render
+// eingeklappt (der QR/Code wird erst auf ausdrückliche Aktion gezeigt — Schlüssel nicht ungefragt).
+function renderSyncUI() {
+  const card = $("sync-card");
+  if (!card) return;
+  // Anbieter aus dem Formular-Select lesen, wenn vorhanden (spiegelt einen laufenden Wechsel
+  // SOFORT, bevor er persistiert ist — settings.provider hinkt im change-Handler noch hinterher).
+  // Die Karte lebt ohnehin nur in der Einstellungs-Ansicht, daher ist der Select maßgeblich.
+  const providerEl = $("provider");
+  const hosted = (providerEl ? providerEl.value : (settings.provider || "hosted")) === "hosted";
+  const show = hosted && !!settings.authToken && syncEnabled && !!window.SyncCrypto;
+  card.classList.toggle("hidden", !show);
+  if (!show) return;
+  const active = syncActive();
+  const off = $("sync-off"), on = $("sync-on");
+  if (off) off.classList.toggle("hidden", active);
+  if (on) on.classList.toggle("hidden", !active);
+  const couple = $("sync-couple"); if (couple) couple.classList.add("hidden");
+  const conf = $("sync-disable-confirm"); if (conf) conf.classList.add("hidden");
+  const jerr = $("sync-join-err"); if (jerr) jerr.classList.add("hidden");
+  const derr = $("sync-disable-err"); if (derr) derr.classList.add("hidden");
+  // Schlüssel-Reste NICHT im (versteckten) DOM lassen: sonst bliebe der E2E-Code/QR nach
+  // Deaktivieren oder Konto-Wechsel per devtools lesbar (Fable-Finding). syncShowCouple füllt
+  // beide beim Öffnen frisch aus dem aktuell gespeicherten Seed.
+  const qrHost = $("sync-qr"); if (qrHost) qrHost.textContent = "";
+  const codeHost = $("sync-code"); if (codeHost) codeHost.textContent = "";
+}
+
+// Lazy-Load des QR-Encoders + Renderers (nur wenn eine Kopplungsansicht geöffnet wird). Der
+// 45-KB-Encoder liegt so nie auf dem kritischen Pfad. Same-origin ('self') → CSP-konform.
+let _syncQrLoading = null;
+function loadSyncQr() {
+  if (window.SyncQR) return Promise.resolve();
+  if (_syncQrLoading) return _syncQrLoading;
+  const loadScriptOnce = (src) => new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src; s.async = true;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("Konnte " + src + " nicht laden"));
+    document.head.appendChild(s);
+  });
+  _syncQrLoading = loadScriptOnce("assets/vendor/qrcodegen.js").then(() => loadScriptOnce("assets/sync-qr.js"));
+  // Bei Fehler den Cache zurücksetzen, damit ein späterer Versuch neu lädt (z. B. nach Offline).
+  _syncQrLoading.catch(() => { _syncQrLoading = null; });
+  return _syncQrLoading;
+}
+
+// Kopplungsansicht zeigen: großer QR + abtippbarer Code + Hinweise. QR ist Best-effort — schlägt
+// das Laden fehl, bleibt der Code (der QR ist nur die bequeme Variante desselben Seeds).
+async function syncShowCouple() {
+  if (!window.SyncCrypto) return;
+  const code = window.SyncCrypto.storedCode();
+  if (!code) return;
+  const couple = $("sync-couple");
+  const codeEl = $("sync-code");
+  if (codeEl) codeEl.textContent = window.SyncCrypto.formatCode(code);
+  if (couple) couple.classList.remove("hidden");
+  const host = $("sync-qr");
+  if (!host) return;
+  host.textContent = "…";
+  try {
+    await loadSyncQr();
+    // Während des Lazy-Loads könnte der Seed gelöscht/gewechselt worden sein (Deaktivieren,
+    // Konto-Wechsel) → nicht den alten Code rendern (Fable-Finding).
+    if (window.SyncCrypto.storedCode() !== code) return;
+    const url = window.SyncCrypto.buildSyncUrl(location.origin, code);
+    // innerHTML ist hier unkritisch: SyncQR.svg baut den String NUR aus der Modul-Matrix
+    // (numerische Koordinaten) + festen Farben + festem, escaptem Titel. Die URL wird in die
+    // QR-Module kodiert, nicht in den SVG-Text interpoliert — kein injizierbarer Eingang.
+    host.innerHTML = window.SyncQR.svg(url, { size: 220, title: "QR zum Koppeln des Geräts" });
+  } catch {
+    host.textContent = "QR gerade nicht verfügbar – nutze den Code unten.";
+  }
+}
+
+// Aktivieren: neuen Seed erzeugen, lokal speichern, direkt die Kopplungsansicht zeigen.
+// (F2 ergänzt den initialen Push aller Kinds unter der neuen kid.)
+function syncActivate() {
+  if (!window.SyncCrypto) return;
+  window.SyncCrypto.storeCode(window.SyncCrypto.seedToCode(window.SyncCrypto.generateSeed()));
+  bindSyncOwner();
+  renderSyncUI();
+  syncShowCouple();
+}
+
+// Zurücksetzen: neuer Seed (überschreibt den bisherigen). F2 lädt danach alle Kinds unter der
+// neuen kid neu hoch; bereits gekoppelte Altgeräte müssen sich neu koppeln (neuer Schlüssel).
+function syncReset() {
+  if (!window.SyncCrypto) return;
+  window.SyncCrypto.storeCode(window.SyncCrypto.seedToCode(window.SyncCrypto.generateSeed()));
+  bindSyncOwner();
+  renderSyncUI();
+  syncShowCouple();
+}
+
+// Bestehendes Gerät koppeln: Code aus dem Eingabefeld übernehmen (format-tolerant: Groß/klein,
+// Bindestriche optional, Crockford-Nachsicht). Ungültig → Fehlermeldung, kein State-Wechsel.
+function syncJoinFromCode() {
+  if (!window.SyncCrypto) return;
+  const input = $("sync-code-input");
+  const err = $("sync-join-err");
+  const canon = window.SyncCrypto.normalizeCode(input ? input.value : "");
+  if (!canon) {
+    if (err) { err.textContent = "Das sieht nicht wie ein gültiger Sync-Code aus. Bitte prüfe die Eingabe."; err.classList.remove("hidden"); }
+    return;
+  }
+  if (err) err.classList.add("hidden");
+  window.SyncCrypto.storeCode(canon);
+  bindSyncOwner();
+  if (input) input.value = "";
+  renderSyncUI();
+  // F2: beim nächsten Start/Trigger Pull + Merge unter der gekoppelten kid.
+}
+
+// Deaktivieren: lokal den Seed löschen (Standard). Optional zusätzlich die verschlüsselten
+// Serverdaten löschen (DELETE /api/sync). Der lokale Trainingsstand bleibt in beiden Fällen.
+async function syncDisableConfirmed() {
+  const err = $("sync-disable-err");
+  if (err) err.classList.add("hidden");
+  const alsoServer = !!($("sync-delete-server") && $("sync-delete-server").checked);
+  if (alsoServer && settings.authToken) {
+    const tok = settings.authToken;
+    let okResp = false;
+    // fetch wirft NUR bei Netzfehlern — einen 4xx/5xx muss man über r.ok prüfen (Codex-Finding).
+    try { const r = await fetch(hostedBase() + "/api/sync", { method: "DELETE", headers: authHeaders() }); okResp = r.ok; }
+    catch { okResp = false; }
+    if (settings.authToken !== tok) return; // Konto während des Requests gewechselt
+    // Server-Löschung fehlgeschlagen: NICHT lokal löschen (sonst wäre der Schlüssel weg UND die
+    // Serverdaten blieben). Fehler zeigen, Nutzer kann erneut versuchen.
+    if (!okResp) {
+      if (err) { err.textContent = "Die Serverdaten konnten gerade nicht gelöscht werden. Bitte später erneut versuchen."; err.classList.remove("hidden"); }
+      return;
+    }
+  }
+  if (window.SyncCrypto) window.SyncCrypto.clearStoredCode();
+  localStorage.removeItem(SYNC_OWNER_KEY);
+  const cb = $("sync-delete-server"); if (cb) cb.checked = false;
+  renderSyncUI();
+}
+
+// Listener einmalig verdrahten (DOM ist bei Ausführung von app.js bereits geparst).
+(function initSyncCard() {
+  const on = (id, ev, fn) => { const el = $(id); if (el) el.addEventListener(ev, fn); };
+  on("sync-activate", "click", syncActivate);
+  on("sync-show", "click", syncShowCouple);
+  on("sync-reset", "click", syncReset);
+  on("sync-join-submit", "click", syncJoinFromCode);
+  on("sync-code-input", "keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); syncJoinFromCode(); } });
+  on("sync-disable", "click", () => { const c = $("sync-disable-confirm"); if (c) c.classList.remove("hidden"); });
+  on("sync-disable-cancel", "click", () => { const c = $("sync-disable-confirm"); if (c) c.classList.add("hidden"); });
+  on("sync-disable-do", "click", syncDisableConfirmed);
+})();
+
+// Startup: einen evtl. per QR gescannten Seed (#sync=v1.…) SOFORT übernehmen und das Fragment
+// aus URL/History entfernen (der Seed darf nicht in der Adressleiste/History hängen bleiben).
+// Läuft vor allem anderen; bei deaktiviertem Feature ist der gespeicherte Seed schlicht ungenutzt.
+try {
+  if (window.SyncCrypto) {
+    const scanned = window.SyncCrypto.consumeSyncFragment();
+    // Ein frisch gescannter Seed ist NOCH ungebunden (er ersetzt einen evtl. an ein ANDERES Konto
+    // gebundenen): die Besitzer-Marke löschen, damit reconcileSyncOwner ihn beim nächsten Login dem
+    // dann angemeldeten Konto zuordnet, statt ihn als „fremd" zu verwerfen bzw. fälschlich dem
+    // Alt-Konto zuzurechnen (Fable-Finding). Entspricht dem QR-scannen-dann-einloggen-Flow.
+    if (scanned) localStorage.removeItem(SYNC_OWNER_KEY);
+  }
+} catch { /* defensiv */ }
 
 // Erst einen evtl. Login-Redirect (?auth/?session) verarbeiten (setzt das Token bei
 // Erfolg), dann die Startansicht waehlen und einen offenen Hintergrund-Job aufnehmen.

@@ -22,9 +22,14 @@ jobs:
           node --check sw.js
           node --check scripts/generate-seo.mjs
           node --check assets/sync-crypto.js
+          node --check assets/sync-qr.js
+          node --check assets/vendor/qrcodegen.js
 
       - name: Geräte-Sync Krypto-Layer (Roundtrip/kid/Fragment) prüfen
         run: node test/sync-crypto.test.js
+
+      - name: Geräte-Sync QR-Renderer (SVG aus Modul-Matrix) prüfen
+        run: node test/sync-qr.test.js
 
       - name: Asset- und Manifest-Integrität prüfen
         run: node .github/scripts/check-integrity.js
