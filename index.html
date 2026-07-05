@@ -217,19 +217,84 @@
     </section>
 
     <!-- Einstellungen -->
-    <section id="view-settings" class="card hidden">
-      <h2>Einstellungen</h2>
-      <label for="provider">Anbieter</label>
-      <select id="provider">
-        <option value="hosted">Gehostet (empfohlen – kein eigener Schlüssel nötig)</option>
-        <option value="anthropic">Eigener Schlüssel: Claude (Anthropic)</option>
-        <option value="openai">Eigener Schlüssel: OpenAI</option>
-        <option value="deepseek">Eigener Schlüssel: DeepSeek</option>
-        <option value="local">Lokales Modell (Ollama / LM Studio)</option>
-      </select>
+    <section id="view-settings" class="settings-page hidden">
+      <div class="settings-head">
+        <h2>Einstellungen</h2>
+        <p class="settings-sub">Dein Konto, dein Guthaben und wie deine Tests erstellt werden.</p>
+      </div>
 
-      <div id="row-tier">
-        <label for="tier">Qualitätsstufe</label>
+      <!-- KONTO + GUTHABEN (nur im gehosteten Modus; updateSettingsProviderUI blendet #row-account) -->
+      <div id="row-account" class="hidden">
+        <!-- Konto: Identitätszeile statt Formularfeld -->
+        <div class="setting-card acct-card">
+          <div class="acct-identity">
+            <span class="acct-avatar" id="acct-avatar" aria-hidden="true">•</span>
+            <div class="acct-who">
+              <p id="account-status" class="acct-mail">Nicht angemeldet.</p>
+              <p class="acct-mode">Gehosteter Modus &middot; kostenlos mit Tageskontingent</p>
+            </div>
+            <!-- Aktion wechselt mit dem Anmeldezustand (renderAccountSection toggelt beide) -->
+            <div id="account-loggedin" class="hidden acct-action">
+              <button id="btn-account-logout" type="button" class="linklike">Abmelden</button>
+            </div>
+            <div id="account-loggedout" class="hidden acct-action">
+              <button id="btn-account-login" type="button" class="primary btn-compact">Anmelden</button>
+            </div>
+          </div>
+          <p id="account-msg" class="hint" role="status"></p>
+          <p class="hint acct-privacy">Für den kostenlosen gehosteten Modus ist eine Anmeldung nötig; wir speichern dabei deine E-Mail (<a href="#" id="link-datenschutz-account">Datenschutz</a>). Ohne Konto kannst du unter „Erweitert“ einen eigenen Schlüssel oder ein lokales Modell wählen.</p>
+        </div>
+
+        <!-- Guthaben-Hero: sichtbar nur bei aktivem Credits-Flag (renderCreditsUI toggelt #guthaben-card) -->
+        <div id="guthaben-card" class="setting-card guthaben-card hidden">
+          <div class="guthaben-hero">
+            <span class="cardlabel">Guthaben</span>
+            <p id="account-balance" class="hidden"></p>
+          </div>
+
+          <!-- Aufladen-Pakete: dieselbe .btn-topup/data-eur-Semantik wie bisher (JS-Verdrahtung
+               unverändert). #topup wird von renderCreditsUI ein-/ausgeblendet (Credits-Flag). -->
+          <div id="topup" class="hidden topup-block">
+            <span class="topup-label">Aufladen</span>
+            <div class="topup-packs">
+              <button type="button" class="btn-topup pack" data-eur="3">3&nbsp;€</button>
+              <button type="button" class="btn-topup pack" data-eur="5">5&nbsp;€</button>
+              <button type="button" class="btn-topup pack" data-eur="10">10&nbsp;€</button>
+            </div>
+            <p id="topup-bonus" class="hint topup-bonus hidden"></p>
+            <p id="topup-msg" class="hint" role="status"></p>
+          </div>
+
+          <!-- Automatisch zahlen: Schalter statt Rechtstext-Checkbox; die Einwilligung
+               erscheint als Bestätigungs-Sheet beim Einschalten (siehe #consent-sheet). -->
+          <div id="auto-credits-row" class="hidden setting-toggle-row">
+            <div class="setting-toggle-text">
+              <span class="setting-toggle-title">Automatisch vom Guthaben zahlen</span>
+              <span class="setting-toggle-desc">Kostenpflichtige Tests ohne jedes Mal nachzufragen starten.</span>
+            </div>
+            <label class="switch" for="auto-use-credits">
+              <input type="checkbox" id="auto-use-credits">
+              <span class="switch-track" aria-hidden="true"></span>
+              <span class="visually-hidden">Automatisch vom Guthaben zahlen</span>
+            </label>
+          </div>
+
+          <!-- Guthaben-Verlauf (Audit 2026-07): serverseitiger Ledger, lazy beim Öffnen geladen. -->
+          <div id="ledger-section" class="hidden ledger-section">
+            <button id="btn-ledger-toggle" type="button" class="linklike">Guthaben-Verlauf anzeigen</button>
+            <div id="ledger-list" class="hidden ledger-list" aria-live="polite"></div>
+            <div class="row wrap">
+              <button id="btn-ledger-more" type="button" class="ghost btn-compact hidden">Ältere Einträge anzeigen</button>
+            </div>
+            <p id="ledger-msg" class="hint" role="status"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUALITÄT neuer Tests (nur gehostet; updateSettingsProviderUI toggelt #row-tier) -->
+      <div id="row-tier" class="setting-card">
+        <span class="cardlabel">Qualität neuer Tests</span>
+        <label for="tier" class="visually-hidden">Qualitätsstufe</label>
         <select id="tier">
           <option value="standard">Standard – empfohlen</option>
           <option value="guenstig">Günstig – schneller und sparsamer</option>
@@ -238,127 +303,132 @@
         <button id="tier-topup-cta" type="button" class="ghost tier-topup-cta hidden">Guthaben aufladen</button>
         <p id="tier-beste-hint" class="hint hidden"></p>
         <p id="tier-free-hint" class="hint hidden"></p>
-        <p class="hint">Im gehosteten Modus ist die Nutzung kostenlos (mit einem fairen Tageskontingent). Deine Eingaben werden zur Erstellung der Tests an unseren Dienst gesendet – Details im <a href="#" id="link-datenschutz-tier">Datenschutzhinweis</a>.</p>
+        <p class="hint">Gilt als Voreinstellung und ist beim Erstellen jedes Tests einzeln änderbar. Im gehosteten Modus werden deine Eingaben zur Erstellung an unseren Dienst gesendet (<a href="#" id="link-datenschutz-tier">Datenschutz</a>).</p>
       </div>
 
-      <div id="row-account" class="hidden">
-        <label>Konto</label>
-        <p id="account-status" class="hint">Nicht angemeldet.</p>
-        <p id="account-balance" class="hidden"></p>
-        <div id="account-loggedin" class="hidden">
-          <div class="row wrap">
-            <button id="btn-account-logout" type="button" class="ghost">Abmelden</button>
-          </div>
-          <div id="auto-credits-row" class="hidden">
-            <label><input type="checkbox" id="auto-use-credits"> Kostenpflichtige Tests automatisch aus dem Guthaben bezahlen – Overflow nach dem Gratis-Tageskontingent und die Stufe „beste“ (Opus) – ohne jedes Mal nachzufragen. Damit stimmst du der sofortigen Ausführung dieser Tests zu; dein Widerrufsrecht erlischt für verbrauchtes Guthaben (<a href="widerruf.html" target="_blank" rel="noopener">Widerrufsbelehrung</a>).</label>
-          </div>
-          <div id="topup" class="hidden">
-            <p class="hint">Guthaben aufladen (für die beste Qualität, Opus):</p>
-            <div class="row wrap">
-              <button type="button" class="ghost btn-topup" data-eur="3">3 €</button>
-              <button type="button" class="ghost btn-topup" data-eur="5">5 €</button>
-              <button type="button" class="ghost btn-topup" data-eur="10">10 €</button>
+      <!-- PROFIL -->
+      <div class="setting-card">
+        <span class="cardlabel">Dein Profil <span class="privacy-chip">bleibt in deinem Browser</span></span>
+        <p class="hint">Ein paar grobe Angaben, damit die Fragen besser zu deiner Ausgangslage passen (z.&nbsp;B. Quereinstieg statt Fachwechsel) – alles optional. Wirkt aktuell nur im <strong>gehosteten Modus</strong>.</p>
+        <label for="profile-trajectory">Worum geht es bei dieser Bewerbung?</label>
+        <select id="profile-trajectory">
+          <option value="">Keine Angabe</option>
+          <option value="fach">Fachlicher Wechsel in dieselbe Richtung</option>
+          <option value="quer">Quereinstieg / Branchenwechsel</option>
+          <option value="aufstieg">Aufstieg / mehr Verantwortung</option>
+        </select>
+        <label for="profile-erfahrung">Wie viel Berufserfahrung bringst du mit?</label>
+        <select id="profile-erfahrung">
+          <option value="">Keine Angabe</option>
+          <option value="einsteiger">Berufseinsteiger</option>
+          <option value="berufserfahren">Berufserfahren</option>
+          <option value="senior">Sehr erfahren (Senior)</option>
+        </select>
+        <label for="profile-ausbildung">Höchster Ausbildungsstand</label>
+        <select id="profile-ausbildung">
+          <option value="">Keine Angabe</option>
+          <option value="schule">Schule</option>
+          <option value="ausbildung_laufend">Ausbildung läuft</option>
+          <option value="ausbildung_abgeschlossen">Ausbildung abgeschlossen</option>
+          <option value="studium_laufend">Studium läuft</option>
+          <option value="studium_abgeschlossen">Studium abgeschlossen</option>
+          <option value="fortbildung">Meister · Techniker · Fachwirt · Zertifikat</option>
+          <option value="umschulung_anerkennung">Umschulung · ausländischer Abschluss in Anerkennung</option>
+        </select>
+        <label for="profile-branche">Branche / Bereich <span class="hint">(optional)</span></label>
+        <input type="text" id="profile-branche" maxlength="80" placeholder="z. B. Logistik, IT, Pflege" autocomplete="off">
+      </div>
+
+      <!-- ERWEITERT: eigener KI-Anbieter (BYOK / lokal). Standardmäßig eingeklappt; JS öffnet
+           bei nicht-gehostetem Anbieter (initSettingsForm) und spiegelt den Status in die Zeile. -->
+      <div class="setting-card">
+        <details id="adv-provider" class="setting-adv">
+          <summary class="setting-adv-summary">
+            <span class="setting-adv-text">
+              <span class="setting-adv-title">Erweitert: Eigener KI-Anbieter</span>
+              <span class="setting-adv-status" id="adv-provider-status">Aktiv: Gehostet – kein eigener Schlüssel nötig</span>
+            </span>
+            <span class="setting-adv-chev" aria-hidden="true">›</span>
+          </summary>
+          <div class="setting-adv-body">
+            <p class="hint">Mit eigenem API-Schlüssel oder lokalem Modell läuft alles ohne Konto – deine Daten gehen dann nicht über unseren Dienst.</p>
+            <label for="provider">Anbieter</label>
+            <select id="provider">
+              <option value="hosted">Gehostet (empfohlen – kein eigener Schlüssel nötig)</option>
+              <option value="anthropic">Eigener Schlüssel: Claude (Anthropic)</option>
+              <option value="openai">Eigener Schlüssel: OpenAI</option>
+              <option value="deepseek">Eigener Schlüssel: DeepSeek</option>
+              <option value="local">Lokales Modell (Ollama / LM Studio)</option>
+            </select>
+
+            <div id="row-api-key">
+              <label for="api-key">API-Schlüssel</label>
+              <input type="password" id="api-key" placeholder="sk-..." autocomplete="off">
+              <p class="hint">Der Schlüssel wird nur lokal in deinem Browser gespeichert und direkt an den Anbieter gesendet.</p>
             </div>
-            <p id="topup-bonus" class="hint hidden"></p>
-            <p id="topup-msg" class="hint" role="status"></p>
-          </div>
-          <!-- Guthaben-Verlauf (Audit 2026-07): der serverseitige ledger, endlich einsehbar.
-               Lazy — geladen erst beim Öffnen (GET /api/ledger, auth-pflichtig). -->
-          <div id="ledger-section" class="hidden">
-            <div class="row wrap">
-              <button id="btn-ledger-toggle" type="button" class="ghost">Guthaben-Verlauf anzeigen</button>
+
+            <div id="row-base-url" class="hidden">
+              <label for="base-url">Adresse des lokalen Servers</label>
+              <input type="text" id="base-url" placeholder="http://localhost:11434/v1" autocomplete="off" spellcheck="false">
+              <p class="hint">Ollama: <code>http://localhost:11434/v1</code> · LM Studio: <code>http://localhost:1234/v1</code>. Für Testerstellung und Auswertung werden keine Daten an einen Anbieter gesendet, alles bleibt auf deinem Rechner (Ausnahme: eine von dir gemeldete Frage geht an uns). Wichtig: Damit diese Seite über https auf den lokalen Server zugreifen darf, muss er Cross-Origin-Anfragen erlauben – in LM Studio im Server-Tab die Option „Enable CORS“ aktivieren, bei Ollama den Server mit <code>OLLAMA_ORIGINS</code> starten. Klappt die Verbindung mit <code>localhost</code> nicht, probiere <code>127.0.0.1</code>.</p>
             </div>
-            <div id="ledger-list" class="hidden" aria-live="polite"></div>
-            <div class="row wrap">
-              <button id="btn-ledger-more" type="button" class="ghost hidden">Ältere Einträge anzeigen</button>
+
+            <div id="row-model">
+              <label for="model">Modell</label>
+              <select id="model"></select>
             </div>
-            <p id="ledger-msg" class="hint" role="status"></p>
+            <div id="row-local-models" class="hidden">
+              <div class="row wrap">
+                <button id="btn-load-models" type="button" class="ghost btn-compact">Modelle laden</button>
+              </div>
+              <p id="local-models-status" class="hint" role="status"></p>
+            </div>
+            <p id="model-desc" class="hint"></p>
+            <div id="row-cloud-hints">
+              <p class="hint">Die Kostenangabe je Modell ist eine grobe Schätzung für einen Test mit etwa 10 Fragen (Erstellen samt Stellenanzeige und Auswerten). Die tatsächlichen Kosten hängen von Länge der Anzeige, Anzahl der Fragen und Denkaufwand des Modells ab; abgerechnet wird direkt beim Anbieter.</p>
+              <p class="hint">Es stehen bewusst nur leistungsstarke Modelle zur Auswahl: Kleine Modelle (z.&nbsp;B. Haiku oder die Mini-Varianten) erzeugen keine zuverlässig strukturierten Fragenkataloge und bewerten Antworten zu oberflächlich.</p>
+            </div>
+            <p id="hint-local" class="hint hidden">Lokale Modelle laufen kostenlos auf deinem Rechner, sind aber meist kleiner als die Cloud-Modelle: Fragen und Bewertung können dadurch oberflächlicher ausfallen. Kleine Modelle neigen außerdem zu Halluzinationen – sie erfinden mitunter Angaben, die gar nicht in der Anzeige stehen (z.&nbsp;B. einen falschen Arbeitsort oder Arbeitgeber). Prüfe solche Angaben im Zweifel selbst. Für brauchbare Ergebnisse empfiehlt sich ein größeres Modell (ab ca. 8B, z.&nbsp;B. <code>llama3.1:8b</code> oder <code>qwen2.5:7b</code>).</p>
+            <p class="hint"><a href="#" id="link-onboarding">Wie bekomme ich einen API-Schlüssel? Zur Schritt-für-Schritt-Anleitung</a></p>
           </div>
-        </div>
-        <div id="account-loggedout" class="hidden">
-          <div class="row wrap">
-            <button id="btn-account-login" type="button" class="primary">Zur Anmeldung</button>
-          </div>
-        </div>
-        <p id="account-msg" class="hint" role="status"></p>
-        <p class="hint">Für den kostenlosen gehosteten Modus ist eine Anmeldung nötig. Bei der Anmeldung speichern wir deine E-Mail; Details im <a href="#" id="link-datenschutz-account">Datenschutzhinweis</a>. Ohne Konto kannst du stattdessen oben einen eigenen API-Schlüssel oder ein lokales Modell wählen.</p>
+        </details>
       </div>
 
-      <div id="row-api-key">
-        <label for="api-key">API-Key</label>
-        <input type="password" id="api-key" placeholder="sk-..." autocomplete="off">
-        <p class="hint">Der Key wird nur lokal in deinem Browser gespeichert und direkt an den Anbieter gesendet.</p>
-      </div>
-
-      <div id="row-base-url" class="hidden">
-        <label for="base-url">Adresse des lokalen Servers</label>
-        <input type="text" id="base-url" placeholder="http://localhost:11434/v1" autocomplete="off" spellcheck="false">
-        <p class="hint">Ollama: <code>http://localhost:11434/v1</code> · LM Studio: <code>http://localhost:1234/v1</code>. Für Testerstellung und Auswertung werden keine Daten an einen Anbieter gesendet, alles bleibt auf deinem Rechner (Ausnahme: eine von dir gemeldete Frage geht an uns). Wichtig: Damit diese Seite über https auf den lokalen Server zugreifen darf, muss er Cross-Origin-Anfragen erlauben – in LM Studio im Server-Tab die Option „Enable CORS“ aktivieren, bei Ollama den Server mit <code>OLLAMA_ORIGINS</code> starten. Klappt die Verbindung mit <code>localhost</code> nicht, probiere <code>127.0.0.1</code>.</p>
-      </div>
-
-      <div id="row-model">
-        <label for="model">Modell</label>
-        <select id="model"></select>
-      </div>
-      <div id="row-local-models" class="hidden">
+      <!-- DATEN sichern und übertragen -->
+      <div class="setting-card">
+        <span class="cardlabel">Deine Daten</span>
+        <p class="hint">Sichert deinen Verlauf und deine Einstellungen als Datei – praktisch für den Umzug auf eine neue Adresse oder einen anderen Browser. Die Datei enthält auch deinen API-Schlüssel, also vertraulich behandeln.</p>
         <div class="row wrap">
-          <button id="btn-load-models" type="button" class="ghost">Modelle laden</button>
+          <button id="btn-export" class="ghost btn-compact" type="button">Daten exportieren</button>
+          <button id="btn-import" class="ghost btn-compact" type="button">Daten importieren</button>
         </div>
-        <p id="local-models-status" class="hint" role="status"></p>
+        <input type="file" id="import-file" accept="application/json,.json" hidden>
+        <p id="data-status" class="hint" role="status"></p>
       </div>
-      <p id="model-desc" class="hint"></p>
-      <div id="row-cloud-hints">
-        <p class="hint">Die Kostenangabe je Modell ist eine grobe Schätzung für einen Test mit etwa 10 Fragen (Erstellen samt Stellenanzeige und Auswerten). Die tatsächlichen Kosten hängen von Länge der Anzeige, Anzahl der Fragen und Denkaufwand des Modells ab; abgerechnet wird direkt beim Anbieter.</p>
-        <p class="hint">Es stehen bewusst nur leistungsstarke Modelle zur Auswahl: Kleine Modelle (z.&nbsp;B. Haiku oder die Mini-Varianten) erzeugen keine zuverlässig strukturierten Fragenkataloge und bewerten Antworten zu oberflächlich.</p>
-      </div>
-      <p id="hint-local" class="hint hidden">Lokale Modelle laufen kostenlos auf deinem Rechner, sind aber meist kleiner als die Cloud-Modelle: Fragen und Bewertung können dadurch oberflächlicher ausfallen. Kleine Modelle neigen außerdem zu Halluzinationen – sie erfinden mitunter Angaben, die gar nicht in der Anzeige stehen (z.&nbsp;B. einen falschen Arbeitsort oder Arbeitgeber). Prüfe solche Angaben im Zweifel selbst. Für brauchbare Ergebnisse empfiehlt sich ein größeres Modell (ab ca. 8B, z.&nbsp;B. <code>llama3.1:8b</code> oder <code>qwen2.5:7b</code>).</p>
 
-      <hr class="settings-divider">
-      <label>Dein Profil <span class="hint">(optional)</span></label>
-      <p class="hint">Ein paar grobe Angaben zu dir – damit die Fragen besser zu deiner Ausgangslage passen (z.&nbsp;B. Quereinstieg statt Fachwechsel). Keine persönlichen Daten nötig, alles bleibt in deinem Browser. Wirkt aktuell nur im <strong>gehosteten Modus</strong>; bei eigenem Schlüssel oder lokalem Modell ändert es noch nichts.</p>
-      <label for="profile-trajectory">Worum geht es bei dieser Bewerbung?</label>
-      <select id="profile-trajectory">
-        <option value="">Keine Angabe</option>
-        <option value="fach">Fachlicher Wechsel in dieselbe Richtung</option>
-        <option value="quer">Quereinstieg / Branchenwechsel</option>
-        <option value="aufstieg">Aufstieg / mehr Verantwortung</option>
-      </select>
-      <label for="profile-erfahrung">Wie viel Berufserfahrung bringst du mit?</label>
-      <select id="profile-erfahrung">
-        <option value="">Keine Angabe</option>
-        <option value="einsteiger">Berufseinsteiger</option>
-        <option value="berufserfahren">Berufserfahren</option>
-        <option value="senior">Sehr erfahren (Senior)</option>
-      </select>
-      <label for="profile-ausbildung">Höchster Ausbildungsstand</label>
-      <select id="profile-ausbildung">
-        <option value="">Keine Angabe</option>
-        <option value="schule">Schule</option>
-        <option value="ausbildung_laufend">Ausbildung läuft</option>
-        <option value="ausbildung_abgeschlossen">Ausbildung abgeschlossen</option>
-        <option value="studium_laufend">Studium läuft</option>
-        <option value="studium_abgeschlossen">Studium abgeschlossen</option>
-        <option value="fortbildung">Meister · Techniker · Fachwirt · Zertifikat</option>
-        <option value="umschulung_anerkennung">Umschulung · ausländischer Abschluss in Anerkennung</option>
-      </select>
-      <label for="profile-branche">Branche / Bereich <span class="hint">(optional)</span></label>
-      <input type="text" id="profile-branche" maxlength="80" placeholder="z. B. Logistik, IT, Pflege" autocomplete="off">
-
-      <div class="row">
-        <button id="btn-save-settings" class="primary">Speichern</button>
+      <!-- Aktionsleiste: im normalen App-Modus verbirgt Autosave sie (Phase 3); im Einrichtungs-
+           Gate (settingsOrigin="gate") bleibt der explizite Weiter-/Abbrechen-Weg sichtbar. -->
+      <div class="row settings-actions hidden" id="settings-actions">
+        <button id="btn-save-settings" class="primary">Speichern und weiter</button>
         <button id="btn-cancel-settings" class="ghost">Abbrechen</button>
       </div>
-      <p class="hint"><a href="#" id="link-onboarding">Wie bekomme ich einen API-Schlüssel? Zur Schritt-für-Schritt-Anleitung</a></p>
 
-      <hr class="settings-divider">
-      <label>Daten sichern und übertragen</label>
-      <p class="hint">Sichert deinen Verlauf und deine Einstellungen als Datei – praktisch für den Umzug auf eine neue Adresse oder einen anderen Browser. Die Datei enthält auch deinen API-Key, also vertraulich behandeln.</p>
-      <div class="row wrap">
-        <button id="btn-export" class="ghost" type="button">Daten exportieren</button>
-        <button id="btn-import" class="ghost" type="button">Daten importieren</button>
+      <!-- Autosave-Bestätigung (Phase 3): kurzes „Gespeichert“ nach jeder Änderung -->
+      <p id="settings-saved-toast" class="settings-saved-toast" role="status" aria-live="polite"></p>
+
+      <!-- Einwilligungs-Sheet für die automatische Zahlung. Trägt den vollständigen Widerrufs-
+           Hinweis, der bislang dauerhaft im Formular stand; erscheint nur beim Einschalten. -->
+      <div id="consent-sheet" class="consent-sheet-wrap hidden">
+        <div class="consent-sheet" role="dialog" aria-modal="true" aria-labelledby="consent-title">
+          <h3 id="consent-title">Automatische Zahlung aktivieren?</h3>
+          <p>Kostenpflichtige Tests – die Überschreitung des Gratis-Tageskontingents und die Stufe „beste“ (Opus) – werden dann ohne Rückfrage sofort aus deinem Guthaben bezahlt.</p>
+          <p>Damit stimmst du der sofortigen Ausführung dieser Tests zu; dein Widerrufsrecht erlischt für verbrauchtes Guthaben (<a href="widerruf.html" target="_blank" rel="noopener">Widerrufsbelehrung</a>).</p>
+          <div class="row">
+            <button id="consent-cancel" type="button" class="ghost">Abbrechen</button>
+            <button id="consent-confirm" type="button" class="primary">Zustimmen und aktivieren</button>
+          </div>
+        </div>
       </div>
-      <input type="file" id="import-file" accept="application/json,.json" hidden>
-      <p id="data-status" class="hint" role="status"></p>
     </section>
 
     <!-- Stellenbeschreibung -->

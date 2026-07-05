@@ -4,9 +4,18 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.31.1";
+const APP_VERSION = "1.32.0";
 
 const CHANGELOG = [
+  {
+    version: "1.32.0",
+    date: "05.07.2026",
+    items: [
+      "Neu gestaltete Einstellungen: Konto, Guthaben und Testqualität liegen jetzt in klaren, getrennten Karten. Dein Guthaben und das Aufladen stehen prominent oben; technische Optionen (eigener API-Schlüssel, lokales Modell) sind übersichtlich unter „Erweitert“ gebündelt.",
+      "Änderungen in den Einstellungen werden automatisch gespeichert – ein kurzes „Gespeichert“ bestätigt es, der frühere Speichern-Knopf entfällt.",
+      "Klarere Zustimmung: Die automatische Bezahlung aus dem Guthaben aktivierst du jetzt über einen Schalter mit kurzer Bestätigung, in der dein Widerrufsrecht erklärt wird.",
+    ],
+  },
   {
     version: "1.31.1",
     date: "04.07.2026",
@@ -3040,8 +3049,12 @@ function scheduleCreateTierContextHint() {
 function renderCreditsUI() {
   renderBalanceLine();
   renderTierControls();
-  // Aufladen nur, wenn Credits live sind (Flag an). Sichtbarkeit haengt zusaetzlich am
-  // Login-Zustand (Block liegt in #account-loggedin).
+  // Guthaben-Karte (Hero) insgesamt nur bei aktivem Credits-Flag zeigen. Sie liegt in
+  // #row-account (Hosted-only) und faellt bei Logout automatisch weg, weil renderAccountSection
+  // dann resetCreditsState()+renderCreditsUI() aufruft (creditsEnabled → false → hier hidden).
+  const guthabenCard = $("guthaben-card");
+  if (guthabenCard) guthabenCard.classList.toggle("hidden", !creditsState.creditsEnabled);
+  // Aufladen nur, wenn Credits live sind (Flag an).
   const topup = $("topup");
   if (topup) topup.classList.toggle("hidden", !creditsState.creditsEnabled);
   // Guthaben-Verlauf: gleiche Sichtbarkeitsregel wie der Aufladen-Block (Flag an + eingeloggt).
@@ -3418,9 +3431,11 @@ function renderBalanceLine() {
     // als nach der Erstattung gedeckt war. Kommentarlos "-0,35 €" anzuzeigen verwirrt genau
     // die Nutzer, die ohnehin gerade unzufrieden waren (Audit 2026-07) → kurz erklaeren.
     const negHint = creditsState.credits < 0
-      ? `<br><span class="hint">Der Stand ist durch eine Erstattung negativ – er wird mit der nächsten Aufladung verrechnet.</span>`
+      ? `<span class="hint">Der Stand ist durch eine Erstattung negativ – er wird mit der nächsten Aufladung verrechnet.</span>`
       : "";
-    el.innerHTML = `Guthaben: <strong>${euro}</strong> <span class="balance-credits">(${cr} Credits)</span>${negHint}`;
+    // Hero-Format: grosser Euro-Betrag, Credits als ruhige Unterzeile. Die Karten-Ueberschrift
+    // „Guthaben“ traegt bereits das Label, daher hier kein „Guthaben:“-Praefix mehr.
+    el.innerHTML = `<span class="balance-euro">${euro}</span><span class="balance-credits">${cr} Credits</span>${negHint}`;
     el.classList.remove("hidden");
   } else {
     el.textContent = "";
@@ -10223,6 +10238,16 @@ function updateModelDesc() {
 
 // Blendet je nach Anbieter die passenden Felder ein (lokal: keine Key-Eingabe,
 // dafuer Server-Adresse, „Modelle laden“ und der Hinweis zu kleinen Modellen).
+// Kurzbeschriftung des aktiven Anbieters fuer die „Erweitert“-Statuszeile (damit BYOK-Nutzer
+// den aktiven Anbieter sehen, ohne die Karte aufzuklappen). Deckt dieselben Werte wie #provider.
+const PROVIDER_STATUS_LABELS = {
+  hosted: "Gehostet – kein eigener Schlüssel nötig",
+  anthropic: "Eigener Schlüssel: Claude (Anthropic)",
+  openai: "Eigener Schlüssel: OpenAI",
+  deepseek: "Eigener Schlüssel: DeepSeek",
+  local: "Lokales Modell (Ollama / LM Studio)",
+};
+
 function updateSettingsProviderUI() {
   const provider = $("provider").value;
   const isLocal = provider === "local";
@@ -10238,6 +10263,13 @@ function updateSettingsProviderUI() {
   $("row-local-models").classList.toggle("hidden", !isLocal);
   $("row-cloud-hints").classList.toggle("hidden", isLocal || isHosted);
   $("hint-local").classList.toggle("hidden", !isLocal);
+  // Erweitert-Karte: Statuszeile spiegelt den aktiven Anbieter; bei eigenem Schluessel/lokal
+  // die Karte aufklappen, damit die zugehoerigen Felder sichtbar sind (sonst „versteckt“ man
+  // dem BYOK-Nutzer sein Key-Feld hinter dem eingeklappten Summary).
+  const advStatus = $("adv-provider-status");
+  if (advStatus) advStatus.textContent = "Aktiv: " + (PROVIDER_STATUS_LABELS[provider] || provider);
+  const adv = $("adv-provider");
+  if (adv) adv.open = !isHosted;
 }
 
 function initSettingsForm() {
@@ -10262,6 +10294,13 @@ function initSettingsForm() {
   $("profile-ausbildung").value = profile.ausbildung || "";
   $("profile-branche").value = profile.branche || "";
   $("account-msg").textContent = "";
+  // Aktionsleiste (Speichern/Abbrechen) nur im Einrichtungs-Gate; im App-Modus uebernimmt
+  // Autosave. Einwilligungs-Sheet und Autosave-Bestaetigung beim Oeffnen zuruecksetzen.
+  const actions = $("settings-actions");
+  if (actions) actions.classList.toggle("hidden", settingsOrigin !== "gate");
+  closeConsentSheet();
+  const savedToast = $("settings-saved-toast");
+  if (savedToast) { savedToast.textContent = ""; savedToast.classList.remove("show"); }
   renderAccountSection();
 }
 
@@ -10270,15 +10309,25 @@ function initSettingsForm() {
 // /auth/me abgefragt; ein 401 verwirft das (abgelaufene) Token still.
 async function renderAccountSection() {
   const status = $("account-status");
+  const avatar = $("acct-avatar");
+  const setAvatar = (email) => {
+    if (!avatar) return;
+    const ch = typeof email === "string" && email.trim() ? email.trim()[0].toUpperCase() : "•";
+    avatar.textContent = ch;
+  };
   const showLoggedIn = (email) => {
     $("account-loggedout").classList.add("hidden");
     $("account-loggedin").classList.remove("hidden");
-    status.textContent = email ? `Angemeldet als ${email}.` : "Angemeldet.";
+    // Identitaetszeile zeigt die E-Mail direkt; ohne bestaetigte E-Mail bleibt es beim
+    // neutralen „Angemeldet“.
+    status.textContent = email || "Angemeldet";
+    setAvatar(email);
   };
   const showLoggedOut = () => {
     $("account-loggedin").classList.add("hidden");
     $("account-loggedout").classList.remove("hidden");
     status.textContent = "Nicht angemeldet.";
+    setAvatar(null);
     resetCreditsState();
     renderCreditsUI();
   };
@@ -10490,6 +10539,9 @@ $("provider").addEventListener("change", () => {
   // Wechsel auf hosted in einem offenen Formular: Konto/Guthaben laden, damit Opus-Option und
   // Guthaben-Zeile sofort stimmen (sonst erst nach Schliessen/Oeffnen der Einstellungen).
   if ($("provider").value === "hosted") renderAccountSection();
+  // Anbieterwechsel im App-Modus sofort sichern (Autosave). Vorhandene BYOK-Felder bleiben
+  // erhalten (persistSettingsFromForm verwirft sie nie).
+  autosaveSettingsIfApp();
 });
 
 $("model").addEventListener("change", updateModelDesc);
@@ -10500,6 +10552,7 @@ $("tier").addEventListener("change", () => {
   updateTierHint(TIER_CONTROLS.settings);
   updateFreeTierHint(TIER_CONTROLS.settings);
   renderFreeQuotaBadges(); // Preis im aufgebraucht-Zustand haengt an der gewaehlten Stufe
+  autosaveSettingsIfApp(); // gewaehlte globale Stufe direkt uebernehmen
 });
 
 // Pro-Test-Qualitaetsstufe in der Erstell-Maske: die Wahl als TRANSIENTEN Override merken (nie
@@ -10582,12 +10635,16 @@ $("btn-load-models").addEventListener("click", async () => {
   }
 });
 
-$("btn-save-settings").addEventListener("click", () => {
+// --- Einstellungen speichern: gemeinsame Persist-Helfer -------------------
+// Aus den Formularfeldern in die Storage-Bestaende schreiben. IDENTISCHE Feldlogik wie
+// bisher der „Speichern“-Knopf — jetzt geteilt zwischen dem expliziten Speichern (Gate-Flow)
+// und dem Autosave (App-Modus). Reine localStorage-Schreibvorgaenge, nie ein API-Aufruf
+// (CLAUDE.md: kostenpflichtige Aktionen nie beilaeufig).
+function persistSettingsFromForm() {
   const provider = $("provider").value;
   if (provider === "hosted") {
-    // Hosted: nur Provider + Stufe setzen. Vorhandene BYOK-Felder (apiKey/baseUrl/
-    // model) BLEIBEN als Fallback erhalten - nie verwerfen (Leitplanke).
-    // autoUseCredits (Opt-in: Overflow ohne jedes Mal nachzufragen) additiv mitspeichern;
+    // Hosted: nur Provider + Stufe setzen. Vorhandene BYOK-Felder (apiKey/baseUrl/model)
+    // BLEIBEN als Fallback erhalten - nie verwerfen (Leitplanke). autoUseCredits additiv;
     // der Haken existiert nur bei aktivem Credits-Flag, sonst bleibt der alte Wert erhalten.
     const autoCb = $("auto-use-credits");
     const autoUseCredits = creditsState.creditsEnabled && autoCb ? autoCb.checked : !!settings.autoUseCredits;
@@ -10606,13 +10663,47 @@ $("btn-save-settings").addEventListener("click", () => {
   // Kontingent-Badges an den (evtl. gewechselten) Anbieter/Stufe anpassen: bei einem Wechsel
   // weg vom Hosted-Modus muessen sie sofort verschwinden (Badge ist ein Hosted-Feature).
   renderFreeQuotaBadges();
-  // Profil unabhaengig von settings in seinem eigenen Key sichern (leere Auswahl → entfernt).
+}
+
+// Profil unabhaengig von settings in seinem eigenen Key sichern (leere Auswahl → entfernt).
+function persistProfileFromForm() {
   saveProfile({
     trajectory: $("profile-trajectory").value,
     erfahrung: $("profile-erfahrung").value,
     ausbildung: $("profile-ausbildung").value,
     branche: $("profile-branche").value,
   });
+}
+
+// Kurze „Gespeichert“-Bestaetigung (Autosave). Ersetzt den frueheren Speichern-Klick als
+// sichtbares Feedback im App-Modus.
+let _savedToastTimer = null;
+function showSettingsSaved(msg) {
+  const el = $("settings-saved-toast");
+  if (!el) return;
+  el.textContent = msg || "Gespeichert";
+  el.classList.add("show");
+  if (_savedToastTimer) clearTimeout(_savedToastTimer);
+  _savedToastTimer = setTimeout(() => { el.classList.remove("show"); el.textContent = ""; }, 1600);
+}
+
+// Autosave nur im normalen App-Modus. Im Einrichtungs-Gate (settingsOrigin="gate") bleibt der
+// klassische, explizite Speichern/Abbrechen-Weg erhalten (die Aktionsleiste ist dort sichtbar),
+// damit „Abbrechen“ dort wie gewohnt nichts uebernimmt und „Speichern und weiter“ navigiert.
+function autosaveSettingsIfApp() {
+  if (settingsOrigin !== "app") return;
+  persistSettingsFromForm();
+  showSettingsSaved();
+}
+function autosaveProfileIfApp() {
+  if (settingsOrigin !== "app") return;
+  persistProfileFromForm();
+  showSettingsSaved();
+}
+
+$("btn-save-settings").addEventListener("click", () => {
+  persistSettingsFromForm();
+  persistProfileFromForm();
   // Wurde aus einem Einrichtungs-Gate (Login/Onboarding) gespeichert und ist der
   // Anbieter jetzt nutzbar, in die App (Startliste) statt per History zurueck aufs
   // Gate - sonst landet man nach dem Einrichten wieder davor. Sonst ueber die
@@ -10624,6 +10715,60 @@ $("btn-save-settings").addEventListener("click", () => {
 });
 
 $("btn-cancel-settings").addEventListener("click", () => history.back());
+
+// --- Autosave-Verdrahtung (App-Modus) -------------------------------------
+// Felder ohne eigenen Change-Handler direkt persistieren. api-key/base-url/model auf „change“
+// (feuert beim Verlassen des Feldes) statt „input“, um nicht bei jedem Tastendruck zu schreiben.
+["api-key", "base-url", "model"].forEach((id) => {
+  const el = $(id);
+  if (el) el.addEventListener("change", autosaveSettingsIfApp);
+});
+["profile-trajectory", "profile-erfahrung", "profile-ausbildung", "profile-branche"].forEach((id) => {
+  const el = $(id);
+  if (el) el.addEventListener("change", autosaveProfileIfApp);
+});
+
+// --- Automatisch zahlen: Einwilligungs-Sheet ------------------------------
+// Das Einschalten erfordert die Widerrufs-Einwilligung. Statt des dauerhaften Rechtstext-
+// Absatzes erscheint sie als Bestaetigungs-Sheet GENAU beim Aktivieren; erst nach „Zustimmen“
+// wird der Haken gesetzt und persistiert. Ausschalten wirkt sofort. Der Einwilligungs-Wortlaut
+// (inkl. Widerrufsbelehrung) ist unveraendert aus dem frueheren Checkbox-Label uebernommen.
+function openConsentSheet() {
+  const s = $("consent-sheet");
+  if (!s) return;
+  s.classList.remove("hidden");
+  const c = $("consent-confirm");
+  if (c) c.focus();
+}
+function closeConsentSheet() {
+  const s = $("consent-sheet");
+  if (s) s.classList.add("hidden");
+}
+{
+  const autoCb = $("auto-use-credits");
+  if (autoCb) autoCb.addEventListener("change", () => {
+    if (autoCb.checked) {
+      // Erst nach ausdruecklicher Zustimmung aktivieren.
+      autoCb.checked = false;
+      openConsentSheet();
+    } else {
+      // Ausschalten sofort uebernehmen (im App-Modus; im Gate-Flow existiert die Zeile nicht).
+      autosaveSettingsIfApp();
+    }
+  });
+  const confirm = $("consent-confirm");
+  if (confirm) confirm.addEventListener("click", () => {
+    const cb = $("auto-use-credits");
+    if (cb) cb.checked = true;
+    closeConsentSheet();
+    autosaveSettingsIfApp();
+  });
+  const cancel = $("consent-cancel");
+  if (cancel) cancel.addEventListener("click", closeConsentSheet);
+  // Klick auf den abgedunkelten Hintergrund = abbrechen (Haken bleibt aus).
+  const wrap = $("consent-sheet");
+  if (wrap) wrap.addEventListener("click", (e) => { if (e.target === wrap) closeConsentSheet(); });
+}
 
 /* ---------- Daten-Export / -Import (Umzug zwischen Adressen/Browsern) ---------- */
 

@@ -352,6 +352,291 @@ input:focus, select:focus, textarea:focus {
 }
 .space-between { justify-content: space-between; }
 
+/* ===========================================================
+   Einstellungen – Redesign (Karten-IA, Guthaben-Hero, Erweitert)
+   Eine Kontoseite aus getrennten Karten statt eines langen Formulars.
+   Alles auf den bestehenden Tokens; Dark Mode greift automatisch.
+   =========================================================== */
+
+/* Barrierefrei ausgeblendet (Label bleibt fuer Screenreader) */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0; border: 0;
+  clip: rect(0 0 0 0); clip-path: inset(50%);
+  overflow: hidden; white-space: nowrap;
+}
+
+/* Aussenhuelle der Seite: kein eigenes Card-Chrome, nur Rhythmus fuer die inneren Karten */
+.settings-head { margin-bottom: 1rem; }
+.settings-head h2 { margin: 0 0 0.2rem; }
+.settings-sub { margin: 0; color: var(--muted); font-size: 0.9rem; }
+
+/* Basiskarte je Themenblock */
+.setting-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem 1.2rem;
+  margin-bottom: 0.9rem;
+  box-shadow: var(--shadow-sm);
+}
+#row-account { margin: 0; } /* Wrapper der beiden Konto-Karten; Abstand traegt jede Karte selbst */
+
+/* Ueberschrift innerhalb einer Karte (ersetzt die frueheren <label>-Titel) */
+.cardlabel {
+  display: block;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+
+/* Vertrauens-Chip (z. B. „bleibt in deinem Browser“) */
+.privacy-chip {
+  display: inline-block;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-weight: 600;
+  font-size: 0.66rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted);
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 0.1rem 0.5rem;
+  margin-left: 0.35rem;
+  vertical-align: middle;
+}
+
+/* Kompakte Buttons (Sekundaeraktionen in Karten) bleiben unter der 44px-Regel greifbar */
+.btn-compact { padding: 0.5rem 0.95rem; font-size: 0.85rem; }
+
+/* Textlink-Button (Abmelden, Verlauf anzeigen): sieht aus wie ein Link, bleibt aber <button> */
+button.linklike {
+  background: none;
+  border: none;
+  min-height: auto;
+  padding: 0.25rem 0;
+  color: var(--accent-text);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  box-shadow: none;
+}
+button.linklike:hover { background: none; border: none; color: var(--primary-dark); }
+button.linklike:active { transform: none; }
+
+/* ---- Konto-Karte ---- */
+.acct-identity { display: flex; align-items: center; gap: 0.75rem; }
+.acct-avatar {
+  flex: none;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  border: 1px solid var(--primary-soft-border);
+  color: var(--accent-text);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  text-transform: uppercase;
+}
+.acct-who { flex: 1; min-width: 0; }
+.acct-mail {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--text-strong);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.acct-mode { margin: 0.1rem 0 0; font-size: 0.76rem; color: var(--muted); }
+.acct-action { flex: none; }
+.acct-privacy { margin-top: 0.75rem; }
+#account-msg:empty { display: none; }
+
+/* ---- Guthaben-Hero ---- */
+.guthaben-card { background: var(--card); }
+.guthaben-hero { display: flex; flex-direction: column; gap: 0.1rem; }
+#account-balance {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 2.1rem;
+  line-height: 1.05;
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+}
+#account-balance .balance-euro { font-size: inherit; }
+#account-balance .balance-credits {
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-weight: 500;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 0.25rem;
+}
+#account-balance .hint { display: block; font-size: 0.76rem; margin-top: 0.3rem; }
+
+.topup-block { margin-top: 1rem; }
+.topup-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-strong);
+  margin-bottom: 0.45rem;
+}
+.topup-packs { display: flex; gap: 0.5rem; }
+button.btn-topup.pack {
+  flex: 1;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-strong);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+button.btn-topup.pack:hover { border-color: var(--primary); color: var(--accent-text); background: var(--primary-soft); }
+.topup-bonus {
+  margin-top: 0.5rem;
+  color: var(--green);
+  font-weight: 600;
+}
+
+/* ---- Schalter-Zeile (Automatisch zahlen) ---- */
+.setting-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+}
+.setting-toggle-text { flex: 1; min-width: 0; }
+.setting-toggle-title { display: block; font-size: 0.86rem; font-weight: 600; color: var(--text-strong); }
+.setting-toggle-desc { display: block; font-size: 0.76rem; color: var(--muted); margin-top: 0.1rem; }
+
+.switch {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  width: 46px; height: 28px;
+  cursor: pointer;
+  margin: 0;
+}
+.switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.switch-track {
+  position: absolute; inset: 0;
+  border-radius: var(--radius-pill);
+  background: var(--border-strong);
+  transition: background 0.15s;
+}
+.switch-track::after {
+  content: "";
+  position: absolute; top: 3px; left: 3px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s;
+}
+.switch input:checked ~ .switch-track { background: var(--green); }
+.switch input:checked ~ .switch-track::after { transform: translateX(18px); }
+.switch input:focus-visible ~ .switch-track { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* ---- Guthaben-Verlauf ---- */
+.ledger-section {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+}
+.ledger-list { margin-top: 0.5rem; }
+.ledger-list p {
+  margin: 0;
+  padding: 0.5rem 0;
+  font-size: 0.8rem;
+  color: var(--text);
+  border-bottom: 1px dashed var(--border);
+  font-variant-numeric: tabular-nums;
+}
+.ledger-list p:last-child { border-bottom: none; }
+
+/* ---- Erweitert (BYOK / lokal) als aufklappbare Karte ---- */
+.setting-adv { }
+.setting-adv-summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.setting-adv-summary::-webkit-details-marker { display: none; }
+.setting-adv-text { flex: 1; min-width: 0; }
+.setting-adv-title { display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-strong); }
+.setting-adv-status { display: block; font-size: 0.76rem; color: var(--muted); margin-top: 0.1rem; }
+.setting-adv-chev {
+  flex: none;
+  font-size: 1.1rem;
+  color: var(--muted);
+  transition: transform 0.15s;
+}
+.setting-adv[open] .setting-adv-chev { transform: rotate(90deg); }
+.setting-adv-body { margin-top: 0.6rem; }
+.setting-adv-summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border-radius: 8px; }
+
+/* ---- Aktionsleiste + Autosave-Bestaetigung ---- */
+.settings-actions { margin-top: 0.4rem; }
+.settings-saved-toast {
+  margin: 0.6rem 0 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--green);
+  min-height: 1.1rem;
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+.settings-saved-toast.show { opacity: 1; }
+
+/* ---- Einwilligungs-Sheet (Automatische Zahlung) ---- */
+.consent-sheet-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--text-strong) 45%, transparent);
+}
+.consent-sheet {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  max-width: 30rem;
+  width: 100%;
+  padding: 1.3rem;
+}
+.consent-sheet h3 { margin: 0 0 0.5rem; }
+.consent-sheet p { margin: 0 0 0.6rem; font-size: 0.86rem; color: var(--text); }
+.consent-sheet .row { margin-top: 1rem; }
+.consent-sheet .row .primary { flex: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .switch-track, .switch-track::after, .setting-adv-chev, .settings-saved-toast { transition: none; }
+}
+
+@media (max-width: 600px) {
+  .setting-card { padding: 1.05rem 1rem; }
+  #account-balance { font-size: 1.9rem; }
+}
+
 /* Beispieltest ohne Login: hervorgehobener Einstieg auf der Login-Karte. */
 /* Onboarding v2 – Wizard-Schritt 1: drei gleichgewichtige, grosse Auswahl-Buttons.
    Auf Mobile stapeln sie ohnehin (flex-column, volle Breite) – kein horizontales Overflow. */
