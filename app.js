@@ -5138,25 +5138,33 @@ async function generateQuiz(opts = {}) {
   }
   const vertiefungFelder = vertiefung ? vertiefung.felder.map((f) => ({ id: f.id, label: f.label })) : null;
 
-  // Bezahlte Stufe (standard ODER beste bei aktivem Flag) gewuenscht? Vor dem Dispatch
-  // FAIL-CLOSED pruefen, dass sie gedeckt ist — eine bewusst bezahlte Auswahl darf nie still
-  // durchrutschen und der Nutzer nie unbeabsichtigt in eine Abbuchung laufen. Nur mit Token
-  // pruefen: ohne Anmeldung uebernimmt startHostedGeneration den Login-Prompt (der Gate darf den
-  // nicht mit einem Guthaben-/Offline-Fehler verdecken).
-  if (isHosted && tierChargesNow(selectedTier()) && settings.authToken) {
+  // Bezahlte Stufe (standard/beste) gewuenscht? Vor dem Dispatch FAIL-CLOSED pruefen, dass sie
+  // gedeckt ist — eine bewusst bezahlte Auswahl darf nie still durchrutschen und der Nutzer nie
+  // unbeabsichtigt in eine Abbuchung laufen. WICHTIG: der Eintritt haengt an !tierIsFree, NICHT an
+  // tierChargesNow — sonst wuerde bei noch-nicht-geladenem creditsState (creditsEnabled=false,
+  // direkt nach Load/Refresh) der Block uebersprungen und der Refresh/Confirm ausgelassen → Silent
+  // Charge (das Backend bucht trotzdem ab). So wird IMMER erst frisch geladen und DANN mit dem
+  // frischen tierChargesNow entschieden. Nur mit Token (ohne Anmeldung uebernimmt
+  // startHostedGeneration den Login-Prompt).
+  if (isHosted && !tierIsFree(selectedTier()) && settings.authToken) {
     // Frisch nachladen, wenn unbekannt ODER moeglicherweise veraltet (nach einer Abbuchung) —
-    // sonst startet ein zweiter bezahlter Test auf stale Guthaben.
+    // sonst startet ein zweiter bezahlter Test auf stale Guthaben (und der Flag-Stand ist frisch).
     if (!creditsState.loaded || creditsState.dirty) await refreshBalance();
     const t = selectedTier();
-    // refreshBalance() kann das Flag bestaetigt-aus gesetzt (dann ist t nicht mehr charging → der
-    // Gratis-Zweig greift) oder bei 401 das Token verworfen haben (Login-Pfad). Dann NICHT blocken.
-    if (settings.authToken && tierChargesNow(t)) {
+    // Innerer Gate an !tierIsFree (nicht tierChargesNow): so greift der „nicht bestaetigt"-Abbruch
+    // AUCH, wenn der Refresh fehlschlug und creditsEnabled unbekannt (loaded=false) blieb — sonst
+    // liefe ein offline nicht bestaetigter Standard-Test in eine stille Backend-Abbuchung. Nur der
+    // 401-Fall (Token verworfen) faellt raus → Login-Pfad.
+    if (settings.authToken && !tierIsFree(t)) {
       if (!creditsState.loaded) {
-        // Deckung liess sich nicht bestaetigen (Balance-Abruf fehlgeschlagen/offline).
+        // Deckung/Flag liess sich nicht bestaetigen (Balance-Abruf fehlgeschlagen/offline) → NICHT
+        // dispatchen (das Backend koennte bei aktivem Flag abbuchen). Fail-closed.
         showError(`Die Qualitätsstufe „${tierLabelFor(t)}“ konnte gerade nicht bestätigt werden. Bitte Verbindung prüfen und erneut versuchen, oder eine andere Stufe wählen.`);
         return;
       }
-      if (!canAffordTier(t)) {
+      // Flag bestaetigt aus (loaded, !creditsEnabled) → t laeuft gratis (Backend-Gratis-Zweig) →
+      // kein Deckungs-Check, kein Confirm. Nur bei charging die Deckung fail-closed pruefen.
+      if (tierChargesNow(t) && !canAffordTier(t)) {
         // Flag an, aber Guthaben deckt die Stufe nicht → NICHT still downgraden, sondern klar aufs
         // Aufladen/eine andere Stufe hinweisen. Preis: beste NUR aus dem Server-Wert (F-2),
         // standard aus dem Festpreis (Client-Konstante = Backend-Festpreis, synchron gehalten).
