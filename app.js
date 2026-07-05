@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.33.2";
+const APP_VERSION = "1.33.3";
 
 const CHANGELOG = [
+  {
+    version: "1.33.3",
+    date: "05.07.2026",
+    items: [
+      "Mehr Sorgfalt bei „automatisch Guthaben verwenden“: Weil „Standard“ jetzt eine bezahlte Stufe ist, holen wir deine Zustimmung zum automatischen Bezahlen einmalig neu ein. Möchtest du die Option nutzen, aktiviere sie kurz erneut in den Einstellungen – ohne deine Zustimmung wird nie Guthaben verwendet.",
+    ],
+  },
   {
     version: "1.33.2",
     date: "05.07.2026",
@@ -856,12 +863,30 @@ function formatTokens(n) {
 
 /* ---------- Einstellungen (localStorage) ---------- */
 
+// Consent-Version fuer „automatisch Guthaben verwenden". Erhoehen, sobald sich der UMFANG der
+// Auto-Zahlung aendert (welche Test-Arten dann OHNE Rueckfrage abgebucht werden) — sonst wuerde
+// ein alter Opt-in still eine NEUE Kostenart decken (§356 BGB: die Einwilligung muss den konkreten
+// Umfang tragen). v2 (2026-07 Repricing): „standard" ist jetzt eine BEZAHLTE Stufe und im
+// Consent-Text enthalten. Ein unter v1 (nur „beste"/Overflow) gegebenes Opt-in wird beim Laden
+// fail-closed zurueckgesetzt (s. loadSettings) → der Nutzer bestaetigt den erweiterten Umfang
+// bewusst erneut, wodurch die aktuelle Version gestempelt wird.
+const AUTO_USE_CREDITS_CONSENT_VERSION = 2;
+
 function loadSettings() {
-  try {
-    return JSON.parse(localStorage.getItem("bewerbungstool.settings")) || {};
-  } catch {
-    return {};
+  let s;
+  try { s = JSON.parse(localStorage.getItem("bewerbungstool.settings")) || {}; }
+  catch { s = {}; }
+  // Consent-Scope-Schutz: ein „Auto-Zahlen"-Opt-in aus einer aelteren Consent-Version deckt NICHT
+  // den erweiterten Umfang (z. B. die seit dem Repricing bezahlte Stufe „standard"). Bei veralteter/
+  // fehlender Version das Flag fail-closed zuruecksetzen — der Nutzer stimmt dem neuen Umfang bewusst
+  // erneut zu (dann stempeln persistSettingsFromForm/Overflow-Consent die aktuelle Version). In-
+  // Memory-Reset genuegt fuer die Sicherheit (settings.autoUseCredits ist ab jetzt false); der
+  // naechste saveSettings schreibt den korrigierten Stand durabel.
+  if (s && s.autoUseCredits === true && (Number(s.autoUseCreditsConsentVersion) || 1) < AUTO_USE_CREDITS_CONSENT_VERSION) {
+    s.autoUseCredits = false;
+    delete s.autoUseCreditsConsentVersion;
   }
+  return s || {};
 }
 
 function saveSettings(s) {
@@ -10828,7 +10853,11 @@ function persistSettingsFromForm() {
     // der Haken existiert nur bei aktivem Credits-Flag, sonst bleibt der alte Wert erhalten.
     const autoCb = $("auto-use-credits");
     const autoUseCredits = creditsState.creditsEnabled && autoCb ? autoCb.checked : !!settings.autoUseCredits;
-    settings = { ...settings, provider: "hosted", tier: tierGetValue($("tier")) || DEFAULT_TIER, autoUseCredits };
+    // Bei aktivem Opt-in die aktuelle Consent-Version stempeln (der Nutzer sieht den aktuellen
+    // Umfangstext im Consent-Sheet) — sonst wuerde loadSettings den frischen Opt-in als „alt"
+    // zuruecksetzen. Beim Abschalten den Stempel unveraendert lassen (irrelevant, solange aus).
+    settings = { ...settings, provider: "hosted", tier: tierGetValue($("tier")) || DEFAULT_TIER, autoUseCredits,
+      autoUseCreditsConsentVersion: autoUseCredits ? AUTO_USE_CREDITS_CONSENT_VERSION : settings.autoUseCreditsConsentVersion };
   } else {
     settings = {
       ...settings,
@@ -11804,7 +11833,10 @@ function closeOverflowConfirm(result) {
     const autoRow = $("overflow-auto-row");
     const cb = $("overflow-auto-credits");
     if (autoRow && cb && !autoRow.classList.contains("hidden") && cb.checked !== !!settings.autoUseCredits) {
-      settings = { ...settings, autoUseCredits: cb.checked };
+      // Opt-in hier aus dem Overflow-Consent (aktueller Umfangstext sichtbar) → aktuelle Consent-
+      // Version stempeln, damit loadSettings ihn nicht als veraltet zuruecksetzt.
+      settings = { ...settings, autoUseCredits: cb.checked,
+        autoUseCreditsConsentVersion: cb.checked ? AUTO_USE_CREDITS_CONSENT_VERSION : settings.autoUseCreditsConsentVersion };
       saveSettings(settings);
       renderCreditsUI(); // Einstellungs-Checkbox + Kostenhinweise sofort spiegeln
     }
