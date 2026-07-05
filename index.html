@@ -315,6 +315,7 @@
         <!-- AN: Status + Kopplungsansicht (QR groß + Code) + Aktionen -->
         <div id="sync-on" class="hidden">
           <p class="hint"><strong>Sync ist auf diesem Gerät aktiv.</strong></p>
+          <p id="sync-mismatch-hint" class="hint sync-err hidden" role="alert">Auf dem Server liegen Daten, die mit einem anderen Schlüssel verschlüsselt sind. Kopple dieses Gerät mit dem Sync-Code des anderen Geräts (Sync deaktivieren, dann Code eingeben) – oder überschreibe den Server mit „Sync zurücksetzen".</p>
           <div id="sync-couple" class="sync-couple hidden">
             <div id="sync-qr" class="sync-qr" aria-hidden="true"></div>
             <div class="sync-code-display"><code id="sync-code"></code></div>
