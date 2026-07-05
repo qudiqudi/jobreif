@@ -11393,6 +11393,7 @@ async function importData(text) {
           status: isValidStatus(impJob.status) ? impJob.status : undefined,
           gespraechAm: jobGespraechAm(impJob) || undefined,
           ...(impIKey ? { identityKey: impIKey } : {}),
+          updatedAt: Date.now(), // Restore ist ausdrücklich → Metadaten-Autorität, damit ein alter Tombstone die Stelle nicht wieder wegräumt (Fable-Finding)
         });
         newJobs++;
         newAttempts += incoming.length;
@@ -11444,6 +11445,7 @@ async function importData(text) {
         }
       });
       existing.attempts.sort((a, b) => a.date - b.date);
+      existing.updatedAt = Date.now(); // s. o.: Restore = Metadaten-Autorität, überlebt einen alten Tombstone
     });
     // Neueste Stelle zuerst, wie beim normalen Speichern
     h.jobs.sort((j1, j2) => {
@@ -12815,7 +12817,7 @@ async function syncDisableConfirmed() {
 const SYNC_META_KEY = "bewerbungstool.syncMeta";
 const SYNC_PUSH_DEBOUNCE_MS = 2000;
 const SYNC_LOCK = "bewerbungstool.sync.profile";
-let _syncApplying = false;   // unterdrückt den Push-Trigger, während ein Pull lokal anwendet (kein Echo)
+let _syncApplying = 0;   // Tiefenzähler: unterdrückt den Push-Trigger, während ein Pull lokal anwendet (kein Echo). Zähler statt Bool, weil applyHistory jetzt über ein await läuft (Fable-Finding)
 let _syncPushTimer = null;
 let _syncLastSig = null;     // Signatur des zuletzt vermerkten profile+tier-Stands (Dedup)
 let _syncKidCache = { code: null, kid: null };
@@ -12908,7 +12910,7 @@ function setKidMismatch(v) {
 
 // Remote-Stand des Kinds `profile` lokal anwenden (LWW hat entschieden). Ohne Echo-Push.
 function applyProfileKind(remote) {
-  _syncApplying = true;
+  _syncApplying++;
   try {
     saveProfile(remote && remote.profile ? remote.profile : {}); // sanitized + persistiert + global `profile`
     const t = remote && remote.tier;
@@ -12916,7 +12918,7 @@ function applyProfileKind(remote) {
     setProfileUpdatedAt(Number(remote && remote.updatedAt) || 0);
     refreshProfileTierUIIfOpen();  // kann settings.tier normalisieren (beste→standard) …
     _syncLastSig = profileSig();   // … daher die Signatur DANACH festhalten (kein Echo-Push)
-  } finally { _syncApplying = false; }
+  } finally { _syncApplying--; }
 }
 function refreshProfileTierUIIfOpen() {
   if (typeof currentView === "function" && currentView() !== "view-settings") return;
@@ -13136,25 +13138,37 @@ function dedupeAttempts(list) {
   for (const at of (list || [])) {
     if (!at) continue;
     const k = at.id ? "id:" + at.id : "d:" + (at.date || 0); // Alt-Versuche ohne id über date
-    if (!seen.has(k)) seen.set(k, at);
-    else if (!seen.get(k).id && at.id) seen.set(k, at);
+    const ex = seen.get(k);
+    if (!ex) { seen.set(k, at); continue; }
+    // Kollision DETERMINISTISCH auflösen (nicht first-wins — sonst wählen zwei Geräte bei
+    // byte-verschiedenen Versuchen gleicher id unterschiedlich → Nicht-Konvergenz/Ping-Pong;
+    // Fable-Finding, erreichbar via Import-prozent-Normalisierung): id-tragende Version bevorzugen,
+    // sonst die JSON-kleinere.
+    const take = (!ex.id && at.id) ? true : (ex.id && !at.id) ? false : (JSON.stringify(canonKeys(at)) < JSON.stringify(canonKeys(ex)));
+    if (take) seen.set(k, at);
   }
   const arr = [...seen.values()];
   arr.sort((x, y) => (x.date || 0) - (y.date || 0) || cmpStr(String(x.id || ""), String(y.id || "")));
   return arr;
 }
-function jobAuthorityTs(j) { return Math.max(Number(j && j.updatedAt) || 0, jobRecency(j)); } // jüngere Metadaten-ODER Versuchszeit
+const jobMetaJson = (j) => JSON.stringify(canonKeys({ ...j, attempts: 0 })); // stabiler Metadaten-Fingerabdruck (attempts neutralisiert)
+// Job-Merge PRO ACHSE (kommutativ+idempotent), damit unterschiedliche Metadaten-Arten sich nicht
+// gegenseitig überschreiben (Fable-Findings): Versuche = Union; themenfelder = neuestes generatedAt
+// (teure/bezahlte Ableitung, nie per UI gelöscht); Cockpit status/gespraechAm = LWW über updatedAt
+// UND löschbar (ein bloßer Versuch auf dem anderen Gerät darf eine Cockpit-Änderung nicht kippen);
+// deskriptive Restfelder vom deterministisch bestimmten Rahmen-Gewinner (selten divergent).
 function mergeTwoJobs(a, b) {
   const attempts = dedupeAttempts([...(a.attempts || []), ...(b.attempts || [])]);
-  // Der Gewinner liefert die Metadaten GANZ (KEIN Feld-Union → auf einem Gerät gelöschte Felder
-  // bleiben gelöscht; Fable-Findings #1/#2). Autorität = jobAuthorityTs; bei Gleichstand
-  // deterministischer JSON-Tiebreak über die Metadaten (attempts neutralisiert) → beide Geräte
-  // wählen denselben Gewinner, sonst Split-Brain/Ping-Pong. mergeTwoJobs ist damit kommutativ.
-  const ta = jobAuthorityTs(a), tb = jobAuthorityTs(b);
-  let winner;
-  if (ta !== tb) winner = ta > tb ? a : b;
-  else winner = JSON.stringify(canonKeys({ ...a, attempts: 0 })) <= JSON.stringify(canonKeys({ ...b, attempts: 0 })) ? a : b;
-  return { ...winner, key: a.key, attempts };
+  const aa = Math.max(Number(a.updatedAt) || 0, jobRecency(a)), ab = Math.max(Number(b.updatedAt) || 0, jobRecency(b));
+  const base = aa !== ab ? (aa > ab ? a : b) : (jobMetaJson(a) <= jobMetaJson(b) ? a : b);
+  const out = { ...(base === a ? b : a), ...base, key: a.key, attempts }; // deskriptive Felder: Rahmen-Gewinner, Verlierer füllt Lücken (nie gelöscht → kein Resurrect-Problem)
+  const tfa = Number(a.themenfelder && a.themenfelder.generatedAt) || 0, tfb = Number(b.themenfelder && b.themenfelder.generatedAt) || 0;
+  if (tfa || tfb) out.themenfelder = (tfa !== tfb ? (tfa > tfb ? a : b) : (JSON.stringify(canonKeys(a.themenfelder)) <= JSON.stringify(canonKeys(b.themenfelder)) ? a : b)).themenfelder;
+  const ua = Number(a.updatedAt) || 0, ub = Number(b.updatedAt) || 0;
+  const cock = ua !== ub ? (ua > ub ? a : b) : base; // Cockpit-Autorität rein über updatedAt (nicht Versuchszeit)
+  for (const f of ["status", "gespraechAm"]) { if (f in cock) out[f] = cock[f]; else delete out[f]; }
+  const mu = Math.max(ua, ub); if (mu) out.updatedAt = mu; else delete out.updatedAt;
+  return out;
 }
 function mergeHistory(a, b) {
   const tombTs = new Map();
@@ -13175,6 +13189,10 @@ function mergeHistory(a, b) {
     if (j.urlKey) ts = Math.max(ts, tombTs.get("u:" + j.urlKey) || 0);
     const iKey = (typeof identityKeyOf === "function") ? identityKeyOf(j.titel, j.arbeitgeber, j.arbeitsort) : "";
     if (iKey) ts = Math.max(ts, tombTs.get("i:" + iKey) || 0); // auch die Identitäts-Tombstone greift
+    // Eine Bearbeitung/Wiederherstellung NACH der Löschung (updatedAt > ts) hebt den Tombstone auf
+    // (Edit/Restore-beats-Delete) — sonst räumt der Tombstone eine gerade importierte oder auf einem
+    // anderen Gerät wiederbelebte Stelle wieder weg (Fable-Finding: Import heilt sonst nur lokal).
+    if (ts && (Number(j.updatedAt) || 0) > ts) ts = 0;
     if (ts) j.attempts = j.attempts.filter(at => (at && at.date || 0) > ts); // Tombstone gewinnt über ältere; neuere überleben
     if (!j.attempts.length) byKey.delete(key);
   }
@@ -13186,7 +13204,7 @@ function mergeHistory(a, b) {
   return { jobs, deleted: dedupeTombstones(allDel.filter(t => t.ts >= cutoff)) };
 }
 async function applyHistory(merged) {
-  _syncApplying = true;
+  _syncApplying++;
   try {
     // Über mutateHistory (History-Lock „bewerbungstool.history") schreiben und dabei gegen den
     // FRISCH gelesenen Stand re-mergen — schließt das Cross-Tab-Fenster: ein parallel (in einem
@@ -13203,7 +13221,7 @@ async function applyHistory(merged) {
       if (v === "view-home" && typeof renderHome === "function") renderHome();
       else if (v === "view-history" && typeof renderHistory === "function") renderHistory();
     } catch { /* View-Refresh best-effort */ }
-  } finally { _syncApplying = false; }
+  } finally { _syncApplying--; }
 }
 
 // Kanonische Schlüsselordnung (rekursiv) → stabiler JSON-Vergleich, Grundlage für Determinismus/
@@ -13234,9 +13252,9 @@ function mergeDeck(a, b) {
   return canonKeys({ v: 1, cards });
 }
 function applyDeck(merged) {
-  _syncApplying = true;
+  _syncApplying++;
   try { saveSrDeck({ v: 1, cards: { ...(merged && merged.cards) } }); mergeState("deck").sig = JSON.stringify(MERGE_KINDS.deck.payload()); }
-  finally { _syncApplying = false; }
+  finally { _syncApplying--; }
 }
 
 // --- Kind `stats` = { v, byType:{typ:{runs,attempted,correct,bestStreak,lastPlayed}} }: pro Zähler MAX ---
@@ -13253,9 +13271,9 @@ function mergeStats(a, b) {
   return canonKeys({ v: 1, byType });
 }
 function applyStats(merged) {
-  _syncApplying = true;
+  _syncApplying++;
   try { saveUebenStats({ v: 1, byType: { ...(merged && merged.byType) } }); mergeState("stats").sig = JSON.stringify(MERGE_KINDS.stats.payload()); }
-  finally { _syncApplying = false; }
+  finally { _syncApplying--; }
 }
 
 const MERGE_KINDS = {
