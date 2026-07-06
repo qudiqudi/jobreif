@@ -484,6 +484,16 @@ button.linklike:active { transform: none; }
 }
 .sync-warn { color: var(--accent-text); }
 .sync-ok { color: var(--green); font-weight: 600; }
+.sync-devices { margin-top: 0.8rem; }
+.sync-devices-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+.sync-devices ul { list-style: none; margin: 0.25rem 0 0; padding: 0; }
+.sync-devices li { font-size: 0.85rem; padding: 0.12rem 0; color: var(--muted); }
+.sync-devices li strong { color: var(--text-strong); font-weight: 600; }
 .sync-actions { margin-top: 0.7rem; gap: 0.5rem; }
 .sync-err { color: var(--red); }
 .sync-offer { color: var(--accent-text); border: 1px solid var(--accent-text); border-radius: 8px; padding: 0.55rem 0.7rem; margin: 0 0 0.75rem; }

@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.35.0";
+const APP_VERSION = "1.36.0";
 
 const CHANGELOG = [
+  {
+    version: "1.36.0",
+    date: "06.07.2026",
+    items: [
+      "Die Geräte-Sync-Karte zeigt jetzt deine gekoppelten Geräte (z. B. „Android · Chrome – zuletzt aktiv heute“) – Ende-zu-Ende verschlüsselt wie der übrige Sync, wir können die Liste nicht lesen.",
+    ],
+  },
   {
     version: "1.35.0",
     date: "06.07.2026",
@@ -12725,8 +12732,11 @@ function renderSyncUI() {
   // beide beim Öffnen frisch aus dem aktuell gespeicherten Seed.
   const qrHost = $("sync-qr"); if (qrHost) qrHost.textContent = "";
   const codeHost = $("sync-code"); if (codeHost) codeHost.textContent = "";
-  // Sichtbarer Sync-Status: „Zuletzt synchronisiert"-Zeile + Ergebnis des letzten Abgleichs.
+  // Sichtbarer Sync-Status: „Zuletzt synchronisiert"-Zeile + Ergebnis des letzten Abgleichs
+  // + Geräteliste. touchSyncDevice ist ein Tages-No-op und hält den eigenen Eintrag frisch.
+  if (active) touchSyncDevice();
   renderSyncLastLine();
+  renderSyncDevices();
   const smsg = $("sync-status-msg");
   if (smsg) {
     smsg.textContent = _syncStatusMsg ? _syncStatusMsg.text : "";
@@ -12754,6 +12764,39 @@ function renderSyncLastLine() {
   const el = $("sync-last"); if (!el) return;
   const at = syncLastOkAt();
   el.textContent = at ? "Zuletzt synchronisiert: " + fmtSyncLast(at) + "." : "";
+}
+
+// Gekoppelte Geräte (E2E-Kind `devices`): dieses Gerät zuerst, dann nach zuletzt-aktiv. Labels
+// kommen aus dem entschlüsselten Blob (= von den eigenen anderen Geräten) → nur textContent.
+function fmtSyncDay(day) {
+  if (day === localDayStr()) return "heute";
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  if (day === localDayStr(y)) return "gestern";
+  const p = String(day).split("-");
+  return p.length === 3 ? "am " + p[2] + "." + p[1] + "." + p[0] : "";
+}
+function renderSyncDevices() {
+  const wrap = $("sync-devices"), list = $("sync-devices-list");
+  if (!wrap || !list) return;
+  const active = syncActive();
+  const reg = active ? devicesLocal().devices : {};
+  const ownId = active ? syncDeviceId() : null;
+  const ids = Object.keys(reg).sort((a, b) =>
+    (a === ownId ? -1 : b === ownId ? 1 : cmpStr(String((reg[b] || {}).lastSeen || ""), String((reg[a] || {}).lastSeen || "")) || cmpStr(a, b)));
+  list.textContent = "";
+  for (const id of ids) {
+    const e = sanitizeDeviceEntry(reg[id]); if (!e || e.gone) continue; // abgekoppelte nicht listen
+    const li = document.createElement("li");
+    const name = document.createElement("strong");
+    name.textContent = e.label;
+    li.appendChild(name);
+    const meta = document.createElement("span");
+    const when = fmtSyncDay(e.lastSeen);
+    meta.textContent = id === ownId ? " – dieses Gerät" : (when ? " – zuletzt aktiv " + when : "");
+    li.appendChild(meta);
+    list.appendChild(li);
+  }
+  wrap.classList.toggle("hidden", !list.childElementCount);
 }
 
 // Lazy-Load des QR-Encoders + Renderers (nur wenn eine Kopplungsansicht geöffnet wird). Der
@@ -12814,6 +12857,7 @@ function syncActivate() {
   // Insert-Basis (rev 0). updatedAt NICHT auf now setzen — sonst schlägt ein leeres, gerade
   // aktiviertes Gerät per LWW ein volles (Fable-Finding); der echte Stand steht in profileUpdatedAt.
   setProfileMeta({ rev: 0 });
+  touchSyncDevice(); // eigenen Geräteliste-Eintrag anlegen, bevor die Kinds initial hochgehen
   _syncStatusMsg = null;
   renderSyncUI();
   syncShowCouple();
@@ -12831,6 +12875,10 @@ function syncReset() {
   setKidMismatch(false);
   setProfileMeta({ rev: 0 });
   setProfileUpdatedAt(Date.now()); // explizites Überschreiben → dieser Stand gewinnt danach die LWW
+  // Geräteliste auf dieses Gerät eindampfen: die Altgeräte sind mit dem neuen Schlüssel
+  // abgekoppelt und sollen nicht als (scheinbar) gekoppelt weiterlaufen.
+  saveDevices({});
+  touchSyncDevice();
   _syncStatusMsg = null;
   renderSyncUI();
   syncShowCouple();
@@ -12855,6 +12903,7 @@ function syncJoinFromCode() {
   setKidMismatch(false);
   setProfileMeta({ rev: 0 }); // Server-rev unbekannt; syncPull setzt sie
   for (const name of Object.keys(MERGE_KINDS)) { setKindMeta(name, { rev: 0 }); mergeState(name).sig = null; }
+  touchSyncDevice(); // eigenen Eintrag anlegen — der folgende Pull merged ihn mit der Liste der anderen
   if (input) input.value = "";
   _syncStatusMsg = null;
   renderSyncUI();
@@ -12916,6 +12965,22 @@ async function syncDisableConfirmed() {
       return;
     }
   }
+  // Best-effort: dieses Gerät bei den anderen als abgekoppelt markieren (gone-Marker statt
+  // Löschung — Löschen propagiert bei Union-Merge nicht), solange der Schlüssel noch da ist.
+  // Scheitert still — rein kosmetisch (wer den Code kennt, könnte ohnehin weiter lesen; die
+  // UI-Fußnote erklärt das). Bei alsoServer überflüssig (die Blobs sind ohnehin gelöscht).
+  if (!alsoServer && syncEligible()) {
+    try {
+      const reg = devicesLocal().devices;
+      const own = reg[syncDeviceId()];
+      if (own && !own.gone) {
+        reg[syncDeviceId()] = { label: own.label || syncDeviceLabel(), lastSeen: localDayStr(), gone: true };
+        saveDevices(reg);
+        await pushMergeKind("devices");
+      }
+    } catch { /* kosmetisch */ }
+  }
+  localStorage.removeItem(SYNC_DEVICES_KEY); // lokale Geräteliste gehört zum Sync-Zustand
   if (window.SyncCrypto) window.SyncCrypto.clearStoredCode();
   localStorage.removeItem(SYNC_OWNER_KEY);
   localStorage.removeItem(SYNC_META_KEY); // rev/updatedAt (aller Kinds) vergessen → Re-Aktivieren startet frisch
@@ -13461,6 +13526,106 @@ function applyStats(merged) {
   finally { _syncApplying--; }
 }
 
+// --- Kind `devices` = { devices: { id → { label, lastSeen } } }: E2E-Geräteliste ---
+// Jedes Gerät schreibt (nur) seinen eigenen Eintrag: zufällige, lokale Geräte-Id + grobes
+// UA-Label ("Android · Chrome") + zuletzt-aktiv-TAG (bewusst tagesgrob: max. ein Push pro Tag,
+// kein Bewegungsprofil). Union über die Ids, je Gerät gewinnt der jüngere lastSeen (LWW).
+// Der Server sieht wie bei allen Kinds nur das Chiffrat.
+const SYNC_DEVICE_ID_KEY = "bewerbungstool.syncDeviceId";
+const SYNC_DEVICES_KEY = "bewerbungstool.syncDevices";
+function syncDeviceId() {
+  let id = localStorage.getItem(SYNC_DEVICE_ID_KEY);
+  if (!id || !/^[0-9a-f]{16}$/.test(id)) {
+    const b = new Uint8Array(8); crypto.getRandomValues(b);
+    id = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+    try { localStorage.setItem(SYNC_DEVICE_ID_KEY, id); } catch { /* voll/blockiert */ }
+  }
+  return id;
+}
+function syncDeviceLabel() {
+  const ua = navigator.userAgent || "";
+  const os = /Android/i.test(ua) ? "Android"
+    : /iPhone|iPod/i.test(ua) ? "iPhone"
+    : /iPad/i.test(ua) ? "iPad"
+    : /Windows/i.test(ua) ? "Windows"
+    : /Macintosh|Mac OS X/i.test(ua) ? "Mac"
+    : /CrOS/i.test(ua) ? "ChromeOS"
+    : /Linux/i.test(ua) ? "Linux" : "Gerät";
+  const br = /Edg\//.test(ua) ? "Edge"
+    : /OPR\//.test(ua) ? "Opera"
+    : /SamsungBrowser\//.test(ua) ? "Samsung Internet"
+    : /Firefox\//.test(ua) ? "Firefox"
+    : /Chrome\//.test(ua) ? "Chrome"
+    : /Safari\//.test(ua) ? "Safari" : "";
+  return br ? os + " · " + br : os;
+}
+function devicesLocal() {
+  try {
+    const d = JSON.parse(localStorage.getItem(SYNC_DEVICES_KEY));
+    return (d && typeof d === "object" && d.devices && typeof d.devices === "object") ? { devices: d.devices } : { devices: {} };
+  } catch { return { devices: {} }; }
+}
+function saveDevices(devices) { try { localStorage.setItem(SYNC_DEVICES_KEY, JSON.stringify({ v: 1, devices })); } catch { /* voll/blockiert */ } }
+function localDayStr(d = new Date()) {
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+function sanitizeDeviceEntry(e) {
+  if (!e || typeof e !== "object") return null;
+  const lastSeen = (typeof e.lastSeen === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.lastSeen)) ? e.lastSeen : "";
+  if (!lastSeen) return null;
+  const label = (typeof e.label === "string" && e.label.trim()) ? e.label.trim().slice(0, 60) : "Gerät";
+  // gone=true: Gerät hat sich beim Deaktivieren selbst ausgetragen. Als Marker (statt den
+  // Eintrag zu löschen) MUSS es bleiben: reines Löschen propagiert bei Union-Merge nicht —
+  // jedes andere Gerät würde den Eintrag beim nächsten Merge wieder einbringen.
+  return e.gone === true ? { label, lastSeen, gone: true } : { label, lastSeen };
+}
+function mergeDevices(a, b) {
+  const out = {};
+  for (const src of [a, b]) {
+    const devs = (src && src.devices) || {};
+    for (const id of Object.keys(devs)) {
+      if (!/^[0-9a-f]{8,32}$/.test(id)) continue; // fremde/verbogene Ids verwerfen
+      const e = sanitizeDeviceEntry(devs[id]); if (!e) continue;
+      const ex = out[id];
+      // LWW je Gerät über lastSeen; Gleichstand: aktiv schlägt gone (Re-Aktivieren am selben
+      // Tag gewinnt), danach deterministisch das Label (Konvergenz auf allen Geräten).
+      if (!ex
+        || cmpStr(e.lastSeen, ex.lastSeen) > 0
+        || (e.lastSeen === ex.lastSeen && !e.gone && !!ex.gone)
+        || (e.lastSeen === ex.lastSeen && !e.gone === !ex.gone && cmpStr(e.label, ex.label) > 0)) out[id] = e;
+    }
+  }
+  // Cap 20 Geräte (die ältesten fliegen), dann kanonische Id-Ordnung (stabile Signaturen)
+  const keep = Object.keys(out)
+    .map((id) => ({ id, e: out[id] }))
+    .sort((x, y) => cmpStr(y.e.lastSeen, x.e.lastSeen) || cmpStr(x.id, y.id))
+    .slice(0, 20)
+    .sort((x, y) => cmpStr(x.id, y.id));
+  const devices = {};
+  for (const k of keep) devices[k.id] = k.e;
+  return { devices };
+}
+function applyDevices(merged) {
+  _syncApplying++;
+  try { saveDevices({ ...((merged && merged.devices) || {}) }); mergeState("devices").sig = JSON.stringify(MERGE_KINDS.devices.payload()); }
+  finally { _syncApplying--; }
+  renderSyncDevices(); // Liste live nachziehen, falls die Einstellungen offen sind
+}
+// Eigenen Eintrag aktuell halten (Label + heutiger Tag). No-op, wenn schon aktuell — dadurch
+// beliebig oft aufrufbar (Startup, renderSyncUI) bei maximal EINEM Push pro Tag und Gerät.
+function touchSyncDevice() {
+  if (!syncActive()) return;
+  const reg = devicesLocal().devices;
+  const id = syncDeviceId();
+  const today = localDayStr();
+  const label = syncDeviceLabel();
+  const cur = reg[id];
+  if (cur && !cur.gone && cur.lastSeen === today && cur.label === label) return; // gone-Eintrag NICHT als aktuell werten (Re-Aktivieren muss ihn überschreiben)
+  reg[id] = { label, lastSeen: today };
+  saveDevices(reg);
+  noteMergeKindChange("devices");
+}
+
 const MERGE_KINDS = {
   history: {
     lock: "bewerbungstool.sync.history",
@@ -13482,6 +13647,13 @@ const MERGE_KINDS = {
     merge: (local, remote) => mergeStats(local, remote),
     apply: applyStats,
     isEmpty: (p) => !p || !p.byType || Object.keys(p.byType).length === 0,
+  },
+  devices: {
+    lock: "bewerbungstool.sync.devices",
+    payload: () => mergeDevices(devicesLocal(), devicesLocal()),
+    merge: (local, remote) => mergeDevices(local, remote),
+    apply: applyDevices,
+    isEmpty: (p) => !p || !p.devices || Object.keys(p.devices).length === 0,
   },
 };
 
@@ -13521,6 +13693,7 @@ consumeAuthRedirect().then(() => {
   // (LWW). No-op ohne Seed/Flag. Kam der Seed in DIESEM Load per QR-Scan, läuft der Pull mit
   // sichtbarem Kopplungs-Feedback (Meldung erscheint in der Sync-Karte); sonst still im
   // Hintergrund — lokal bleibt immer nutzbar.
+  if (syncEligible()) touchSyncDevice(); // eigener Geräteliste-Eintrag: Tages-No-op, max. 1 Push/Tag
   if (_syncScannedThisLoad && syncEligible()) syncPullWithFeedback("couple").catch(() => {});
   else syncPull().catch(() => {});
 });
