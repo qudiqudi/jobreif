@@ -291,6 +291,57 @@
         </div>
       </div>
 
+      <!-- GERÄTE-SYNC (nur gehostet + angemeldet + serverseitig freigeschaltet; renderSyncUI toggelt
+           #sync-card. E2E-verschlüsselt: der Schlüssel bleibt auf dem Gerät, der Server sieht nur
+           Chiffrate. QR-Encoder wird bei Bedarf lazy geladen (assets/vendor/qrcodegen.js). -->
+      <div id="sync-card" class="setting-card sync-card hidden">
+        <span class="cardlabel">Geräte-Sync</span>
+        <p class="hint">Dein Trainingsstand wird Ende-zu-Ende verschlüsselt über deine Geräte synchronisiert – auf unseren Servern liegen nur verschlüsselte Daten, den Schlüssel hast nur du. <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutz</a></p>
+
+        <!-- AUS: neu aktivieren ODER ein bereits aktives Gerät per Code koppeln -->
+        <div id="sync-off">
+          <!-- Gerät-B-Hinweis: erscheint, wenn auf dem Server (unter diesem Konto) schon Sync-Daten
+               liegen, dieses Gerät aber keinen Seed hat → zum Koppeln einladen statt neu zu aktivieren. -->
+          <p id="sync-couple-offer" class="hint sync-offer hidden">Auf einem anderen Gerät hast du Geräte-Sync bereits aktiviert. Kopple dieses Gerät mit dem Sync-Code (oder QR) des anderen Geräts, um deinen Trainingsstand zu übernehmen – oder aktiviere neu, um von vorn zu beginnen.</p>
+          <button id="sync-activate" type="button" class="primary">Aktivieren</button>
+          <details id="sync-join" class="setting-adv">
+            <summary>Schon auf einem anderen Gerät aktiv? Code eingeben</summary>
+            <label for="sync-code-input" class="visually-hidden">Sync-Code des anderen Geräts</label>
+            <input id="sync-code-input" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXXX">
+            <div class="row wrap">
+              <button id="sync-join-submit" type="button" class="ghost btn-compact">Gerät koppeln</button>
+            </div>
+            <p id="sync-join-err" class="hint sync-err hidden" role="alert"></p>
+          </details>
+        </div>
+
+        <!-- AN: Status + Kopplungsansicht (QR groß + Code) + Aktionen -->
+        <div id="sync-on" class="hidden">
+          <p class="hint"><strong>Sync ist auf diesem Gerät aktiv.</strong></p>
+          <p id="sync-mismatch-hint" class="hint sync-err hidden" role="alert">Auf dem Server liegen Daten, die mit einem anderen Schlüssel verschlüsselt sind. Kopple dieses Gerät mit dem Sync-Code des anderen Geräts (Sync deaktivieren, dann Code eingeben) – oder überschreibe den Server mit „Sync zurücksetzen".</p>
+          <div id="sync-couple" class="sync-couple hidden">
+            <div id="sync-qr" class="sync-qr" aria-hidden="true"></div>
+            <div class="sync-code-display"><code id="sync-code"></code></div>
+            <p class="hint">Auf dem anderen Gerät scannen oder den Code eingeben.</p>
+            <p class="hint sync-warn">Der Code ist dein Schlüssel. Wir können deine Daten nicht lesen – und auch nicht wiederherstellen, wenn du den Code und alle Geräte verlierst.</p>
+          </div>
+          <div class="row wrap sync-actions">
+            <button id="sync-show" type="button" class="primary btn-compact">Dieses Gerät koppeln</button>
+            <button id="sync-reset" type="button" class="ghost btn-compact">Sync zurücksetzen</button>
+            <button id="sync-disable" type="button" class="linklike">Sync deaktivieren</button>
+          </div>
+          <div id="sync-disable-confirm" class="sync-confirm hidden">
+            <p class="hint">Sync auf diesem Gerät deaktivieren? Dein lokaler Trainingsstand bleibt erhalten.</p>
+            <label><input type="checkbox" id="sync-delete-server"> Auch die verschlüsselten Daten auf dem Server löschen</label>
+            <div class="row wrap">
+              <button id="sync-disable-do" type="button" class="ghost btn-compact">Deaktivieren</button>
+              <button id="sync-disable-cancel" type="button" class="linklike">Abbrechen</button>
+            </div>
+            <p id="sync-disable-err" class="hint sync-err hidden" role="alert"></p>
+          </div>
+        </div>
+      </div>
+
       <!-- QUALITÄT neuer Tests (nur gehostet; updateSettingsProviderUI toggelt #row-tier) -->
       <div id="row-tier" class="setting-card">
         <span class="cardlabel">Qualität neuer Tests</span>
@@ -417,57 +468,6 @@
             <p class="hint"><a href="#" id="link-onboarding">Wie bekomme ich einen API-Schlüssel? Zur Schritt-für-Schritt-Anleitung</a></p>
           </div>
         </details>
-      </div>
-
-      <!-- GERÄTE-SYNC (nur gehostet + angemeldet + serverseitig freigeschaltet; renderSyncUI toggelt
-           #sync-card. E2E-verschlüsselt: der Schlüssel bleibt auf dem Gerät, der Server sieht nur
-           Chiffrate. QR-Encoder wird bei Bedarf lazy geladen (assets/vendor/qrcodegen.js). -->
-      <div id="sync-card" class="setting-card sync-card hidden">
-        <span class="cardlabel">Geräte-Sync</span>
-        <p class="hint">Dein Trainingsstand wird Ende-zu-Ende verschlüsselt über deine Geräte synchronisiert – auf unseren Servern liegen nur verschlüsselte Daten, den Schlüssel hast nur du. <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutz</a></p>
-
-        <!-- AUS: neu aktivieren ODER ein bereits aktives Gerät per Code koppeln -->
-        <div id="sync-off">
-          <!-- Gerät-B-Hinweis: erscheint, wenn auf dem Server (unter diesem Konto) schon Sync-Daten
-               liegen, dieses Gerät aber keinen Seed hat → zum Koppeln einladen statt neu zu aktivieren. -->
-          <p id="sync-couple-offer" class="hint sync-offer hidden">Auf einem anderen Gerät hast du Geräte-Sync bereits aktiviert. Kopple dieses Gerät mit dem Sync-Code (oder QR) des anderen Geräts, um deinen Trainingsstand zu übernehmen – oder aktiviere neu, um von vorn zu beginnen.</p>
-          <button id="sync-activate" type="button" class="primary">Aktivieren</button>
-          <details id="sync-join" class="setting-adv">
-            <summary>Schon auf einem anderen Gerät aktiv? Code eingeben</summary>
-            <label for="sync-code-input" class="visually-hidden">Sync-Code des anderen Geräts</label>
-            <input id="sync-code-input" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXXX">
-            <div class="row wrap">
-              <button id="sync-join-submit" type="button" class="ghost btn-compact">Gerät koppeln</button>
-            </div>
-            <p id="sync-join-err" class="hint sync-err hidden" role="alert"></p>
-          </details>
-        </div>
-
-        <!-- AN: Status + Kopplungsansicht (QR groß + Code) + Aktionen -->
-        <div id="sync-on" class="hidden">
-          <p class="hint"><strong>Sync ist auf diesem Gerät aktiv.</strong></p>
-          <p id="sync-mismatch-hint" class="hint sync-err hidden" role="alert">Auf dem Server liegen Daten, die mit einem anderen Schlüssel verschlüsselt sind. Kopple dieses Gerät mit dem Sync-Code des anderen Geräts (Sync deaktivieren, dann Code eingeben) – oder überschreibe den Server mit „Sync zurücksetzen".</p>
-          <div id="sync-couple" class="sync-couple hidden">
-            <div id="sync-qr" class="sync-qr" aria-hidden="true"></div>
-            <div class="sync-code-display"><code id="sync-code"></code></div>
-            <p class="hint">Auf dem anderen Gerät scannen oder den Code eingeben.</p>
-            <p class="hint sync-warn">Der Code ist dein Schlüssel. Wir können deine Daten nicht lesen – und auch nicht wiederherstellen, wenn du den Code und alle Geräte verlierst.</p>
-          </div>
-          <div class="row wrap sync-actions">
-            <button id="sync-show" type="button" class="primary btn-compact">Dieses Gerät koppeln</button>
-            <button id="sync-reset" type="button" class="ghost btn-compact">Sync zurücksetzen</button>
-            <button id="sync-disable" type="button" class="linklike">Sync deaktivieren</button>
-          </div>
-          <div id="sync-disable-confirm" class="sync-confirm hidden">
-            <p class="hint">Sync auf diesem Gerät deaktivieren? Dein lokaler Trainingsstand bleibt erhalten.</p>
-            <label><input type="checkbox" id="sync-delete-server"> Auch die verschlüsselten Daten auf dem Server löschen</label>
-            <div class="row wrap">
-              <button id="sync-disable-do" type="button" class="ghost btn-compact">Deaktivieren</button>
-              <button id="sync-disable-cancel" type="button" class="linklike">Abbrechen</button>
-            </div>
-            <p id="sync-disable-err" class="hint sync-err hidden" role="alert"></p>
-          </div>
-        </div>
       </div>
 
       <!-- DATEN sichern und übertragen -->

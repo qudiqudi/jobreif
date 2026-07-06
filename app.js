@@ -11,7 +11,7 @@ const CHANGELOG = [
     version: "1.34.2",
     date: "06.07.2026",
     items: [
-      "Einstellungen aufgeräumt: Geräte-Sync steht jetzt direkt bei „Deine Daten“, und „Konto löschen“ findest du – wie gewohnt bei Apps – ganz unten am Ende der Seite.",
+      "Einstellungen aufgeräumt: Geräte-Sync steht jetzt direkt bei deinem Konto und Guthaben, und „Konto löschen“ findest du – wie bei Apps üblich – ganz unten am Ende der Seite.",
     ],
   },
   {
