@@ -2731,8 +2731,8 @@ function clearAuthToken() {
 // → der Hinweis verschwindet beim naechsten Balance-Refresh.
 let creditsState = { credits: null, creditsEnabled: false, opusTestCredits: null, freeRemaining: null, firstTopupBonus: null, loaded: false, dirty: false };
 
-// Geräte-Sync-Signal (aus /auth/me: syncEnabled = Server-Flag SYNC_ENABLED). Gated die
-// Geräte-Sync-Karte, entkoppelt so den Client-Deploy vom Flag-Flip (Flag aus → Karte aus).
+// Geräte-Sync-Signal (aus /auth/me: syncEnabled, serverseitig gesteuert). Gated die
+// Geräte-Sync-Karte, entkoppelt so den Client-Deploy von der serverseitigen Freischaltung.
 // Früh deklariert (kein TDZ), falls renderAccountSection vor dem Sync-Block läuft.
 let syncEnabled = false;
 // Der Sync-Seed ist der E2E-Schlüssel und wird an das Konto gebunden, unter dem er aktiviert
@@ -3518,7 +3518,7 @@ let _ledgerOldest = null; // created_at des aeltesten gerenderten Eintrags (Fall
 // Server-gelieferter next-Cursor (before + beforeId): created_at hat Sekunden-Aufloesung,
 // mehrere Buchungen koennen denselben Timestamp tragen (z. B. Aufladung + Startbonus) — der
 // Tupel-Cursor verhindert, dass beim Blaettern gleich-sekuendige Eintraege verloren gehen
-// (Codex-Finding, Server-Haelfte in jobreif-backend#88). Fehlt next (aelteres Backend),
+// (die zugehörige Server-Hälfte liefert den Cursor). Fehlt next (aelteres Backend),
 // greift der reine Zeit-Fallback ueber _ledgerOldest.
 let _ledgerNext = null;
 
