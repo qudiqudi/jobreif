@@ -484,6 +484,11 @@ button.linklike:active { transform: none; }
 }
 .sync-warn { color: var(--accent-text); }
 .sync-ok { color: var(--green); font-weight: 600; }
+.sync-devices { margin-top: 0.8rem; }
+/* Label teilt die Optik mit .topup-label (siehe dort) — eine Regel, keine Drift. */
+.sync-devices ul { list-style: none; margin: 0.25rem 0 0; padding: 0; }
+.sync-devices li { font-size: 0.85rem; padding: 0.12rem 0; color: var(--muted); }
+.sync-devices li strong { color: var(--text-strong); font-weight: 600; }
 .sync-actions { margin-top: 0.7rem; gap: 0.5rem; }
 .sync-err { color: var(--red); }
 .sync-offer { color: var(--accent-text); border: 1px solid var(--accent-text); border-radius: 8px; padding: 0.55rem 0.7rem; margin: 0 0 0.75rem; }
@@ -518,13 +523,15 @@ button.linklike:active { transform: none; }
 #account-balance .hint { display: block; font-size: 0.76rem; margin-top: 0.3rem; }
 
 .topup-block { margin-top: 1rem; }
-.topup-label {
+.topup-label,
+.sync-devices-label {
   display: block;
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-strong);
   margin-bottom: 0.45rem;
 }
+.sync-devices-label { margin-bottom: 0; }
 .topup-packs { display: flex; gap: 0.5rem; }
 button.btn-topup.pack {
   flex: 1;

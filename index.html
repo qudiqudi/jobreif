@@ -327,6 +327,14 @@
             <p class="hint">Auf dem anderen Gerät scannen oder den Code eingeben.</p>
             <p class="hint sync-warn">Der Code ist dein Schlüssel. Wir können deine Daten nicht lesen – und auch nicht wiederherstellen, wenn du den Code und alle Geräte verlierst.</p>
           </div>
+          <!-- Gekoppelte Geräte (E2E-Kind `devices`; renderSyncDevices füllt die Liste). Die
+               Fußnote ist bewusst ehrlich: Einträge sind informativ, echtes Aussperren geht nur
+               über „Sync zurücksetzen" (neuer Schlüssel). -->
+          <div id="sync-devices" class="sync-devices hidden">
+            <span class="sync-devices-label">Gekoppelte Geräte</span>
+            <ul id="sync-devices-list"></ul>
+            <p class="hint">Geräte, die mit deinem Sync-Code aktiv waren. Einzeln entfernen lässt sich ein Gerät nicht – wer den Code kennt, kann weiter mitlesen. Um ein Gerät wirklich auszuschließen: „Sync zurücksetzen“ und die übrigen Geräte neu koppeln.</p>
+          </div>
           <div class="row wrap sync-actions">
             <button id="sync-show" type="button" class="primary btn-compact">Dieses Gerät koppeln</button>
             <button id="sync-now" type="button" class="ghost btn-compact">Jetzt synchronisieren</button>
