@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.34.1";
+const APP_VERSION = "1.34.2";
 
 const CHANGELOG = [
+  {
+    version: "1.34.2",
+    date: "06.07.2026",
+    items: [
+      "Einstellungen aufgeräumt: Geräte-Sync steht jetzt direkt bei deinem Konto und Guthaben, und „Konto löschen“ findest du – wie bei Apps üblich – ganz unten am Ende der Seite.",
+    ],
+  },
   {
     version: "1.34.1",
     date: "06.07.2026",
@@ -10561,10 +10568,17 @@ function updateSettingsProviderUI() {
   const provider = $("provider").value;
   const isLocal = provider === "local";
   const isHosted = provider === "hosted";
-  // Hosted: kein Key, kein Modell-/Lokal-Block; stattdessen die Qualitaetsstufe.
-  $("row-tier").classList.toggle("hidden", !isHosted);
-  // Konto nur im Hosted-Modus (Auth gehoert zum gehosteten Dienst).
-  $("row-account").classList.toggle("hidden", !isHosted);
+  // Hosted-only-Bereiche: Qualitaetsstufe, Konto/Guthaben und die Loesch-Zone am Seitenende
+  // haengen am selben Gate — EINE Liste statt verstreuter Einzel-Toggles, damit die naechste
+  // hosted-only-Karte hier nicht vergessen wird (diese Bugklasse gab es schon: sync-card,
+  // siehe Kommentar unten). Null-tolerant, weil im Deploy-Fenster altes HTML ohne eine der
+  // Ids mit neuem JS zusammentreffen kann (unversioniertes app.js + HTTP-Cache).
+  // Das Angemeldet-Gate toggelt renderAccountSection weiterhin auf #account-danger —
+  // beide Bedingungen bleiben UND-verknuepft (#row-danger = Hosted, #account-danger = angemeldet).
+  for (const id of ["row-tier", "row-account", "row-danger"]) {
+    const el = $(id);
+    if (el) el.classList.toggle("hidden", !isHosted);
+  }
   $("row-model").classList.toggle("hidden", isHosted);
   $("model-desc").classList.toggle("hidden", isHosted);
   $("row-api-key").classList.toggle("hidden", isLocal || isHosted);
