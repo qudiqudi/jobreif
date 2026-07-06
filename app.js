@@ -5141,7 +5141,9 @@ async function saveThemenfelder(job, derived, level) {
       return false;
     }
     target.themenfelder = themenfelder;
-    target.updatedAt = Date.now(); // Metadaten-Änderung datieren → Ordnungs-Autorität für den Sync-Merge (F3)
+    // KEIN updatedAt-Stempel: themenfelder mergt im Sync über sein eigenes generatedAt (per-Achse).
+    // updatedAt bleibt so eine saubere NUR-Cockpit-Autorität (sonst würde eine Themenfelder-Ableitung
+    // eine Cockpit-Änderung via LWW verdrängen und die Cockpit-Achse wäre nicht assoziativ).
   });
   job.themenfelder = themenfelder;
   return themenfelder;
@@ -13153,6 +13155,11 @@ function dedupeAttempts(list) {
 }
 const HANDLED_JOB_FIELDS = new Set(["attempts", "themenfelder", "status", "gespraechAm", "updatedAt", "key"]);
 const cockKey = (j) => JSON.stringify([j.status === undefined ? null : j.status, j.gespraechAm === undefined ? null : j.gespraechAm]);
+// Deskriptive Felder haben KEINEN eigenen Zeitstempel (rein aus der Anzeige abgeleitet, kein
+// „letzter Edit"). Auflösung updatedAt-UNABHÄNGIG (sonst nicht assoziativ, weil updatedAt beim
+// Merge auf max promotet wird): truthy schlägt falsy (leerer Titel verliert gegen echten), dann
+// JSON-kleinerer Wert. Extremum über eine totale Ordnung ⇒ assoziativ+kommutativ+idempotent.
+const pickDesc = (x, y) => { const tx = x ? 1 : 0, ty = y ? 1 : 0; if (tx !== ty) return tx > ty ? x : y; return JSON.stringify(canonKeys(x)) <= JSON.stringify(canonKeys(y)) ? x : y; };
 // Job-Merge PRO ACHSE — jede Achse ein deterministischer Verband (kommutativ + idempotent +
 // ASSOZIATIV), damit unterschiedliche Metadaten-Arten sich nicht gegenseitig überschreiben und
 // nichts flackert (Fable-Findings):
@@ -13172,9 +13179,8 @@ function mergeTwoJobs(a, b) {
   for (const f of [...new Set([...Object.keys(a), ...Object.keys(b)])].filter((k) => !HANDLED_JOB_FIELDS.has(k)).sort(cmpStr)) {
     const va = a[f], vb = b[f];
     if (va === undefined) out[f] = vb;
-    else if (vb === undefined) out[f] = va;
-    else if (ua !== ub) out[f] = ua > ub ? va : vb;
-    else out[f] = JSON.stringify(canonKeys(va)) <= JSON.stringify(canonKeys(vb)) ? va : vb;
+    else if (vb === undefined) out[f] = va; // vorhanden schlägt fehlend (Lücke füllen, kein Datenverlust)
+    else out[f] = pickDesc(va, vb);          // beide vorhanden: updatedAt-unabhängig → assoziativ
   }
   out.key = a.key;
   out.attempts = attempts;
