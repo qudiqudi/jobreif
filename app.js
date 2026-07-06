@@ -1367,7 +1367,9 @@ const LOADING_TIPS = [
   "Wusstest du? In der Historie kannst du alte Versuche jederzeit noch einmal durchsehen – ohne dass neu bewertet wird.",
 ];
 const LOADING_TIP_DELAY_S = 7;   // erst nach dieser Wartezeit den ersten Tipp zeigen
-const LOADING_TIP_ROTATE_S = 8;  // danach im Abstand weiterrotieren
+const LOADING_TIP_ROTATE_S = 20; // danach im Abstand weiterrotieren (8 s war zu hektisch zum
+                                 // Lesen — User-Feedback 2026-07-06; bei ~1-2 min Generierung
+                                 // sieht man so immer noch 3-6 verschiedene Tipps)
 
 // Tipp-Zeile setzen bzw. mit null wieder ausblenden. Defensiv (Element kann in
 // eingebetteten/alten Markup-Staenden fehlen); Text nur bei Aenderung schreiben.
