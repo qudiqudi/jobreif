@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.36.0";
+const APP_VERSION = "1.36.1";
 
 const CHANGELOG = [
+  {
+    version: "1.36.1",
+    date: "06.07.2026",
+    items: [
+      "Bezahlte Opus-Tests: Das inklusive Auswerten und Vertiefen gilt jetzt zuverlässig 7 Tage nach der Erstellung (vorher konnte es durch eine zu kurze serverseitige Frist schon nach einer Stunde verfallen). Und falls es doch einmal abgelaufen ist, bietet die App an, deine Antworten kostenlos in Standard-Qualität auszuwerten, statt dich mit einer Fehlermeldung stehen zu lassen.",
+    ],
+  },
   {
     version: "1.36.0",
     date: "06.07.2026",
@@ -3947,7 +3954,7 @@ function hostedErrorMessage(status, code) {
         return "Dein Guthaben reicht für diesen Test nicht aus. Du kannst in den Einstellungen aufladen.";
       case "needs-paid-test":
       case "no-entitlement":
-        return "Auswerten und Vertiefen in bester Qualität (Opus) gehören zu einem in Opus erstellten Test. Bitte erstelle den Test zuerst in bester Qualität.";
+        return "Auswerten und Vertiefen in bester Qualität (Opus) sind nur bei einem in Opus erstellten Test inklusive – und dort bis 7 Tage nach der Erstellung.";
       // tier-locked u. a.: Stufe im kostenlosen Modus gesperrt (tritt bei ausgeblendeter
       // Opus-Option normal nicht auf — defensiv).
       default:
@@ -3984,7 +3991,11 @@ async function callHosted(hosted, onProgress, opts = {}) {
     throw new Error("Interner Fehler: Hosted-Aufruf ohne Aktion.");
   }
   requireHostedLoginOrThrow(); // Backstop: Anmeldung Pflicht
-  const tier = tierForHostedCall(hosted.payload);
+  // tierOverride: expliziter Stufen-Wunsch des Aufrufers (Rettungsnetz "in Standard auswerten",
+  // wenn das Opus-Inklusiv-Entitlement abgelaufen ist) — sonst die normale Provenienz-Logik.
+  const tier = (typeof hosted.tierOverride === "string" && hosted.tierOverride)
+    ? hosted.tierOverride
+    : tierForHostedCall(hosted.payload);
   const body = JSON.stringify({ ...hosted.payload, tier });
   const headers = { "Content-Type": "application/json", ...authHeaders() };
   // cData an genau diesen Body binden (Hash des exakt gesendeten Strings).
@@ -4005,7 +4016,15 @@ async function callHosted(hosted, onProgress, opts = {}) {
   }
 
   if (res.status === 401) { handleHostedUnauthorized(); throw new Error(LOGIN_REDIRECT); }
-  if (!res.ok) throw new Error(hostedErrorMessage(res.status, await hostedErrorCode(res)));
+  if (!res.ok) {
+    // Fehlercode strukturiert mitgeben (additiv): der Auswerten-Pfad unterscheidet daran
+    // das abgelaufene Opus-Inklusiv-Entitlement (Rettungsnetz) von sonstigen Fehlern.
+    const code = await hostedErrorCode(res);
+    const err = new Error(hostedErrorMessage(res.status, code));
+    err.hostedStatus = res.status;
+    err.hostedCode = code;
+    throw err;
+  }
 
   let finishReason = null;
   const text = await readSSEText(
@@ -6951,12 +6970,13 @@ async function evaluateQuiz() {
   runEvaluation();
 }
 
-async function runEvaluation() {
+async function runEvaluation(opts = {}) {
   if (actionRunning) return;
   stopTimer();
   $("timeout-modal").classList.add("hidden");
   const durationMs = Date.now() - startTime;
 
+  let entitlementLapse = false; // abgelaufenes Opus-Inklusiv-Auswerten → Rettungsnetz nach dem finally
   actionRunning = true;
   showLoading("Antworten werden ausgewertet...");
   try {
@@ -7103,7 +7123,7 @@ async function runEvaluation() {
         setLoadingProgress(seen, total, seen > 0
           ? `Antwort ${Math.min(seen, total)} von ${total} wird bewertet...`
           : "Antworten werden ausgewertet...");
-      }, { hosted: { action: "evaluate", payload: evalHostedPayload } });
+      }, { hosted: { action: "evaluate", payload: evalHostedPayload, ...(opts.fallbackTier ? { tierOverride: opts.fallbackTier } : {}) } });
       evalCost = cost;
       evalTokens = tokens;
       // Form absichern, bevor gespeichert/gerendert wird: ohne striktes Schema
@@ -7185,12 +7205,51 @@ async function runEvaluation() {
     }
     showView("view-result");
   } catch (e) {
-    showError(e.message);
+    // Abgelaufenes Opus-Inklusiv-Auswerten (Entitlement serverseitig nach seiner TTL geraeumt):
+    // NICHT in der Sackgassen-Meldung enden — die Antworten liegen vollstaendig lokal, eine
+    // kostenlose Standard-Auswertung ist jederzeit moeglich. Angebot NACH dem finally (der
+    // Retry laeuft erneut durch runEvaluation und braucht actionRunning=false).
+    if (!opts.fallbackTier
+      && e && (e.hostedCode === "no-entitlement" || e.hostedCode === "needs-paid-test")
+      && quiz && quiz.provenance && quiz.provenance.tier === "beste") {
+      entitlementLapse = true;
+    } else {
+      showError(e.message);
+    }
   } finally {
     actionRunning = false;
     hideLoading();
   }
+  if (entitlementLapse && (await openEvalFallbackConfirm())) {
+    return runEvaluation({ fallbackTier: "standard" });
+  }
 }
+
+// Rettungsnetz-Dialog: Opus-Inklusiv-Auswerten abgelaufen → kostenlose Standard-Auswertung
+// anbieten. Nutzt das consent-sheet-Layout; loest mit true (auswerten) oder false (abbrechen).
+let _evalFallbackResolve = null;
+let _evalFallbackReturnFocus = null; // Fokus-Rueckgabe beim Schliessen (Muster overflowConfirmReturnFocus)
+function openEvalFallbackConfirm() {
+  const modal = $("evalfallback-modal");
+  if (!modal) return Promise.resolve(false);
+  _evalFallbackReturnFocus = document.activeElement;
+  modal.classList.remove("hidden");
+  const btn = $("evalfallback-confirm");
+  if (btn) btn.focus();
+  return new Promise((resolve) => { _evalFallbackResolve = resolve; });
+}
+(function initEvalFallbackModal() {
+  const close = (v) => {
+    const m = $("evalfallback-modal"); if (m) m.classList.add("hidden");
+    const r = _evalFallbackResolve; _evalFallbackResolve = null;
+    const rf = _evalFallbackReturnFocus; _evalFallbackReturnFocus = null;
+    if (rf && typeof rf.focus === "function" && document.contains(rf)) { try { rf.focus(); } catch { /* egal */ } }
+    if (r) r(v);
+  };
+  const on = (id, v) => { const el = $(id); if (el) el.addEventListener("click", () => close(v)); };
+  on("evalfallback-confirm", true);
+  on("evalfallback-cancel", false);
+})();
 
 // Score-Ring (SVG) in #result-score zeichnen. Liest defensiv: Prozent ist
 // immer vorhanden; die Punkte-Unterzeile wird nur gezeigt, wenn ergebnisse da
