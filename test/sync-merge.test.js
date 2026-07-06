@@ -132,5 +132,66 @@ assert(absorb === 0, `Absorption (${absorb})`);
 assert(loss === 0, `kein Datenverlust deskriptiver Felder (${loss})`);
 assert(keyord === 0, `deterministische Feldreihenfolge (${keyord})`);
 
+// --- Kind `devices`: ts-LWW + gone-Marker (Fable-Review-Findings der Geräteliste) ---
+// Die Konflikt-Uhr MUSS das ms-ts sein, nicht der tagesgrobe lastSeen — sonst gewinnt der
+// morgendliche Aktiv-Stempel gegen ein Abkoppeln am selben Tag und der gone-Marker
+// propagiert nie. Diese Tests verankern genau das.
+{
+  const devSandbox = {};
+  vm.createContext(devSandbox);
+  vm.runInContext([
+    constLine("cmpStr"), funcSrc("dateInputToTs"),
+    funcSrc("sanitizeDeviceEntry"), funcSrc("mergeDevices"),
+    "globalThis.__d = { mergeDevices, sanitizeDeviceEntry };",
+  ].join("\n"), devSandbox);
+  const { mergeDevices, sanitizeDeviceEntry } = devSandbox.__d;
+  const dj = (x) => JSON.stringify(x);
+  const A = "aaaaaaaaaaaaaaaa", B = "bbbbbbbbbbbbbbbb";
+
+  // gone (spaeteres Ereignis am selben Tag) schlaegt aktiv — in beide Merge-Richtungen
+  const act = { devices: { [A]: { label: "Linux · Chrome", lastSeen: "2026-07-06", ts: 1000 } } };
+  const gone = { devices: { [A]: { label: "Linux · Chrome", lastSeen: "2026-07-06", ts: 2000, gone: true } } };
+  assert(mergeDevices(act, gone).devices[A].gone === true, "devices: gone-Marker gewinnt per ts (a,b)");
+  assert(mergeDevices(gone, act).devices[A].gone === true, "devices: gone-Marker gewinnt per ts (b,a)");
+  // Re-Aktivieren (noch spaeteres Ereignis) gewinnt wieder
+  const reAct = { devices: { [A]: { label: "Linux · Chrome", lastSeen: "2026-07-06", ts: 3000 } } };
+  assert(!mergeDevices(gone, reAct).devices[A].gone, "devices: Re-Aktivieren schlaegt gone");
+  // exakter ts-Gleichstand: gone gewinnt (deterministisch, bewusstere Aussage)
+  const actSame = { devices: { [A]: { label: "Linux · Chrome", lastSeen: "2026-07-06", ts: 2000 } } };
+  assert(mergeDevices(actSame, gone).devices[A].gone === true, "devices: ts-Tie → gone");
+  assert(dj(mergeDevices(actSame, gone)) === dj(mergeDevices(gone, actSame)), "devices: Tie kommutativ");
+  // Union + Sanitizing: invalide Id/ungueltiges Datum fliegen, fehlendes ts wird aus lastSeen abgeleitet
+  const u = mergeDevices(
+    { devices: { [A]: { label: "X", lastSeen: "2026-07-01" } } },
+    { devices: { [B]: { label: "Y", lastSeen: "2026-07-02", ts: 5 }, "BAD!": { label: "Z", lastSeen: "2026-07-02" }, cccccccccccccccc: { label: "W", lastSeen: "2026-99-99" } } }
+  );
+  assert(Object.keys(u.devices).sort().join(",") === [A, B].join(","), "devices: Union + Verwerfen invalider Eintraege");
+  assert(typeof u.devices[A].ts === "number" && u.devices[A].ts > 0, "devices: ts-Fallback aus lastSeen");
+  assert(sanitizeDeviceEntry({ label: "L", lastSeen: "2026-99-99" }) === null, "devices: unmoegliches Datum abgewiesen");
+  // Lattice-Eigenschaften (Zufall)
+  const rndDev = (rnd) => {
+    const ids = [A, B, "cccccccccccccccc"], out = {};
+    for (const id of ids) if (rnd() < 0.7) out[id] = {
+      label: rnd() < 0.5 ? "L1" : "L2",
+      lastSeen: rnd() < 0.5 ? "2026-07-05" : "2026-07-06",
+      ts: Math.floor(rnd() * 5) * 1000,
+      ...(rnd() < 0.3 ? { gone: true } : {}),
+    };
+    return { devices: out };
+  };
+  let seed = 42; const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  let dcomm = 0, didem = 0, dassoc = 0;
+  for (let t = 0; t < 20000; t++) {
+    const a = rndDev(rnd), b = rndDev(rnd), c = rndDev(rnd);
+    const ab = mergeDevices(a, b);
+    if (dj(ab) !== dj(mergeDevices(b, a))) dcomm++;
+    if (dj(mergeDevices(ab, ab)) !== dj(ab)) didem++;
+    if (dj(mergeDevices(a, mergeDevices(b, c))) !== dj(mergeDevices(ab, c))) dassoc++;
+  }
+  assert(dcomm === 0, `devices: kommutativ (${dcomm})`);
+  assert(didem === 0, `devices: idempotent (${didem})`);
+  assert(dassoc === 0, `devices: assoziativ (${dassoc})`);
+}
+
 if (failures) { console.error(`\n${failures} FEHLER`); process.exit(1); }
 console.log("\nsync-merge.test.js OK");

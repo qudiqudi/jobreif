@@ -2768,6 +2768,7 @@ let syncEnabled = false;
 let _syncStatusMsg = null;        // { warn: bool, text: string } | null — renderSyncUI zeigt sie
 let _syncKidMismatch = false;     // von setKidMismatch gepflegt (DOM-Hinweis + Logik-Spiegel)
 let _syncScannedThisLoad = false; // QR-Seed in DIESEM Load übernommen → Feedback nach dem Start-Pull
+let _syncOpBusy = false;          // Re-Entranz-Guard für Deaktivieren/Zurücksetzen (enthalten awaits)
 // Der Sync-Seed ist der E2E-Schlüssel und wird an das Konto gebunden, unter dem er aktiviert
 // wurde: auf einem geteilten Browser darf ein zweiter Nutzer NICHT den Schlüssel/QR des ersten
 // sehen (Codex-Finding). syncUserId = aktuell angemeldete user.id (aus /auth/me); der Besitzer
@@ -10705,6 +10706,7 @@ async function deleteAccountFlow() {
     if (window.SyncCrypto && window.SyncCrypto.clearStoredCode) window.SyncCrypto.clearStoredCode();
     localStorage.removeItem(SYNC_OWNER_KEY);
     localStorage.removeItem(SYNC_META_KEY);
+    clearSyncDevices(); // Geräteliste gehört zum (gelöschten) Sync-Kreis
   } catch { /* Sync evtl. nicht geladen */ }
   if (input) input.value = "";
   $("account-msg").textContent = "Dein Konto wurde gelöscht. Dein lokaler Stand auf diesem Gerät bleibt erhalten.";
@@ -10743,6 +10745,7 @@ async function renderAccountSection() {
     renderCreditsUI();
     syncEnabled = false;
     syncUserId = null; // abgemeldet: kein Konto → Karte aus (Seed bleibt lokal, an Besitzer gebunden)
+    _syncStatusMsg = null; // Abgleich-Meldung gehört zur Sitzung
     resetSyncRemoteOffer(); // Kontowechsel: das Gerät-B-Angebot beim nächsten Login neu prüfen
     renderSyncUI();
     // Loesch-Karte verbergen + einklappen + Eingabe/Fehler zuruecksetzen.
@@ -12672,6 +12675,10 @@ function reconcileSyncOwner() {
   if (syncUserId && owner !== syncUserId) {
     window.SyncCrypto.clearStoredCode();
     localStorage.removeItem(SYNC_OWNER_KEY);
+    // Geräteliste des Vor-Nutzers mit verwerfen: sonst sähe der neue Nutzer sie in den
+    // Einstellungen und würde sie beim eigenen Aktivieren sogar in SEIN Konto hochpushen
+    // (geteilter Browser; Fable-Review-Finding).
+    clearSyncDevices();
   }
 }
 
@@ -12716,7 +12723,11 @@ function renderSyncUI() {
   const hosted = (providerEl ? providerEl.value : (settings.provider || "hosted")) === "hosted";
   const show = hosted && !!settings.authToken && syncEnabled && !!window.SyncCrypto;
   card.classList.toggle("hidden", !show);
-  if (!show) { _syncStatusMsg = null; return; } // Karte weg (Logout/BYOK) → Abgleich-Meldung verwerfen
+  // Meldung hier NICHT verwerfen: show ist beim App-Start bis zur /auth/me-Antwort false
+  // (syncEnabled kommt vom Server) — das QR-Kopplungs-Feedback würde sonst im Rennen verloren
+  // gehen (Fable-Review-Finding). Verworfen wird sie bei Logout (showLoggedOut) und den
+  // Sync-Lifecycle-Übergängen.
+  if (!show) return;
   const active = syncActive();
   const off = $("sync-off"), on = $("sync-on");
   if (off) off.classList.toggle("hidden", active);
@@ -12735,6 +12746,14 @@ function renderSyncUI() {
   // Sichtbarer Sync-Status: „Zuletzt synchronisiert"-Zeile + Ergebnis des letzten Abgleichs
   // + Geräteliste. touchSyncDevice ist ein Tages-No-op und hält den eigenen Eintrag frisch.
   if (active) touchSyncDevice();
+  renderSyncStatus();
+}
+
+// NUR die Statuselemente (Zeile/Meldung/Geräteliste) — bewusst getrennt von renderSyncUI:
+// das volle Re-Render klappt die Kopplungsansicht ein und wischt den QR (Schlüssel-Hygiene).
+// Ein Abgleich-Ergebnis darf einem Nutzer, der gerade den QR zum Scannen hochhält, nicht die
+// Ansicht schließen (Fable-Review-Finding).
+function renderSyncStatus() {
   renderSyncLastLine();
   renderSyncDevices();
   const smsg = $("sync-status-msg");
@@ -12752,13 +12771,12 @@ function fmtSyncLast(ms) {
   const diff = Date.now() - ms;
   if (diff < 60 * 1000) return "gerade eben";
   if (diff < 60 * 60 * 1000) return "vor " + Math.floor(diff / 60000) + " Min";
-  const d = new Date(ms), now = new Date();
-  const hm = d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-  const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-  if (sameDay(d, now)) return "heute " + hm;
-  const yest = new Date(now); yest.setDate(now.getDate() - 1);
-  if (sameDay(d, yest)) return "gestern " + hm;
-  return "am " + d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const day = toDateInputValue(ms); // Tagesgrenzen über DENSELBEN Formatter wie überall (lokal)
+  const hm = new Date(ms).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  if (day === localDayStr()) return "heute " + hm;
+  const yest = new Date(); yest.setDate(yest.getDate() - 1);
+  if (day === localDayStr(yest)) return "gestern " + hm;
+  return "am " + formatDay(ms);
 }
 function renderSyncLastLine() {
   const el = $("sync-last"); if (!el) return;
@@ -12769,11 +12787,12 @@ function renderSyncLastLine() {
 // Gekoppelte Geräte (E2E-Kind `devices`): dieses Gerät zuerst, dann nach zuletzt-aktiv. Labels
 // kommen aus dem entschlüsselten Blob (= von den eigenen anderen Geräten) → nur textContent.
 function fmtSyncDay(day) {
-  if (day === localDayStr()) return "heute";
+  const today = localDayStr();
+  if (cmpStr(String(day), today) >= 0) return "heute"; // Zukunfts-Tage (verstellte Uhr eines Geräts) nicht anzeigen
   const y = new Date(); y.setDate(y.getDate() - 1);
   if (day === localDayStr(y)) return "gestern";
-  const p = String(day).split("-");
-  return p.length === 3 ? "am " + p[2] + "." + p[1] + "." + p[0] : "";
+  const ts = dateInputToTs(day); // validiert (weist 2026-99-99 ab, das die Form-Regex durchließe)
+  return ts === null ? "" : "am " + formatDay(ts);
 }
 function renderSyncDevices() {
   const wrap = $("sync-devices"), list = $("sync-devices-list");
@@ -12781,11 +12800,14 @@ function renderSyncDevices() {
   const active = syncActive();
   const reg = active ? devicesLocal().devices : {};
   const ownId = active ? syncDeviceId() : null;
-  const ids = Object.keys(reg).sort((a, b) =>
-    (a === ownId ? -1 : b === ownId ? 1 : cmpStr(String((reg[b] || {}).lastSeen || ""), String((reg[a] || {}).lastSeen || "")) || cmpStr(a, b)));
+  // Erst sanitizen (eine Schutzschicht), dann sortieren: dieses Gerät zuerst, Rest nach
+  // zuletzt-aktiv. gone-Einträge (abgekoppelt) erscheinen nicht.
+  const rows = Object.keys(reg)
+    .map((id) => ({ id, e: sanitizeDeviceEntry(reg[id]) }))
+    .filter((r) => r.e && !r.e.gone)
+    .sort((a, b) => (a.id === ownId ? -1 : b.id === ownId ? 1 : cmpStr(b.e.lastSeen, a.e.lastSeen) || cmpStr(a.id, b.id)));
   list.textContent = "";
-  for (const id of ids) {
-    const e = sanitizeDeviceEntry(reg[id]); if (!e || e.gone) continue; // abgekoppelte nicht listen
+  for (const { id, e } of rows) {
     const li = document.createElement("li");
     const name = document.createElement("strong");
     name.textContent = e.label;
@@ -12796,7 +12818,7 @@ function renderSyncDevices() {
     li.appendChild(meta);
     list.appendChild(li);
   }
-  wrap.classList.toggle("hidden", !list.childElementCount);
+  wrap.classList.toggle("hidden", !rows.length);
 }
 
 // Lazy-Load des QR-Encoders + Renderers (nur wenn eine Kopplungsansicht geöffnet wird). Der
@@ -12857,9 +12879,8 @@ function syncActivate() {
   // Insert-Basis (rev 0). updatedAt NICHT auf now setzen — sonst schlägt ein leeres, gerade
   // aktiviertes Gerät per LWW ein volles (Fable-Finding); der echte Stand steht in profileUpdatedAt.
   setProfileMeta({ rev: 0 });
-  touchSyncDevice(); // eigenen Geräteliste-Eintrag anlegen, bevor die Kinds initial hochgehen
   _syncStatusMsg = null;
-  renderSyncUI();
+  renderSyncUI(); // legt über touchSyncDevice auch den eigenen Geräteliste-Eintrag an
   syncShowCouple();
   scheduleProfilePush(); // initialer Push (Insert), sobald der Seed steht
   for (const name of Object.keys(MERGE_KINDS)) { setKindMeta(name, { rev: 0 }); mergeState(name).sig = null; pushMergeKind(name).catch(() => {}); }
@@ -12869,16 +12890,14 @@ function syncActivate() {
 // neuen kid neu hoch; bereits gekoppelte Altgeräte müssen sich neu koppeln (neuer Schlüssel).
 function syncReset() {
   if (!window.SyncCrypto) return;
+  if (_syncOpBusy) return; // nicht mitten in ein laufendes Deaktivieren grätschen
   window.SyncCrypto.storeCode(window.SyncCrypto.seedToCode(window.SyncCrypto.generateSeed()));
   bindSyncOwner();
   _syncKidCache = { code: null, kid: null };
   setKidMismatch(false);
   setProfileMeta({ rev: 0 });
   setProfileUpdatedAt(Date.now()); // explizites Überschreiben → dieser Stand gewinnt danach die LWW
-  // Geräteliste auf dieses Gerät eindampfen: die Altgeräte sind mit dem neuen Schlüssel
-  // abgekoppelt und sollen nicht als (scheinbar) gekoppelt weiterlaufen.
-  saveDevices({});
-  touchSyncDevice();
+  for (const name of Object.keys(MERGE_KINDS)) { const k = MERGE_KINDS[name]; if (k.onReset) k.onReset(); }
   _syncStatusMsg = null;
   renderSyncUI();
   syncShowCouple();
@@ -12903,7 +12922,7 @@ function syncJoinFromCode() {
   setKidMismatch(false);
   setProfileMeta({ rev: 0 }); // Server-rev unbekannt; syncPull setzt sie
   for (const name of Object.keys(MERGE_KINDS)) { setKindMeta(name, { rev: 0 }); mergeState(name).sig = null; }
-  touchSyncDevice(); // eigenen Eintrag anlegen — der folgende Pull merged ihn mit der Liste der anderen
+  clearSyncDevices(); // alte Liste (evtl. aus einem früheren Kreis) nicht in den neuen mergen
   if (input) input.value = "";
   _syncStatusMsg = null;
   renderSyncUI();
@@ -12923,16 +12942,25 @@ function syncSnapshotCounts() {
 // Erklärung. Fehler enden in einer ehrlichen Meldung statt im stummen catch.
 async function syncPullWithFeedback(mode) {
   const before = syncSnapshotCounts();
-  let ok = false;
-  try { ok = (await syncPull()) === true; } catch { ok = false; }
+  let res = false;
+  try { res = await syncPull(); } catch { res = false; }
   const coupled = mode === "couple";
   if (_syncKidMismatch) {
     _syncStatusMsg = null;
-  } else if (!ok) {
+  } else if (res === false) {
     _syncStatusMsg = { warn: true, text: coupled
       ? "Gekoppelt – der erste Abgleich hat aber noch nicht geklappt (offline?). Beim nächsten Öffnen der App wird er automatisch wiederholt."
       : "Synchronisieren gerade nicht möglich (offline?). Dein Stand bleibt lokal erhalten." };
+  } else if (res === "partial") {
+    // GET kam durch, aber mindestens ein Upload blieb hängen (Cap/Rate-Limit/5xx) — KEIN
+    // grünes "alles aktuell" vorgaukeln (Fable-Review-Finding: falsches Vertrauen wäre genau
+    // das Problem, das dieses Feature beheben soll).
+    _syncStatusMsg = { warn: true, text: (coupled ? "Gerät gekoppelt. " : "")
+      + "Teilweise synchronisiert – ein Teil deines Stands konnte gerade nicht hochgeladen werden. Wird automatisch erneut versucht." };
   } else {
+    // Hinweis: Das Delta zählt den lokalen Bestand vor/nach dem Pull — parallele eigene
+    // Aktivität während des Roundtrips kann die Zählung minimal verfälschen (bekannte,
+    // bewusst akzeptierte Näherung).
     const after = syncSnapshotCounts();
     const dj = after.jobs - before.jobs, da = after.attempts - before.attempts;
     const delta = [];
@@ -12942,12 +12970,19 @@ async function syncPullWithFeedback(mode) {
       ? "Vom anderen Gerät übernommen: " + delta.join(", ") + ". Lernkartei und Statistiken wurden abgeglichen."
       : (coupled ? "Abgleich abgeschlossen – dein Stand ist jetzt für deine Geräte verfügbar." : "Alles aktuell – dein Stand ist synchronisiert.")) };
   }
-  renderSyncUI();
+  renderSyncStatus();
 }
 
 // Deaktivieren: lokal den Seed löschen (Standard). Optional zusätzlich die verschlüsselten
 // Serverdaten löschen (DELETE /api/sync). Der lokale Trainingsstand bleibt in beiden Fällen.
 async function syncDisableConfirmed() {
+  // Re-Entranz-Schutz: das Deaktivieren enthält awaits (Server-DELETE, gone-Marker-Push) —
+  // Doppelklicks oder ein paralleles "Sync zurücksetzen" (das den frisch erzeugten neuen Seed
+  // gleich wieder löschen würde) müssen währenddessen abprallen.
+  if (_syncOpBusy) return;
+  _syncOpBusy = true;
+  const busyBtn = $("sync-disable-do"); if (busyBtn) busyBtn.disabled = true;
+  try {
   const err = $("sync-disable-err");
   if (err) err.classList.add("hidden");
   const alsoServer = !!($("sync-delete-server") && $("sync-delete-server").checked);
@@ -12965,22 +13000,12 @@ async function syncDisableConfirmed() {
       return;
     }
   }
-  // Best-effort: dieses Gerät bei den anderen als abgekoppelt markieren (gone-Marker statt
-  // Löschung — Löschen propagiert bei Union-Merge nicht), solange der Schlüssel noch da ist.
-  // Scheitert still — rein kosmetisch (wer den Code kennt, könnte ohnehin weiter lesen; die
-  // UI-Fußnote erklärt das). Bei alsoServer überflüssig (die Blobs sind ohnehin gelöscht).
-  if (!alsoServer && syncEligible()) {
-    try {
-      const reg = devicesLocal().devices;
-      const own = reg[syncDeviceId()];
-      if (own && !own.gone) {
-        reg[syncDeviceId()] = { label: own.label || syncDeviceLabel(), lastSeen: localDayStr(), gone: true };
-        saveDevices(reg);
-        await pushMergeKind("devices");
-      }
-    } catch { /* kosmetisch */ }
+  // Kind-Lifecycle (devices: gone-Marker best-effort pushen + lokale Liste verwerfen). Läuft
+  // VOR clearStoredCode — die Marker-Verschlüsselung braucht den noch vorhandenen Schlüssel.
+  for (const name of Object.keys(MERGE_KINDS)) {
+    const k = MERGE_KINDS[name];
+    if (k.onDisable) { try { await k.onDisable(alsoServer); } catch { /* Best-effort */ } }
   }
-  localStorage.removeItem(SYNC_DEVICES_KEY); // lokale Geräteliste gehört zum Sync-Zustand
   if (window.SyncCrypto) window.SyncCrypto.clearStoredCode();
   localStorage.removeItem(SYNC_OWNER_KEY);
   localStorage.removeItem(SYNC_META_KEY); // rev/updatedAt (aller Kinds) vergessen → Re-Aktivieren startet frisch
@@ -12992,6 +13017,7 @@ async function syncDisableConfirmed() {
   resetSyncRemoteOffer(); // nach dem Deaktivieren neu prüfen (Server-Daten evtl. noch da → Koppeln anbieten)
   _syncStatusMsg = null;
   renderSyncUI();
+  } finally { _syncOpBusy = false; if (busyBtn) busyBtn.disabled = false; }
 }
 
 // Listener einmalig verdrahten (DOM ist bei Ausführung von app.js bereits geparst).
@@ -13159,11 +13185,17 @@ async function syncPull() {
   const data = await apiSyncGet(); // EIN Roundtrip für alle Kinds
   if (!data || typeof data !== "object") return false;
   const blobs = data.blobs || {};
-  await pullProfileBlob(blobs.profile); // profile (LWW) unter dem profile-Lock
+  // Kind-Ergebnisse einsammeln: false = ein nötiger Upload blieb hängen (Cap/Rate/5xx) oder
+  // Kid-Mismatch. Dann "partial" melden und lastOkAt NICHT stempeln — die Statuszeile steht
+  // für den letzten VOLLSTÄNDIGEN Abgleich (sonst würde das Feedback falsches Vertrauen
+  // erzeugen; Fable-Review-Finding).
+  let clean = (await pullProfileBlob(blobs.profile)) !== false; // profile (LWW) unter dem profile-Lock
   for (const name of Object.keys(MERGE_KINDS)) { // history etc. je unter eigenem Lock
-    await withSyncLock(() => pullMergeKind(name, blobs[name]), MERGE_KINDS[name].lock);
+    const ok = await withSyncLock(() => pullMergeKind(name, blobs[name]), MERGE_KINDS[name].lock);
+    clean = (ok !== false) && clean;
   }
-  if (!_syncKidMismatch) noteSyncOk();
+  if (_syncKidMismatch || !clean) return "partial";
+  noteSyncOk();
   return true;
 }
 
@@ -13173,23 +13205,23 @@ async function pullProfileBlob(blob) {
   return withSyncLock(async () => {
     if (!blob || !blob.envelope) {
       setProfileMeta({ rev: 0 });
-      if (Object.keys(loadProfile()).length || syncCurrentTier() !== DEFAULT_TIER) await pushProfileLocked(0);
-      return;
+      if (Object.keys(loadProfile()).length || syncCurrentTier() !== DEFAULT_TIER) return pushProfileLocked(0);
+      return true;
     }
     const kid = await currentKid();
-    if (blob.envelope.kid && kid && blob.envelope.kid !== kid) { setKidMismatch(true); return; }
+    if (blob.envelope.kid && kid && blob.envelope.kid !== kid) { setKidMismatch(true); return false; }
     let remote;
     try {
       const { key } = await window.SyncCrypto.deriveKey(window.SyncCrypto.storedCode());
       remote = await window.SyncCrypto.decrypt(key, blob.envelope);
-    } catch { setKidMismatch(true); return; } // GCM-Auth-Fehler = falscher Schlüssel
+    } catch { setKidMismatch(true); return false; } // GCM-Auth-Fehler = falscher Schlüssel
     setKidMismatch(false);
     setProfileMeta({ rev: Number(blob.rev) || 0 });
     const localAt = getProfileUpdatedAt();
     const remoteAt = Number(remote.updatedAt) || 0;
-    if (remoteAt > localAt) applyProfileKind(remote);
-    else if (localAt > remoteAt) await pushProfileLocked(Number(blob.rev) || 0);
-    // gleich → in sync
+    if (remoteAt > localAt) { applyProfileKind(remote); return true; }
+    if (localAt > remoteAt) return pushProfileLocked(Number(blob.rev) || 0);
+    return true; // gleich → in sync
   });
 }
 
@@ -13220,35 +13252,35 @@ async function syncForceOverwrite() {
 // PUSH-Kern (Lock muss gehalten werden). CAS über rev; 409 → Server-Envelope entschlüsseln,
 // LWW mergen, erneut versuchen (bounded). force=true überschreibt ohne LWW/kid-Check.
 async function pushProfileLocked(rev, attempt = 0, force = false) {
-  if (!syncEligible()) return;
+  if (!syncEligible()) return false;
   const code = window.SyncCrypto.storedCode();
   const { key, kid } = await window.SyncCrypto.deriveKey(code);
   const envelope = await window.SyncCrypto.encrypt(key, kid, profileKindPayload());
   let r;
-  try { r = await apiSyncPut("profile", rev, envelope); } catch { return; } // offline → nächster Trigger
+  try { r = await apiSyncPut("profile", rev, envelope); } catch { return false; } // offline → nächster Trigger
   if (r.status === 200) {
     let body = {}; try { body = await r.json(); } catch { /* leer */ }
     setProfileMeta({ rev: Number(body.rev) || rev + 1 });
     _syncLastSig = profileSig();
     setKidMismatch(false); // erfolgreicher eigener Write → evtl. hängenden Mismatch-Hinweis löschen (Fable-Finding)
     noteSyncOk();
-    return;
+    return true;
   }
   if (r.status === 409 && attempt < 3) {
     let body = {}; try { body = await r.json(); } catch { /* leer */ }
     const serverRev = Number(body.rev) || 0;
     if (!force && body.envelope) {
       const bkid = body.envelope.kid;
-      if (bkid && kid && bkid !== kid) { setKidMismatch(true); return; }
+      if (bkid && kid && bkid !== kid) { setKidMismatch(true); return false; }
       try {
         const remote = await window.SyncCrypto.decrypt(key, body.envelope);
         setProfileMeta({ rev: serverRev });
-        if ((Number(remote.updatedAt) || 0) > getProfileUpdatedAt()) { applyProfileKind(remote); return; }
-      } catch { setKidMismatch(true); return; }
+        if ((Number(remote.updatedAt) || 0) > getProfileUpdatedAt()) { applyProfileKind(remote); return true; } // Server war neuer → konvergiert
+      } catch { setKidMismatch(true); return false; }
     }
     return pushProfileLocked(serverRev, attempt + 1, force); // lokal gewinnt / force → neu schreiben
   }
-  // sonstige 4xx/5xx (disabled/auth/rate) → still; nächster Trigger retryt.
+  return false; // sonstige 4xx/5xx (disabled/auth/rate) → still; nächster Trigger retryt.
 }
 
 /* ---------- Sync F3: generische „Merge-Kinds" (history; deck/stats folgen in F4) ---------- */
@@ -13283,36 +13315,44 @@ async function pushMergeKind(name) {
 // PUSH-Kern (Lock gehalten). CAS über rev; 409 → Server entschlüsseln, mergen, lokal anwenden,
 // mit Server-rev erneut schreiben (bounded). force=true überschreibt ohne Merge/kid-Check.
 async function pushMergeKindLocked(name, rev, attempt = 0, force = false) {
-  if (!syncEligible()) return;
+  if (!syncEligible()) return false;
   const kind = MERGE_KINDS[name];
   const { key, kid } = await window.SyncCrypto.deriveKey(window.SyncCrypto.storedCode());
   const envelope = await window.SyncCrypto.encrypt(key, kid, kind.payload());
   let r;
-  try { r = await apiSyncPut(name, rev, envelope); } catch { return; }
+  try { r = await apiSyncPut(name, rev, envelope); } catch { return false; }
   if (r.status === 200) {
     let body = {}; try { body = await r.json(); } catch { /* leer */ }
     setKindMeta(name, { rev: Number(body.rev) || rev + 1 });
     mergeState(name).sig = JSON.stringify(kind.payload());
     setKidMismatch(false);
     noteSyncOk();
-    return;
+    return true;
   }
   if (r.status === 409 && attempt < 3) {
     let body = {}; try { body = await r.json(); } catch { /* leer */ }
     const serverRev = Number(body.rev) || 0;
     if (!force && body.envelope) {
       const bkid = body.envelope.kid;
-      if (bkid && kid && bkid !== kid) { setKidMismatch(true); return; }
+      if (bkid && kid && bkid !== kid) {
+        // Kind-Hook: kosmetische Kinds (devices) überschreiben einen fremd-verschlüsselten
+        // Blob forciert, statt den roten Mismatch-Alarm zu ziehen (Alt-Client-Reset-Fall).
+        if (kind.kidMismatch === "overwrite") return pushMergeKindLocked(name, serverRev, attempt + 1, true);
+        setKidMismatch(true); return false;
+      }
       try {
         const remote = await window.SyncCrypto.decrypt(key, body.envelope);
         setKindMeta(name, { rev: serverRev });
         const merged = kind.merge(kind.payload(), remote);
         if (!_jsonEq(merged, kind.payload())) await kind.apply(merged); // lokal konvergieren, dann neu pushen
-      } catch { setKidMismatch(true); return; }
+      } catch {
+        if (kind.kidMismatch === "overwrite") return pushMergeKindLocked(name, serverRev, attempt + 1, true);
+        setKidMismatch(true); return false;
+      }
     }
     return pushMergeKindLocked(name, serverRev, attempt + 1, force);
   }
-  // 413 (zu groß) / sonstige 4xx/5xx → still; nächster Trigger versucht erneut.
+  return false; // 413 (zu groß) / sonstige 4xx/5xx → still; nächster Trigger versucht erneut.
 }
 // PULL eines Merge-Kind-Blobs (aus syncPull, unter dem Kind-Lock). Server leer + lokal Inhalt →
 // push. Sonst mergen: result≠local ⇒ anwenden, result≠remote ⇒ push (Server bekommt die Union).
@@ -13320,22 +13360,32 @@ async function pullMergeKind(name, blob) {
   const kind = MERGE_KINDS[name];
   if (!blob || !blob.envelope) {
     setKindMeta(name, { rev: 0 });
-    if (!kind.isEmpty(kind.payload())) await pushMergeKindLocked(name, 0);
-    return;
+    if (!kind.isEmpty(kind.payload())) return pushMergeKindLocked(name, 0);
+    return true;
   }
   const kid = await currentKid();
-  if (blob.envelope.kid && kid && blob.envelope.kid !== kid) { setKidMismatch(true); return; }
+  if (blob.envelope.kid && kid && blob.envelope.kid !== kid) {
+    // Kind-Hook (devices): fremd-verschlüsselten Blob forciert mit dem eigenen Stand
+    // überschreiben statt Mismatch-Alarm — z. B. nach „Sync zurücksetzen" von einem
+    // Alt-Client, der dieses Kind nicht kennt und darum nicht mit-überschrieben hat.
+    if (kind.kidMismatch === "overwrite") return pushMergeKindLocked(name, Number(blob.rev) || 0, 0, true);
+    setKidMismatch(true); return false;
+  }
   let remote;
   try {
     const { key } = await window.SyncCrypto.deriveKey(window.SyncCrypto.storedCode());
     remote = await window.SyncCrypto.decrypt(key, blob.envelope);
-  } catch { setKidMismatch(true); return; }
+  } catch {
+    if (kind.kidMismatch === "overwrite") return pushMergeKindLocked(name, Number(blob.rev) || 0, 0, true);
+    setKidMismatch(true); return false;
+  }
   setKidMismatch(false);
   setKindMeta(name, { rev: Number(blob.rev) || 0 });
   const local = kind.payload();
   const merged = kind.merge(local, remote);
   if (!_jsonEq(merged, local)) await kind.apply(merged);
-  if (!_jsonEq(merged, kind.merge(remote, remote))) await pushMergeKindLocked(name, Number(blob.rev) || 0);
+  if (!_jsonEq(merged, kind.merge(remote, remote))) return pushMergeKindLocked(name, Number(blob.rev) || 0);
+  return true;
 }
 async function forceOverwriteMergeKind(name, serverRev) {
   const kind = MERGE_KINDS[name]; if (!kind) return;
@@ -13526,18 +13576,26 @@ function applyStats(merged) {
   finally { _syncApplying--; }
 }
 
-// --- Kind `devices` = { devices: { id → { label, lastSeen } } }: E2E-Geräteliste ---
+// --- Kind `devices` = { devices: { id → { label, lastSeen, ts, gone? } } }: E2E-Geräteliste ---
 // Jedes Gerät schreibt (nur) seinen eigenen Eintrag: zufällige, lokale Geräte-Id + grobes
-// UA-Label ("Android · Chrome") + zuletzt-aktiv-TAG (bewusst tagesgrob: max. ein Push pro Tag,
-// kein Bewegungsprofil). Union über die Ids, je Gerät gewinnt der jüngere lastSeen (LWW).
+// UA-Label ("Android · Chrome") + zuletzt-aktiv-TAG (lastSeen; bewusst tagesgrob: max. ein
+// Push pro Tag, kein Bewegungsprofil) + ts (ms) als LWW-Konflikt-Uhr. lastSeen ist NUR
+// Anzeige/Tages-Drossel — die Konfliktauflösung MUSS über ts laufen: mit tagesgrober Uhr wäre
+// ein Abkoppeln (gone) am selben Tag gegen den morgendlichen Aktiv-Stempel unentscheidbar und
+// der gone-Marker würde von den anderen Geräten zurückgedreht (Fable-Review-Finding).
 // Der Server sieht wie bei allen Kinds nur das Chiffrat.
 const SYNC_DEVICE_ID_KEY = "bewerbungstool.syncDeviceId";
 const SYNC_DEVICES_KEY = "bewerbungstool.syncDevices";
 function syncDeviceId() {
   let id = localStorage.getItem(SYNC_DEVICE_ID_KEY);
   if (!id || !/^[0-9a-f]{16}$/.test(id)) {
-    const b = new Uint8Array(8); crypto.getRandomValues(b);
-    id = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+    // Muster newAttemptId: crypto NIE roh aufrufen (kann in Sonder-Umgebungen fehlen/werfen —
+    // ein Throw hier risse renderSyncUI mit). Notnagel: Zeit+Random.
+    try {
+      id = Array.from(crypto.getRandomValues(new Uint8Array(8)), (x) => x.toString(16).padStart(2, "0")).join("");
+    } catch {
+      id = (Date.now().toString(16) + Math.random().toString(16).slice(2) + "0".repeat(16)).slice(0, 16);
+    }
     try { localStorage.setItem(SYNC_DEVICE_ID_KEY, id); } catch { /* voll/blockiert */ }
   }
   return id;
@@ -13566,18 +13624,22 @@ function devicesLocal() {
   } catch { return { devices: {} }; }
 }
 function saveDevices(devices) { try { localStorage.setItem(SYNC_DEVICES_KEY, JSON.stringify({ v: 1, devices })); } catch { /* voll/blockiert */ } }
-function localDayStr(d = new Date()) {
-  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-}
+// Registry verwerfen: bei Konto-Wechsel/-Löschung, QR-Adoption eines neuen Codes und Disable —
+// die Liste gehört zum jeweiligen Sync-Kreis und darf nicht in den nächsten wandern (sonst
+// leakt sie z. B. auf einem geteilten Browser die Geräte des Vor-Nutzers; Fable-Review-Finding).
+function clearSyncDevices() { try { localStorage.removeItem(SYNC_DEVICES_KEY); } catch { /* egal */ } }
+function localDayStr(d = new Date()) { return toDateInputValue(d.getTime()); } // ein Tages-Formatter im Codebase (YYYY-MM-DD, lokal)
 function sanitizeDeviceEntry(e) {
   if (!e || typeof e !== "object") return null;
-  const lastSeen = (typeof e.lastSeen === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.lastSeen)) ? e.lastSeen : "";
+  // dateInputToTs prüft auch VALIDITÄT (weist 2026-99-99 ab), nicht nur die Form.
+  const lastSeen = (typeof e.lastSeen === "string" && dateInputToTs(e.lastSeen) !== null) ? e.lastSeen : "";
   if (!lastSeen) return null;
+  const ts = (typeof e.ts === "number" && Number.isFinite(e.ts) && e.ts > 0) ? e.ts : (dateInputToTs(lastSeen) || 0);
   const label = (typeof e.label === "string" && e.label.trim()) ? e.label.trim().slice(0, 60) : "Gerät";
   // gone=true: Gerät hat sich beim Deaktivieren selbst ausgetragen. Als Marker (statt den
   // Eintrag zu löschen) MUSS es bleiben: reines Löschen propagiert bei Union-Merge nicht —
   // jedes andere Gerät würde den Eintrag beim nächsten Merge wieder einbringen.
-  return e.gone === true ? { label, lastSeen, gone: true } : { label, lastSeen };
+  return e.gone === true ? { label, lastSeen, ts, gone: true } : { label, lastSeen, ts };
 }
 function mergeDevices(a, b) {
   const out = {};
@@ -13587,18 +13649,22 @@ function mergeDevices(a, b) {
       if (!/^[0-9a-f]{8,32}$/.test(id)) continue; // fremde/verbogene Ids verwerfen
       const e = sanitizeDeviceEntry(devs[id]); if (!e) continue;
       const ex = out[id];
-      // LWW je Gerät über lastSeen; Gleichstand: aktiv schlägt gone (Re-Aktivieren am selben
-      // Tag gewinnt), danach deterministisch das Label (Konvergenz auf allen Geräten).
+      // LWW je Gerät über ts (ms — das jüngere EREIGNIS gewinnt, auch gone vs. aktiv am selben
+      // Tag). Exakter Gleichstand (praktisch nur identische Einträge): gone schlägt aktiv
+      // (das Abkoppeln ist die bewusstere Aussage), danach das Label — deterministisch auf
+      // allen Geräten. BEWUSST kein Zukunfts-Clamp mit Date.now(): merge/payload müssen
+      // deterministisch und zeitstabil sein (sonst flappt die Push-Signatur → Push-Schleife);
+      // ein verstellte-Uhr-Eintrag pinnt sich schlimmstenfalls kosmetisch, Reset heilt.
       if (!ex
-        || cmpStr(e.lastSeen, ex.lastSeen) > 0
-        || (e.lastSeen === ex.lastSeen && !e.gone && !!ex.gone)
-        || (e.lastSeen === ex.lastSeen && !e.gone === !ex.gone && cmpStr(e.label, ex.label) > 0)) out[id] = e;
+        || e.ts > ex.ts
+        || (e.ts === ex.ts && !!e.gone && !ex.gone)
+        || (e.ts === ex.ts && !!e.gone === !!ex.gone && cmpStr(JSON.stringify(e), JSON.stringify(ex)) > 0)) out[id] = e;
     }
   }
   // Cap 20 Geräte (die ältesten fliegen), dann kanonische Id-Ordnung (stabile Signaturen)
   const keep = Object.keys(out)
     .map((id) => ({ id, e: out[id] }))
-    .sort((x, y) => cmpStr(y.e.lastSeen, x.e.lastSeen) || cmpStr(x.id, y.id))
+    .sort((x, y) => (y.e.ts - x.e.ts) || cmpStr(x.id, y.id))
     .slice(0, 20)
     .sort((x, y) => cmpStr(x.id, y.id));
   const devices = {};
@@ -13611,19 +13677,27 @@ function applyDevices(merged) {
   finally { _syncApplying--; }
   renderSyncDevices(); // Liste live nachziehen, falls die Einstellungen offen sind
 }
-// Eigenen Eintrag aktuell halten (Label + heutiger Tag). No-op, wenn schon aktuell — dadurch
-// beliebig oft aufrufbar (Startup, renderSyncUI) bei maximal EINEM Push pro Tag und Gerät.
+// Eigenen Eintrag schreiben. mode "gone" = Abkopplungs-Marker (Disable), "silent" = ohne
+// Push-Trigger (Reset: syncForceOverwrite pusht gleich ALLE Kinds forciert — ein zusätzlich
+// debouncter Normal-Push mit alter rev/kid würde nur ein 409/Mismatch-Race provozieren).
+function writeOwnDeviceEntry(mode) {
+  const reg = devicesLocal().devices;
+  const entry = { label: syncDeviceLabel(), lastSeen: localDayStr(), ts: Date.now() };
+  if (mode === "gone") entry.gone = true;
+  reg[syncDeviceId()] = entry;
+  saveDevices(reg);
+  if (!mode) noteMergeKindChange("devices"); // "gone"/"silent": Caller pusht selbst bzw. gar nicht
+}
+// Eigenen Eintrag aktuell halten (Label + heutiger Tag). Tages-No-op — dadurch beliebig oft
+// aufrufbar bei maximal EINEM Push pro Tag und Gerät. Owner der Aufrufe: Startup +
+// renderSyncUI (aktiv-Zweig) — Lifecycle-Übergänge (Aktivieren/Koppeln) laufen ohnehin durch
+// renderSyncUI und brauchen KEINEN eigenen Aufruf.
 function touchSyncDevice() {
   if (!syncActive()) return;
-  const reg = devicesLocal().devices;
-  const id = syncDeviceId();
-  const today = localDayStr();
-  const label = syncDeviceLabel();
-  const cur = reg[id];
-  if (cur && !cur.gone && cur.lastSeen === today && cur.label === label) return; // gone-Eintrag NICHT als aktuell werten (Re-Aktivieren muss ihn überschreiben)
-  reg[id] = { label, lastSeen: today };
-  saveDevices(reg);
-  noteMergeKindChange("devices");
+  const cur = devicesLocal().devices[syncDeviceId()];
+  // gone-Eintrag NICHT als aktuell werten (Re-Aktivieren muss ihn überschreiben)
+  if (cur && !cur.gone && cur.lastSeen === localDayStr() && cur.label === syncDeviceLabel()) return;
+  writeOwnDeviceEntry();
 }
 
 const MERGE_KINDS = {
@@ -13654,6 +13728,29 @@ const MERGE_KINDS = {
     merge: (local, remote) => mergeDevices(local, remote),
     apply: applyDevices,
     isEmpty: (p) => !p || !p.devices || Object.keys(p.devices).length === 0,
+    // Kosmetisches Kind: ein devices-Blob unter fremdem/altem Schlüssel (z. B. nach einem
+    // "Sync zurücksetzen" von einem Alt-Client, der dieses Kind noch nicht kennt und es darum
+    // nicht mit-überschrieben hat) soll KEINEN dauerhaften roten Mismatch-Alarm auslösen,
+    // sondern wird forciert mit dem eigenen Stand überschrieben (Datenverlust irrelevant).
+    kidMismatch: "overwrite",
+    // Reset: Liste auf dieses Gerät eindampfen (Altgeräte sind mit dem neuen Schlüssel
+    // abgekoppelt). OHNE Push-Trigger — syncForceOverwrite pusht gleich alle Kinds forciert;
+    // ein zusätzlicher debouncter Normal-Push mit alter rev würde nur ein 409-Race provozieren.
+    onReset: () => { clearSyncDevices(); writeOwnDeviceEntry("silent"); },
+    // Disable: sich selbst per gone-Marker austragen (Best-effort, gedeckelt — ein hängender
+    // Fetch darf das Deaktivieren nicht blockieren), dann die lokale Liste verwerfen.
+    onDisable: async (alsoServer) => {
+      if (!alsoServer && syncEligible()) {
+        try {
+          const own = devicesLocal().devices[syncDeviceId()];
+          if (own && !own.gone) {
+            writeOwnDeviceEntry("gone"); // ohne Debounce-Trigger — direkt pushen
+            await Promise.race([pushMergeKind("devices"), new Promise((r) => setTimeout(r, 4000))]);
+          }
+        } catch { /* kosmetisch */ }
+      }
+      clearSyncDevices();
+    },
   },
 };
 
@@ -13677,7 +13774,17 @@ try {
     // gebundenen): die Besitzer-Marke löschen, damit reconcileSyncOwner ihn beim nächsten Login dem
     // dann angemeldeten Konto zuordnet, statt ihn als „fremd" zu verwerfen bzw. fälschlich dem
     // Alt-Konto zuzurechnen (Fable-Finding). Entspricht dem QR-scannen-dann-einloggen-Flow.
-    if (scanned) { localStorage.removeItem(SYNC_OWNER_KEY); _syncScannedThisLoad = true; }
+    if (scanned) {
+      localStorage.removeItem(SYNC_OWNER_KEY);
+      _syncScannedThisLoad = true;
+      // Der Scan ERSETZT einen evtl. vorhandenen Code (z. B. Re-Koppeln nach „Sync
+      // zurücksetzen") → wie in syncJoinFromCode den alten Kreis-Zustand verwerfen: sonst
+      // würde die alte Geräteliste (inkl. gerade ausgesperrter Geräte) in den neuen Kreis
+      // gemerged und veraltete revs/Signaturen weiterverwendet (Fable-Review-Finding).
+      clearSyncDevices();
+      setProfileMeta({ rev: 0 });
+      for (const name of Object.keys(MERGE_KINDS)) { setKindMeta(name, { rev: 0 }); mergeState(name).sig = null; }
+    }
   }
 } catch { /* defensiv */ }
 
