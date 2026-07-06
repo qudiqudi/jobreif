@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.34.0";
+const APP_VERSION = "1.34.1";
 
 const CHANGELOG = [
+  {
+    version: "1.34.1",
+    date: "06.07.2026",
+    items: [
+      "Zweites Gerät koppeln ist jetzt leichter: Wenn du dich auf einem weiteren Gerät anmeldest und dort bereits Geräte-Sync-Daten von dir liegen, weist dich die App aktiv darauf hin und bietet direkt das Koppeln an – du musst die Option nicht mehr selbst suchen.",
+    ],
+  },
   {
     version: "1.34.0",
     date: "06.07.2026",
@@ -10703,6 +10710,7 @@ async function renderAccountSection() {
     renderCreditsUI();
     syncEnabled = false;
     syncUserId = null; // abgemeldet: kein Konto → Karte aus (Seed bleibt lokal, an Besitzer gebunden)
+    resetSyncRemoteOffer(); // Kontowechsel: das Gerät-B-Angebot beim nächsten Login neu prüfen
     renderSyncUI();
     // Loesch-Karte verbergen + einklappen + Eingabe/Fehler zuruecksetzen.
     accountEmail = null;
@@ -12634,6 +12642,34 @@ function reconcileSyncOwner() {
   }
 }
 
+// Gerät-B-Angebot (Plan §3-Fallback „eingeloggt auf B, kein QR zur Hand"): liegen unter diesem
+// Konto schon verschlüsselte Sync-Blobs auf dem Server, dieses Gerät hat aber keinen Seed, dann
+// zum Koppeln einladen (statt nur „Aktivieren" anzubieten, was einen zweiten Seed erzeugen würde).
+// Pro Konto/Session nur EIN GET (Guard); still bei Offline/Fehler; erst nach Reset (Logout/Disable)
+// erneut. Löst ohne Seed KEINEN sonstigen Sync-Verkehr aus.
+let _syncRemoteChecked = false;
+let _syncRemoteSeen = false;
+function resetSyncRemoteOffer() { _syncRemoteChecked = false; _syncRemoteSeen = false; }
+async function syncOfferCouplingCheck() {
+  if (_syncRemoteChecked) return;
+  const hosted = (settings.provider || "hosted") === "hosted";
+  if (!(hosted && settings.authToken && syncEnabled && window.SyncCrypto)) return;
+  if (window.SyncCrypto.storedCode()) return; // schon ein Seed → kein Angebot
+  _syncRemoteChecked = true;                   // nur ein Versuch pro Konto/Session (kein Spam)
+  const tok = settings.authToken;
+  let has = false;
+  try {
+    const r = await fetch(hostedBase() + "/api/sync", { headers: authHeaders() });
+    if (r.ok) { const d = await r.json(); has = !!(d && d.blobs && Object.keys(d.blobs).length); }
+  } catch { return; } // offline → kein Angebot (bis zum nächsten Reset/Load)
+  if (settings.authToken !== tok) return;       // Konto während des Requests gewechselt
+  if (window.SyncCrypto.storedCode()) return;   // inzwischen selbst aktiviert/gekoppelt
+  if (!has) return;
+  _syncRemoteSeen = true;
+  renderSyncUI();                               // Angebot einblenden (async → keine Re-Entrancy)
+  const dj = $("sync-join"); if (dj) dj.open = true; // Code-Eingabe direkt aufklappen
+}
+
 // Sichtbarkeit + Zustand der Karte. Nur gehostet + angemeldet + Server-Flag (syncEnabled) UND
 // nur, wenn der Krypto-Layer geladen ist. Kopplungs-/Bestätigungs-Panels werden bei jedem Render
 // eingeklappt (der QR/Code wird erst auf ausdrückliche Aktion gezeigt — Schlüssel nicht ungefragt).
@@ -12652,6 +12688,8 @@ function renderSyncUI() {
   const off = $("sync-off"), on = $("sync-on");
   if (off) off.classList.toggle("hidden", active);
   if (on) on.classList.toggle("hidden", !active);
+  const offer = $("sync-couple-offer"); if (offer) offer.classList.toggle("hidden", active || !_syncRemoteSeen);
+  if (!active) syncOfferCouplingCheck(); // Gerät-B: einmalig prüfen, ob Server-Daten warten (fire-and-forget)
   const couple = $("sync-couple"); if (couple) couple.classList.add("hidden");
   const conf = $("sync-disable-confirm"); if (conf) conf.classList.add("hidden");
   const jerr = $("sync-join-err"); if (jerr) jerr.classList.add("hidden");
@@ -12793,6 +12831,7 @@ async function syncDisableConfirmed() {
   for (const name of Object.keys(MERGE_KINDS)) { const st = mergeState(name); if (st.timer) clearTimeout(st.timer); st.timer = null; st.sig = null; }
   setKidMismatch(false);
   const cb = $("sync-delete-server"); if (cb) cb.checked = false;
+  resetSyncRemoteOffer(); // nach dem Deaktivieren neu prüfen (Server-Daten evtl. noch da → Koppeln anbieten)
   renderSyncUI();
 }
 
