@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.36.1";
+const APP_VERSION = "1.36.2";
 
 const CHANGELOG = [
+  {
+    version: "1.36.2",
+    date: "06.07.2026",
+    items: [
+      "Nachbesserung zur kostenlosen Ersatz-Auswertung: Sie läuft jetzt wirklich über die Gratis-Stufe (vorher konnte direkt nach dem Angebot eine weitere Fehlermeldung erscheinen) und greift auch bei bezahlten Standard-Tests, deren inklusive Auswertung abgelaufen ist.",
+    ],
+  },
   {
     version: "1.36.1",
     date: "06.07.2026",
@@ -7205,13 +7212,17 @@ async function runEvaluation(opts = {}) {
     }
     showView("view-result");
   } catch (e) {
-    // Abgelaufenes Opus-Inklusiv-Auswerten (Entitlement serverseitig nach seiner TTL geraeumt):
-    // NICHT in der Sackgassen-Meldung enden — die Antworten liegen vollstaendig lokal, eine
-    // kostenlose Standard-Auswertung ist jederzeit moeglich. Angebot NACH dem finally (der
-    // Retry laeuft erneut durch runEvaluation und braucht actionRunning=false).
+    // Abgelaufenes Inklusiv-Auswerten eines BEZAHLTEN Tests (Entitlement serverseitig nach
+    // seiner TTL geraeumt): NICHT in der Sackgassen-Meldung enden — die Antworten liegen
+    // vollstaendig lokal, eine kostenlose Auswertung (Gratis-Stufe) ist jederzeit moeglich.
+    // Drei Server-Codes fuehren hierher: beste → no-entitlement/needs-paid-test (Pflicht-
+    // Entitlement), standard → tier-locked (opportunistisches Entitlement weg, und standard
+    // ist seit dem Repricing eine BEZAHL-Stufe, die der Gratis-Pfad ablehnt). Angebot NACH
+    // dem finally (der Retry laeuft erneut durch runEvaluation, braucht actionRunning=false).
+    const paidProvenance = quiz && quiz.provenance && (quiz.provenance.tier === "beste" || quiz.provenance.tier === "standard");
     if (!opts.fallbackTier
-      && e && (e.hostedCode === "no-entitlement" || e.hostedCode === "needs-paid-test")
-      && quiz && quiz.provenance && quiz.provenance.tier === "beste") {
+      && e && (e.hostedCode === "no-entitlement" || e.hostedCode === "needs-paid-test" || e.hostedCode === "tier-locked")
+      && paidProvenance) {
       entitlementLapse = true;
     } else {
       showError(e.message);
@@ -7221,7 +7232,9 @@ async function runEvaluation(opts = {}) {
     hideLoading();
   }
   if (entitlementLapse && (await openEvalFallbackConfirm())) {
-    return runEvaluation({ fallbackTier: "standard" });
+    // DEFAULT_TIER (guenstig) = die einzige Gratis-Stufe. "standard" waere seit dem Repricing
+    // ebenfalls bezahlt und wuerde im Gratis-Pfad mit tier-locked abprallen (Fable-Nachfix).
+    return runEvaluation({ fallbackTier: DEFAULT_TIER });
   }
 }
 
