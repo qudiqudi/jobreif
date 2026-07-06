@@ -784,6 +784,20 @@
       </div>
     </div>
 
+    <!-- Rettungsnetz: Opus-Inklusiv-Auswerten abgelaufen → kostenlose Standard-Auswertung
+         anbieten statt Sackgassen-Fehlermeldung (runEvaluation/openEvalFallbackConfirm). -->
+    <div id="evalfallback-modal" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="evalfallback-title">
+      <div class="modal card">
+        <h2 id="evalfallback-title">Opus-Auswertung nicht mehr inklusive</h2>
+        <p>Dieser Test wurde in bester Qualität (Opus) erstellt. Das inklusive Opus-Auswerten gilt 7 Tage nach der Erstellung und ist für diesen Test inzwischen abgelaufen.</p>
+        <p>Deine Antworten sind vollständig erhalten &ndash; du kannst sie <strong>kostenlos in Standard-Qualität</strong> auswerten lassen.</p>
+        <div class="row">
+          <button id="evalfallback-confirm" class="primary">Kostenlos in Standard auswerten</button>
+          <button id="evalfallback-cancel" class="ghost">Abbrechen</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Rückfrage: unbeantwortete Fragen vor dem Auswerten -->
     <div id="confirm-eval-modal" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-eval-title">
       <div class="modal card">
