@@ -31,6 +31,9 @@ jobs:
       - name: Geräte-Sync QR-Renderer (SVG aus Modul-Matrix) prüfen
         run: node test/sync-qr.test.js
 
+      - name: Geräte-Sync Merge-Kern (Konflikt-Matrix + Lattice-Eigenschaften) prüfen
+        run: node test/sync-merge.test.js
+
       - name: Asset- und Manifest-Integrität prüfen
         run: node .github/scripts/check-integrity.js
 
