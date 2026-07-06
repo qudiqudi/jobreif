@@ -5141,7 +5141,9 @@ async function saveThemenfelder(job, derived, level) {
       return false;
     }
     target.themenfelder = themenfelder;
-    target.updatedAt = Date.now(); // Metadaten-Änderung datieren → Ordnungs-Autorität für den Sync-Merge (F3)
+    // KEIN updatedAt-Stempel: themenfelder mergt im Sync über sein eigenes generatedAt (per-Achse).
+    // updatedAt bleibt so eine saubere NUR-Cockpit-Autorität (sonst würde eine Themenfelder-Ableitung
+    // eine Cockpit-Änderung via LWW verdrängen und die Cockpit-Achse wäre nicht assoziativ).
   });
   job.themenfelder = themenfelder;
   return themenfelder;
@@ -13151,29 +13153,48 @@ function dedupeAttempts(list) {
   arr.sort((x, y) => (x.date || 0) - (y.date || 0) || cmpStr(String(x.id || ""), String(y.id || "")));
   return arr;
 }
-const jobMetaJson = (j) => JSON.stringify(canonKeys({ ...j, attempts: 0 })); // stabiler Metadaten-Fingerabdruck (attempts neutralisiert)
-// Job-Merge PRO ACHSE (kommutativ+idempotent), damit unterschiedliche Metadaten-Arten sich nicht
-// gegenseitig überschreiben (Fable-Findings): Versuche = Union; themenfelder = neuestes generatedAt
-// (teure/bezahlte Ableitung, nie per UI gelöscht); Cockpit status/gespraechAm = LWW über updatedAt
-// UND löschbar (ein bloßer Versuch auf dem anderen Gerät darf eine Cockpit-Änderung nicht kippen);
-// deskriptive Restfelder vom deterministisch bestimmten Rahmen-Gewinner (selten divergent).
+const HANDLED_JOB_FIELDS = new Set(["attempts", "themenfelder", "status", "gespraechAm", "updatedAt", "key"]);
+const cockKey = (j) => JSON.stringify([j.status === undefined ? null : j.status, j.gespraechAm === undefined ? null : j.gespraechAm]);
+// Deskriptive Felder haben KEINEN eigenen Zeitstempel (rein aus der Anzeige abgeleitet, kein
+// „letzter Edit"). Auflösung updatedAt-UNABHÄNGIG (sonst nicht assoziativ, weil updatedAt beim
+// Merge auf max promotet wird): truthy schlägt falsy (leerer Titel verliert gegen echten), dann
+// JSON-kleinerer Wert. Extremum über eine totale Ordnung ⇒ assoziativ+kommutativ+idempotent.
+const pickDesc = (x, y) => { const tx = x ? 1 : 0, ty = y ? 1 : 0; if (tx !== ty) return tx > ty ? x : y; return JSON.stringify(canonKeys(x)) <= JSON.stringify(canonKeys(y)) ? x : y; };
+// Job-Merge PRO ACHSE — jede Achse ein deterministischer Verband (kommutativ + idempotent +
+// ASSOZIATIV), damit unterschiedliche Metadaten-Arten sich nicht gegenseitig überschreiben und
+// nichts flackert (Fable-Findings):
+//  • Versuche = Union;
+//  • deskriptive Felder (Titel/Arbeitgeber/Ort/jobText/…) PRO FELD: vorhanden schlägt fehlend
+//    (Lücken füllen, KEIN Datenverlust), beide vorhanden → höherer updatedAt, Gleichstand →
+//    JSON-kleinerer Wert. Schlüssel sortiert → deterministische Feldreihenfolge;
+//  • themenfelder (teure/bezahlte Ableitung, nie per UI gelöscht) = neuestes generatedAt;
+//  • Cockpit status/gespraechAm = LWW über updatedAt UND löschbar (nur updatedAt zählt, nicht die
+//    Versuchszeit → ein bloßer Versuch auf dem anderen Gerät kippt eine Cockpit-Änderung nicht;
+//    Gleichstand → stabiler cockKey);
+//  • updatedAt = Maximum.
 function mergeTwoJobs(a, b) {
   const attempts = dedupeAttempts([...(a.attempts || []), ...(b.attempts || [])]);
-  const aa = Math.max(Number(a.updatedAt) || 0, jobRecency(a)), ab = Math.max(Number(b.updatedAt) || 0, jobRecency(b));
-  const base = aa !== ab ? (aa > ab ? a : b) : (jobMetaJson(a) <= jobMetaJson(b) ? a : b);
-  // Deskriptive Felder (Titel/Arbeitgeber/Ort/…): Rahmen-Gewinner, Verlierer füllt Lücken (nie
-  // gelöscht → kein Resurrect-Problem, KEIN Datenverlust). Diese eine Achse ist bewusst NICHT
-  // pro-Feld aufgelöst: bei einem Autoritäts-GLEICHSTAND mit echt divergenten Werten kann ein Feld
-  // beim Mehrgeräte-Settling kurz flackern + wenige Extra-PUTs kosten (nachgewiesen beschränkt/selbst-
-  // heilend, ≤34 Schritte, keine Dauer-Divergenz, kein Ping-Pong). Doppelt selten, weil gleicher
-  // key = gleicher Anzeigetext = gleiche abgeleiteten Felder. Kosmetischer Rest, bewusst belassen.
-  const out = { ...(base === a ? b : a), ...base, key: a.key, attempts };
-  const tfa = Number(a.themenfelder && a.themenfelder.generatedAt) || 0, tfb = Number(b.themenfelder && b.themenfelder.generatedAt) || 0;
-  if (tfa || tfb) out.themenfelder = (tfa !== tfb ? (tfa > tfb ? a : b) : (JSON.stringify(canonKeys(a.themenfelder)) <= JSON.stringify(canonKeys(b.themenfelder)) ? a : b)).themenfelder;
   const ua = Number(a.updatedAt) || 0, ub = Number(b.updatedAt) || 0;
-  const cock = ua !== ub ? (ua > ub ? a : b) : base; // Cockpit-Autorität rein über updatedAt (nicht Versuchszeit)
+  const out = {};
+  for (const f of [...new Set([...Object.keys(a), ...Object.keys(b)])].filter((k) => !HANDLED_JOB_FIELDS.has(k)).sort(cmpStr)) {
+    const va = a[f], vb = b[f];
+    if (va === undefined) out[f] = vb;
+    else if (vb === undefined) out[f] = va; // vorhanden schlägt fehlend (Lücke füllen, kein Datenverlust)
+    else out[f] = pickDesc(va, vb);          // beide vorhanden: updatedAt-unabhängig → assoziativ
+  }
+  out.key = a.key;
+  out.attempts = attempts;
+  if (a.themenfelder || b.themenfelder) {
+    if (!b.themenfelder) out.themenfelder = a.themenfelder;
+    else if (!a.themenfelder) out.themenfelder = b.themenfelder;
+    else {
+      const tfa = Number(a.themenfelder.generatedAt) || 0, tfb = Number(b.themenfelder.generatedAt) || 0;
+      out.themenfelder = (tfa !== tfb ? (tfa > tfb ? a : b) : (JSON.stringify(canonKeys(a.themenfelder)) <= JSON.stringify(canonKeys(b.themenfelder)) ? a : b)).themenfelder;
+    }
+  }
+  const cock = ua !== ub ? (ua > ub ? a : b) : (cockKey(a) <= cockKey(b) ? a : b);
   for (const f of ["status", "gespraechAm"]) { if (f in cock) out[f] = cock[f]; else delete out[f]; }
-  const mu = Math.max(ua, ub); if (mu) out.updatedAt = mu; else delete out.updatedAt;
+  const mu = Math.max(ua, ub); if (mu) out.updatedAt = mu;
   return out;
 }
 function mergeHistory(a, b) {
