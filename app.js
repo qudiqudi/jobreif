@@ -10568,14 +10568,17 @@ function updateSettingsProviderUI() {
   const provider = $("provider").value;
   const isLocal = provider === "local";
   const isHosted = provider === "hosted";
-  // Hosted: kein Key, kein Modell-/Lokal-Block; stattdessen die Qualitaetsstufe.
-  $("row-tier").classList.toggle("hidden", !isHosted);
-  // Konto nur im Hosted-Modus (Auth gehoert zum gehosteten Dienst). Die Loesch-Zone lebt
-  // seit dem Umzug ans Seitenende ausserhalb von #row-account und braucht dasselbe
-  // Hosted-Gate als eigenen Wrapper; das Angemeldet-Gate toggelt renderAccountSection
-  // weiterhin auf #account-danger (beide Bedingungen muessen UND-verknuepft bleiben).
-  $("row-account").classList.toggle("hidden", !isHosted);
-  $("row-danger").classList.toggle("hidden", !isHosted);
+  // Hosted-only-Bereiche: Qualitaetsstufe, Konto/Guthaben und die Loesch-Zone am Seitenende
+  // haengen am selben Gate — EINE Liste statt verstreuter Einzel-Toggles, damit die naechste
+  // hosted-only-Karte hier nicht vergessen wird (diese Bugklasse gab es schon: sync-card,
+  // siehe Kommentar unten). Null-tolerant, weil im Deploy-Fenster altes HTML ohne eine der
+  // Ids mit neuem JS zusammentreffen kann (unversioniertes app.js + HTTP-Cache).
+  // Das Angemeldet-Gate toggelt renderAccountSection weiterhin auf #account-danger —
+  // beide Bedingungen bleiben UND-verknuepft (#row-danger = Hosted, #account-danger = angemeldet).
+  for (const id of ["row-tier", "row-account", "row-danger"]) {
+    const el = $(id);
+    if (el) el.classList.toggle("hidden", !isHosted);
+  }
   $("row-model").classList.toggle("hidden", isHosted);
   $("model-desc").classList.toggle("hidden", isHosted);
   $("row-api-key").classList.toggle("hidden", isLocal || isHosted);
