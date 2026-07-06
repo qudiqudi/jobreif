@@ -485,6 +485,7 @@ button.linklike:active { transform: none; }
 .sync-warn { color: var(--accent-text); }
 .sync-actions { margin-top: 0.7rem; gap: 0.5rem; }
 .sync-err { color: var(--red); }
+.sync-offer { color: var(--accent-text); border: 1px solid var(--accent-text); border-radius: 8px; padding: 0.55rem 0.7rem; margin: 0 0 0.75rem; }
 .sync-confirm { margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px solid var(--border); }
 #sync-code-input {
   font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;

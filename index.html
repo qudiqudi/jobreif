@@ -313,6 +313,9 @@
 
         <!-- AUS: neu aktivieren ODER ein bereits aktives Gerät per Code koppeln -->
         <div id="sync-off">
+          <!-- Gerät-B-Hinweis: erscheint, wenn auf dem Server (unter diesem Konto) schon Sync-Daten
+               liegen, dieses Gerät aber keinen Seed hat → zum Koppeln einladen statt neu zu aktivieren. -->
+          <p id="sync-couple-offer" class="hint sync-offer hidden">Auf einem anderen Gerät hast du Geräte-Sync bereits aktiviert. Kopple dieses Gerät mit dem Sync-Code (oder QR) des anderen Geräts, um deinen Trainingsstand zu übernehmen – oder aktiviere neu, um von vorn zu beginnen.</p>
           <button id="sync-activate" type="button" class="primary">Aktivieren</button>
           <details id="sync-join" class="setting-adv">
             <summary>Schon auf einem anderen Gerät aktiv? Code eingeben</summary>
