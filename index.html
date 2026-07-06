@@ -245,19 +245,6 @@
           <p class="hint acct-privacy">Für den kostenlosen gehosteten Modus ist eine Anmeldung nötig; wir speichern dabei deine E-Mail (<a href="#" id="link-datenschutz-account">Datenschutz</a>). Ohne Konto kannst du unter „Erweitert“ einen eigenen Schlüssel oder ein lokales Modell wählen.</p>
         </div>
 
-        <!-- Konto löschen: bewusst zurückhaltend (aufklappbar) + getippte E-Mail-Bestätigung, damit
-             nichts versehentlich ausgelöst wird. Sichtbar nur angemeldet (renderAccountSection). -->
-        <details id="account-danger" class="setting-card acct-danger hidden">
-          <summary>Konto löschen</summary>
-          <p class="hint">Löscht dein Konto und alle personenbezogenen Daten auf unseren Servern <strong>unwiderruflich</strong> – inklusive der Ende-zu-Ende-verschlüsselt synchronisierten Daten. Aufzeichnungen zu Käufen bewahren wir aus gesetzlichen Gründen weiter auf, dann aber pseudonymisiert (ohne direkten Bezug zu dir). Ein etwaiges Restguthaben verfällt. Dein lokaler Trainingsstand auf diesem Gerät bleibt erhalten. <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutz</a></p>
-          <label for="account-delete-confirm">Zur Bestätigung deine Konto-E-Mail eingeben:</label>
-          <input id="account-delete-confirm" type="email" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="email" placeholder="deine@email.de">
-          <div class="row wrap">
-            <button id="btn-account-delete" type="button" class="danger btn-compact" disabled>Konto endgültig löschen</button>
-          </div>
-          <p id="account-delete-err" class="hint sync-err hidden" role="alert"></p>
-        </details>
-
         <!-- Guthaben-Hero: sichtbar nur bei aktivem Credits-Flag (renderCreditsUI toggelt #guthaben-card) -->
         <div id="guthaben-card" class="setting-card guthaben-card hidden">
           <div class="guthaben-hero">
@@ -300,57 +287,6 @@
               <button id="btn-ledger-more" type="button" class="ghost btn-compact hidden">Ältere Einträge anzeigen</button>
             </div>
             <p id="ledger-msg" class="hint" role="status"></p>
-          </div>
-        </div>
-      </div>
-
-      <!-- GERÄTE-SYNC (nur gehostet + angemeldet + serverseitig freigeschaltet; renderSyncUI toggelt
-           #sync-card. E2E-verschlüsselt: der Schlüssel bleibt auf dem Gerät, der Server sieht nur
-           Chiffrate. QR-Encoder wird bei Bedarf lazy geladen (assets/vendor/qrcodegen.js). -->
-      <div id="sync-card" class="setting-card sync-card hidden">
-        <span class="cardlabel">Geräte-Sync</span>
-        <p class="hint">Dein Trainingsstand wird Ende-zu-Ende verschlüsselt über deine Geräte synchronisiert – auf unseren Servern liegen nur verschlüsselte Daten, den Schlüssel hast nur du. <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutz</a></p>
-
-        <!-- AUS: neu aktivieren ODER ein bereits aktives Gerät per Code koppeln -->
-        <div id="sync-off">
-          <!-- Gerät-B-Hinweis: erscheint, wenn auf dem Server (unter diesem Konto) schon Sync-Daten
-               liegen, dieses Gerät aber keinen Seed hat → zum Koppeln einladen statt neu zu aktivieren. -->
-          <p id="sync-couple-offer" class="hint sync-offer hidden">Auf einem anderen Gerät hast du Geräte-Sync bereits aktiviert. Kopple dieses Gerät mit dem Sync-Code (oder QR) des anderen Geräts, um deinen Trainingsstand zu übernehmen – oder aktiviere neu, um von vorn zu beginnen.</p>
-          <button id="sync-activate" type="button" class="primary">Aktivieren</button>
-          <details id="sync-join" class="setting-adv">
-            <summary>Schon auf einem anderen Gerät aktiv? Code eingeben</summary>
-            <label for="sync-code-input" class="visually-hidden">Sync-Code des anderen Geräts</label>
-            <input id="sync-code-input" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXXX">
-            <div class="row wrap">
-              <button id="sync-join-submit" type="button" class="ghost btn-compact">Gerät koppeln</button>
-            </div>
-            <p id="sync-join-err" class="hint sync-err hidden" role="alert"></p>
-          </details>
-        </div>
-
-        <!-- AN: Status + Kopplungsansicht (QR groß + Code) + Aktionen -->
-        <div id="sync-on" class="hidden">
-          <p class="hint"><strong>Sync ist auf diesem Gerät aktiv.</strong></p>
-          <p id="sync-mismatch-hint" class="hint sync-err hidden" role="alert">Auf dem Server liegen Daten, die mit einem anderen Schlüssel verschlüsselt sind. Kopple dieses Gerät mit dem Sync-Code des anderen Geräts (Sync deaktivieren, dann Code eingeben) – oder überschreibe den Server mit „Sync zurücksetzen".</p>
-          <div id="sync-couple" class="sync-couple hidden">
-            <div id="sync-qr" class="sync-qr" aria-hidden="true"></div>
-            <div class="sync-code-display"><code id="sync-code"></code></div>
-            <p class="hint">Auf dem anderen Gerät scannen oder den Code eingeben.</p>
-            <p class="hint sync-warn">Der Code ist dein Schlüssel. Wir können deine Daten nicht lesen – und auch nicht wiederherstellen, wenn du den Code und alle Geräte verlierst.</p>
-          </div>
-          <div class="row wrap sync-actions">
-            <button id="sync-show" type="button" class="primary btn-compact">Dieses Gerät koppeln</button>
-            <button id="sync-reset" type="button" class="ghost btn-compact">Sync zurücksetzen</button>
-            <button id="sync-disable" type="button" class="linklike">Sync deaktivieren</button>
-          </div>
-          <div id="sync-disable-confirm" class="sync-confirm hidden">
-            <p class="hint">Sync auf diesem Gerät deaktivieren? Dein lokaler Trainingsstand bleibt erhalten.</p>
-            <label><input type="checkbox" id="sync-delete-server"> Auch die verschlüsselten Daten auf dem Server löschen</label>
-            <div class="row wrap">
-              <button id="sync-disable-do" type="button" class="ghost btn-compact">Deaktivieren</button>
-              <button id="sync-disable-cancel" type="button" class="linklike">Abbrechen</button>
-            </div>
-            <p id="sync-disable-err" class="hint sync-err hidden" role="alert"></p>
           </div>
         </div>
       </div>
@@ -483,6 +419,57 @@
         </details>
       </div>
 
+      <!-- GERÄTE-SYNC (nur gehostet + angemeldet + serverseitig freigeschaltet; renderSyncUI toggelt
+           #sync-card. E2E-verschlüsselt: der Schlüssel bleibt auf dem Gerät, der Server sieht nur
+           Chiffrate. QR-Encoder wird bei Bedarf lazy geladen (assets/vendor/qrcodegen.js). -->
+      <div id="sync-card" class="setting-card sync-card hidden">
+        <span class="cardlabel">Geräte-Sync</span>
+        <p class="hint">Dein Trainingsstand wird Ende-zu-Ende verschlüsselt über deine Geräte synchronisiert – auf unseren Servern liegen nur verschlüsselte Daten, den Schlüssel hast nur du. <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutz</a></p>
+
+        <!-- AUS: neu aktivieren ODER ein bereits aktives Gerät per Code koppeln -->
+        <div id="sync-off">
+          <!-- Gerät-B-Hinweis: erscheint, wenn auf dem Server (unter diesem Konto) schon Sync-Daten
+               liegen, dieses Gerät aber keinen Seed hat → zum Koppeln einladen statt neu zu aktivieren. -->
+          <p id="sync-couple-offer" class="hint sync-offer hidden">Auf einem anderen Gerät hast du Geräte-Sync bereits aktiviert. Kopple dieses Gerät mit dem Sync-Code (oder QR) des anderen Geräts, um deinen Trainingsstand zu übernehmen – oder aktiviere neu, um von vorn zu beginnen.</p>
+          <button id="sync-activate" type="button" class="primary">Aktivieren</button>
+          <details id="sync-join" class="setting-adv">
+            <summary>Schon auf einem anderen Gerät aktiv? Code eingeben</summary>
+            <label for="sync-code-input" class="visually-hidden">Sync-Code des anderen Geräts</label>
+            <input id="sync-code-input" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXXX">
+            <div class="row wrap">
+              <button id="sync-join-submit" type="button" class="ghost btn-compact">Gerät koppeln</button>
+            </div>
+            <p id="sync-join-err" class="hint sync-err hidden" role="alert"></p>
+          </details>
+        </div>
+
+        <!-- AN: Status + Kopplungsansicht (QR groß + Code) + Aktionen -->
+        <div id="sync-on" class="hidden">
+          <p class="hint"><strong>Sync ist auf diesem Gerät aktiv.</strong></p>
+          <p id="sync-mismatch-hint" class="hint sync-err hidden" role="alert">Auf dem Server liegen Daten, die mit einem anderen Schlüssel verschlüsselt sind. Kopple dieses Gerät mit dem Sync-Code des anderen Geräts (Sync deaktivieren, dann Code eingeben) – oder überschreibe den Server mit „Sync zurücksetzen".</p>
+          <div id="sync-couple" class="sync-couple hidden">
+            <div id="sync-qr" class="sync-qr" aria-hidden="true"></div>
+            <div class="sync-code-display"><code id="sync-code"></code></div>
+            <p class="hint">Auf dem anderen Gerät scannen oder den Code eingeben.</p>
+            <p class="hint sync-warn">Der Code ist dein Schlüssel. Wir können deine Daten nicht lesen – und auch nicht wiederherstellen, wenn du den Code und alle Geräte verlierst.</p>
+          </div>
+          <div class="row wrap sync-actions">
+            <button id="sync-show" type="button" class="primary btn-compact">Dieses Gerät koppeln</button>
+            <button id="sync-reset" type="button" class="ghost btn-compact">Sync zurücksetzen</button>
+            <button id="sync-disable" type="button" class="linklike">Sync deaktivieren</button>
+          </div>
+          <div id="sync-disable-confirm" class="sync-confirm hidden">
+            <p class="hint">Sync auf diesem Gerät deaktivieren? Dein lokaler Trainingsstand bleibt erhalten.</p>
+            <label><input type="checkbox" id="sync-delete-server"> Auch die verschlüsselten Daten auf dem Server löschen</label>
+            <div class="row wrap">
+              <button id="sync-disable-do" type="button" class="ghost btn-compact">Deaktivieren</button>
+              <button id="sync-disable-cancel" type="button" class="linklike">Abbrechen</button>
+            </div>
+            <p id="sync-disable-err" class="hint sync-err hidden" role="alert"></p>
+          </div>
+        </div>
+      </div>
+
       <!-- DATEN sichern und übertragen -->
       <div class="setting-card">
         <span class="cardlabel">Deine Daten</span>
@@ -493,6 +480,24 @@
         </div>
         <input type="file" id="import-file" accept="application/json,.json" hidden>
         <p id="data-status" class="hint" role="status"></p>
+      </div>
+
+
+      <!-- KONTO LÖSCHEN: bewusst ganz am Seitenende und zurückhaltend gestaltet (aufklappbar) +
+           getippte E-Mail-Bestätigung, damit nichts versehentlich ausgelöst wird. Doppeltes Gate:
+           #row-danger nur im Hosted-Modus (updateSettingsProviderUI), #account-danger nur
+           angemeldet (renderAccountSection). -->
+      <div id="row-danger" class="hidden">
+        <details id="account-danger" class="setting-card acct-danger hidden">
+          <summary>Konto löschen</summary>
+          <p class="hint">Löscht dein Konto und alle personenbezogenen Daten auf unseren Servern <strong>unwiderruflich</strong> – inklusive der Ende-zu-Ende-verschlüsselt synchronisierten Daten. Aufzeichnungen zu Käufen bewahren wir aus gesetzlichen Gründen weiter auf, dann aber pseudonymisiert (ohne direkten Bezug zu dir). Ein etwaiges Restguthaben verfällt. Dein lokaler Trainingsstand auf diesem Gerät bleibt erhalten. <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutz</a></p>
+          <label for="account-delete-confirm">Zur Bestätigung deine Konto-E-Mail eingeben:</label>
+          <input id="account-delete-confirm" type="email" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="email" placeholder="deine@email.de">
+          <div class="row wrap">
+            <button id="btn-account-delete" type="button" class="danger btn-compact" disabled>Konto endgültig löschen</button>
+          </div>
+          <p id="account-delete-err" class="hint sync-err hidden" role="alert"></p>
+        </details>
       </div>
 
       <!-- Aktionsleiste: im normalen App-Modus verbirgt Autosave sie (Phase 3); im Einrichtungs-

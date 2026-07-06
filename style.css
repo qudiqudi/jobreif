@@ -1759,10 +1759,13 @@ button.danger:hover { background: var(--red-soft); border-color: var(--red); }
 button.danger:disabled { opacity: 0.5; cursor: not-allowed; }
 button.danger:disabled:hover { background: transparent; border-color: color-mix(in srgb, var(--red) 45%, transparent); }
 
-/* Konto löschen: zurückhaltende „Gefahrenzone" (aufklappbar). */
-.acct-danger { border-color: color-mix(in srgb, var(--red) 30%, var(--border)); }
-.acct-danger > summary { color: var(--red); cursor: pointer; font-weight: 600; }
-.acct-danger > summary:hover { text-decoration: underline; }
+/* Konto löschen: am Seitenende bewusst leise — neutral und gedämpft, solange zugeklappt;
+   erst beim Aufklappen (= bewusster Schritt in den Lösch-Flow) kippt die Karte auf Rot. */
+.acct-danger { border-color: var(--border); }
+.acct-danger > summary { color: var(--muted); cursor: pointer; font-size: 0.92rem; }
+.acct-danger > summary:hover { color: var(--red); text-decoration: underline; }
+.acct-danger[open] { border-color: color-mix(in srgb, var(--red) 30%, var(--border)); }
+.acct-danger[open] > summary { color: var(--red); font-weight: 600; font-size: 1rem; }
 #account-delete-confirm { margin: 0.4rem 0; }
 
 .trend {

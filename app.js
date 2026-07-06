@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.34.1";
+const APP_VERSION = "1.34.2";
 
 const CHANGELOG = [
+  {
+    version: "1.34.2",
+    date: "06.07.2026",
+    items: [
+      "Einstellungen aufgeräumt: Geräte-Sync steht jetzt direkt bei „Deine Daten“, und „Konto löschen“ findest du – wie gewohnt bei Apps – ganz unten am Ende der Seite.",
+    ],
+  },
   {
     version: "1.34.1",
     date: "06.07.2026",
@@ -10563,8 +10570,12 @@ function updateSettingsProviderUI() {
   const isHosted = provider === "hosted";
   // Hosted: kein Key, kein Modell-/Lokal-Block; stattdessen die Qualitaetsstufe.
   $("row-tier").classList.toggle("hidden", !isHosted);
-  // Konto nur im Hosted-Modus (Auth gehoert zum gehosteten Dienst).
+  // Konto nur im Hosted-Modus (Auth gehoert zum gehosteten Dienst). Die Loesch-Zone lebt
+  // seit dem Umzug ans Seitenende ausserhalb von #row-account und braucht dasselbe
+  // Hosted-Gate als eigenen Wrapper; das Angemeldet-Gate toggelt renderAccountSection
+  // weiterhin auf #account-danger (beide Bedingungen muessen UND-verknuepft bleiben).
   $("row-account").classList.toggle("hidden", !isHosted);
+  $("row-danger").classList.toggle("hidden", !isHosted);
   $("row-model").classList.toggle("hidden", isHosted);
   $("model-desc").classList.toggle("hidden", isHosted);
   $("row-api-key").classList.toggle("hidden", isLocal || isHosted);
