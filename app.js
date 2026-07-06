@@ -7228,9 +7228,11 @@ async function runEvaluation(opts = {}) {
 // Rettungsnetz-Dialog: Opus-Inklusiv-Auswerten abgelaufen → kostenlose Standard-Auswertung
 // anbieten. Nutzt das consent-sheet-Layout; loest mit true (auswerten) oder false (abbrechen).
 let _evalFallbackResolve = null;
+let _evalFallbackReturnFocus = null; // Fokus-Rueckgabe beim Schliessen (Muster overflowConfirmReturnFocus)
 function openEvalFallbackConfirm() {
   const modal = $("evalfallback-modal");
   if (!modal) return Promise.resolve(false);
+  _evalFallbackReturnFocus = document.activeElement;
   modal.classList.remove("hidden");
   const btn = $("evalfallback-confirm");
   if (btn) btn.focus();
@@ -7240,6 +7242,8 @@ function openEvalFallbackConfirm() {
   const close = (v) => {
     const m = $("evalfallback-modal"); if (m) m.classList.add("hidden");
     const r = _evalFallbackResolve; _evalFallbackResolve = null;
+    const rf = _evalFallbackReturnFocus; _evalFallbackReturnFocus = null;
+    if (rf && typeof rf.focus === "function" && document.contains(rf)) { try { rf.focus(); } catch { /* egal */ } }
     if (r) r(v);
   };
   const on = (id, v) => { const el = $(id); if (el) el.addEventListener("click", () => close(v)); };
