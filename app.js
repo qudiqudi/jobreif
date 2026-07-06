@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.34.2";
+const APP_VERSION = "1.35.0";
 
 const CHANGELOG = [
+  {
+    version: "1.35.0",
+    date: "06.07.2026",
+    items: [
+      "Geräte-Sync zeigt jetzt, was passiert: Nach dem Koppeln siehst du direkt, was vom anderen Gerät übernommen wurde, die Karte zeigt an, wann zuletzt synchronisiert wurde, und mit „Jetzt synchronisieren“ kannst du den Abgleich jederzeit selbst anstoßen.",
+    ],
+  },
   {
     version: "1.34.2",
     date: "06.07.2026",
@@ -2749,6 +2756,11 @@ let creditsState = { credits: null, creditsEnabled: false, opusTestCredits: null
 // Geräte-Sync-Karte, entkoppelt so den Client-Deploy von der serverseitigen Freischaltung.
 // Früh deklariert (kein TDZ), falls renderAccountSection vor dem Sync-Block läuft.
 let syncEnabled = false;
+// Sync-Status-UI („sichtbarer Sync"): Abgleich-Meldung nach Koppeln/manuellem Sync, Spiegel des
+// Kid-Mismatch-Hinweises und QR-Scan-Marker dieses Loads. Ebenfalls früh deklariert (kein TDZ).
+let _syncStatusMsg = null;        // { warn: bool, text: string } | null — renderSyncUI zeigt sie
+let _syncKidMismatch = false;     // von setKidMismatch gepflegt (DOM-Hinweis + Logik-Spiegel)
+let _syncScannedThisLoad = false; // QR-Seed in DIESEM Load übernommen → Feedback nach dem Start-Pull
 // Der Sync-Seed ist der E2E-Schlüssel und wird an das Konto gebunden, unter dem er aktiviert
 // wurde: auf einem geteilten Browser darf ein zweiter Nutzer NICHT den Schlüssel/QR des ersten
 // sehen (Codex-Finding). syncUserId = aktuell angemeldete user.id (aus /auth/me); der Besitzer
@@ -12697,7 +12709,7 @@ function renderSyncUI() {
   const hosted = (providerEl ? providerEl.value : (settings.provider || "hosted")) === "hosted";
   const show = hosted && !!settings.authToken && syncEnabled && !!window.SyncCrypto;
   card.classList.toggle("hidden", !show);
-  if (!show) return;
+  if (!show) { _syncStatusMsg = null; return; } // Karte weg (Logout/BYOK) → Abgleich-Meldung verwerfen
   const active = syncActive();
   const off = $("sync-off"), on = $("sync-on");
   if (off) off.classList.toggle("hidden", active);
@@ -12713,6 +12725,35 @@ function renderSyncUI() {
   // beide beim Öffnen frisch aus dem aktuell gespeicherten Seed.
   const qrHost = $("sync-qr"); if (qrHost) qrHost.textContent = "";
   const codeHost = $("sync-code"); if (codeHost) codeHost.textContent = "";
+  // Sichtbarer Sync-Status: „Zuletzt synchronisiert"-Zeile + Ergebnis des letzten Abgleichs.
+  renderSyncLastLine();
+  const smsg = $("sync-status-msg");
+  if (smsg) {
+    smsg.textContent = _syncStatusMsg ? _syncStatusMsg.text : "";
+    smsg.classList.toggle("hidden", !_syncStatusMsg);
+    smsg.classList.toggle("sync-warn", !!(_syncStatusMsg && _syncStatusMsg.warn));
+    smsg.classList.toggle("sync-ok", !!(_syncStatusMsg && !_syncStatusMsg.warn));
+  }
+}
+
+// Relativ-knappe Zeitangabe für „Zuletzt synchronisiert" (gerade eben / vor N Min. / heute
+// HH:MM / gestern HH:MM / Datum). Bewusst grob — es geht um Vertrauen, nicht um Sekunden.
+function fmtSyncLast(ms) {
+  const diff = Date.now() - ms;
+  if (diff < 60 * 1000) return "gerade eben";
+  if (diff < 60 * 60 * 1000) return "vor " + Math.floor(diff / 60000) + " Min";
+  const d = new Date(ms), now = new Date();
+  const hm = d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  if (sameDay(d, now)) return "heute " + hm;
+  const yest = new Date(now); yest.setDate(now.getDate() - 1);
+  if (sameDay(d, yest)) return "gestern " + hm;
+  return "am " + d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+function renderSyncLastLine() {
+  const el = $("sync-last"); if (!el) return;
+  const at = syncLastOkAt();
+  el.textContent = at ? "Zuletzt synchronisiert: " + fmtSyncLast(at) + "." : "";
 }
 
 // Lazy-Load des QR-Encoders + Renderers (nur wenn eine Kopplungsansicht geöffnet wird). Der
@@ -12773,6 +12814,7 @@ function syncActivate() {
   // Insert-Basis (rev 0). updatedAt NICHT auf now setzen — sonst schlägt ein leeres, gerade
   // aktiviertes Gerät per LWW ein volles (Fable-Finding); der echte Stand steht in profileUpdatedAt.
   setProfileMeta({ rev: 0 });
+  _syncStatusMsg = null;
   renderSyncUI();
   syncShowCouple();
   scheduleProfilePush(); // initialer Push (Insert), sobald der Seed steht
@@ -12789,6 +12831,7 @@ function syncReset() {
   setKidMismatch(false);
   setProfileMeta({ rev: 0 });
   setProfileUpdatedAt(Date.now()); // explizites Überschreiben → dieser Stand gewinnt danach die LWW
+  _syncStatusMsg = null;
   renderSyncUI();
   syncShowCouple();
   syncForceOverwrite().catch(() => {}); // Server mit dem Stand dieses Geräts (neuer Schlüssel) überschreiben
@@ -12813,8 +12856,44 @@ function syncJoinFromCode() {
   setProfileMeta({ rev: 0 }); // Server-rev unbekannt; syncPull setzt sie
   for (const name of Object.keys(MERGE_KINDS)) { setKindMeta(name, { rev: 0 }); mergeState(name).sig = null; }
   if (input) input.value = "";
+  _syncStatusMsg = null;
   renderSyncUI();
-  syncPull().catch(() => {}); // Stand des anderen Geräts holen + mergen (LWW profile, Union history)
+  syncPullWithFeedback("couple"); // Stand des anderen Geräts holen + mergen — mit sichtbarem Ergebnis
+}
+
+// Trainingsstand-Zählung (Stellen/Versuche) vor/nach einem Pull → konkretes Abgleich-Feedback.
+function syncSnapshotCounts() {
+  const h = historyLocal();
+  let attempts = 0;
+  for (const j of h.jobs) attempts += ((j && j.attempts) || []).length;
+  return { jobs: h.jobs.length, attempts };
+}
+
+// Pull mit sichtbarem Ergebnis (nach dem Koppeln bzw. „Jetzt synchronisieren"). Meldet konkret,
+// was vom Server übernommen wurde; bei Kid-Mismatch übernimmt der bestehende rote Hinweis die
+// Erklärung. Fehler enden in einer ehrlichen Meldung statt im stummen catch.
+async function syncPullWithFeedback(mode) {
+  const before = syncSnapshotCounts();
+  let ok = false;
+  try { ok = (await syncPull()) === true; } catch { ok = false; }
+  const coupled = mode === "couple";
+  if (_syncKidMismatch) {
+    _syncStatusMsg = null;
+  } else if (!ok) {
+    _syncStatusMsg = { warn: true, text: coupled
+      ? "Gekoppelt – der erste Abgleich hat aber noch nicht geklappt (offline?). Beim nächsten Öffnen der App wird er automatisch wiederholt."
+      : "Synchronisieren gerade nicht möglich (offline?). Dein Stand bleibt lokal erhalten." };
+  } else {
+    const after = syncSnapshotCounts();
+    const dj = after.jobs - before.jobs, da = after.attempts - before.attempts;
+    const delta = [];
+    if (dj > 0) delta.push(dj === 1 ? "1 neue Stelle" : dj + " neue Stellen");
+    if (da > 0) delta.push(da === 1 ? "1 neuer Versuch" : da + " neue Versuche");
+    _syncStatusMsg = { warn: false, text: (coupled ? "Gerät gekoppelt. " : "") + (delta.length
+      ? "Vom anderen Gerät übernommen: " + delta.join(", ") + ". Lernkartei und Statistiken wurden abgeglichen."
+      : (coupled ? "Abgleich abgeschlossen – dein Stand ist jetzt für deine Geräte verfügbar." : "Alles aktuell – dein Stand ist synchronisiert.")) };
+  }
+  renderSyncUI();
 }
 
 // Deaktivieren: lokal den Seed löschen (Standard). Optional zusätzlich die verschlüsselten
@@ -12846,6 +12925,7 @@ async function syncDisableConfirmed() {
   setKidMismatch(false);
   const cb = $("sync-delete-server"); if (cb) cb.checked = false;
   resetSyncRemoteOffer(); // nach dem Deaktivieren neu prüfen (Server-Daten evtl. noch da → Koppeln anbieten)
+  _syncStatusMsg = null;
   renderSyncUI();
 }
 
@@ -12854,6 +12934,14 @@ async function syncDisableConfirmed() {
   const on = (id, ev, fn) => { const el = $(id); if (el) el.addEventListener(ev, fn); };
   on("sync-activate", "click", syncActivate);
   on("sync-show", "click", syncShowCouple);
+  on("sync-now", "click", () => {
+    const btn = $("sync-now");
+    if (!btn || btn.disabled) return;
+    btn.disabled = true;
+    const orig = btn.textContent;
+    btn.textContent = "Synchronisiere…";
+    syncPullWithFeedback("manual").finally(() => { btn.disabled = false; btn.textContent = orig; });
+  });
   on("sync-reset", "click", syncReset);
   on("sync-join-submit", "click", syncJoinFromCode);
   on("sync-code-input", "keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); syncJoinFromCode(); } });
@@ -12884,6 +12972,15 @@ function loadSyncMeta() {
 function saveSyncMeta(m) { try { localStorage.setItem(SYNC_META_KEY, JSON.stringify(m)); } catch { /* voll/blockiert */ } }
 function profileMeta() { const m = loadSyncMeta(); return (m.profile && typeof m.profile === "object") ? m.profile : {}; }
 function setProfileMeta(patch) { const m = loadSyncMeta(); m.profile = { ...(m.profile || {}), ...patch }; saveSyncMeta(m); }
+
+// „Zuletzt synchronisiert": Zeitstempel des letzten erfolgreichen Server-Abgleichs (Pull ohne
+// Kid-Mismatch bzw. bestätigter Push). Lebt als top-level-Zahl in syncMeta — kollidiert nicht
+// mit den Kind-Metas (das sind Objekte unter ihrem Kind-Namen).
+function syncLastOkAt() { const v = Number(loadSyncMeta().lastOkAt); return Number.isFinite(v) && v > 0 ? v : 0; }
+function noteSyncOk() {
+  const m = loadSyncMeta(); m.lastOkAt = Date.now(); saveSyncMeta(m);
+  renderSyncLastLine(); // Statuszeile live nachziehen, falls die Einstellungen gerade offen sind
+}
 
 function syncCurrentTier() { return settings.tier || DEFAULT_TIER; }
 function profileSig() { return JSON.stringify({ p: loadProfile(), t: syncCurrentTier() }); }
@@ -12959,6 +13056,7 @@ async function currentKid() {
   return kid;
 }
 function setKidMismatch(v) {
+  _syncKidMismatch = !!v;
   const hint = $("sync-mismatch-hint");
   if (hint) hint.classList.toggle("hidden", !v);
 }
@@ -12988,15 +13086,20 @@ function refreshProfileTierUIIfOpen() {
 
 // PULL: Server-Stand holen, Kind `profile` LWW-mergen. Kid-Mismatch → Hinweis, kein Entschlüsseln.
 // Server leer + lokal Inhalt → hochladen. Alles unter Web-Lock; Fehler bleiben still.
+// Rückgabe true = Roundtrip hat stattgefunden (Server geantwortet, Kinds verarbeitet) — Basis
+// für das sichtbare Feedback (Koppeln/„Jetzt synchronisieren"). Kid-Mismatch zählt NICHT als
+// Erfolg (kein lastOkAt), der Mismatch-Hinweis übernimmt dann die Erklärung.
 async function syncPull() {
-  if (!syncEligible()) return;
+  if (!syncEligible()) return false;
   const data = await apiSyncGet(); // EIN Roundtrip für alle Kinds
-  if (!data || typeof data !== "object") return;
+  if (!data || typeof data !== "object") return false;
   const blobs = data.blobs || {};
   await pullProfileBlob(blobs.profile); // profile (LWW) unter dem profile-Lock
   for (const name of Object.keys(MERGE_KINDS)) { // history etc. je unter eigenem Lock
     await withSyncLock(() => pullMergeKind(name, blobs[name]), MERGE_KINDS[name].lock);
   }
+  if (!_syncKidMismatch) noteSyncOk();
+  return true;
 }
 
 // profile (LWW) unter dem profile-Lock — Logik unverändert; nur der GET liegt jetzt in syncPull
@@ -13063,6 +13166,7 @@ async function pushProfileLocked(rev, attempt = 0, force = false) {
     setProfileMeta({ rev: Number(body.rev) || rev + 1 });
     _syncLastSig = profileSig();
     setKidMismatch(false); // erfolgreicher eigener Write → evtl. hängenden Mismatch-Hinweis löschen (Fable-Finding)
+    noteSyncOk();
     return;
   }
   if (r.status === 409 && attempt < 3) {
@@ -13125,6 +13229,7 @@ async function pushMergeKindLocked(name, rev, attempt = 0, force = false) {
     setKindMeta(name, { rev: Number(body.rev) || rev + 1 });
     mergeState(name).sig = JSON.stringify(kind.payload());
     setKidMismatch(false);
+    noteSyncOk();
     return;
   }
   if (r.status === 409 && attempt < 3) {
@@ -13400,7 +13505,7 @@ try {
     // gebundenen): die Besitzer-Marke löschen, damit reconcileSyncOwner ihn beim nächsten Login dem
     // dann angemeldeten Konto zuordnet, statt ihn als „fremd" zu verwerfen bzw. fälschlich dem
     // Alt-Konto zuzurechnen (Fable-Finding). Entspricht dem QR-scannen-dann-einloggen-Flow.
-    if (scanned) localStorage.removeItem(SYNC_OWNER_KEY);
+    if (scanned) { localStorage.removeItem(SYNC_OWNER_KEY); _syncScannedThisLoad = true; }
   }
 } catch { /* defensiv */ }
 
@@ -13413,8 +13518,11 @@ consumeAuthRedirect().then(() => {
   // sofort korrekt verfuegbar ist und effectiveTier sie nicht still auf standard herabstuft.
   if ((settings.provider || "hosted") === "hosted" && settings.authToken) refreshBalance();
   // Geräte-Sync (F2): angemeldet + gekoppelt → Profil/Stufe vom Server ziehen und mergen
-  // (LWW). No-op ohne Seed/Flag. Fehler bleiben still; lokal bleibt immer nutzbar.
-  syncPull().catch(() => {});
+  // (LWW). No-op ohne Seed/Flag. Kam der Seed in DIESEM Load per QR-Scan, läuft der Pull mit
+  // sichtbarem Kopplungs-Feedback (Meldung erscheint in der Sync-Karte); sonst still im
+  // Hintergrund — lokal bleibt immer nutzbar.
+  if (_syncScannedThisLoad && syncEligible()) syncPullWithFeedback("couple").catch(() => {});
+  else syncPull().catch(() => {});
 });
 
 /* ---------- Service Worker (PWA) ---------- */
