@@ -373,7 +373,7 @@
       <!-- PROFIL -->
       <div class="setting-card">
         <span class="cardlabel">Dein Profil <span class="privacy-chip">bleibt in deinem Browser</span></span>
-        <p class="hint">Ein paar grobe Angaben, damit die Fragen besser zu deiner Ausgangslage passen (z.&nbsp;B. Quereinstieg statt Fachwechsel) – alles optional. Wirkt aktuell nur im <strong>gehosteten Modus</strong>.</p>
+        <p class="hint">Ein paar grobe Angaben, damit die Fragen besser zu deiner Ausgangslage passen (z.&nbsp;B. Quereinstieg statt Fachwechsel) – alles optional. Nur mit Anmeldung – mit eigenem Schlüssel oder lokalem Modell nicht aktiv.</p>
         <label for="profile-trajectory">Worum geht es bei dieser Bewerbung?</label>
         <select id="profile-trajectory">
           <option value="">Keine Angabe</option>
@@ -523,7 +523,24 @@
            als positives Feature. Befuellt von renderFreeQuotaBadges(); bleibt hidden, solange
            das Credits-Flag aus ist oder der Server kein Kontingent meldet (dormant). -->
       <p id="home-free-badge" class="free-badge hidden" role="status"></p>
-      <p class="hint hidden" id="home-empty">Noch keine Stelle. Lege mit &bdquo;Neue Stelle&ldquo; eine Stellenanzeige an und erstelle deinen ersten Test &ndash; danach erscheint die Stelle hier mit deinem Fortschritt.</p>
+      <!-- Leerer Zustand als Onboarding-Moment (statt blosser Hinweis): klarer nächster Schritt
+           + endowter Fortschritt (Schritt 1 „kostenlos gestartet" ist bereits erledigt → das
+           Gefühl, schon begonnen zu haben). btn-Handler: empty-create ruft „+ Neue Stelle",
+           empty-demo spielt den Beispieltest ab. -->
+      <div class="hidden empty-onboarding" id="home-empty">
+        <span class="eyebrow">Erster Test</span>
+        <h3 class="empty-title">Dein erster Test ist einen Klick entfernt</h3>
+        <p class="hint">Füge deine Stellenanzeige ein – daraus bauen wir einen passenden Übungstest mit Lösungen und Quellen zur Vertiefung.</p>
+        <ol class="empty-steps" aria-label="Erste Schritte">
+          <li class="done"><span class="es-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"></path></svg></span>Kostenlos gestartet</li>
+          <li class="cur"><span class="es-mark" aria-hidden="true">2</span>Stelle einfügen &amp; Test erstellen</li>
+          <li><span class="es-mark" aria-hidden="true">3</span>Im Lernmodus lernen – mit Erklärungen &amp; Quellen</li>
+        </ol>
+        <div class="empty-actions">
+          <button type="button" class="primary" id="empty-create">Test für deine Stelle erstellen</button>
+          <button type="button" class="ghost" id="empty-demo">Erst ein Beispiel ansehen</button>
+        </div>
+      </div>
       <!-- Hintergrund-Generierung (Punkt 1): laeuft serverseitig weiter, auch wenn man die Seite verlaesst. -->
       <div id="active-job-card" class="active-job-card hidden">
         <div class="active-job-row">
@@ -690,7 +707,7 @@
         <option value="telefon">Telefoninterview</option>
         <option value="assessment">Assessment-Center</option>
       </select>
-      <p class="hint">Schneidet die Fragen auf eine bestimmte Interviewrunde zu (z.&nbsp;B. breiteres Screening beim Telefoninterview, mehr Verhalten und Szenarien im Assessment-Center). Wirkt nur im gehosteten Modus.</p>
+      <p class="hint">Schneidet die Fragen auf eine bestimmte Interviewrunde zu (z.&nbsp;B. breiteres Screening beim Telefoninterview, mehr Verhalten und Szenarien im Assessment-Center). Nur mit Anmeldung – mit eigenem Schlüssel oder lokalem Modell nicht verfügbar.</p>
       </div><!-- /#input-advanced -->
 
       <div class="row space-between">
