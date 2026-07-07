@@ -144,7 +144,7 @@
         </button>
       </div>
       <!-- Datensparsamkeit sichtbar als Vertrauens-Signal (statt nur im Kleingedruckten). -->
-      <div class="trust-row" aria-label="Datenschutz auf einen Blick">
+      <div class="trust-row" role="group" aria-label="Datenschutz auf einen Blick">
         <span class="trust-badge"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>Kein Lebenslauf</span>
         <span class="trust-badge">Keine Anmeldung nötig</span>
         <span class="trust-badge">Datenschutz-first</span>
@@ -656,12 +656,38 @@
       </div>
       <p class="hint">&bdquo;Schwer&ldquo; sind Fragen, wie sie im echten Auswahlverfahren für diese Stelle am wahrscheinlichsten gestellt werden &ndash; die Stufe steuert ihren Anteil im Test. Im Lernmodus wird die Schwierigkeit jeder Frage angezeigt.</p>
 
-      <label for="create-tier">Qualitätsstufe</label>
-      <select id="create-tier">
-        <option value="standard">Standard – empfohlen</option>
-        <option value="guenstig">Günstig – schneller und sparsamer</option>
-        <option value="beste" hidden disabled>Beste (Opus) – höchste Qualität</option>
-      </select>
+      <label id="create-tier-label">Qualitätsstufe</label>
+      <!-- Auswahl-Karten mit Kosten-Chip am Entscheidungspunkt (wie die globale Wahl in den
+           Einstellungen). #create-tier bleibt der Control-Anker (data-tier-radio); die
+           bezahl-kritische Tier-Logik bedient beide DOM-Formen über denselben Adapter. -->
+      <div id="create-tier" data-tier-radio role="radiogroup" aria-labelledby="create-tier-label" class="tier-cards">
+        <label class="tier-card" data-value="standard">
+          <input type="radio" name="create-tier-choice" value="standard" checked>
+          <span class="tier-card-body">
+            <span class="tier-card-title">Standard</span>
+            <span class="tier-card-desc">Empfohlen – beste Balance aus Qualität und Tempo.</span>
+            <span class="tier-card-after" data-after hidden></span>
+          </span>
+          <span class="tier-card-chip tier-chip-free" data-chip>Kostenlos</span>
+        </label>
+        <label class="tier-card" data-value="guenstig">
+          <input type="radio" name="create-tier-choice" value="guenstig">
+          <span class="tier-card-body">
+            <span class="tier-card-title">Günstig</span>
+            <span class="tier-card-desc">Schneller und sparsamer – etwas weniger Fragen möglich.</span>
+            <span class="tier-card-after" data-after hidden></span>
+          </span>
+          <span class="tier-card-chip tier-chip-free" data-chip>Kostenlos</span>
+        </label>
+        <label class="tier-card" data-value="beste" data-beste hidden>
+          <input type="radio" name="create-tier-choice" value="beste" disabled>
+          <span class="tier-card-body">
+            <span class="tier-card-title">Beste (Opus)</span>
+            <span class="tier-card-desc">Höchste Qualität, bezahlt aus deinem Guthaben.</span>
+          </span>
+          <span class="tier-card-chip tier-chip-paid" data-chip>Guthaben</span>
+        </label>
+      </div>
       <button id="create-tier-topup-cta" type="button" class="ghost tier-topup-cta hidden">Guthaben aufladen</button>
       <p id="create-tier-beste-hint" class="hint hidden"></p>
       <p id="create-tier-free-hint" class="hint hidden"></p>

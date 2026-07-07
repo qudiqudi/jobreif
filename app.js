@@ -9,9 +9,10 @@ const APP_VERSION = "1.37.0";
 const CHANGELOG = [
   {
     version: "1.37.0",
-    date: "06.07.2026",
+    date: "07.07.2026",
     items: [
       "Klarer Einstieg: Auf der Startseite siehst du jetzt auf einen Blick, dass du jobreif ohne Lebenslauf und ohne Pflicht-Anmeldung ausprobieren kannst. Und während dein Test erstellt wird, ist besser erkennbar, dass es meist in unter einer Minute fertig ist und du die Seite ruhig verlassen kannst.",
+      "Klarere Qualitätswahl beim Erstellen: Standard, Günstig und – sofern verfügbar – Beste (Opus) erscheinen jetzt als übersichtliche Karten mit Kostenangabe direkt dort, wo du den Test startest (vorher ein einfaches Auswahlmenü).",
     ],
   },
   {
@@ -1210,7 +1211,7 @@ function syncCreateTierSelect() {
   // wiederherstellen (der Detour hatte den transienten Override verworfen). Vor selectedTier(),
   // damit die Auswahl gleich beste zeigt; updateTierOptions entscheidet dann waehlbar/gesperrt.
   if (pendingCreateBesteIntent) { formTierOverride = "beste"; pendingCreateBesteIntent = false; }
-  sel.value = selectedTier();
+  tierSetValue(sel, selectedTier());
   updateTierOptions(g);   // setzt ggf. beste sichtbar/gesperrt und korrigiert den Wert
   updateFreeTierHint(g);
   renderFreeQuotaBadges(); // Create-Badge folgt selectedTier() → beim Betreten frisch zeichnen
@@ -2979,8 +2980,8 @@ const TIER_OPTION_LABELS = {
 };
 
 // --- Tier-Control-Adapter -------------------------------------------------
-// Der Einstellungen-Selektor #tier ist seit v1.32.1 ein Radio-Karten-Block
-// (Attribut data-tier-radio); die Erstell-Maske #create-tier bleibt ein <select>.
+// Sowohl der Einstellungen-Selektor #tier (seit v1.32.1) als auch die Erstell-Maske
+// #create-tier (seit v1.37.0) sind Radio-Karten-Blöcke (Attribut data-tier-radio).
 // Damit die bezahl-kritische Tier-Logik (Entitlement, Affordability, Opus-Preise)
 // EINE Implementierung bleibt, kapseln diese Helfer beide DOM-Formen. Fuer den
 // <select>-Pfad ist das Verhalten identisch zum frueheren Direktzugriff
@@ -11078,7 +11079,7 @@ $("tier").addEventListener("change", () => {
 $("create-tier").addEventListener("change", () => {
   const g = TIER_CONTROLS.create;
   const sel = $(g.sel);
-  if (sel) formTierOverride = sel.value;
+  if (sel) formTierOverride = tierGetValue(sel);
   updateTierOptions(g);
   updateFreeTierHint(g);
   renderFreeQuotaBadges(); // Preis im aufgebraucht-Zustand haengt an der gewaehlten Stufe

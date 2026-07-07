@@ -565,6 +565,10 @@ button.btn-topup.pack:hover { border-color: var(--primary); color: var(--accent-
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
 }
+/* Das `hidden`-Attribut (vom Tier-Adapter für die gesperrte Opus-Karte gesetzt) muss die
+   Karte wirklich ausblenden — `.tier-card { display:flex }` würde die UA-Regel sonst
+   überstimmen. Die Attribut-Selektor-Spezifität schlägt `.tier-card`, kein !important nötig. */
+.tier-card[hidden] { display: none; }
 @media (prefers-reduced-motion: reduce) { .tier-card { transition: none; } }
 .tier-card input {
   margin: 0.15rem 0 0;
