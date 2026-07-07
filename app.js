@@ -2970,8 +2970,9 @@ function renderTierControls() {
   updateCreateTierContextHint();
 }
 
-// Basis-Beschriftungen der Qualitaetsstufen (muessen den statischen Optionen in index.html
-// entsprechen). Preise werden bei aktivem Credits-Flag als Suffix angehaengt und hier immer
+// Basis-Beschriftungen der Qualitaetsstufen (fuer den <select>-Zweig des Adapters — seit v1.37.0
+// nutzen beide Tier-Controls Karten, der Select-Zweig bleibt als harmlose Fallback-Implementierung).
+// Preise werden bei aktivem Credits-Flag als Suffix angehaengt und hier immer
 // frisch aus der Basis aufgebaut — nie aus dem DOM weitergereicht (idempotent bei Flag-Wechsel).
 const TIER_OPTION_LABELS = {
   standard: "Standard – empfohlen",
@@ -3050,7 +3051,10 @@ function applyTierOptionPriceLabels(el) {
       } else {
         // Gratis-(Trial-)Stufe guenstig (oder standard bei Flag aus): „Kostenlos“ + proaktiver
         // Overflow-Preis (gleiche Bedingung/Quelle wie updateFreeTierHint, nur frueher sichtbar).
-        if (chip) { chip.textContent = "Kostenlos"; chip.className = "tier-card-chip tier-chip-free"; }
+        // beste ist NIE gratis — im kurzen Vor-Ladefenster (gespeicherte beste-Absicht, Karte
+        // sichtbar) nicht faelschlich „Kostenlos“ ueberschreiben, sondern die statische
+        // „Guthaben“-Beschriftung lassen (Review-Fund Slice 2).
+        if (chip && v !== "beste") { chip.textContent = "Kostenlos"; chip.className = "tier-card-chip tier-chip-free"; }
         if (after) {
           if (freeQuotaVisible() && tierIsFree(v)) {
             after.textContent = "danach ca. " + freeTierOverflowEuro(v) + "/Test";
