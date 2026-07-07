@@ -121,36 +121,6 @@
   </header>
 
   <main>
-    <!-- Onboarding v2: gefuehrter Erststart fuer ausgeloggte Besucher im gehosteten Modus.
-         Ein Fokus je Schritt, minimal Text. Rein clientseitige Ansicht (kein neuer Zustand);
-         inszeniert die bestehenden Flows (Eingabe/Beispiel/Ueben) als Schritt 1. Eingeloggte,
-         BYOK- und lokale Nutzer sehen den Wizard nie (routeInitialView). -->
-    <section id="view-wizard" class="card hidden" aria-labelledby="wizard-title">
-      <span class="eyebrow wizard-eyebrow">Kostenlos starten</span>
-      <h2 id="wizard-title">Womit möchtest du starten?</h2>
-      <p class="hint wizard-lead">Kostenlos und zum Ausprobieren ohne Anmeldung – such dir einfach einen Einstieg aus.</p>
-      <div class="wizard-choices">
-        <button id="wizard-choice-stelle" type="button" class="wizard-choice">
-          <span class="wizard-choice-title">Test für meine Stelle</span>
-          <span class="wizard-choice-sub">Stellenanzeige einfügen und einen passenden Übungstest erstellen.</span>
-        </button>
-        <button id="wizard-choice-demo" type="button" class="wizard-choice">
-          <span class="wizard-choice-title">Erst ein Beispiel ansehen</span>
-          <span class="wizard-choice-sub">Einen kompletten Beispieltest mit Lösungen und Quellen durchspielen – ohne Anmeldung.</span>
-        </button>
-        <button id="wizard-choice-ueben" type="button" class="wizard-choice">
-          <span class="wizard-choice-title">Nur Module üben</span>
-          <span class="wizard-choice-sub">Zahlenreihen, Konzentration und Figuren sofort üben – ohne Anmeldung.</span>
-        </button>
-      </div>
-      <!-- Datensparsamkeit sichtbar als Vertrauens-Signal (statt nur im Kleingedruckten). -->
-      <div class="trust-row" role="group" aria-label="Datenschutz auf einen Blick">
-        <span class="trust-badge"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>Kein Lebenslauf</span>
-        <span class="trust-badge">Keine Anmeldung nötig</span>
-        <span class="trust-badge">Datenschutz-first</span>
-      </div>
-    </section>
-
     <!-- Anmeldung (gehosteter Modus erfordert ein Konto) -->
     <section id="view-login" class="card hidden">
       <!-- Zwei Framings, per JS umgeschaltet (promptHostedLogin): der generische Titel fuer
@@ -988,12 +958,13 @@
          überspringbar, rein lokal (schreibt nur das optionale Profil, kein API-Call). -->
     <div id="welcome-modal" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
       <div class="modal card welcome-modal">
-        <h2 id="welcome-title">Willkommen!</h2>
-        <p id="welcome-frage">Damit dein Test zu dir passt: Wie kommst du zu dieser Stelle?</p>
+        <span class="eyebrow">Damit dein Test zu dir passt</span>
+        <h2 id="welcome-title">Wie kommst du zu dieser Stelle?</h2>
+        <p id="welcome-frage" class="hint">Ein Tipp genügt – daraus schneiden wir die Fragen auf deine Ausgangslage zu. Überspringen kannst du jederzeit.</p>
         <!-- Zwei-Schritt-Muster (Fix 1.31.1): Klick auf eine Karte WÄHLT nur aus (aria-pressed),
              gespeichert und geschlossen wird erst über „Los geht’s“ – vorher schloss der erste
              Klick das Modal sofort und das Erfahrungs-Dropdown darunter ging verloren. -->
-        <div class="welcome-choices" role="group" aria-labelledby="welcome-frage">
+        <div class="welcome-choices" role="group" aria-labelledby="welcome-title">
           <button type="button" class="welcome-choice" data-trajectory="fach" aria-pressed="false">
             <strong>Fachkraft im Beruf</strong>
             <span>Du bleibst fachlich in deiner Richtung – gleicher Beruf oder gleiches Fachgebiet.</span>
