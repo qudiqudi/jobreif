@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.36.2";
+const APP_VERSION = "1.37.0";
 
 const CHANGELOG = [
+  {
+    version: "1.37.0",
+    date: "06.07.2026",
+    items: [
+      "Klarer Einstieg: Auf der Startseite siehst du jetzt auf einen Blick, dass du jobreif ohne Lebenslauf und ohne Pflicht-Anmeldung ausprobieren kannst. Und während dein Test erstellt wird, ist besser erkennbar, dass es meist in unter einer Minute fertig ist und du die Seite ruhig verlassen kannst.",
+    ],
+  },
   {
     version: "1.36.2",
     date: "06.07.2026",
@@ -6002,7 +6009,7 @@ function renderActiveJobCard(state) {
       ? "Die Erstellung ist fehlgeschlagen. Bitte erneut starten."
       : ready
       ? readyMsg
-      : "Dein Test wird erstellt … du kannst die Seite verlassen und später zurückkehren.";
+      : "Dein Test wird erstellt – meist in unter einer Minute fertig. Du kannst die Seite ruhig verlassen und später zurückkehren.";
   }
   if (spin) spin.classList.toggle("hidden", state !== "pending");
   if (startBtn) startBtn.classList.toggle("hidden", !ready);
