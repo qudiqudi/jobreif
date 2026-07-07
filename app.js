@@ -4,9 +4,17 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.36.2";
+const APP_VERSION = "1.37.0";
 
 const CHANGELOG = [
+  {
+    version: "1.37.0",
+    date: "07.07.2026",
+    items: [
+      "Klarer Einstieg: Auf der Startseite siehst du jetzt auf einen Blick, dass du jobreif ohne Lebenslauf und ohne Pflicht-Anmeldung ausprobieren kannst. Und während dein Test erstellt wird, ist besser erkennbar, dass es meist in unter einer Minute fertig ist und du die Seite ruhig verlassen kannst.",
+      "Klarere Qualitätswahl beim Erstellen: Standard, Günstig und – sofern verfügbar – Beste (Opus) erscheinen jetzt als übersichtliche Karten mit Kostenangabe direkt dort, wo du den Test startest (vorher ein einfaches Auswahlmenü).",
+    ],
+  },
   {
     version: "1.36.2",
     date: "06.07.2026",
@@ -1165,6 +1173,10 @@ function updateGuestInputUi() {
   const guest = hostedNeedsLogin();
   $("guest-value-prop").classList.toggle("hidden", !guest);
   $("guest-escape").classList.toggle("hidden", !guest);
+  // Gast sieht die S1-Frage („Für welche Stelle…?"); die neutrale Abschnitts-Überschrift
+  // „Stellenbeschreibung" bleibt den eingeloggten/BYOK-Nutzern vorbehalten.
+  const sectTitle = $("input-section-title");
+  if (sectTitle) sectTitle.classList.toggle("hidden", guest);
   // Wizard-Schritt 2: die Feinkonfiguration (Modus/Schwierigkeit/Qualitaet/Gespraechsstufe)
   // fuer ausgeloggte Besucher ausblenden — hier zaehlt nur Stelle eingeben + "Test erstellen".
   // Nach der Anmeldung ist der Nutzer kein Gast mehr, der Block erscheint und wird beim
@@ -1172,11 +1184,11 @@ function updateGuestInputUi() {
   // die Bedienelemente bleiben im DOM (nur display:none), ihre Defaults gelten weiterhin.
   const adv = $("input-advanced");
   if (adv) adv.classList.toggle("hidden", guest);
-  // Zurueck-Weg: fuer Gaeste fuehrt er zu Wizard-Schritt 1 (per History-Rueckwaerts, das den
-  // Wizard-Eintrag wiederherstellt), fuer eingerichtete Nutzer wie bisher zu "Meine Stellen".
+  // Zurueck-Weg: fuer Gaeste ist die Eingabe der Einstieg (kein sinnvolles Zurueck-Ziel) →
+  // Knopf ausblenden. Fuer eingerichtete/eingeloggte Nutzer wie bisher zu "Meine Stellen".
   const back = $("btn-input-back");
-  back.classList.remove("hidden");
-  back.textContent = guest ? "‹ Zurück" : "‹ Meine Stellen";
+  back.classList.toggle("hidden", guest);
+  back.textContent = "‹ Meine Stellen";
   // Der Wiederhergestellt-Hinweis gilt nur unmittelbar nach dem Login-Ruecksprung;
   // consumePendingJobInputIntoForm blendet ihn danach gezielt wieder ein.
   const hint = $("pending-restored-hint");
@@ -1203,7 +1215,7 @@ function syncCreateTierSelect() {
   // wiederherstellen (der Detour hatte den transienten Override verworfen). Vor selectedTier(),
   // damit die Auswahl gleich beste zeigt; updateTierOptions entscheidet dann waehlbar/gesperrt.
   if (pendingCreateBesteIntent) { formTierOverride = "beste"; pendingCreateBesteIntent = false; }
-  sel.value = selectedTier();
+  tierSetValue(sel, selectedTier());
   updateTierOptions(g);   // setzt ggf. beste sichtbar/gesperrt und korrigiert den Wert
   updateFreeTierHint(g);
   renderFreeQuotaBadges(); // Create-Badge folgt selectedTier() → beim Betreten frisch zeichnen
@@ -2962,8 +2974,9 @@ function renderTierControls() {
   updateCreateTierContextHint();
 }
 
-// Basis-Beschriftungen der Qualitaetsstufen (muessen den statischen Optionen in index.html
-// entsprechen). Preise werden bei aktivem Credits-Flag als Suffix angehaengt und hier immer
+// Basis-Beschriftungen der Qualitaetsstufen (fuer den <select>-Zweig des Adapters — seit v1.37.0
+// nutzen beide Tier-Controls Karten, der Select-Zweig bleibt als harmlose Fallback-Implementierung).
+// Preise werden bei aktivem Credits-Flag als Suffix angehaengt und hier immer
 // frisch aus der Basis aufgebaut — nie aus dem DOM weitergereicht (idempotent bei Flag-Wechsel).
 const TIER_OPTION_LABELS = {
   standard: "Standard – empfohlen",
@@ -2972,8 +2985,8 @@ const TIER_OPTION_LABELS = {
 };
 
 // --- Tier-Control-Adapter -------------------------------------------------
-// Der Einstellungen-Selektor #tier ist seit v1.32.1 ein Radio-Karten-Block
-// (Attribut data-tier-radio); die Erstell-Maske #create-tier bleibt ein <select>.
+// Sowohl der Einstellungen-Selektor #tier (seit v1.32.1) als auch die Erstell-Maske
+// #create-tier (seit v1.37.0) sind Radio-Karten-Blöcke (Attribut data-tier-radio).
 // Damit die bezahl-kritische Tier-Logik (Entitlement, Affordability, Opus-Preise)
 // EINE Implementierung bleibt, kapseln diese Helfer beide DOM-Formen. Fuer den
 // <select>-Pfad ist das Verhalten identisch zum frueheren Direktzugriff
@@ -3042,7 +3055,10 @@ function applyTierOptionPriceLabels(el) {
       } else {
         // Gratis-(Trial-)Stufe guenstig (oder standard bei Flag aus): „Kostenlos“ + proaktiver
         // Overflow-Preis (gleiche Bedingung/Quelle wie updateFreeTierHint, nur frueher sichtbar).
-        if (chip) { chip.textContent = "Kostenlos"; chip.className = "tier-card-chip tier-chip-free"; }
+        // beste ist NIE gratis — im kurzen Vor-Ladefenster (gespeicherte beste-Absicht, Karte
+        // sichtbar) nicht faelschlich „Kostenlos“ ueberschreiben, sondern die statische
+        // „Guthaben“-Beschriftung lassen (Review-Fund Slice 2).
+        if (chip && v !== "beste") { chip.textContent = "Kostenlos"; chip.className = "tier-card-chip tier-chip-free"; }
         if (after) {
           if (freeQuotaVisible() && tierIsFree(v)) {
             after.textContent = "danach ca. " + freeTierOverflowEuro(v) + "/Test";
@@ -6002,7 +6018,7 @@ function renderActiveJobCard(state) {
       ? "Die Erstellung ist fehlgeschlagen. Bitte erneut starten."
       : ready
       ? readyMsg
-      : "Dein Test wird erstellt … du kannst die Seite verlassen und später zurückkehren.";
+      : "Dein Test wird erstellt – meist in unter einer Minute fertig. Du kannst die Seite ruhig verlassen und später zurückkehren.";
   }
   if (spin) spin.classList.toggle("hidden", state !== "pending");
   if (startBtn) startBtn.classList.toggle("hidden", !ready);
@@ -10338,11 +10354,11 @@ function goHome() {
 
 // Austritt aus dem Ueben dorthin, wo der Nutzer hergekommen ist: ein eingerichteter
 // Nutzer (angemeldet bzw. BYOK/lokal) landet auf "Meine Stellen"; ein ausgeloggter
-// Hosted-Besucher kehrt zum gefuehrten Wizard-Einstieg (Schritt 1) zurueck — nicht in
-// die volle App-Shell und nicht ans blanke Login-Gate (die gehostete Testerstellung
-// selbst bleibt anmeldepflichtig, hostedNeedsLogin()).
+// Hosted-Besucher kehrt zum Ein-Aktion-Einstieg (view-input) zurueck — nicht in die
+// volle App-Shell und nicht ans blanke Login-Gate (die gehostete Testerstellung selbst
+// bleibt anmeldepflichtig, hostedNeedsLogin()).
 function leavePractice() {
-  if (hostedNeedsLogin()) showWizard();
+  if (hostedNeedsLogin()) showView("view-input");
   else goHome();
 }
 
@@ -10943,6 +10959,9 @@ $("wizard-choice-stelle").addEventListener("click", () => {
 });
 $("wizard-choice-demo").addEventListener("click", startDemoTest);
 $("wizard-choice-ueben").addEventListener("click", () => openPracticePicker());
+// Sekundaere No-Login-Wege am Ein-Aktion-Einstieg (view-input, guest-escape).
+$("alt-demo").addEventListener("click", startDemoTest);
+$("alt-ueben").addEventListener("click", () => openPracticePicker());
 
 // Kanonischer Uebungs-Einstieg in der Kopfzeile ("Üben"), fuer ein- UND ausgeloggte Nutzer.
 // Ersetzt die frueheren Inline-Uebungs-Buttons am Login-Gate und in der Gast-Eingabe.
@@ -11071,7 +11090,7 @@ $("tier").addEventListener("change", () => {
 $("create-tier").addEventListener("change", () => {
   const g = TIER_CONTROLS.create;
   const sel = $(g.sel);
-  if (sel) formTierOverride = sel.value;
+  if (sel) formTierOverride = tierGetValue(sel);
   updateTierOptions(g);
   updateFreeTierHint(g);
   renderFreeQuotaBadges(); // Preis im aufgebraucht-Zustand haengt an der gewaehlten Stufe
@@ -12695,7 +12714,10 @@ function routeInitialView() {
       _authRedirectMsg = "";
       return;
     }
-    showWizard();
+    // Ein-Aktion-Einstieg (S1): der Gast landet direkt auf der Eingabe (Stelle zuerst); Beispiel
+    // und Module sind dort sekundaer (guest-escape). Die Anmeldung kommt weiterhin erst beim
+    // „Test erstellen"/„Laden". Ersetzt den frueheren 3-Karten-Wizard als Erststart.
+    showView("view-input");
     return;
   }
   _authRedirectMsg = "";

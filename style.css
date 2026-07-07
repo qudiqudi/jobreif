@@ -51,6 +51,8 @@
   --shadow: 0 18px 40px -18px oklch(0.45 0.04 40 / 0.20);
   --shadow-sm: 0 2px 8px -3px oklch(0.45 0.04 40 / 0.18);
   --display: "Sora", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* Struktur-/Label-Schrift (Eyebrows, Trust-Badges): Systemschrift, kein Extra-Asset. */
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   color-scheme: light;
 }
 
@@ -563,6 +565,10 @@ button.btn-topup.pack:hover { border-color: var(--primary); color: var(--accent-
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
 }
+/* Das `hidden`-Attribut (vom Tier-Adapter für die gesperrte Opus-Karte gesetzt) muss die
+   Karte wirklich ausblenden — `.tier-card { display:flex }` würde die UA-Regel sonst
+   überstimmen. Die Attribut-Selektor-Spezifität schlägt `.tier-card`, kein !important nötig. */
+.tier-card[hidden] { display: none; }
 @media (prefers-reduced-motion: reduce) { .tier-card { transition: none; } }
 .tier-card input {
   margin: 0.15rem 0 0;
@@ -586,6 +592,7 @@ button.btn-topup.pack:hover { border-color: var(--primary); color: var(--accent-
 .tier-card-desc { display: block; font-size: 0.76rem; color: var(--muted); margin-top: 0.1rem; }
 /* Proaktiver Overflow-Preis der Gratis-Stufen („danach ca. X €/Test“) */
 .tier-card-after { display: block; font-size: 0.72rem; font-weight: 600; color: var(--accent-text); margin-top: 0.25rem; }
+.tier-card-after[hidden] { display: none; } /* wie .tier-card[hidden]: display:block sonst UA-[hidden] ueberstimmen */
 .tier-card-chip {
   flex: none;
   align-self: center;
@@ -598,6 +605,21 @@ button.btn-topup.pack:hover { border-color: var(--primary); color: var(--accent-
 }
 .tier-chip-free { background: var(--green-soft); color: var(--green); border: 1px solid color-mix(in srgb, var(--green) 35%, transparent); }
 .tier-chip-paid { background: var(--primary-soft); color: var(--accent-text); border: 1px solid var(--primary-soft-border); }
+/* Reiche Tier-Karten am Entscheidungspunkt (nur Erstell-Maske via .tier-cards-rich; die
+   globale Wahl in den Einstellungen bleibt bewusst kompakt). Rein praesentational — die
+   Auswahl-/Preis-Logik laeuft unveraendert ueber denselben Adapter. */
+.tier-cards-rich { gap: 0.7rem; }
+.tier-cards-rich .tier-card { position: relative; padding: 1rem 1.05rem; }
+.tier-cards-rich .tier-card:has(input:checked) { padding: calc(1rem - 0.5px) calc(1.05rem - 0.5px); }
+.tier-cards-rich .tier-card-chip { align-self: flex-start; font-size: 0.7rem; }
+.tier-card-points { list-style: none; margin: 0.55rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.32rem; }
+.tier-card-points li { position: relative; padding-left: 0.95rem; font-size: 0.78rem; color: var(--text); line-height: 1.35; }
+.tier-card-points li::before { content: ""; position: absolute; left: 0.12rem; top: 0.52em; width: 5px; height: 5px; border-radius: 50%; background: var(--primary); }
+.tier-card-flag {
+  position: absolute; top: -0.55rem; right: 0.9rem;
+  font-family: var(--mono); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  background: var(--primary); color: var(--primary-on); padding: 0.16rem 0.5rem; border-radius: 7px; white-space: nowrap;
+}
 .tier-card.is-disabled { opacity: 0.6; cursor: default; }
 .tier-card.is-disabled .tier-card-title { color: var(--muted); }
 .tier-card:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
@@ -766,6 +788,71 @@ button.btn-topup.pack:hover { border-color: var(--primary); color: var(--accent-
   color: var(--muted, #6b5d57);
   line-height: 1.4;
 }
+
+/* --- Struktur-Eyebrow: kleines Mono-Label mit vorangestelltem Strich.
+   Wiederverwendbares Onboarding-Motiv (Einstieg, Wartezustand). --- */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+  margin: 0 0 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+.eyebrow::before {
+  content: "";
+  width: 1.5em;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--primary);
+  opacity: 0.85;
+}
+
+/* --- Privacy-Trust-Badges: ruhige Mono-Chips, die die Datensparsamkeit
+   sichtbar machen (statt sie im Kleingedruckten zu verstecken). --- */
+.trust-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 1.1rem;
+}
+.trust-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.32rem 0.7rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-strong);
+  background: var(--card-2);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+}
+.trust-badge svg {
+  width: 0.95em;
+  height: 0.95em;
+  flex: none;
+  color: var(--accent-text);
+}
+.wizard-eyebrow { margin-top: 0.1rem; }
+
+/* S1 Ein-Aktion-Einstieg (view-input, Gast): Frage-Ueberschrift + sekundaere No-Login-Wege. */
+.input-guest-head { margin: 0 0 0.4rem; }
+.input-guest-title { margin: 0.35rem 0 0; }
+.alt-actions { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.25rem; }
+.alt-action {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;
+  width: 100%; text-align: left; padding: 0.85rem 1rem; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--card); min-height: 0;
+}
+.alt-action:hover { background: var(--primary-soft); border-color: var(--primary); }
+.alt-action-t { font-family: var(--display); font-weight: 700; font-size: 0.95rem; color: var(--text-strong, var(--text)); }
+.alt-action-s { font-size: 0.8rem; color: var(--muted); font-weight: 400; line-height: 1.35; }
 
 .field-inline {
   display: flex;
