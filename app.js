@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.38.0";
+const APP_VERSION = "1.39.0";
 
 const CHANGELOG = [
+  {
+    version: "1.39.0",
+    date: "07.07.2026",
+    items: [
+      "Klarer Start ohne Tests: Die Übersicht „Meine Stellen“ zeigt jetzt einen einladenden ersten Schritt zu deinem ersten Übungstest, statt nur einen Hinweis. Und die Erklärungen bei Profil und Gesprächsstufe sind verständlicher formuliert (mit Anmeldung statt Fachbegriff).",
+    ],
+  },
   {
     version: "1.38.0",
     date: "07.07.2026",
@@ -10956,6 +10963,10 @@ $("login-magic-form").addEventListener("submit", async (e) => {
 // abspielen (startDemoTest) bzw. den generischen Uebungs-Hub oeffnen (openPracticePicker).
 $("alt-demo").addEventListener("click", startDemoTest);
 $("alt-ueben").addEventListener("click", () => openPracticePicker());
+// Leerer-Zustand-Onboarding (view-home): „Test erstellen" = derselbe Frischstart wie
+// „+ Neue Stelle" (Felder/Entwurf-Reset inklusive), „Beispiel" spielt den Demotest ab.
+$("empty-create").addEventListener("click", () => $("btn-new-job").click());
+$("empty-demo").addEventListener("click", startDemoTest);
 
 // Kanonischer Uebungs-Einstieg in der Kopfzeile ("Üben"), fuer ein- UND ausgeloggte Nutzer.
 // Ersetzt die frueheren Inline-Uebungs-Buttons am Login-Gate und in der Gast-Eingabe.
