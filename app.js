@@ -1311,7 +1311,11 @@ function restoreView(state) {
     // nicht direkt showView — sonst umgeht diese Wiederherstellung den Once-pro-Anzeige-Gate
     // der login-shown-Telemetrie (P10).
     else if (id === "view-login") promptHostedLogin();
-    else showView(id);
+    // Nur bekannte Views direkt zeigen. Ein veralteter History-Eintrag einer entfernten View
+    // (z. B. der frühere view-wizard aus einem Tab vor v1.37.0) würde sonst in showView ALLE
+    // Views ausblenden → kurzer Leer-Screen. Unbekannte id → Startliste.
+    else if (views.includes(id)) showView(id);
+    else goHome();
   } finally {
     _poppingHistory = false;
   }
