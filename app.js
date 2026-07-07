@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.37.0";
+const APP_VERSION = "1.38.0";
 
 const CHANGELOG = [
+  {
+    version: "1.38.0",
+    date: "07.07.2026",
+    items: [
+      "Der kurze Personalisierungs-Schritt beim ersten Login (die Frage „Wie kommst du zu dieser Stelle?“) ist klarer gestaltet und formuliert – ein Tipp genügt, überspringen geht jederzeit.",
+    ],
+  },
   {
     version: "1.37.0",
     date: "07.07.2026",
@@ -1136,7 +1143,7 @@ const timer = { intervalId: null, deadline: 0, overtime: false, limitMin: 0 };
 
 const $ = (id) => document.getElementById(id);
 
-const views = ["view-wizard", "view-login", "view-onboarding", "view-settings", "view-home", "view-input", "view-job", "view-quiz", "view-result", "view-history", "view-sr"];
+const views = ["view-login", "view-onboarding", "view-settings", "view-home", "view-input", "view-job", "view-quiz", "view-result", "view-history", "view-sr"];
 
 function showView(id) {
   // Eingabe-Bildschirm verlassen → den TRANSIENTEN Pro-Test-Tier-Override verwerfen, damit er
@@ -1194,14 +1201,6 @@ function updateGuestInputUi() {
   const hint = $("pending-restored-hint");
   hint.classList.add("hidden");
   hint.textContent = "";
-}
-
-// Onboarding v2, Schritt 1: den gefuehrten Wizard zeigen und den Fokus fuer Tastatur/
-// Screenreader auf die erste Auswahl legen. Rein clientseitig; kein Zustand, kein API-Call.
-function showWizard() {
-  showView("view-wizard");
-  const first = $("wizard-choice-stelle");
-  if (first) first.focus({ preventScroll: true });
 }
 
 // Den Pro-Test-Tier-Selektor (#create-tier) mit der aktuellen Absicht (Override oder globaler
@@ -1305,9 +1304,9 @@ function restoreView(state) {
       // zeigen, sondern auf die Startliste.
       if (key && viewRecordKey(id) === key) showView(id); else goHome();
     }
-    // Einrichtungs-Gates (Login/Onboarding) und der Gast-Wizard nicht per Zurueck erneut
-    // zeigen, wenn der Anbieter inzwischen nutzbar eingerichtet ist - dann auf die Startliste.
-    else if ((id === "view-login" || id === "view-onboarding" || id === "view-wizard") && isProviderConfigured()) goHome();
+    // Einrichtungs-Gates (Login/Onboarding) nicht per Zurueck erneut zeigen, wenn der Anbieter
+    // inzwischen nutzbar eingerichtet ist - dann auf die Startliste.
+    else if ((id === "view-login" || id === "view-onboarding") && isProviderConfigured()) goHome();
     // Zurueck/Vorwaerts IN view-login (Login noch noetig): ueber promptHostedLogin fuehren,
     // nicht direkt showView — sonst umgeht diese Wiederherstellung den Once-pro-Anzeige-Gate
     // der login-shown-Telemetrie (P10).
@@ -10949,17 +10948,8 @@ $("login-magic-form").addEventListener("submit", async (e) => {
   }
 });
 
-// Onboarding v2, Schritt 1 (Wizard): drei gleichwertige Einstiege fuer ausgeloggte Besucher.
-// Alle rein lokal/clientseitig, kein API-Call: "Stelle" fuehrt zu Schritt 2 (Eingabe), "Beispiel"
-// spielt den Beispieltest ab (startDemoTest), "Ueben" oeffnet den generischen Uebungs-Hub.
-$("wizard-choice-stelle").addEventListener("click", () => {
-  showView("view-input");
-  const url = $("job-url");
-  if (url && !url.classList.contains("hidden")) url.focus({ preventScroll: true });
-});
-$("wizard-choice-demo").addEventListener("click", startDemoTest);
-$("wizard-choice-ueben").addEventListener("click", () => openPracticePicker());
-// Sekundaere No-Login-Wege am Ein-Aktion-Einstieg (view-input, guest-escape).
+// Sekundaere No-Login-Wege am Ein-Aktion-Einstieg (view-input, guest-escape): Beispieltest
+// abspielen (startDemoTest) bzw. den generischen Uebungs-Hub oeffnen (openPracticePicker).
 $("alt-demo").addEventListener("click", startDemoTest);
 $("alt-ueben").addEventListener("click", () => openPracticePicker());
 
@@ -12703,9 +12693,9 @@ function routeInitialView() {
   if (consumeUebenDeepLink()) return; // Uebungs-Deep-Link hat Vorrang (lokal, ohne Gate)
   const provider0 = settings.provider || "hosted";
   if (provider0 === "hosted" && !settings.authToken) {
-    // Onboarding v2: Erstbesucher sehen einen gefuehrten Wizard (Schritt 1: Womit starten?)
-    // statt einer textlastigen Eingabemaske oder einer Login-Wand; die Anmeldung kommt erst
-    // beim Klick auf "Test erstellen" bzw. "Laden" (generateQuiz/URL-Import sichern die Eingabe).
+    // Onboarding v2: Erstbesucher sehen den Ein-Aktion-Einstieg (Eingabe) statt einer Login-Wand;
+    // die Anmeldung kommt erst beim Klick auf "Test erstellen" bzw. "Laden" (generateQuiz/
+    // URL-Import sichern die Eingabe).
     // Nur wenn gerade ein Login-Redirect mit Meldung zurueckkam (Fehler, abgebrochene
     // oder abgelaufene Anmeldung), weiter das Login-Gate zeigen, damit die Meldung
     // sichtbar ist und der Nutzer es direkt erneut versuchen kann.
