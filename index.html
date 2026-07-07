@@ -927,6 +927,19 @@
       </div>
     </div>
 
+    <!-- Sicherheits-Rückfrage: ein gescannter Kopplungs-Code würde einen bereits eingerichteten
+         Geräte-Sync ersetzen (schützt vor stillem Neu-Koppeln über einen präparierten Link). -->
+    <div id="confirm-replace-seed-modal" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-replace-seed-title">
+      <div class="modal card">
+        <h2 id="confirm-replace-seed-title">Gerät neu koppeln?</h2>
+        <p id="confirm-replace-seed-text">Dieser Link enthält einen Kopplungs-Code für den Geräte-Sync. Wenn du fortfährst, wird dein bisheriger Sync-Schlüssel auf diesem Gerät <strong>ersetzt</strong> – das Gerät löst sich aus deinem bisherigen Sync-Verbund und verbindet sich mit dem gescannten. Fahre nur fort, wenn du den Code selbst erzeugt hast.</p>
+        <div class="row">
+          <button id="btn-confirm-replace-seed" class="primary">Ersetzen und koppeln</button>
+          <button id="btn-confirm-replace-seed-cancel" class="ghost">Abbrechen</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Ende des Beispieltests (ohne Login): CTA zum eigenen Test -->
     <div id="demo-end-modal" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="demo-end-title">
       <div class="modal card">
