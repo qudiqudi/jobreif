@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.39.0";
+const APP_VERSION = "1.40.0";
 
 const CHANGELOG = [
+  {
+    version: "1.40.0",
+    date: "07.07.2026",
+    items: [
+      "Mehr Sicherheit beim Geräte-Sync: Öffnest du einen Kopplungs-Link, der einen bereits eingerichteten Sync auf diesem Gerät ersetzen würde, fragt jobreif jetzt zuerst nach. So kann ein fremder Link dein Gerät nicht mehr unbemerkt neu koppeln.",
+    ],
+  },
   {
     version: "1.39.0",
     date: "07.07.2026",
@@ -12050,6 +12057,50 @@ $("btn-confirm-replace-learn").addEventListener("click", () => {
 });
 $("btn-confirm-replace-learn-cancel").addEventListener("click", closeConfirmReplaceLearn);
 
+// --- M6 (Security-Review): Bestaetigung vor dem ERSETZEN eines bestehenden Sync-Seeds ---------
+// Uebernimmt einen gescannten Seed in den lokalen Zustand: Besitzer-Marke loeschen (der Seed ist
+// noch ungebunden — reconcileSyncOwner ordnet ihn beim naechsten Login dem dann angemeldeten
+// Konto zu, statt ihn als „fremd" zu verwerfen) und den alten Kreis-Zustand verwerfen (sonst
+// wuerde die alte Geraeteliste inkl. gerade ausgesperrter Geraete in den neuen Kreis gemerged;
+// Fable-Review-Finding). triggerPull=true stoesst den Kreis-Pull SELBST an — genutzt aus dem
+// Bestaetigungs-Dialog, dessen Klick NACH dem synchronen Startup-Pull faellt (im reibungslosen
+// Frisch-Install-Fall uebernimmt der Startup-Pull, daher dort triggerPull=false).
+function adoptScannedSeed(triggerPull) {
+  localStorage.removeItem(SYNC_OWNER_KEY);
+  _syncScannedThisLoad = true;
+  clearSyncDevices();
+  setProfileMeta({ rev: 0 });
+  for (const name of Object.keys(MERGE_KINDS)) { setKindMeta(name, { rev: 0 }); mergeState(name).sig = null; }
+  if (triggerPull && syncEligible()) syncPullWithFeedback("couple").catch(() => {});
+}
+
+let confirmReplaceSeedCode = null;
+let confirmReplaceSeedReturnFocus = null;
+function openConfirmReplaceSeed(code) {
+  confirmReplaceSeedCode = code;
+  confirmReplaceSeedReturnFocus = document.activeElement;
+  $("confirm-replace-seed-modal").classList.remove("hidden");
+  $("btn-confirm-replace-seed").focus();
+}
+function closeConfirmReplaceSeed() {
+  $("confirm-replace-seed-modal").classList.add("hidden");
+  confirmReplaceSeedCode = null;
+  if (confirmReplaceSeedReturnFocus && typeof confirmReplaceSeedReturnFocus.focus === "function") {
+    confirmReplaceSeedReturnFocus.focus();
+  }
+  confirmReplaceSeedReturnFocus = null;
+}
+$("btn-confirm-replace-seed").addEventListener("click", () => {
+  const code = confirmReplaceSeedCode;
+  closeConfirmReplaceSeed();
+  if (!code) return;
+  // Erst JETZT (nach Bestaetigung) speichern und uebernehmen — vorher wurde nur das Fragment
+  // aus der URL gestrippt (adopt:false), der bisherige Seed blieb aktiv.
+  try { window.SyncCrypto.storeCode(code); } catch { return; }
+  adoptScannedSeed(true);
+});
+$("btn-confirm-replace-seed-cancel").addEventListener("click", closeConfirmReplaceSeed);
+
 // Rueckfrage vor dem bezahlten Overflow: ist das Gratis-Tageskontingent aufgebraucht, fragt
 // der Server mit 402 quota-exhausted zurueck. Erst NACH ausdruecklicher Bestaetigung sendet der
 // Client den Generierungs-Request erneut mit payWithCredits:true (keine unbeabsichtigten Kosten,
@@ -13870,21 +13921,33 @@ _syncLastSig = profileSig();
 // Läuft vor allem anderen; bei deaktiviertem Feature ist der gespeicherte Seed schlicht ungenutzt.
 try {
   if (window.SyncCrypto) {
-    const scanned = window.SyncCrypto.consumeSyncFragment();
-    // Ein frisch gescannter Seed ist NOCH ungebunden (er ersetzt einen evtl. an ein ANDERES Konto
-    // gebundenen): die Besitzer-Marke löschen, damit reconcileSyncOwner ihn beim nächsten Login dem
-    // dann angemeldeten Konto zuordnet, statt ihn als „fremd" zu verwerfen bzw. fälschlich dem
-    // Alt-Konto zuzurechnen (Fable-Finding). Entspricht dem QR-scannen-dann-einloggen-Flow.
-    if (scanned) {
-      localStorage.removeItem(SYNC_OWNER_KEY);
-      _syncScannedThisLoad = true;
-      // Der Scan ERSETZT einen evtl. vorhandenen Code (z. B. Re-Koppeln nach „Sync
-      // zurücksetzen") → wie in syncJoinFromCode den alten Kreis-Zustand verwerfen: sonst
-      // würde die alte Geräteliste (inkl. gerade ausgesperrter Geräte) in den neuen Kreis
-      // gemerged und veraltete revs/Signaturen weiterverwendet (Fable-Review-Finding).
-      clearSyncDevices();
-      setProfileMeta({ rev: 0 });
-      for (const name of Object.keys(MERGE_KINDS)) { setKindMeta(name, { rev: 0 }); mergeState(name).sig = null; }
+    const incoming = window.SyncCrypto.parseSyncFragment(location.hash);
+    if (incoming) {
+      // M6 (Security-Review): Ein per Link/QR eingehender Seed, der einen BEREITS gespeicherten,
+      // ANDEREN Seed ersetzen wuerde, ist der gefaehrliche Fall — ein praeparierter #sync=-Link
+      // koennte ein eingeloggtes Geraet still aus seinem Kreis loesen und den lokalen Bestand
+      // unter einem angreifer-bekannten Schluessel neu hochladen. Nur DANN erst nach
+      // ausdruecklicher Bestaetigung uebernehmen. Frisch-Install oder derselbe Seed bleibt
+      // reibungslos (keine Rueckfrage).
+      let existing = null;
+      try { existing = window.SyncCrypto.storedCode(); } catch { existing = null; }
+      let sameSeed = false;
+      if (existing) {
+        try {
+          const S = window.SyncCrypto;
+          sameSeed = S.seedToCode(S.codeToSeed(existing)) === S.seedToCode(S.codeToSeed(incoming));
+        } catch { sameSeed = false; }
+      }
+      if (existing && !sameSeed) {
+        // Fragment SOFORT strippen (Seed nie in der Adressleiste/History), aber NICHT
+        // uebernehmen, bis der Nutzer bestaetigt.
+        window.SyncCrypto.consumeSyncFragment({ adopt: false });
+        openConfirmReplaceSeed(incoming);
+      } else {
+        // Reibungslos uebernehmen (Frisch-Install/gleicher Seed) — Speichern + Strip im Modul.
+        const scanned = window.SyncCrypto.consumeSyncFragment();
+        if (scanned) adoptScannedSeed(false);
+      }
     }
   }
 } catch { /* defensiv */ }

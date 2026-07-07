@@ -162,6 +162,19 @@ async function run() {
     eq(c3, code, "consumeSyncFragment liefert Code auch bei Storage-Fehler");
     eq(replaced2, "/", "Fragment auch bei Storage-Fehler aus URL entfernt");
 
+    // M6: adopt:false strippt das Fragment aus der URL, speichert den Seed aber NICHT (genutzt,
+    // wenn der Seed einen bestehenden ANDEREN ersetzen wuerde → erst nach Nutzer-Bestaetigung).
+    const store3 = new Map();
+    const storage3 = { getItem: (k) => (store3.has(k) ? store3.get(k) : null), setItem: (k, v) => store3.set(k, v), removeItem: (k) => store3.delete(k) };
+    store3.set(SC.SYNC_KEY_STORAGE, "ALT-CODE"); // ein bestehender Seed liegt vor
+    let replaced4 = "SENTINEL";
+    const history4 = { replaceState: (_s, _t, u) => { replaced4 = u; } };
+    const loc4 = { hash: "#sync=v1." + code, pathname: "/", search: "" };
+    const c4 = SC.consumeSyncFragment({ location: loc4, history: history4, storage: storage3, adopt: false });
+    eq(c4, code, "adopt:false liefert den gescannten Code");
+    eq(store3.get(SC.SYNC_KEY_STORAGE), "ALT-CODE", "adopt:false ueberschreibt den bestehenden Seed NICHT");
+    eq(replaced4, "/", "adopt:false strippt das Fragment TROTZDEM aus der URL (Seed nie in der Adressleiste)");
+
     // storedCode / storeCode / clearStoredCode
     eq(SC.storedCode(storage), code, "storedCode liest kanonisch");
     SC.clearStoredCode(storage);

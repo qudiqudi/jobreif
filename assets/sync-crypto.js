@@ -201,11 +201,17 @@
     if (!location || typeof location.hash !== "string") return null;
     const code = parseSyncFragment(location.hash);
     if (!code) return null;
+    // adopt (Default true, rueckwaerts-kompatibel): den gescannten Seed uebernehmen (speichern).
+    // adopt:false = das Fragment NUR aus URL/History strippen, aber NICHT speichern — vom Aufrufer
+    // genutzt, wenn der Seed einen BEREITS gespeicherten, ANDEREN Seed ersetzen wuerde: dann wird
+    // erst nach ausdruecklicher Nutzer-Bestaetigung uebernommen (M6, gegen stilles Neu-Koppeln per
+    // praepariertem #sync=-Link). Der URL-Strip laeuft in JEDEM Fall (Seed nie in der Adressleiste).
+    const adopt = !deps || deps.adopt !== false;
     // Seed sichern — aber das Fragment MUSS auch dann aus URL/History verschwinden, wenn das
     // Speichern scheitert (Privatmodus/Quota/Storage deaktiviert → setItem wirft). Sonst bliebe
     // der Seed in der Adressleiste/History sichtbar (Codex-Adversarial-Finding). Daher store in
     // try/catch, der replaceState-Strip laeuft unabhaengig.
-    try { if (storage) storage.setItem(SYNC_KEY_STORAGE, code); } catch { /* Strip trotzdem */ }
+    if (adopt) { try { if (storage) storage.setItem(SYNC_KEY_STORAGE, code); } catch { /* Strip trotzdem */ } }
     if (history && typeof history.replaceState === "function") {
       const rest = (location.pathname || "/") + (location.search || "");
       try { history.replaceState(null, "", rest); } catch { /* best effort */ }
