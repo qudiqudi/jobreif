@@ -605,6 +605,21 @@ button.btn-topup.pack:hover { border-color: var(--primary); color: var(--accent-
 }
 .tier-chip-free { background: var(--green-soft); color: var(--green); border: 1px solid color-mix(in srgb, var(--green) 35%, transparent); }
 .tier-chip-paid { background: var(--primary-soft); color: var(--accent-text); border: 1px solid var(--primary-soft-border); }
+/* Reiche Tier-Karten am Entscheidungspunkt (nur Erstell-Maske via .tier-cards-rich; die
+   globale Wahl in den Einstellungen bleibt bewusst kompakt). Rein praesentational — die
+   Auswahl-/Preis-Logik laeuft unveraendert ueber denselben Adapter. */
+.tier-cards-rich { gap: 0.7rem; }
+.tier-cards-rich .tier-card { position: relative; padding: 1rem 1.05rem; }
+.tier-cards-rich .tier-card:has(input:checked) { padding: calc(1rem - 0.5px) calc(1.05rem - 0.5px); }
+.tier-cards-rich .tier-card-chip { align-self: flex-start; font-size: 0.7rem; }
+.tier-card-points { list-style: none; margin: 0.55rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.32rem; }
+.tier-card-points li { position: relative; padding-left: 0.95rem; font-size: 0.78rem; color: var(--text); line-height: 1.35; }
+.tier-card-points li::before { content: ""; position: absolute; left: 0.12rem; top: 0.52em; width: 5px; height: 5px; border-radius: 50%; background: var(--primary); }
+.tier-card-flag {
+  position: absolute; top: -0.55rem; right: 0.9rem;
+  font-family: var(--mono); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  background: var(--primary); color: var(--primary-on); padding: 0.16rem 0.5rem; border-radius: 7px;
+}
 .tier-card.is-disabled { opacity: 0.6; cursor: default; }
 .tier-card.is-disabled .tier-card-title { color: var(--muted); }
 .tier-card:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
