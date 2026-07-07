@@ -618,7 +618,7 @@ button.btn-topup.pack:hover { border-color: var(--primary); color: var(--accent-
 .tier-card-flag {
   position: absolute; top: -0.55rem; right: 0.9rem;
   font-family: var(--mono); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
-  background: var(--primary); color: var(--primary-on); padding: 0.16rem 0.5rem; border-radius: 7px;
+  background: var(--primary); color: var(--primary-on); padding: 0.16rem 0.5rem; border-radius: 7px; white-space: nowrap;
 }
 .tier-card.is-disabled { opacity: 0.6; cursor: default; }
 .tier-card.is-disabled .tier-card-title { color: var(--muted); }
@@ -840,6 +840,19 @@ button.btn-topup.pack:hover { border-color: var(--primary); color: var(--accent-
   color: var(--accent-text);
 }
 .wizard-eyebrow { margin-top: 0.1rem; }
+
+/* S1 Ein-Aktion-Einstieg (view-input, Gast): Frage-Ueberschrift + sekundaere No-Login-Wege. */
+.input-guest-head { margin: 0 0 0.4rem; }
+.input-guest-title { margin: 0.35rem 0 0; }
+.alt-actions { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.25rem; }
+.alt-action {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;
+  width: 100%; text-align: left; padding: 0.85rem 1rem; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--card); min-height: 0;
+}
+.alt-action:hover { background: var(--primary-soft); border-color: var(--primary); }
+.alt-action-t { font-family: var(--display); font-weight: 700; font-size: 0.95rem; color: var(--text-strong, var(--text)); }
+.alt-action-s { font-size: 0.8rem; color: var(--muted); font-weight: 400; line-height: 1.35; }
 
 .field-inline {
   display: flex;

@@ -591,11 +591,18 @@
       <button id="btn-input-back" class="ghost back-link" type="button">‹ Meine Stellen</button>
       <!-- Investment-first-Einstieg: Wertversprechen nur fuer ausgeloggte Besucher im
            gehosteten Modus (updateGuestInputUi); eingeloggte/BYOK-Nutzer sehen es nie. -->
-      <p id="guest-value-prop" class="hidden"><strong>Dein persönlicher Einstellungstest für genau diese Stelle – kostenlos.</strong> Füge unten die Stellenanzeige ein und stelle den Test so ein, wie du ihn brauchst. Anmelden musst du dich erst kurz bevor dein Test erstellt wird.</p>
+      <!-- S1 Ein-Aktion-Einstieg: fuer ausgeloggte Gaeste ist die Eingabe der erste Screen
+           (routeInitialView). Eyebrow + Frage + Kurztext; eingeloggte/BYOK sehen stattdessen
+           die neutrale „Stellenbeschreibung"-Ueberschrift (updateGuestInputUi toggelt beides). -->
+      <div id="guest-value-prop" class="hidden input-guest-head">
+        <span class="eyebrow">Kostenlos starten</span>
+        <h2 class="input-guest-title">Für welche Stelle willst du fit werden?</h2>
+        <p class="hint">Füge die Anzeige ein – Qualität und Details stellst du gleich ein. Anmelden musst du dich erst kurz bevor dein Test erstellt wird.</p>
+      </div>
       <!-- Nach dem Login-Ruecksprung: bestaetigt die wiederhergestellte Eingabe (Text via JS,
            damit Screenreader die Statusmeldung ansagen). -->
       <p id="pending-restored-hint" class="hint hidden" role="status"></p>
-      <h2>Stellenbeschreibung</h2>
+      <h2 id="input-section-title">Stellenbeschreibung</h2>
       <!-- Gratis-Kontingent-Badge (P5), Pendant zum Badge der Startseite (siehe dort). -->
       <p id="create-free-badge" class="free-badge hidden" role="status"></p>
       <p id="source-intro-hint" class="hint">Entweder die Anzeige per URL laden oder den Text direkt einfügen.</p>
@@ -688,7 +695,7 @@
           <span class="tier-card-chip tier-chip-free" data-chip>Kostenlos</span>
         </label>
         <label class="tier-card" data-value="beste" data-beste hidden>
-          <span class="tier-card-flag">Tiefster Test</span>
+          <span class="tier-card-flag">Näher am echten Test</span>
           <input type="radio" name="create-tier-choice" value="beste" disabled>
           <span class="tier-card-body">
             <span class="tier-card-title">Beste (Opus)</span>
@@ -734,6 +741,23 @@
            blendet den Block sonst aus). Der Uebungs-Einstieg wanderte in die Kopfzeile ("Üben")
            und in Wizard-Schritt 1 – hier nur noch der No-Login-Weg mit eigenem Schluessel/lokal. -->
       <div id="guest-escape" class="hidden">
+        <!-- Sekundaere No-Login-Wege (frueher der gleichwertige Wizard-Chooser): jetzt dem
+             Ein-Aktion-Einstieg untergeordnet. btn-Handler: startDemoTest / openPracticePicker. -->
+        <div class="alt-actions">
+          <button type="button" class="alt-action" id="alt-demo">
+            <span class="alt-action-t">Erst ein Beispiel ansehen</span>
+            <span class="alt-action-s">Kompletter Beispieltest mit Lösungen und Quellen – ohne Anmeldung.</span>
+          </button>
+          <button type="button" class="alt-action" id="alt-ueben">
+            <span class="alt-action-t">Nur Module üben</span>
+            <span class="alt-action-s">Zahlenreihen, Konzentration und Figuren sofort üben – ohne Anmeldung.</span>
+          </button>
+        </div>
+        <div class="trust-row" role="group" aria-label="Datenschutz auf einen Blick">
+          <span class="trust-badge"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>Kein Lebenslauf</span>
+          <span class="trust-badge">Keine Anmeldung nötig</span>
+          <span class="trust-badge">Datenschutz-first</span>
+        </div>
         <hr class="settings-divider">
         <p class="hint">Ganz ohne Konto arbeiten? Mit einem eigenen API-Schlüssel oder einem lokalen Modell läuft alles ohne Anmeldung. <a href="#" id="link-guest-settings">Mit eigenem API-Schlüssel/lokalem Modell (ohne Anmeldung)</a></p>
       </div>

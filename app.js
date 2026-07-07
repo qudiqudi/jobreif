@@ -1173,6 +1173,10 @@ function updateGuestInputUi() {
   const guest = hostedNeedsLogin();
   $("guest-value-prop").classList.toggle("hidden", !guest);
   $("guest-escape").classList.toggle("hidden", !guest);
+  // Gast sieht die S1-Frage („Für welche Stelle…?"); die neutrale Abschnitts-Überschrift
+  // „Stellenbeschreibung" bleibt den eingeloggten/BYOK-Nutzern vorbehalten.
+  const sectTitle = $("input-section-title");
+  if (sectTitle) sectTitle.classList.toggle("hidden", guest);
   // Wizard-Schritt 2: die Feinkonfiguration (Modus/Schwierigkeit/Qualitaet/Gespraechsstufe)
   // fuer ausgeloggte Besucher ausblenden — hier zaehlt nur Stelle eingeben + "Test erstellen".
   // Nach der Anmeldung ist der Nutzer kein Gast mehr, der Block erscheint und wird beim
@@ -1180,11 +1184,11 @@ function updateGuestInputUi() {
   // die Bedienelemente bleiben im DOM (nur display:none), ihre Defaults gelten weiterhin.
   const adv = $("input-advanced");
   if (adv) adv.classList.toggle("hidden", guest);
-  // Zurueck-Weg: fuer Gaeste fuehrt er zu Wizard-Schritt 1 (per History-Rueckwaerts, das den
-  // Wizard-Eintrag wiederherstellt), fuer eingerichtete Nutzer wie bisher zu "Meine Stellen".
+  // Zurueck-Weg: fuer Gaeste ist die Eingabe der Einstieg (kein sinnvolles Zurueck-Ziel) →
+  // Knopf ausblenden. Fuer eingerichtete/eingeloggte Nutzer wie bisher zu "Meine Stellen".
   const back = $("btn-input-back");
-  back.classList.remove("hidden");
-  back.textContent = guest ? "‹ Zurück" : "‹ Meine Stellen";
+  back.classList.toggle("hidden", guest);
+  back.textContent = "‹ Meine Stellen";
   // Der Wiederhergestellt-Hinweis gilt nur unmittelbar nach dem Login-Ruecksprung;
   // consumePendingJobInputIntoForm blendet ihn danach gezielt wieder ein.
   const hint = $("pending-restored-hint");
@@ -10350,11 +10354,11 @@ function goHome() {
 
 // Austritt aus dem Ueben dorthin, wo der Nutzer hergekommen ist: ein eingerichteter
 // Nutzer (angemeldet bzw. BYOK/lokal) landet auf "Meine Stellen"; ein ausgeloggter
-// Hosted-Besucher kehrt zum gefuehrten Wizard-Einstieg (Schritt 1) zurueck — nicht in
-// die volle App-Shell und nicht ans blanke Login-Gate (die gehostete Testerstellung
-// selbst bleibt anmeldepflichtig, hostedNeedsLogin()).
+// Hosted-Besucher kehrt zum Ein-Aktion-Einstieg (view-input) zurueck — nicht in die
+// volle App-Shell und nicht ans blanke Login-Gate (die gehostete Testerstellung selbst
+// bleibt anmeldepflichtig, hostedNeedsLogin()).
 function leavePractice() {
-  if (hostedNeedsLogin()) showWizard();
+  if (hostedNeedsLogin()) showView("view-input");
   else goHome();
 }
 
@@ -10955,6 +10959,9 @@ $("wizard-choice-stelle").addEventListener("click", () => {
 });
 $("wizard-choice-demo").addEventListener("click", startDemoTest);
 $("wizard-choice-ueben").addEventListener("click", () => openPracticePicker());
+// Sekundaere No-Login-Wege am Ein-Aktion-Einstieg (view-input, guest-escape).
+$("alt-demo").addEventListener("click", startDemoTest);
+$("alt-ueben").addEventListener("click", () => openPracticePicker());
 
 // Kanonischer Uebungs-Einstieg in der Kopfzeile ("Üben"), fuer ein- UND ausgeloggte Nutzer.
 // Ersetzt die frueheren Inline-Uebungs-Buttons am Login-Gate und in der Gast-Eingabe.
@@ -12707,7 +12714,10 @@ function routeInitialView() {
       _authRedirectMsg = "";
       return;
     }
-    showWizard();
+    // Ein-Aktion-Einstieg (S1): der Gast landet direkt auf der Eingabe (Stelle zuerst); Beispiel
+    // und Module sind dort sekundaer (guest-escape). Die Anmeldung kommt weiterhin erst beim
+    // „Test erstellen"/„Laden". Ersetzt den frueheren 3-Karten-Wizard als Erststart.
+    showView("view-input");
     return;
   }
   _authRedirectMsg = "";
