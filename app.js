@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.40.0";
+const APP_VERSION = "1.41.0";
 
 const CHANGELOG = [
+  {
+    version: "1.41.0",
+    date: "08.07.2026",
+    items: [
+      "Sicherheits-Feinschliff: Der Anmeldelink gibt seinen einmaligen Token nicht mehr an fremde Dienste weiter, der Google-Login wird nur noch zur echten Google-Seite weitergeleitet, und beim Geräte-Sync ist deutlicher erklärt, dass dein Kopplungs-Code wie ein Schlüssel wirkt – wer ihn sieht, kann mitlesen.",
+    ],
+  },
   {
     version: "1.40.0",
     date: "07.07.2026",
@@ -11011,7 +11018,12 @@ $("btn-login-google").addEventListener("click", async () => {
     const r = await fetch(hostedBase() + "/auth/google/start?vh=" + encodeURIComponent(vh), { headers });
     if (r.ok) {
       const d = await r.json();
-      if (d.url) { window.location.href = d.url; return; }
+      // Security-Review #9: d.url kommt vom eigenen Backend ueber HTTPS, wird aber vor der
+      // Navigation gegen Googles Anmelde-Origin geprueft — ein manipuliertes/kompromittiertes
+      // Backend-Response darf keinen Open-Redirect auf eine fremde Seite ausloesen.
+      let gOk = false;
+      try { gOk = d && typeof d.url === "string" && new URL(d.url).origin === "https://accounts.google.com"; } catch { gOk = false; }
+      if (gOk) { window.location.href = d.url; return; }
     }
     $("login-msg").textContent = r.status === 503
       ? "Der Google-Login ist noch nicht eingerichtet."

@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <!-- Referrer-Policy explizit (Security-Review #7): NIE Pfad/Query (z. B. der einmalige
+       Magic-Link-Token in ?auth=) an fremde Origins senden. strict-origin-when-cross-origin
+       ist zwar der moderne Default, wird hier aber festgeschrieben, damit auch aeltere Browser
+       (Default no-referrer-when-downgrade = volle URL) den Token nicht cross-origin leaken. -->
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <!-- Content-Security-Policy als Defense-in-Depth. Scripts nur von hier (plus
        der Hash des Inline-Theme-Skripts unten - wird er geaendert, muss der Hash
        angepasst werden; der CI-Check erzwingt das). connect-src listet die
@@ -302,7 +307,7 @@
             <div id="sync-qr" class="sync-qr" aria-hidden="true"></div>
             <div class="sync-code-display"><code id="sync-code"></code></div>
             <p class="hint">Auf dem anderen Gerät scannen oder den Code eingeben.</p>
-            <p class="hint sync-warn">Der Code ist dein Schlüssel. Wir können deine Daten nicht lesen – und auch nicht wiederherstellen, wenn du den Code und alle Geräte verlierst.</p>
+            <p class="hint sync-warn">Der Code (und der QR) ist dein Schlüssel: Zeig ihn nur deinen eigenen Geräten – wer ihn sieht oder abfotografiert, kann deine synchronisierten Daten mitlesen und ändern. Wir können deine Daten nicht lesen – und auch nicht wiederherstellen, wenn du den Code und alle Geräte verlierst. Vermutest du, dass jemand den Code gesehen hat: „Sync zurücksetzen“ vergibt einen neuen Schlüssel.</p>
           </div>
           <!-- Gekoppelte Geräte (E2E-Kind `devices`; renderSyncDevices füllt die Liste). Die
                Fußnote ist bewusst ehrlich: Einträge sind informativ, echtes Aussperren geht nur
