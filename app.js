@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.41.0";
+const APP_VERSION = "1.42.0";
 
 const CHANGELOG = [
+  {
+    version: "1.42.0",
+    date: "09.07.2026",
+    items: [
+      "Zuverlässigere Anmeldung: Wenn die Sicherheitsprüfung in einem lange geöffneten Tab hängen bleibt, repariert sie sich jetzt selbst — du musst die Seite nicht mehr neu laden.",
+    ],
+  },
   {
     version: "1.41.0",
     date: "08.07.2026",
@@ -3889,6 +3896,10 @@ let _tsPending = null;
 // Gesicherter Lade-Text waehrend einer SICHTBAREN (interaktiven) Challenge, um ihn
 // danach wiederherzustellen. null = gerade keine Challenge aktiv.
 let _tsPrevLoadingText = null;
+// Merkt, ob die laufende Challenge interaktiv wurde (before-interactive-callback
+// gefeuert). Erlaubt dem Watchdog, einem Nutzer, der gerade eine sichtbare
+// Challenge loest, das restliche Gesamtbudget zu lassen statt ihn abzuschneiden.
+let _tsInteractive = false;
 
 // Das Widget nur WÄHREND des Lösens einblenden; danach ausblenden, damit der kurze
 // Challenge-/Erfolgs-Status keine App-Meldung (z. B. die Fehlerkarte) verdeckt.
@@ -3913,6 +3924,20 @@ async function turnstileReady(ms = 4000) {
   return typeof window.turnstile !== "undefined";
 }
 
+// Raeumt einen evtl. haengenden interaktiven Challenge-Zustand auf (Klasse +
+// Lade-Text). Idempotent: mehrfacher Aufruf (auch ohne dass je eine interaktive
+// Challenge lief) ist ein No-Op.
+function restoreTurnstileInteractiveUi() {
+  _tsInteractive = false;
+  const el = document.getElementById("turnstile-container");
+  if (el) el.classList.remove("challenge");
+  // Vorigen Phasen-Text wiederherstellen (generisch — funktioniert fuer
+  // Generierung, Auswertung etc.; der Aufrufer setzt danach ggf. weiter).
+  const lt = document.getElementById("loading-text");
+  if (lt && _tsPrevLoadingText !== null) { lt.textContent = _tsPrevLoadingText; }
+  _tsPrevLoadingText = null;
+}
+
 // Rendert das Widget einmalig (execution:"execute" → laeuft erst bei execute();
 // interaction-only → meist unsichtbar). Gibt true zurueck, wenn ein Widget bereitsteht.
 function ensureTurnstileWidget() {
@@ -3931,6 +3956,7 @@ function ensureTurnstileWidget() {
       // und abgedunkelt in den Fokus holen - sonst bliebe sie unten in der Ecke leicht
       // uebersehen und der Flow wirkte haengend. Stiller Pass bleibt unsichtbar.
       "before-interactive-callback": () => {
+        _tsInteractive = true;
         const el = document.getElementById("turnstile-container");
         if (el) el.classList.add("challenge");
         // Kein Feedback-Loch: Wird der (sonst stille) Solve interaktiv, den
@@ -3939,15 +3965,7 @@ function ensureTurnstileWidget() {
         const lt = document.getElementById("loading-text");
         if (lt) { _tsPrevLoadingText = lt.textContent; lt.textContent = "Kurze Sicherheitsabfrage - bitte bestätigen..."; }
       },
-      "after-interactive-callback": () => {
-        const el = document.getElementById("turnstile-container");
-        if (el) el.classList.remove("challenge");
-        // Vorigen Phasen-Text wiederherstellen (generisch — funktioniert fuer
-        // Generierung, Auswertung etc.; der Aufrufer setzt danach ggf. weiter).
-        const lt = document.getElementById("loading-text");
-        if (lt && _tsPrevLoadingText !== null) { lt.textContent = _tsPrevLoadingText; }
-        _tsPrevLoadingText = null;
-      },
+      "after-interactive-callback": () => { restoreTurnstileInteractiveUi(); },
     });
     return _tsWidgetId != null;
   } catch {
@@ -3956,20 +3974,15 @@ function ensureTurnstileWidget() {
   }
 }
 
-// Frisches, einmaliges Token fuer genau diese Aktion. Leerer String, wenn Turnstile
-// nicht konfiguriert/bereit ist (dann muss der Worker SKIP_TURNSTILE gesetzt haben).
-// cData (optional) bindet das Token an genau diesen Request: der Aufrufer uebergibt den
-// SHA-256-Hex des exakt geposteten Bodys (bzw. des vh-Werts bei google-start); der Worker
-// prueft data.cdata gegen den serverseitig neu berechneten Hash. So laesst sich ein
-// abgegriffenes Token nicht auf eine andere Payload umhaengen.
-async function getTurnstileToken(action, cData) {
-  if (!turnstileSitekey()) return "";
-  if (!(await turnstileReady())) return "";
-  setTurnstileVisible(true); // VOR render/execute einblenden (Render braucht sichtbaren Host)
-  if (!ensureTurnstileWidget()) { setTurnstileVisible(false); return ""; }
+// EIN Loesungsversuch, OHNE Sichtbarkeits-Steuerung (die uebernimmt der Aufrufer).
+// Rendert bei Bedarf frisch (ensureTurnstileWidget ist ein No-Op, wenn schon ein
+// Widget lebt) — das ist der Haken, an dem der Retry in getTurnstileToken nach
+// dem Verwerfen des toten Widgets ein echtes neues Widget bekommt.
+function runTurnstileAttempt(action, cData, timeoutMs, deadline) {
+  if (!ensureTurnstileWidget()) return Promise.resolve("");
   return new Promise((resolve) => {
     let done = false;
-    const finish = (t) => { if (!done) { done = true; setTurnstileVisible(false); resolve(t || ""); } };
+    const finish = (t) => { if (!done) { done = true; resolve(t || ""); } };
     _tsPending = finish;
     try {
       window.turnstile.reset(_tsWidgetId); // vorheriges Token verwerfen → frisches erzwingen
@@ -3982,8 +3995,53 @@ async function getTurnstileToken(action, cData) {
       return;
     }
     // Haengt das Widget, den Aufruf nicht ewig blockieren.
-    setTimeout(() => { if (_tsPending === finish) _tsPending = null; finish(""); }, 20000);
+    const armWatchdog = (ms) => setTimeout(() => {
+      if (done) return;
+      // Interaktive Challenge sichtbar → dem Nutzer das restliche Gesamtbudget lassen,
+      // statt ihn mitten im Klicken abzuschneiden (Budget-Deckel: deadline).
+      const left = deadline - Date.now();
+      if (_tsInteractive && left > 0) { armWatchdog(left); return; }
+      if (_tsPending === finish) _tsPending = null;
+      finish("");
+    }, ms);
+    armWatchdog(timeoutMs);
   });
+}
+
+// Frisches, einmaliges Token fuer genau diese Aktion. Leerer String, wenn Turnstile
+// nicht konfiguriert/bereit ist (dann muss der Worker SKIP_TURNSTILE gesetzt haben).
+// cData (optional) bindet das Token an genau diesen Request: der Aufrufer uebergibt den
+// SHA-256-Hex des exakt geposteten Bodys (bzw. des vh-Werts bei google-start); der Worker
+// prueft data.cdata gegen den serverseitig neu berechneten Hash. So laesst sich ein
+// abgegriffenes Token nicht auf eine andere Payload umhaengen.
+//
+// Selbstheilung: liefert der erste Versuch kein Token (totes Widget nach
+// Tab-Discarding/abgelaufenem Challenge-Zustand), wird das Widget verworfen und
+// GENAU EINMAL frisch gerendert+ausgefuehrt — kein Loop, der zweite Aufruf ist
+// strukturell terminal. Das Gesamtbudget (deadline) waechst dabei nicht ueber die
+// heutigen 20s.
+async function getTurnstileToken(action, cData) {
+  if (!turnstileSitekey()) return "";
+  if (!(await turnstileReady())) return "";
+  const deadline = Date.now() + 20000; // heutiges Gesamtbudget — waechst NICHT
+  setTurnstileVisible(true); // VOR render/execute (Render braucht sichtbaren Host)
+  try {
+    let token = await runTurnstileAttempt(action, cData, Math.min(10000, deadline - Date.now()), deadline);
+    if (!token) {
+      // Selbstheilung: totes Widget (Tab-Discarding/abgelaufener Challenge-Zustand)
+      // verwerfen und GENAU EINMAL frisch rendern+ausfuehren — kein Loop, der
+      // zweite Aufruf ist strukturell der letzte.
+      restoreTurnstileInteractiveUi(); // evtl. haengenden Challenge-Text/-Zustand aufraeumen
+      try { if (_tsWidgetId !== null) window.turnstile.remove(_tsWidgetId); } catch { /* totes Widget darf werfen */ }
+      _tsWidgetId = null;
+      const remaining = deadline - Date.now();
+      if (remaining > 1000) token = await runTurnstileAttempt(action, cData, remaining, deadline);
+    }
+    return token;
+  } finally {
+    restoreTurnstileInteractiveUi();
+    setTurnstileVisible(false); // auf JEDEM Pfad genau einmal am Ende
+  }
 }
 
 // Stabile, nutzerfreundliche Meldungen fuer die Hosted-Fehlercodes. Der optionale
