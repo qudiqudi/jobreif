@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.44.0";
+const APP_VERSION = "1.45.0";
 
 const CHANGELOG = [
+  {
+    version: "1.45.0",
+    date: "09.07.2026",
+    items: [
+      "Mehr Sicherheit: Auf jobreif.de verwendet die App jetzt grundsätzlich die offiziellen Server- und Bezahl-Einstellungen — zurückgebliebene oder eingeschleuste Test-Einstellungen werden dort ignoriert. Für die lokale Entwicklung ändert sich nichts.",
+    ],
+  },
   {
     version: "1.44.0",
     date: "09.07.2026",
@@ -2717,14 +2724,31 @@ async function readSSEText(res, extractDelta, onChunk) {
 
 /* ---------- Hosted-Modus (gehosteter Worker, kein Nutzer-Key) ---------- */
 
-// Basis-URL des Hosted-Workers. Override per localStorage nur fuer lokale Tests
-// (z. B. gegen `wrangler dev`), Default ist die Produktions-Subdomain.
+// Dev-Host = lokale Entwicklung (wrangler dev, lokale Spiegel). NUR dort wirken die
+// localStorage-Debug-Overrides (hostedBase/paddleEnv/turnstileSitekey) ueberhaupt: auf
+// jobreif.de wird ein vorhandener Override IGNORIERT, nicht geloescht — localStorage
+// ueberlebt jeden Reload, ein liegengebliebener oder von einem fluechtigen Skript-Treffer
+// untergeschobener Wert waere sonst eine dauerhafte, unsichtbare Umkonfiguration. Die
+// Entscheidung haengt bewusst NUR an location.hostname, NIEMALS an einem localStorage-Flag
+// (sonst koennte derselbe Angreifer, der den Override setzt, auch dieses Gate oeffnen).
+// Hinweis: location.hostname liefert bei IPv6-Loopback tatsaechlich "[::1]" MIT Klammern.
+function devHost() {
+  const h = (location && location.hostname) || "";
+  return h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h.endsWith(".localhost");
+}
+
+// Basis-URL des Hosted-Workers. Override per localStorage ist ein reiner Dev-/Test-Schalter
+// (z. B. gegen `wrangler dev` auf 127.0.0.1:8787) und wird NUR auf Dev-Hosts honoriert:
+// ueber diese URL laeuft praktisch die gesamte Server-Kommunikation inkl. Auth-Header, ein
+// auf jobreif.de persistierter Override wuerde sie dauerhaft und unsichtbar umlenken.
+// Default ist immer die Produktions-Subdomain — ignoriert, nicht geloescht.
 function hostedBase() {
-  try {
-    return localStorage.getItem("bewerbungstool.hostedBase") || "https://api.jobreif.de";
-  } catch {
-    return "https://api.jobreif.de";
+  if (devHost()) {
+    try {
+      return localStorage.getItem("bewerbungstool.hostedBase") || "https://api.jobreif.de";
+    } catch { /* Safari Private Mode wirft — Fallback unten */ }
   }
+  return "https://api.jobreif.de";
 }
 
 // --- Anonyme Nutzungsstatistik (Topic #2) --------------------------------
@@ -3433,23 +3457,17 @@ const PADDLE_CONFIG = {
   },
 };
 
-// Dev-Host = lokale Entwicklung. Nur dort darf der Sandbox-Schalter ueberhaupt wirken.
-function paddleDevHost() {
-  const h = (location && location.hostname) || "";
-  return h === "localhost" || h === "127.0.0.1" || h.endsWith(".localhost");
-}
-
 // Umgebung: sobald das prod-Token eingetragen ist (Go-Live konfiguriert), automatisch
 // "production" — das Befuellen des Tokens genuegt, kein separater Code-Edit. Solange prod
 // UNkonfiguriert ist (leeres Token), bleibt sandbox der Default.
 //
 // Der localStorage-Override (bewerbungstool.paddleEnv) ist ein reiner Dev-/Test-Schalter
-// und wird NUR auf Dev-Hosts (localhost/127.*) honoriert (Audit 2026-07): auf jobreif.de
+// und wird NUR auf Dev-Hosts (siehe devHost) honoriert (Audit 2026-07): auf jobreif.de
 // konnte er bisher einen "Kauf" in die Paddle-Sandbox lenken, der mit Testkarten
 // durchlaeuft, aber NIE gutgeschrieben wird (der Sandbox-Webhook verifiziert am
 // Prod-Endpoint-Secret nicht) — ein Support-/Chargeback-Fall ohne jeden Nutzen.
 function paddleEnv() {
-  if (paddleDevHost()) {
+  if (devHost()) {
     try { const o = localStorage.getItem("bewerbungstool.paddleEnv"); if (o === "production" || o === "sandbox") return o; } catch {}
   }
   return PADDLE_CONFIG.production && PADDLE_CONFIG.production.token ? "production" : "sandbox";
@@ -3899,17 +3917,11 @@ async function consumeAuthRedirect() {
 // BYOK/lokal brauchen kein Turnstile.
 const TURNSTILE_SITEKEY = "0x4AAAAAADmmEQ6MVc83TvmX";
 
-// Dev-Host = lokale Entwicklung. NUR dort darf der Sitekey-Override wirken — ein in Prod
-// liegengebliebener Override (z. B. Cloudflares "blockt immer"-Testkey) legt sonst den
-// Login reload-fest lahm (localStorage ueberlebt den Reload). Gleiches Muster wie
-// paddleDevHost (Audit 2026-07).
-function turnstileDevHost() {
-  const h = (location && location.hostname) || "";
-  return h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h.endsWith(".localhost");
-}
-
+// Gate: devHost, Audit 2026-07 — ein in Prod liegengebliebener Override (z. B.
+// Cloudflares "blockt immer"-Testkey) legt sonst den Login reload-fest lahm
+// (localStorage ueberlebt den Reload).
 function turnstileSitekey() {
-  if (turnstileDevHost()) {
+  if (devHost()) {
     try {
       return localStorage.getItem("bewerbungstool.turnstileSitekey") || TURNSTILE_SITEKEY;
     } catch { /* Safari Private Mode wirft — Fallback unten */ }
