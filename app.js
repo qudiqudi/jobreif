@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.43.0";
+const APP_VERSION = "1.44.0";
 
 const CHANGELOG = [
+  {
+    version: "1.44.0",
+    date: "09.07.2026",
+    items: [
+      "Robustere Sicherheitsprüfung: Auf jobreif.de wird jetzt immer die richtige Prüf-Konfiguration verwendet — eine versehentlich zurückgebliebene Test-Einstellung kann die Anmeldung nicht mehr blockieren.",
+    ],
+  },
   {
     version: "1.43.0",
     date: "09.07.2026",
@@ -3886,16 +3893,28 @@ async function consumeAuthRedirect() {
 
 // Turnstile (Bot-/Missbrauchsschutz im Hosted-Modus). PRODUKTION: echten Sitekey hier
 // eintragen (Cloudflare-Dashboard → Turnstile). Override per localStorage nur fuer Tests
-// (z. B. Cloudflare-Testkey "1x00000000000000000000BB" = unsichtbar, immer ok). Ohne
-// Sitekey liefert getTurnstileToken "" → nur sinnvoll, wenn der Worker SKIP_TURNSTILE
-// gesetzt hat. BYOK/lokal brauchen kein Turnstile.
+// (z. B. Cloudflare-Testkey "1x00000000000000000000BB" = unsichtbar, immer ok) und NUR
+// auf Dev-Hosts (localhost/127.0.0.1/[::1]) honoriert. Ohne Sitekey liefert
+// getTurnstileToken "" → nur sinnvoll, wenn der Worker SKIP_TURNSTILE gesetzt hat.
+// BYOK/lokal brauchen kein Turnstile.
 const TURNSTILE_SITEKEY = "0x4AAAAAADmmEQ6MVc83TvmX";
+
+// Dev-Host = lokale Entwicklung. NUR dort darf der Sitekey-Override wirken — ein in Prod
+// liegengebliebener Override (z. B. Cloudflares "blockt immer"-Testkey) legt sonst den
+// Login reload-fest lahm (localStorage ueberlebt den Reload). Gleiches Muster wie
+// paddleDevHost (Audit 2026-07).
+function turnstileDevHost() {
+  const h = (location && location.hostname) || "";
+  return h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h.endsWith(".localhost");
+}
+
 function turnstileSitekey() {
-  try {
-    return localStorage.getItem("bewerbungstool.turnstileSitekey") || TURNSTILE_SITEKEY;
-  } catch {
-    return TURNSTILE_SITEKEY;
+  if (turnstileDevHost()) {
+    try {
+      return localStorage.getItem("bewerbungstool.turnstileSitekey") || TURNSTILE_SITEKEY;
+    } catch { /* Safari Private Mode wirft — Fallback unten */ }
   }
+  return TURNSTILE_SITEKEY;
 }
 
 let _tsWidgetId = null;
