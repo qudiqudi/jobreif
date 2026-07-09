@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.42.0";
+const APP_VERSION = "1.43.0";
 
 const CHANGELOG = [
+  {
+    version: "1.43.0",
+    date: "09.07.2026",
+    items: [
+      "Bessere Hilfe bei Anmeldeproblemen: Schlägt die Sicherheitsprüfung fehl, zeigt die Meldung jetzt einen Fehlercode an. Damit lässt sich die Ursache viel schneller finden.",
+    ],
+  },
   {
     version: "1.42.0",
     date: "09.07.2026",
@@ -3893,6 +3900,9 @@ function turnstileSitekey() {
 
 let _tsWidgetId = null;
 let _tsPending = null;
+// Fehlercode der error-callback des LETZTEN Versuchs (Cloudflare-Turnstile-Code, z. B.
+// 110100/110200/300xxx/600xxx). null = kein Code (Timeout/stummes Haengen liefert keinen).
+let _tsLastErrorCode = null;
 // Gesicherter Lade-Text waehrend einer SICHTBAREN (interaktiven) Challenge, um ihn
 // danach wiederherzustellen. null = gerade keine Challenge aktiv.
 let _tsPrevLoadingText = null;
@@ -3950,7 +3960,11 @@ function ensureTurnstileWidget() {
       execution: "execute",
       appearance: "interaction-only",
       callback: (token) => { if (_tsPending) { const f = _tsPending; _tsPending = null; f(token); } },
-      "error-callback": () => { if (_tsPending) { const f = _tsPending; _tsPending = null; f(""); } },
+      "error-callback": (code) => {
+        _tsLastErrorCode = (code === undefined || code === null || code === "") ? null : String(code).slice(0, 32);
+        console.warn("Turnstile-Fehler:", _tsLastErrorCode || "(ohne Code)");
+        if (_tsPending) { const f = _tsPending; _tsPending = null; f(""); }
+      },
       "timeout-callback": () => { if (_tsPending) { const f = _tsPending; _tsPending = null; f(""); } },
       // Nur wenn Cloudflare eine echte Interaktion verlangt, die Challenge zentriert
       // und abgedunkelt in den Fokus holen - sonst bliebe sie unten in der Ecke leicht
@@ -3979,6 +3993,10 @@ function ensureTurnstileWidget() {
 // Widget lebt) — das ist der Haken, an dem der Retry in getTurnstileToken nach
 // dem Verwerfen des toten Widgets ein echtes neues Widget bekommt.
 function runTurnstileAttempt(action, cData, timeoutMs, deadline) {
+  // Garantiert, dass der gemeldete Fehlercode der des LETZTEN Versuchs ist: ein
+  // Erfolg nach Fehlversuch meldet keinen stale Code, ein stiller Timeout in
+  // diesem Versuch bleibt codelos statt den Code des vorigen Versuchs zu zeigen.
+  _tsLastErrorCode = null;
   if (!ensureTurnstileWidget()) return Promise.resolve("");
   return new Promise((resolve) => {
     let done = false;
@@ -4021,8 +4039,8 @@ function runTurnstileAttempt(action, cData, timeoutMs, deadline) {
 // strukturell terminal. Das Gesamtbudget (deadline) waechst dabei nicht ueber die
 // heutigen 20s.
 async function getTurnstileToken(action, cData) {
-  if (!turnstileSitekey()) return "";
-  if (!(await turnstileReady())) return "";
+  if (!turnstileSitekey()) return { token: "", errorCode: null };
+  if (!(await turnstileReady())) return { token: "", errorCode: null };
   const deadline = Date.now() + 20000; // heutiges Gesamtbudget — waechst NICHT
   setTurnstileVisible(true); // VOR render/execute (Render braucht sichtbaren Host)
   try {
@@ -4037,11 +4055,20 @@ async function getTurnstileToken(action, cData) {
       const remaining = deadline - Date.now();
       if (remaining > 1000) token = await runTurnstileAttempt(action, cData, remaining, deadline);
     }
-    return token;
+    return { token, errorCode: token ? null : _tsLastErrorCode };
   } finally {
     restoreTurnstileInteractiveUi();
     setTurnstileVisible(false); // auf JEDEM Pfad genau einmal am Ende
   }
+}
+
+// Cloudflare-Turnstile-Fehlercodes sind oeffentlich dokumentiert und duerfen angezeigt
+// werden (beschleunigt Diagnose, Vorfall 2026-07-09). Defensiv nur harmlose Zeichen.
+function turnstileFailMessage(code) {
+  const c = (typeof code === "string" && /^[\w-]{1,32}$/.test(code)) ? code : "";
+  return c
+    ? `Sicherheitsprüfung fehlgeschlagen (Code ${c}). Bitte die Seite neu laden und erneut versuchen.`
+    : "Sicherheitsprüfung fehlgeschlagen. Bitte die Seite neu laden und erneut versuchen.";
 }
 
 // Stabile, nutzerfreundliche Meldungen fuer die Hosted-Fehlercodes. Der optionale
@@ -4106,7 +4133,7 @@ async function callHosted(hosted, onProgress, opts = {}) {
   const body = JSON.stringify({ ...hosted.payload, tier });
   const headers = { "Content-Type": "application/json", ...authHeaders() };
   // cData an genau diesen Body binden (Hash des exakt gesendeten Strings).
-  const token = await getTurnstileToken(hosted.action, await sha256hex(body));
+  const { token } = await getTurnstileToken(hosted.action, await sha256hex(body));
   if (token) headers["CF-Turnstile-Token"] = token;
 
   let res;
@@ -4542,7 +4569,7 @@ async function fetchJobViaBackend(url) {
   const body = JSON.stringify({ url });
   const headers = { "Content-Type": "application/json", ...authHeaders() };
   // cData an genau diesen Body binden (Hash des exakt gesendeten Strings).
-  const token = await getTurnstileToken("import", await sha256hex(body));
+  const { token } = await getTurnstileToken("import", await sha256hex(body));
   if (token) headers["CF-Turnstile-Token"] = token;
 
   let res;
@@ -5752,7 +5779,7 @@ function postGenerationJob(ctx, tierSent, payWithCredits) {
     // sichtbare Challenge. Modus/Gate/Timeout/a11y bleiben unveraendert. setLoadingText
     // statt showLoading, damit der Elapsed-Timer nicht zurueckgesetzt wird.
     setLoadingText("Sicherheitsprüfung läuft...");
-    const token = await getTurnstileToken("generate-quiz", await sha256hex(jobBody));
+    const { token } = await getTurnstileToken("generate-quiz", await sha256hex(jobBody));
     setLoadingText("Test wird gestartet...");
     const headers = { "Content-Type": "application/json", ...authHeaders() };
     if (token) headers["CF-Turnstile-Token"] = token;
@@ -11004,7 +11031,7 @@ $("login-magic-form").addEventListener("submit", async (e) => {
   try {
     // Turnstile (Anti-Bot) wie bei der Generierung – an die Aktion und den Body gebunden.
     const magicBody = JSON.stringify({ email });
-    const tkn = await getTurnstileToken("magic-link", await sha256hex(magicBody));
+    const { token: tkn, errorCode: tsCode } = await getTurnstileToken("magic-link", await sha256hex(magicBody));
     const headers = { "Content-Type": "application/json" };
     if (tkn) headers["CF-Turnstile-Token"] = tkn;
     const res = await fetch(hostedBase() + "/auth/magic/start", {
@@ -11018,7 +11045,7 @@ $("login-magic-form").addEventListener("submit", async (e) => {
       // Bewusst neutrale Meldung (keine Auskunft, ob die Adresse existiert).
       $("login-msg").textContent = "Wenn alles passt, haben wir dir einen Anmeldelink geschickt. Bitte dein Postfach prüfen (auch Spam).";
     } else if (res.status === 403) {
-      $("login-msg").textContent = "Sicherheitsprüfung fehlgeschlagen. Bitte die Seite neu laden und erneut versuchen.";
+      $("login-msg").textContent = turnstileFailMessage(tsCode);
     } else if (res.status === 400) {
       $("login-msg").textContent = "Bitte eine gültige E-Mail-Adresse eingeben.";
     } else {
@@ -11070,7 +11097,7 @@ $("btn-login-google").addEventListener("click", async () => {
     const vh = await sha256hex(verifier);
     // Turnstile (Anti-Bot) wie bei Magic-Link/Generierung – an die Aktion und den vh-Wert
     // gebunden (google-start hat keinen Body; der Worker hasht den vh-Query-Wert).
-    const tkn = await getTurnstileToken("google-start", await sha256hex(vh));
+    const { token: tkn, errorCode: tsCode } = await getTurnstileToken("google-start", await sha256hex(vh));
     const headers = { Accept: "application/json" };
     if (tkn) headers["CF-Turnstile-Token"] = tkn;
     const r = await fetch(hostedBase() + "/auth/google/start?vh=" + encodeURIComponent(vh), { headers });
@@ -11083,9 +11110,9 @@ $("btn-login-google").addEventListener("click", async () => {
       try { gOk = d && typeof d.url === "string" && new URL(d.url).origin === "https://accounts.google.com"; } catch { gOk = false; }
       if (gOk) { window.location.href = d.url; return; }
     }
-    $("login-msg").textContent = r.status === 503
-      ? "Der Google-Login ist noch nicht eingerichtet."
-      : "Google-Anmeldung momentan nicht möglich. Bitte später erneut versuchen.";
+    $("login-msg").textContent = r.status === 403
+      ? turnstileFailMessage(tsCode)
+      : (r.status === 503 ? "Der Google-Login ist noch nicht eingerichtet." : "Google-Anmeldung momentan nicht möglich. Bitte später erneut versuchen.");
   } catch {
     $("login-msg").textContent = "Keine Verbindung. Bitte später erneut versuchen.";
   } finally {
