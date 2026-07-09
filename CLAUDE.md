@@ -40,7 +40,19 @@ Regeln:
 - main ist per Ruleset geschützt: Änderungen laufen über Feature-Branch und PR, der CI-Check (`.github/workflows/ci.yml`: JS-Syntax, Asset-/Manifest-Integrität, `__BUILD__`-Platzhalter) muss grün sein, dann mergen. Direkte Pushes auf main sind blockiert.
 - Deploy läuft über GitHub Actions (`.github/workflows/deploy.yml`): Merge auf main genügt, die CI-Checks laufen vor dem Deploy erneut. Die Action ersetzt den Platzhalter `__BUILD__` in `sw.js` durch den Commit-Hash — kein manuelles Hochzählen der Cache-Version mehr, den Platzhalter nie entfernen.
 - Nur die PWA wird aus diesem Repo deployt. Der Hosted-Worker/das Backend lebt im privaten Repo `qudiqudi/jobreif-backend` und deployt von dort über eigene GitHub Actions — Backend-/Prompt-Änderungen also dort, nicht hier.
-- Vor dem Push lokal testen (`python3 -m http.server`, UI-Flows per Browser durchklicken; Zustand lässt sich über die globalen Variablen quiz/answers/mode/revealed in der Konsole injizieren).
+- Vor dem Push lokal testen: UI-Flows per Browser durchklicken; Zustand lässt sich über die globalen Variablen quiz/answers/mode/revealed in der Konsole injizieren. Den Testserver IMMER selbstbegrenzend und nur auf Loopback starten:
+
+      timeout 900 python3 -m http.server 8765 --bind 127.0.0.1
+
+  `--bind 127.0.0.1` ist Pflicht — ohne das lauscht `http.server` laut `--help` auf allen Interfaces (`default: all interfaces`) und serviert dieses Repo samt `.git/` und Verzeichnis-Listings ins Netz. `timeout` ist Pflicht, weil es den Server überlebt und ihn nach Ablauf per SIGTERM beendet: Wer ihn per `… &` aus einer Shell startet, die sofort zurückkehrt, koppelt ihn ab — ein `trap … EXIT` auf dieser Shell feuert dann sofort (killt zu früh) oder nie. (Ein `trap` funktioniert nur, wenn die startende Shell mit `wait` am Leben bleibt; für Fire-and-forget taugt er nicht.) Am Ende zusätzlich explizit abräumen und nachprüfen, statt es zu glauben — PID merken statt nach Mustern zu suchen:
+
+      timeout 900 python3 -m http.server 8765 --bind 127.0.0.1 & SRV=$!
+      # ... testen ...
+      kill $SRV; ss -ltn 'sport = :8765' | tail -n +2 | grep -q . && echo "NOCH BELEGT" || echo "Port frei"
+
+  Zwei Fallen, beide praktisch verifiziert: `pkill -f "http.server 8765"` trifft **jeden** Prozess, dessen Kommandozeile den String enthält — auch die eigene umschließende Shell und den 8765-Server eines parallel arbeitenden Agents. Und `ss -ltn | grep 8765` liefert einen Treffer für einen Listener auf `18765`; deshalb der exakte `sport`-Filter.
+
+  Hintergrund: Am 09.07.2026 liefen zehn so entstandene Waisen-Server, der älteste seit dem 27.06.; vier davon servierten dieses Repo auf `0.0.0.0`. Beim Suchen nach Waisen kein Präfix-Muster wie `pgrep -f "http.server 87"` benutzen — das fand nur die Ports, die mit 87 beginnen, und übersah sieben von zehn.
 - Deploy verifizieren: `gh run watch` bzw. mit Cache-Buster `curl -s "https://jobreif.de/sw.js?t=$RANDOM" | grep bewerbungstool-` (muss den Commit-Hash zeigen, nicht `__BUILD__`). Die alte github.io-Adresse leitet nur noch per 301 auf die Custom Domain um.
 
 ## API-Aufrufe
