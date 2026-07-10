@@ -1,52 +1,102 @@
-# Bewerbungstool – Regeln für Änderungen
+# jobreif — Regeln für Änderungen an diesem Repo
 
-Das Tool ist öffentlich auf GitHub Pages deployt und hat aktive Nutzer. Ab jetzt gilt: keine Breaking Changes. Bei Änderungen, die UX oder Bedienbarkeit betreffen, besonders vorsichtig vorgehen.
+Dies ist die **öffentliche PWA** von [jobreif.de](https://jobreif.de): ein Einstellungstest-Simulator,
+der ohne Build-Schritt im Browser läuft und offline funktioniert. Das Repo ist deployt und hat aktive
+Nutzer. Zwei Rahmenbedingungen prägen jede Änderung:
+
+- **Keine Breaking Changes.** Weder an gespeicherten Nutzerdaten noch an etablierten Bedienflüssen.
+- **Das Repo ist öffentlich und wird als Ganzes ausgeliefert.** Was hier committet wird, ist auf
+  github.com und potenziell auf der Produktionsdomain lesbar.
+
+## Öffentliches Repo: keine Interna
+
+Das gehostete Backend liegt in einem separaten, **nicht-öffentlichen** Repository. Namen seiner
+Bausteine, Quelldateien, Env-Variablen und Secrets gehören nicht in dieses Repo — nicht in Code,
+Kommentare, Doku, generierte Seiten, Commit-Messages oder PR-Beschreibungen. Eine Commit-Message ist
+so öffentlich wie der Code.
+
+Zwei CI-Wächter setzen das durch: `.github/scripts/check-no-internals.js` (bekannte Interna-Begriffe)
+und `.github/scripts/check-no-foreign-js.js` (jeder erwähnte `.js`/`.mjs`-Name muss im Repo existieren
+oder auf einer begründeten Ausnahmeliste stehen). Sie ersetzen kein Nachdenken, sondern fangen das
+Versehen.
+
+Über Client-Interna hinaus verrät der ausgelieferte Code nichts über die Backend-Architektur: Der
+Moat liegt im privaten Repo, nicht in offengelegten Endpoints, Schemas oder Prompt-Strategien.
 
 ## Gespeicherte Nutzerdaten (localStorage) sind Produktivdaten
 
-- `bewerbungstool.settings`: { provider, apiKey, model, tier }
-- `bewerbungstool.history`: { jobs: [{ key, titel, jobText, attempts: [...] }] }
+- `bewerbungstool.settings` — `{ provider, apiKey, model, tier }`
+- `bewerbungstool.history` — `{ jobs: [{ key, titel, jobText, attempts: [...] }] }`
 
-Seit 1.1.0 ist `provider: "hosted"` der Default: das Tool läuft über einen eigenen
-Cloudflare Worker und braucht keinen Nutzer-Key. BYOK (anthropic/openai/deepseek) und `local`
-bleiben als Fallback erhalten (in den Einstellungen unter „Anbieter"), also KEIN Bruch
-der keine-Breaking-Changes-Regel. `tier` ist die im Hosted-Modus gewählte Qualitätsstufe
-(standard/guenstig; „beste" hinter der Paywall). Alte Keys nie löschen — sie sind
-die Credentials des BYOK-Fallbacks.
+Der `bewerbungstool.`-Präfix ist historisch (Altname des Projekts) und **bleibt** — er ist Teil des
+Vertrags mit bestehenden Browsern.
 
-Das gehostete Backend liegt in einem separaten, nicht-öffentlichen Repository und deployt von
-dort. Die Prompts in `app.js` gehören zum BYOK-Pfad; sie stehen für sich und werden NICHT mit
-der Serverseite abgeglichen. Der API-Vertrag — also die `/api/*`- und `/auth/*`-Endpoints, die
-`app.js` aufruft — muss abwärtskompatibel bleiben: die ausgelieferte PWA hängt daran.
+`provider: "hosted"` ist der Default: Das Tool läuft über einen eigenen Cloudflare Worker und braucht
+keinen Nutzer-Key. BYOK (anthropic/openai/deepseek) und `local` bleiben als Fallback (Einstellungen →
+„Anbieter"). `tier` ist die im Hosted-Modus gewählte Qualitätsstufe (standard/günstig; „beste" hinter
+der Paywall). **Alte Keys nie löschen** — sie sind die Credentials des BYOK-Fallbacks.
 
-Regeln:
-- Formate nur abwärtskompatibel erweitern: neue Felder optional, nie bestehende Felder umbenennen oder entfernen, nie die Storage-Keys ändern.
-- Rendering muss alte Einträge tolerieren (Felder können fehlen, z. B. Versuche aus älteren Versionen ohne neuere Eigenschaften). Immer defensiv lesen, nie blind auf neue Felder zugreifen.
-- Wenn ein Formatwechsel unvermeidbar ist: Migration beim Laden einbauen, alte Daten nie verwerfen.
+Regeln für alle gespeicherten Formate:
+
+- Nur abwärtskompatibel erweitern: neue Felder optional; bestehende Felder nie umbenennen oder
+  entfernen; Storage-Keys nie ändern.
+- Defensiv lesen: Rendering muss alte Einträge tolerieren (Felder aus älteren Versionen können fehlen).
+  Nie blind auf neue Felder zugreifen.
+- Ist ein Formatwechsel unvermeidbar: Migration beim Laden, alte Daten nie verwerfen.
+
+## Client, Backend und der API-Vertrag
+
+Nur die PWA lebt und deployt aus diesem Repo. Backend- und Prompt-Änderungen gehören ins private
+Repository, nicht hierher.
+
+Die Prompts in `app.js` gehören zum BYOK-Pfad; sie stehen für sich und werden nicht mit der Serverseite
+abgeglichen. Der **API-Vertrag** dagegen ist bindend: Die `/api/*`- und `/auth/*`-Endpoints, die `app.js`
+aufruft, müssen abwärtskompatibel bleiben — die ausgelieferte PWA hängt daran. Schema-Erweiterungen für
+die Fragengenerierung passieren serverseitig; gespeicherte Versuche können Quiz-Objekte im alten Schema
+enthalten, der Anzeige-Code muss damit umgehen (defensiv lesen). BYOK-Provider-Defaults im UI
+(Anbieterauswahl/Modelle) nicht ohne Begründung ändern.
 
 ## UI und Flows
 
-- Etablierte Bedienflüsse (Onboarding, URL/Text-Tabs, Lern-/Prüfungsmodus, Auflösen, Historie, Review ohne erneute Bewertung) nicht entfernen oder grundlegend umbauen, ohne dass der Nutzer das ausdrücklich verlangt.
-- Aktionen, die API-Kosten verursachen, dürfen nie unbeabsichtigt auslösbar sein (Vorbild: Review-Modus bewertet nicht erneut).
-- Mobile-Tauglichkeit (≤ 600px) bei jeder UI-Änderung mitprüfen.
+- Etablierte Bedienflüsse (Onboarding, URL/Text-Tabs, Lern-/Prüfungsmodus, Auflösen, Historie, Review
+  ohne erneute Bewertung) nicht entfernen oder grundlegend umbauen, ohne dass der Nutzer es ausdrücklich
+  verlangt.
+- **Aktionen mit API-Kosten dürfen nie unbeabsichtigt auslösbar sein** (Vorbild: Der Review-Modus
+  bewertet nicht erneut).
+- Mobile-Tauglichkeit (≤ 600 px) bei jeder UI-Änderung mitprüfen.
 
-## Deployment-Ritual
+## Deployment
 
-- Bei nutzersichtbaren Änderungen: Version in der `VERSION`-Datei hochzählen und in `app.js` `APP_VERSION` plus einen neuen `CHANGELOG`-Eintrag (oben anfügen) pflegen — der CI-Check erzwingt, dass alle drei übereinstimmen.
-- Changelog-Trennung: Der In-App-`CHANGELOG` (Fenster „Was ist neu“) führt nur Highlights, die für nicht-technische Nutzer eine gute Info sind — Features und sichtbare Fixes. Iterative Interna (Local-Model-Tuning, reines Robustheits-/Barrierefreiheits-Plumbing) gehören NICHT hinein. Der vollständige Verlauf liegt in den GitHub-Releases (Link unten im Fenster). Pro Version daher zusätzlich ein GitHub-Release mit den ausführlichen Notizen anlegen: `gh release create vX.Y.Z --target <commit> --title "Version X.Y.Z (TT.MM.JJJJ)" --notes-file <datei>`. Tag-Schema `vX.Y.Z`, das jüngste Release ist automatisch „Latest“.
-- main ist per Ruleset geschützt: Änderungen laufen über Feature-Branch und PR, der CI-Check (`.github/workflows/ci.yml`: JS-Syntax, Asset-/Manifest-Integrität, `__BUILD__`-Platzhalter) muss grün sein, dann mergen. Direkte Pushes auf main sind blockiert.
-- Deploy läuft über GitHub Actions (`.github/workflows/deploy.yml`): Merge auf main genügt, die CI-Checks laufen vor dem Deploy erneut. Die Action ersetzt den Platzhalter `__BUILD__` in `sw.js` durch den Commit-Hash — kein manuelles Hochzählen der Cache-Version mehr, den Platzhalter nie entfernen.
-- Nur die PWA wird aus diesem Repo deployt. Das gehostete Backend liegt in einem separaten, nicht-öffentlichen Repository und deployt von dort — Backend-/Prompt-Änderungen also nicht hier.
-- Vor dem Push lokal testen: UI-Flows per Browser durchklicken; Zustand lässt sich über die globalen Variablen quiz/answers/mode/revealed in der Konsole injizieren. Einen lokalen Testserver immer nur auf Loopback und selbstbegrenzend starten, danach beenden und den Port prüfen:
+**Versionierung.** Bei nutzersichtbaren Änderungen die Version an drei Stellen erhöhen: die `VERSION`-
+Datei, `APP_VERSION` in `app.js` und ein neuer, oberster `CHANGELOG`-Eintrag in `app.js`. Der CI-Check
+erzwingt, dass alle drei übereinstimmen. Reine Interna (Doku, CI, Refactoring ohne sichtbare Wirkung)
+brauchen keinen Bump.
 
-      timeout 900 python3 -m http.server 8765 --bind 127.0.0.1 & SRV=$!
-      # ... testen ...
-      kill $SRV; ss -ltn 'sport = :8765' | tail -n +2 | grep -q . && echo "NOCH BELEGT" || echo "Port frei"
+**Changelog-Ebenen.** Der In-App-`CHANGELOG` („Was ist neu") führt nur nutzerrelevante Highlights —
+Features und sichtbare Fixes, kein iteratives Plumbing. Der vollständige Verlauf liegt in den
+GitHub-Releases (Link unten im Fenster). Pro Version daher zusätzlich ein Release anlegen:
 
-  Ohne `--bind` lauscht `http.server` auf allen Interfaces (`--help`: „default: all interfaces“) und liefert das Arbeitsverzeichnis aus. `timeout` überlebt die startende Shell und beendet den Server per SIGTERM; ein `trap … EXIT` taugt dafür nicht, wenn die Shell sofort zurückkehrt. Zum Abräumen die PID merken statt `pkill -f` (das trifft jeden Prozess mit passender Kommandozeile) und `ss … 'sport = :8765'` statt `grep 8765` (das matcht auch einen Listener auf `18765`).
-- Deploy verifizieren: `gh run watch` bzw. mit Cache-Buster `curl -s "https://jobreif.de/sw.js?t=$RANDOM" | grep bewerbungstool-` (muss den Commit-Hash zeigen, nicht `__BUILD__`). Die alte github.io-Adresse leitet nur noch per 301 auf die Custom Domain um.
+    gh release create vX.Y.Z --target <commit> --title "Version X.Y.Z (TT.MM.JJJJ)" --notes-file <datei>
 
-## API-Aufrufe
+Tag-Schema `vX.Y.Z`; das jüngste Release ist automatisch „Latest".
 
-- Schema-Erweiterungen für die Fragengenerierung passieren serverseitig, also nicht in diesem Repo. Aber: gespeicherte Versuche enthalten Quiz-Objekte im alten Schema — der Anzeige-Code hier muss damit umgehen (defensiv lesen).
-- BYOK-Provider-Defaults im UI (Anbieterauswahl/Modelle) nicht ohne Begründung ändern. Die Modellwahl des Hosted-Modus wird serverseitig entschieden und gehört nicht hierher.
+**Merge und Deploy.** `main` ist per Ruleset geschützt — Änderungen laufen über Feature-Branch und PR,
+der CI-Check muss grün sein, direkte Pushes sind blockiert. Ein Merge auf `main` löst den Pages-Deploy
+aus (`.github/workflows/deploy.yml`); die CI läuft davor erneut. Die Action ersetzt den Platzhalter
+`__BUILD__` in `sw.js` durch den Commit-Hash (Cache-Version) — **den Platzhalter nie entfernen**.
+
+**Lokal testen.** UI-Flows im Browser durchklicken; der Zustand lässt sich über die globalen Variablen
+`quiz` / `answers` / `mode` / `revealed` in der Konsole injizieren. Einen lokalen Testserver nur auf
+Loopback und selbstbegrenzend starten, danach den Port prüfen:
+
+    timeout 900 python3 -m http.server 8765 --bind 127.0.0.1 & SRV=$!
+    # ... testen ...
+    kill $SRV
+
+Ohne `--bind 127.0.0.1` lauscht `http.server` auf allen Interfaces und liefert das Arbeitsverzeichnis
+ins Netz; `timeout` beendet einen vergessenen Server von selbst.
+
+**Deploy verifizieren.** `gh run watch`, oder mit Cache-Buster prüfen, dass der ausgelieferte
+Service-Worker den Commit-Hash trägt statt des Platzhalters:
+
+    curl -s "https://jobreif.de/sw.js?t=$RANDOM" | grep bewerbungstool-
