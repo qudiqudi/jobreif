@@ -5,8 +5,9 @@ der ohne Build-Schritt im Browser läuft und offline funktioniert. Das Repo ist 
 Nutzer. Zwei Rahmenbedingungen prägen jede Änderung:
 
 - **Keine Breaking Changes.** Weder an gespeicherten Nutzerdaten noch an etablierten Bedienflüssen.
-- **Das Repo ist öffentlich und wird als Ganzes ausgeliefert.** Was hier committet wird, ist auf
-  github.com und potenziell auf der Produktionsdomain lesbar.
+- **Das Repo ist öffentlich, und der Deploy liefert den Großteil davon direkt auf die Domain aus.**
+  Was hier committet wird, ist auf github.com lesbar — und, sofern der Deploy es nicht ausdrücklich
+  ausschließt, auch auf der Produktionsdomain. Im Zweifel: als öffentlich behandeln.
 
 ## Öffentliches Repo: keine Interna
 
@@ -20,8 +21,8 @@ und `.github/scripts/check-no-foreign-js.js` (jeder erwähnte `.js`/`.mjs`-Name 
 oder auf einer begründeten Ausnahmeliste stehen). Sie ersetzen kein Nachdenken, sondern fangen das
 Versehen.
 
-Über Client-Interna hinaus verrät der ausgelieferte Code nichts über die Backend-Architektur: Der
-Moat liegt im privaten Repo, nicht in offengelegten Endpoints, Schemas oder Prompt-Strategien.
+Der ausgelieferte Client darf über die technisch unvermeidbaren Endpoint-Pfade hinaus nichts über die
+Backend-Architektur preisgeben — keine internen Schemas, keine Prompt-Strategien, keine Komponenten.
 
 ## Gespeicherte Nutzerdaten (localStorage) sind Produktivdaten
 
@@ -33,8 +34,9 @@ Vertrags mit bestehenden Browsern.
 
 `provider: "hosted"` ist der Default: Das Tool läuft über einen eigenen Cloudflare Worker und braucht
 keinen Nutzer-Key. BYOK (anthropic/openai/deepseek) und `local` bleiben als Fallback (Einstellungen →
-„Anbieter"). `tier` ist die im Hosted-Modus gewählte Qualitätsstufe (standard/günstig; „beste" hinter
-der Paywall). **Alte Keys nie löschen** — sie sind die Credentials des BYOK-Fallbacks.
+„Anbieter"). `tier` ist die im Hosted-Modus gewählte Qualitätsstufe: `günstig` ist das einmalige
+Gratis-Trial, `standard` und `beste` sind **bezahlte** Stufen (Quelle der Wahrheit ist `tierIsFree`
+in `app.js`, nicht diese Zeile). **Alte Keys nie löschen** — sie sind die Credentials des BYOK-Fallbacks.
 
 Regeln für alle gespeicherten Formate:
 
@@ -50,11 +52,12 @@ Nur die PWA lebt und deployt aus diesem Repo. Backend- und Prompt-Änderungen ge
 Repository, nicht hierher.
 
 Die Prompts in `app.js` gehören zum BYOK-Pfad; sie stehen für sich und werden nicht mit der Serverseite
-abgeglichen. Der **API-Vertrag** dagegen ist bindend: Die `/api/*`- und `/auth/*`-Endpoints, die `app.js`
-aufruft, müssen abwärtskompatibel bleiben — die ausgelieferte PWA hängt daran. Schema-Erweiterungen für
-die Fragengenerierung passieren serverseitig; gespeicherte Versuche können Quiz-Objekte im alten Schema
-enthalten, der Anzeige-Code muss damit umgehen (defensiv lesen). BYOK-Provider-Defaults im UI
-(Anbieterauswahl/Modelle) nicht ohne Begründung ändern.
+abgeglichen (BYOK-Prompts hier zu ändern ist also erlaubt — **serverseitige** Prompts gehören ins
+private Repo). Der **API-Vertrag** dagegen ist bindend: Die `/api/*`- und `/auth/*`-Endpoints, die
+`app.js` aufruft, müssen abwärtskompatibel bleiben — die ausgelieferte PWA hängt daran.
+Schema-Erweiterungen für die Fragengenerierung passieren serverseitig; gespeicherte Versuche können
+Quiz-Objekte im alten Schema enthalten, der Anzeige-Code muss damit umgehen (defensiv lesen).
+BYOK-Provider-Defaults im UI (Anbieterauswahl/Modelle) nicht ohne Begründung ändern.
 
 ## UI und Flows
 
@@ -87,7 +90,7 @@ aus (`.github/workflows/deploy.yml`); die CI läuft davor erneut. Die Action ers
 
 **Lokal testen.** UI-Flows im Browser durchklicken; der Zustand lässt sich über die globalen Variablen
 `quiz` / `answers` / `mode` / `revealed` in der Konsole injizieren. Einen lokalen Testserver nur auf
-Loopback und selbstbegrenzend starten, danach den Port prüfen:
+Loopback und selbstbegrenzend starten, danach explizit beenden:
 
     timeout 900 python3 -m http.server 8765 --bind 127.0.0.1 & SRV=$!
     # ... testen ...
@@ -95,6 +98,9 @@ Loopback und selbstbegrenzend starten, danach den Port prüfen:
 
 Ohne `--bind 127.0.0.1` lauscht `http.server` auf allen Interfaces und liefert das Arbeitsverzeichnis
 ins Netz; `timeout` beendet einen vergessenen Server von selbst.
+
+Wird der SEO-Katalog (`seo/catalog.json`) oder der Generator angefasst: `node scripts/generate-seo.mjs`
+lokal laufen lassen und das Ergebnis mitcommitten — die CI prüft auf Drift und wird sonst rot.
 
 **Deploy verifizieren.** `gh run watch`, oder mit Cache-Buster prüfen, dass der ausgelieferte
 Service-Worker den Commit-Hash trägt statt des Platzhalters:
