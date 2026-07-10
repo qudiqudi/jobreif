@@ -37,6 +37,9 @@ jobs:
       - name: Asset- und Manifest-Integrität prüfen
         run: node .github/scripts/check-integrity.js
 
+      - name: Keine Interna im öffentlichen Repo
+        run: node .github/scripts/check-no-internals.js
+
       - name: SEO-Output ist aktuell (kein Drift zum Katalog)
         run: |
           node scripts/generate-seo.mjs
