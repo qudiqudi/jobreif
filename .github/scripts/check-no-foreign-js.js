@@ -50,13 +50,20 @@ function findForeignJs(text, existing, exceptions) {
     // (a.test.js) und Pfade (dir/a.js) als GANZES gegriffen werden statt in
     // Fragmente zu zerfallen. \b am Ende verhindert .jsx/.json-Fehltreffer.
     // URLs brauchen keine Sonderbehandlung: ":" bricht die Zeichenklasse, der
-    // Rest ab dem Host/Pfad wird normal gematcht und dann per Basename geprüft.
+    // Rest ab dem Host/Pfad wird normal gematcht und dann per Segment geprüft.
     const re = /[a-z0-9_][a-z0-9_.\/-]*\.(?:js|mjs)\b/g;
     let m;
     while ((m = re.exec(norm))) {
-      const base = m[0].split("/").pop();
-      if (!existing.has(base) && !exceptions.has(base)) {
-        hits.push({ line: i + 1, name: base });
+      // Jedes Pfadsegment einzeln prüfen, nicht nur das letzte: sonst würde ein
+      // Fremdname, der VOR einem existierenden Basenamen steht (z. B.
+      // "fremd.js/app.js" als ein einziger Match), von split("/").pop() nie
+      // ausgewertet und stillschweigend durchgelassen — ein Fail-Open-Loch im
+      // sonst fail-closed gemeinten Wächter.
+      for (const seg of m[0].split("/")) {
+        if (!/\.(?:js|mjs)$/.test(seg)) continue; // Zwischensegment ohne Endung
+        if (!existing.has(seg) && !exceptions.has(seg)) {
+          hits.push({ line: i + 1, name: seg });
+        }
       }
     }
   });

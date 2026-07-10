@@ -96,6 +96,15 @@ function run() {
     eq(hits.length, 0, "i) .jsx erzeugt keinen Treffer");
   }
 
+  // j) Fremdname VOR einem existierenden Basenamen im selben Match (ein
+  // Slash-Lauf) darf nicht durch Basename-Verkürzung verschluckt werden.
+  {
+    const existing = new Set(["app.js"]);
+    const hits = findForeignJs("unknown.js/app.js", existing, EXCEPTIONS);
+    eq(hits.length, 1, "j) führendes Fremdsegment vor bekanntem Namen wird gefangen");
+    if (hits.length === 1) eq(hits[0].name, "unknown.js", "j) Trefferinhalt korrekt");
+  }
+
   // Zusatz-Smoke: main-Skript gegen den echten Repo-Stand ausführen
   {
     const script = path.join(__dirname, "..", ".github", "scripts", "check-no-foreign-js.js");
