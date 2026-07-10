@@ -32,6 +32,16 @@ jobs:
       - name: Cache-Version aus Commit-Hash setzen
         run: sed -i "s/__BUILD__/${GITHUB_SHA:0:8}/" sw.js
 
+      # Pages liefert den hochgeladenen Ordner KOMPLETT aus (nur Dot-Verzeichnisse
+      # wie .github fallen raus). Ohne diesen Schritt stehen Entwickler-Dateien auf
+      # der Produktionsdomain, z. B. https://jobreif.de/CLAUDE.md. Entfernt wird nur,
+      # was die ausgelieferte App nachweislich nicht braucht: keine der Dateien steht
+      # in der ASSETS-Liste von sw.js, keine wird von einer HTML-Seite referenziert,
+      # und keine wird zur Laufzeit geladen. Der CI-Job `checks` hat einen eigenen
+      # Checkout und sieht scripts/ und seo/ weiterhin (SEO-Drift-Prüfung).
+      - name: Nicht-Web-Dateien aus dem Pages-Artefakt entfernen
+        run: rm -rf CLAUDE.md test scripts seo
+
       - uses: actions/configure-pages@v6
 
       - uses: actions/upload-pages-artifact@v5

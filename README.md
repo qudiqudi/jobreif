@@ -54,9 +54,12 @@ In the settings you can export all data as `jobreif-backup-<date>.json` and impo
 Start any static server, no build step:
 
 ```
-$ python3 -m http.server 8000
+$ python3 -m http.server 8000 --bind 127.0.0.1
 # → http://localhost:8000
 ```
+
+Without `--bind 127.0.0.1`, `http.server` listens on every network interface and serves the
+whole directory to anyone who can reach your machine.
 
 For deployment, static hosting is enough (e.g. GitHub Pages). The service worker cache is only active over HTTPS; locally the app runs without it too.
 
