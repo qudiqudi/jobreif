@@ -34,11 +34,17 @@ jobs:
       - name: Geräte-Sync Merge-Kern (Konflikt-Matrix + Lattice-Eigenschaften) prüfen
         run: node test/sync-merge.test.js
 
+      - name: Fremd-JS-Wächter (Regelwerk) prüfen
+        run: node test/check-no-foreign-js.test.js
+
       - name: Asset- und Manifest-Integrität prüfen
         run: node .github/scripts/check-integrity.js
 
       - name: Keine Interna im öffentlichen Repo
         run: node .github/scripts/check-no-internals.js
+
+      - name: Erwähnte JS-Dateinamen existieren im Repo
+        run: node .github/scripts/check-no-foreign-js.js
 
       - name: SEO-Output ist aktuell (kein Drift zum Katalog)
         run: |
