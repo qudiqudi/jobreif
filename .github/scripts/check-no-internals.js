@@ -14,17 +14,30 @@
 // ist enger: Die verbotenen Zeichenketten sollen nicht im Klartext in einer
 // öffentlichen, von Suchmaschinen und Code-Suchen indexierten Datei stehen —
 // sonst würde ausgerechnet der Wächter die Begriffe publizieren, die er verbietet.
+// Pflege: Die Liste wird NICHT automatisch aus der Serverseite abgeleitet — sie ist
+// handgepflegt und damit nur so gut wie ihre letzte Durchsicht. Ein grüner Lauf beweist
+// die Abwesenheit DIESER Begriffe, nicht die Abwesenheit von Interna. Wer serverseitig
+// eine neue Komponente, ein neues Env-Flag oder ein neues Secret einführt, ergänzt sie hier.
 const FORBIDDEN_B64 = [
   "am9icmVpZi1iYWNrZW5k",       // Name des nicht-öffentlichen Repos
   "Y2xvYWticm93c2Vy",           // interne Komponente
+  "Y2xvYWtzZXJ2ZQ==",           // interne Komponente
   "R29sZGVuLVNldA==",           // interne Komponente
   "QnVkZ2V0LUdhdGU=",           // interne Komponente
   "UHJlbWl1bS1Qcm9tcHQ=",       // interne Komponente
+  "cXVpei1xdWFsaXR5",           // serverseitiger Quelldateiname
   "T1BFTlJPVVRFUl9LRVk=",       // Secret-Name
   "VFVSTlNUSUxFX1NFQ1JFVA==",   // Secret-Name
   "QURNSU5fU0VDUkVU",           // Secret-Name
-  "VEVTVF9TVUJKRUNUUw==",       // Secret-Name
-  "UEFJRF9EQVlfQlVER0VUX1VTRA==", // Secret-Name
+  "UkVTRU5EX0tFWQ==",           // Secret-Name
+  "Q0hFQ0tPVVRfSU5URU5UX1NFQ1JFVA==", // Secret-Name
+  "UEFERExFX1dFQkhPT0tfU0VDUkVU", // Secret-Name
+  "VEVTVF9TVUJKRUNUUw==",       // Env-Flag
+  "UEFJRF9EQVlfQlVER0VUX1VTRA==", // Env-Flag
+  "U0tJUF9UVVJOU1RJTEU=",       // Env-Flag (Bot-Schutz-Bypass)
+  "VFVSTlNUSUxFX1NLSVBfQ0RBVEE=", // Env-Flag
+  "TU9DS19VUFNUUkVBTQ==",       // Env-Flag
+  "QURNSU5fSVBfQUxMT1dMSVNU",   // Env-Flag
 ];
 
 const { execFileSync } = require("child_process");

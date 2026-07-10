@@ -1890,10 +1890,10 @@ function normalizeKernpunkte(k, jobText) {
   // die manche Modell-Laeufe den beleg rahmen, obwohl der Inhalt ein perfektes
   // woertliches Zitat ist. Ohne dieses Abstreifen scheiterte der Substring-Check nur
   // am fuehrenden/abschliessenden Quote-Zeichen und der kernpunkt galt faelschlich als
-  // ungrounded. Muss verhaltensgleich zu quiz-quality.js (Backend) bleiben.
+  // ungrounded. Muss verhaltensgleich zur serverseitigen Pruefung bleiben.
   // Gemeinsame Quote-Klasse fuer BEIDE Enden (ASCII + deutsche/franzoesische typografische
   // Quotes in beiden Richtungen, inkl. Guillemets «…» UND »…«). Symmetrisches Abstreifen ist
-  // fuer den reinen Substring-Match unschaedlich. MUSS identisch zu quiz-quality.js sein.
+  // fuer den reinen Substring-Match unschaedlich. MUSS identisch zur Serverseite sein.
   const stripWrapQuotes = (s) =>
     String(s || "")
       .replace(/^["'„“”‟«»‘’‚‹›″′]+/, "")
@@ -2384,7 +2384,7 @@ function scoreReihenfolge(userOrder, correctOrder) {
 
 // Zahlenreihe (Plan 3.7): tolerantes Parsen einer Zahl-Eingabe. Akzeptiert deutsches
 // Dezimalkomma + Tausenderpunkte, ignoriert Leerzeichen/fuehrendes Plus. NaN, wenn der
-// String keine reine Zahl ist. MUSS sich mit dem Backend (quiz-quality.js parseNumericAnswer)
+// String keine reine Zahl ist. MUSS sich mit der serverseitigen Zahl-Erkennung
 // decken, damit "ist das eine Zahl?" client- und serverseitig gleich entschieden wird.
 function parseZahl(v) {
   if (typeof v === "number") return Number.isFinite(v) ? v : NaN;
@@ -2724,7 +2724,7 @@ async function readSSEText(res, extractDelta, onChunk) {
 
 /* ---------- Hosted-Modus (gehosteter Worker, kein Nutzer-Key) ---------- */
 
-// Dev-Host = lokale Entwicklung (wrangler dev, lokale Spiegel). NUR dort wirken die
+// Dev-Host = lokale Entwicklung (lokale Serverseite, lokale Spiegel). NUR dort wirken die
 // localStorage-Debug-Overrides (hostedBase/paddleEnv/turnstileSitekey) ueberhaupt: auf
 // jobreif.de wird ein vorhandener Override IGNORIERT, nicht geloescht — localStorage
 // ueberlebt jeden Reload, ein liegengebliebener oder von einem fluechtigen Skript-Treffer
@@ -2738,7 +2738,7 @@ function devHost() {
 }
 
 // Basis-URL des Hosted-Workers. Override per localStorage ist ein reiner Dev-/Test-Schalter
-// (z. B. gegen `wrangler dev` auf 127.0.0.1:8787) und wird NUR auf Dev-Hosts honoriert:
+// (z. B. gegen eine lokal laufende Serverseite) und wird NUR auf Dev-Hosts honoriert:
 // ueber diese URL laeuft praktisch die gesamte Server-Kommunikation inkl. Auth-Header, ein
 // auf jobreif.de persistierter Override wuerde sie dauerhaft und unsichtbar umlenken.
 // Default ist immer die Produktions-Subdomain — ignoriert, nicht geloescht.
@@ -3913,8 +3913,8 @@ async function consumeAuthRedirect() {
 // eintragen (Cloudflare-Dashboard → Turnstile). Override per localStorage nur fuer Tests
 // (z. B. Cloudflare-Testkey "1x00000000000000000000BB" = unsichtbar, immer ok) und NUR
 // auf Dev-Hosts (localhost/127.0.0.1/[::1]) honoriert. Ohne Sitekey liefert
-// getTurnstileToken "" → nur sinnvoll, wenn der Worker SKIP_TURNSTILE gesetzt hat.
-// BYOK/lokal brauchen kein Turnstile.
+// getTurnstileToken "" → nur sinnvoll gegen eine Serverseite, die den Bot-Schutz fuer
+// die lokale Entwicklung ausgeschaltet hat. BYOK/lokal brauchen kein Turnstile.
 const TURNSTILE_SITEKEY = "0x4AAAAAADmmEQ6MVc83TvmX";
 
 // Gate: devHost, Audit 2026-07 — ein in Prod liegengebliebener Override (z. B.
@@ -4058,7 +4058,8 @@ function runTurnstileAttempt(action, cData, timeoutMs, deadline) {
 }
 
 // Frisches, einmaliges Token fuer genau diese Aktion. Leerer String, wenn Turnstile
-// nicht konfiguriert/bereit ist (dann muss der Worker SKIP_TURNSTILE gesetzt haben).
+// nicht konfiguriert/bereit ist (dann muss die Serverseite ihren Bot-Schutz fuer die
+// lokale Entwicklung ausgeschaltet haben).
 // cData (optional) bindet das Token an genau diesen Request: der Aufrufer uebergibt den
 // SHA-256-Hex des exakt geposteten Bodys (bzw. des vh-Werts bei google-start); der Worker
 // prueft data.cdata gegen den serverseitig neu berechneten Hash. So laesst sich ein
