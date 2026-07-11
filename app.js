@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.45.2";
+const APP_VERSION = "1.45.3";
 
 const CHANGELOG = [
+  {
+    version: "1.45.3",
+    date: "11.07.2026",
+    items: [
+      "Kein versehentlicher Verlust beim Abmelden: Wartet ein fertiger, noch nicht gestarteter Test, fragt die App vor dem Abmelden nach – du kannst ihn zuerst starten, statt ihn (und das dafür verbrauchte Kontingent bzw. Guthaben) zu verlieren.",
+    ],
+  },
   {
     version: "1.45.2",
     date: "11.07.2026",
@@ -11197,6 +11204,17 @@ $("link-guest-settings").addEventListener("click", (e) => {
 $("btn-account-login").addEventListener("click", () => promptHostedLogin());
 
 $("btn-account-logout").addEventListener("click", async () => {
+  if (confirmLogoutReadyResolve) return; // Dialog bereits offen: Doppelklick abprallen lassen
+  // Wartet ein fertiger, noch nicht gestarteter Test, wuerde ihn das nachfolgende clearActiveJob
+  // still verwerfen (das dafuer verbrauchte Kontingent/Guthaben bliebe verbucht). Deshalb erst
+  // rueckfragen und den fertigen Test als Ausweg anbieten (analog zum Guard in
+  // startHostedGeneration). Der Check laeuft VOR jedem destruktiven Schritt.
+  const existing = loadActiveJob();
+  if (existing && existing.status === "ready") {
+    const choice = await openConfirmLogoutReady();
+    if (choice === "start") { startReadyJob(); return; } // Test doch zuerst starten, angemeldet bleiben
+    if (choice !== "logout") return; // abgebrochen: nichts verwerfen, angemeldet bleiben
+  }
   try {
     await fetch(hostedBase() + "/auth/logout", { method: "POST", headers: authHeaders() });
   } catch { /* egal: lokal abmelden reicht */ }
@@ -12242,6 +12260,38 @@ function settleConfirmReplaceReady(outcome) {
 $("btn-confirm-replace-ready-start").addEventListener("click", () => settleConfirmReplaceReady("start"));
 $("btn-confirm-replace-ready-new").addEventListener("click", () => settleConfirmReplaceReady("replace"));
 $("btn-confirm-replace-ready-cancel").addEventListener("click", () => settleConfirmReplaceReady("cancel"));
+
+// Rueckfrage vor dem Abmelden, wenn ein bereits FERTIGER, noch nicht gestarteter Test wartet. Das
+// Abmelden verwirft den geraetelokalen Job-Zeiger (clearActiveJob) — sonst ginge das fertige
+// Ergebnis verloren, das dafuer verbrauchte Gratis-Kontingent bzw. Guthaben bliebe aber verbucht
+// (dieselbe Klasse Kostenverlust, gegen die der Guard in startHostedGeneration schuetzt). Drei
+// Ausgaenge, promise-basiert, loest genau einmal auf: "start" (den fertigen Test doch noch starten,
+// angemeldet bleiben), "logout" (trotzdem abmelden, Test verwerfen), "cancel" (nichts tun).
+let confirmLogoutReadyResolve = null;
+let confirmLogoutReadyReturnFocus = null;
+function openConfirmLogoutReady() {
+  return new Promise((resolve) => {
+    confirmLogoutReadyResolve = resolve;
+    confirmLogoutReadyReturnFocus = document.activeElement;
+    $("confirm-logout-ready-modal").classList.remove("hidden");
+    $("btn-confirm-logout-ready-start").focus();
+  });
+}
+function settleConfirmLogoutReady(outcome) {
+  const resolve = confirmLogoutReadyResolve;
+  confirmLogoutReadyResolve = null;
+  $("confirm-logout-ready-modal").classList.add("hidden");
+  // Fokus nur zurueckgeben, wenn der Nutzer auf der Einstellungen-Ansicht BLEIBT. Bei "start"
+  // navigiert startReadyJob sofort in die Quiz-Ansicht — den Fokus dann NICHT auf den jetzt
+  // verborgenen Ausloeser zwingen (liefe ins Leere).
+  const rf = confirmLogoutReadyReturnFocus;
+  confirmLogoutReadyReturnFocus = null;
+  if (outcome !== "start" && rf && typeof rf.focus === "function") rf.focus();
+  if (resolve) resolve(outcome);
+}
+$("btn-confirm-logout-ready-start").addEventListener("click", () => settleConfirmLogoutReady("start"));
+$("btn-confirm-logout-ready-logout").addEventListener("click", () => settleConfirmLogoutReady("logout"));
+$("btn-confirm-logout-ready-cancel").addEventListener("click", () => settleConfirmLogoutReady("cancel"));
 
 // --- M6 (Security-Review): Bestaetigung vor dem ERSETZEN eines bestehenden Sync-Seeds ---------
 // Uebernimmt einen gescannten Seed in den lokalen Zustand: Besitzer-Marke loeschen (der Seed ist
