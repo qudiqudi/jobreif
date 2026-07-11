@@ -948,6 +948,21 @@
       </div>
     </div>
 
+    <!-- Rückfrage vor dem Abmelden, wenn ein fertiger, noch nicht gestarteter Test wartet: das
+         Abmelden verwirft den gerätelokalen Job-Zeiger, das dafür verbrauchte Kontingent/Guthaben
+         bliebe aber verbucht. Der fertige Test wird als Ausweg angeboten. -->
+    <div id="confirm-logout-ready-modal" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-logout-ready-title">
+      <div class="modal card">
+        <h2 id="confirm-logout-ready-title">Fertiger Test noch nicht gestartet</h2>
+        <p>Du hast einen fertigen Test, den du noch nicht gestartet hast. Wenn du dich jetzt abmeldest, wird er <strong>verworfen</strong> – das dafür verbrauchte Kontingent bzw. Guthaben wird nicht zurückerstattet.</p>
+        <div class="row wrap">
+          <button id="btn-confirm-logout-ready-start" class="primary">Fertigen Test starten</button>
+          <button id="btn-confirm-logout-ready-logout" class="ghost">Trotzdem abmelden</button>
+          <button id="btn-confirm-logout-ready-cancel" class="ghost">Abbrechen</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Sicherheits-Rückfrage: ein gescannter Kopplungs-Code würde einen bereits eingerichteten
          Geräte-Sync ersetzen (schützt vor stillem Neu-Koppeln über einen präparierten Link). -->
     <div id="confirm-replace-seed-modal" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-replace-seed-title">
