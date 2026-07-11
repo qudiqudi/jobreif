@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.45.3";
+const APP_VERSION = "1.45.4";
 
 const CHANGELOG = [
+  {
+    version: "1.45.4",
+    date: "11.07.2026",
+    items: [
+      "Auch ein gerade in Erstellung befindlicher Test wird beim Abmelden nicht mehr still verworfen: Die App fragt jetzt nach, damit du warten kannst, bis er fertig ist, statt ihn (und das dafür verbrauchte Kontingent bzw. Guthaben) zu verlieren.",
+    ],
+  },
   {
     version: "1.45.3",
     date: "11.07.2026",
@@ -11204,16 +11211,23 @@ $("link-guest-settings").addEventListener("click", (e) => {
 $("btn-account-login").addEventListener("click", () => promptHostedLogin());
 
 $("btn-account-logout").addEventListener("click", async () => {
-  if (confirmLogoutReadyResolve) return; // Dialog bereits offen: Doppelklick abprallen lassen
-  // Wartet ein fertiger, noch nicht gestarteter Test, wuerde ihn das nachfolgende clearActiveJob
-  // still verwerfen (das dafuer verbrauchte Kontingent/Guthaben bliebe verbucht). Deshalb erst
-  // rueckfragen und den fertigen Test als Ausweg anbieten (analog zum Guard in
-  // startHostedGeneration). Der Check laeuft VOR jedem destruktiven Schritt.
+  if (confirmLogoutReadyResolve || confirmLogoutPendingResolve) return; // ein Dialog bereits offen: Doppelklick abprallen lassen
+  // Das nachfolgende clearActiveJob verwirft den geraetelokalen Job-Zeiger. Wartet daran noch ein
+  // Ergebnis (fertig ODER gerade in Erstellung), waere es danach unerreichbar, das dafuer
+  // verbrauchte Kontingent/Guthaben bliebe aber verbucht. Deshalb VOR jedem destruktiven Schritt
+  // rueckfragen (analog zum Guard in startHostedGeneration).
   const existing = loadActiveJob();
   if (existing && existing.status === "ready") {
+    // Fertiger, noch nicht gestarteter Test → als Ausweg anbieten, ihn doch zu starten.
     const choice = await openConfirmLogoutReady();
     if (choice === "start") { startReadyJob(); return; } // Test doch zuerst starten, angemeldet bleiben
     if (choice !== "logout") return; // abgebrochen: nichts verwerfen, angemeldet bleiben
+  } else if (existing) {
+    // Noch laufender (nicht fertiger) Test: kann nicht gestartet werden — nur warten oder verwerfen.
+    // Das Abmelden verwirft den Zeiger (Job-Isolation), der serverseitig ggf. bezahlte Lauf waere
+    // danach nicht mehr abrufbar. Deshalb ausdruecklich rueckfragen statt still zu verwerfen.
+    const choice = await openConfirmLogoutPending();
+    if (choice !== "logout") return; // weiter warten/abgebrochen: angemeldet bleiben
   }
   try {
     await fetch(hostedBase() + "/auth/logout", { method: "POST", headers: authHeaders() });
@@ -12292,6 +12306,36 @@ function settleConfirmLogoutReady(outcome) {
 $("btn-confirm-logout-ready-start").addEventListener("click", () => settleConfirmLogoutReady("start"));
 $("btn-confirm-logout-ready-logout").addEventListener("click", () => settleConfirmLogoutReady("logout"));
 $("btn-confirm-logout-ready-cancel").addEventListener("click", () => settleConfirmLogoutReady("cancel"));
+
+// Rueckfrage vor dem Abmelden, wenn gerade noch ein Test ERSTELLT wird (Job-Zeiger vorhanden, aber
+// noch nicht "ready"). Anders als beim fertigen Test gibt es hier kein "jetzt starten" — nur weiter
+// warten (angemeldet bleiben) oder trotzdem abmelden (Zeiger verwerfen; der serverseitig ggf.
+// bezahlte Lauf ist danach nicht mehr abrufbar). Zwei Ausgaenge, promise-basiert, loest genau einmal
+// auf: "wait" (weiter warten) und "logout" (trotzdem abmelden). Der sichere Weg (weiter warten) ist
+// die fokussierte Primaeraktion.
+let confirmLogoutPendingResolve = null;
+let confirmLogoutPendingReturnFocus = null;
+function openConfirmLogoutPending() {
+  return new Promise((resolve) => {
+    confirmLogoutPendingResolve = resolve;
+    confirmLogoutPendingReturnFocus = document.activeElement;
+    $("confirm-logout-pending-modal").classList.remove("hidden");
+    $("btn-confirm-logout-pending-wait").focus();
+  });
+}
+function settleConfirmLogoutPending(outcome) {
+  const resolve = confirmLogoutPendingResolve;
+  confirmLogoutPendingResolve = null;
+  $("confirm-logout-pending-modal").classList.add("hidden");
+  // Nach beiden Ausgaengen bleibt der Nutzer zunaechst auf der Einstellungen-Ansicht (bei "logout"
+  // rendert renderAccountSection sie neu) — Fokus auf den Ausloeser zuruecklegen ist unkritisch.
+  const rf = confirmLogoutPendingReturnFocus;
+  confirmLogoutPendingReturnFocus = null;
+  if (rf && typeof rf.focus === "function") rf.focus();
+  if (resolve) resolve(outcome);
+}
+$("btn-confirm-logout-pending-wait").addEventListener("click", () => settleConfirmLogoutPending("wait"));
+$("btn-confirm-logout-pending-logout").addEventListener("click", () => settleConfirmLogoutPending("logout"));
 
 // --- M6 (Security-Review): Bestaetigung vor dem ERSETZEN eines bestehenden Sync-Seeds ---------
 // Uebernimmt einen gescannten Seed in den lokalen Zustand: Besitzer-Marke loeschen (der Seed ist
