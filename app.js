@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.45.1";
+const APP_VERSION = "1.45.2";
 
 const CHANGELOG = [
+  {
+    version: "1.45.2",
+    date: "11.07.2026",
+    items: [
+      "Geräte-Sync zuverlässiger: Bleibt ein Teil deines Stands am Server hängen, weil dort noch Daten mit einem anderen Schlüssel liegen, zeigt die App jetzt dauerhaft den richtigen Hinweis (koppeln oder zurücksetzen) statt eines endlosen „wird automatisch erneut versucht“. Und „Aktivieren“ beginnt jetzt wirklich von vorn – vorhandene Server-Daten aus einem früheren Schlüssel werden dabei überschrieben.",
+    ],
+  },
   {
     version: "1.45.1",
     date: "11.07.2026",
@@ -2870,7 +2877,9 @@ let syncEnabled = false;
 // Sync-Status-UI („sichtbarer Sync"): Abgleich-Meldung nach Koppeln/manuellem Sync, Spiegel des
 // Kid-Mismatch-Hinweises und QR-Scan-Marker dieses Loads. Ebenfalls früh deklariert (kein TDZ).
 let _syncStatusMsg = null;        // { warn: bool, text: string } | null — renderSyncUI zeigt sie
-let _syncKidMismatch = false;     // von setKidMismatch gepflegt (DOM-Hinweis + Logik-Spiegel)
+const _syncKidMismatch = new Set(); // Kinds, deren Server-Blob mit einem fremden Schlüssel liegt (PRO KIND,
+                                    // nicht global: ein sauberer Write eines anderen Kinds darf einen echten
+                                    // Mismatch nicht löschen). Von setKidMismatch/clearAllKidMismatch gepflegt.
 let _syncScannedThisLoad = false; // QR-Seed in DIESEM Load übernommen → Feedback nach dem Start-Pull
 let _syncOpBusy = false;          // Re-Entranz-Guard für Deaktivieren/Zurücksetzen (enthalten awaits)
 // Der Sync-Seed ist der E2E-Schlüssel und wird an das Konto gebunden, unter dem er aktiviert
@@ -13204,15 +13213,22 @@ function syncActivate() {
   window.SyncCrypto.storeCode(window.SyncCrypto.seedToCode(window.SyncCrypto.generateSeed()));
   bindSyncOwner();
   _syncKidCache = { code: null, kid: null };
-  setKidMismatch(false);
+  clearAllKidMismatch();
   // Insert-Basis (rev 0). updatedAt NICHT auf now setzen — sonst schlägt ein leeres, gerade
   // aktiviertes Gerät per LWW ein volles (Fable-Finding); der echte Stand steht in profileUpdatedAt.
   setProfileMeta({ rev: 0 });
+  for (const name of Object.keys(MERGE_KINDS)) { setKindMeta(name, { rev: 0 }); mergeState(name).sig = null; }
   _syncStatusMsg = null;
   renderSyncUI(); // legt über touchSyncDevice auch den eigenen Geräteliste-Eintrag an
   syncShowCouple();
-  scheduleProfilePush(); // initialer Push (Insert), sobald der Seed steht
-  for (const name of Object.keys(MERGE_KINDS)) { setKindMeta(name, { rev: 0 }); mergeState(name).sig = null; pushMergeKind(name).catch(() => {}); }
+  // „Aktivieren" ist laut Kopplungs-Banner ausdrücklich der Weg, „von vorn zu beginnen". Liegen auf
+  // dem Server noch Blobs eines früheren Kreises (verschlüsselt mit einem hier nicht mehr vorhandenen
+  // Schlüssel — z. B. nach einer ersten, verlorenen Aktivierung), bliebe ein normaler rev-0-Push
+  // daran als Kid-Mismatch hängen und das UI-Versprechen wäre gebrochen. Darum forciert überschreiben
+  // (wie „Sync zurücksetzen"). Wichtig: OHNE updatedAt-Stempel (s. o.) — sonst würde ein leeres, gerade
+  // aktiviertes Gerät beim späteren Koppeln an ein volleres dessen Profil per LWW verlieren; force
+  // schreibt den vorhandenen Stand dieses Geräts, ohne ihn künstlich „jünger" zu machen.
+  syncForceOverwrite().catch(() => {});
 }
 
 // Zurücksetzen: neuer Seed (überschreibt den bisherigen). F2 lädt danach alle Kinds unter der
@@ -13223,7 +13239,7 @@ function syncReset() {
   window.SyncCrypto.storeCode(window.SyncCrypto.seedToCode(window.SyncCrypto.generateSeed()));
   bindSyncOwner();
   _syncKidCache = { code: null, kid: null };
-  setKidMismatch(false);
+  clearAllKidMismatch();
   setProfileMeta({ rev: 0 });
   setProfileUpdatedAt(Date.now()); // explizites Überschreiben → dieser Stand gewinnt danach die LWW
   for (const name of Object.keys(MERGE_KINDS)) { const k = MERGE_KINDS[name]; if (k.onReset) k.onReset(); }
@@ -13248,7 +13264,7 @@ function syncJoinFromCode() {
   window.SyncCrypto.storeCode(canon);
   bindSyncOwner();
   _syncKidCache = { code: null, kid: null };
-  setKidMismatch(false);
+  clearAllKidMismatch();
   setProfileMeta({ rev: 0 }); // Server-rev unbekannt; syncPull setzt sie
   for (const name of Object.keys(MERGE_KINDS)) { setKindMeta(name, { rev: 0 }); mergeState(name).sig = null; }
   clearSyncDevices(); // alte Liste (evtl. aus einem früheren Kreis) nicht in den neuen mergen
@@ -13274,7 +13290,7 @@ async function syncPullWithFeedback(mode) {
   let res = false;
   try { res = await syncPull(); } catch { res = false; }
   const coupled = mode === "couple";
-  if (_syncKidMismatch) {
+  if (anyKidMismatch()) {
     _syncStatusMsg = null;
   } else if (res === false) {
     _syncStatusMsg = { warn: true, text: coupled
@@ -13341,7 +13357,7 @@ async function syncDisableConfirmed() {
   _syncKidCache = { code: null, kid: null };
   // ausstehende Merge-Kind-Pushes abbrechen + Signaturen zurücksetzen
   for (const name of Object.keys(MERGE_KINDS)) { const st = mergeState(name); if (st.timer) clearTimeout(st.timer); st.timer = null; st.sig = null; }
-  setKidMismatch(false);
+  clearAllKidMismatch();
   const cb = $("sync-delete-server"); if (cb) cb.checked = false;
   resetSyncRemoteOffer(); // nach dem Deaktivieren neu prüfen (Server-Daten evtl. noch da → Koppeln anbieten)
   _syncStatusMsg = null;
@@ -13475,10 +13491,23 @@ async function currentKid() {
   _syncKidCache = { code, kid };
   return kid;
 }
-function setKidMismatch(v) {
-  _syncKidMismatch = !!v;
+// Mismatch PRO KIND führen (Fix): ein Kind, dessen Server-Blob mit einem fremden Schlüssel liegt
+// (verlorener Alt-Schlüssel), scheitert dauerhaft an 409+kid. Früher war der Zustand ein globales
+// Flag, das JEDER erfolgreiche Write eines ANDEREN Kinds (deck/stats laufen durch) wieder löschte —
+// der rote Reset-Hinweis verschwand, der Nutzer sah nur ewig „wird automatisch erneut versucht".
+// Jetzt setzt/löscht jedes Kind nur seinen eigenen Eintrag; der Hinweis steht, solange IRGENDEIN
+// Kind hängt.
+function setKidMismatch(kind, v) {
+  if (v) _syncKidMismatch.add(kind); else _syncKidMismatch.delete(kind);
   const hint = $("sync-mismatch-hint");
-  if (hint) hint.classList.toggle("hidden", !v);
+  if (hint) hint.classList.toggle("hidden", _syncKidMismatch.size === 0);
+}
+function anyKidMismatch() { return _syncKidMismatch.size > 0; }
+// Vollständig zurücksetzen (Aktivieren/Koppeln/Zurücksetzen/Deaktivieren wechseln den ganzen Kreis).
+function clearAllKidMismatch() {
+  _syncKidMismatch.clear();
+  const hint = $("sync-mismatch-hint");
+  if (hint) hint.classList.add("hidden");
 }
 
 // Remote-Stand des Kinds `profile` lokal anwenden (LWW hat entschieden). Ohne Echo-Push.
@@ -13523,7 +13552,7 @@ async function syncPull() {
     const ok = await withSyncLock(() => pullMergeKind(name, blobs[name]), MERGE_KINDS[name].lock);
     clean = (ok !== false) && clean;
   }
-  if (_syncKidMismatch || !clean) return "partial";
+  if (anyKidMismatch() || !clean) return "partial";
   noteSyncOk();
   return true;
 }
@@ -13534,17 +13563,18 @@ async function pullProfileBlob(blob) {
   return withSyncLock(async () => {
     if (!blob || !blob.envelope) {
       setProfileMeta({ rev: 0 });
+      setKidMismatch("profile", false); // kein Server-Blob = kein fremder Schlüssel für dieses Kind → evtl. hängenden Mismatch dieses Kinds löschen (sonst bliebe der rote Hinweis stehen, wenn der Blob serverseitig verschwindet)
       if (Object.keys(loadProfile()).length || syncCurrentTier() !== DEFAULT_TIER) return pushProfileLocked(0);
       return true;
     }
     const kid = await currentKid();
-    if (blob.envelope.kid && kid && blob.envelope.kid !== kid) { setKidMismatch(true); return false; }
+    if (blob.envelope.kid && kid && blob.envelope.kid !== kid) { setKidMismatch("profile", true); return false; }
     let remote;
     try {
       const { key } = await window.SyncCrypto.deriveKey(window.SyncCrypto.storedCode());
       remote = await window.SyncCrypto.decrypt(key, blob.envelope);
-    } catch { setKidMismatch(true); return false; } // GCM-Auth-Fehler = falscher Schlüssel
-    setKidMismatch(false);
+    } catch { setKidMismatch("profile", true); return false; } // GCM-Auth-Fehler = falscher Schlüssel
+    setKidMismatch("profile", false);
     setProfileMeta({ rev: Number(blob.rev) || 0 });
     const localAt = getProfileUpdatedAt();
     const remoteAt = Number(remote.updatedAt) || 0;
@@ -13569,7 +13599,7 @@ async function syncForceOverwrite() {
   await withSyncLock(async () => {
     const rev = Number(blobs.profile && blobs.profile.rev) || 0;
     setProfileMeta({ rev });
-    setKidMismatch(false);
+    setKidMismatch("profile", false);
     await pushProfileLocked(rev, 0, true); // updatedAt kommt aus getProfileUpdatedAt (der Caller hat gestempelt)
   });
   // Merge-Kinds ebenfalls forciert überschreiben (neuer Schlüssel gewinnt), je unter eigenem Lock.
@@ -13591,7 +13621,7 @@ async function pushProfileLocked(rev, attempt = 0, force = false) {
     let body = {}; try { body = await r.json(); } catch { /* leer */ }
     setProfileMeta({ rev: Number(body.rev) || rev + 1 });
     _syncLastSig = profileSig();
-    setKidMismatch(false); // erfolgreicher eigener Write → evtl. hängenden Mismatch-Hinweis löschen (Fable-Finding)
+    setKidMismatch("profile", false); // erfolgreicher eigener Write → hängenden Mismatch DIESES Kinds löschen (Fable-Finding)
     noteSyncOk();
     return true;
   }
@@ -13600,12 +13630,12 @@ async function pushProfileLocked(rev, attempt = 0, force = false) {
     const serverRev = Number(body.rev) || 0;
     if (!force && body.envelope) {
       const bkid = body.envelope.kid;
-      if (bkid && kid && bkid !== kid) { setKidMismatch(true); return false; }
+      if (bkid && kid && bkid !== kid) { setKidMismatch("profile", true); return false; }
       try {
         const remote = await window.SyncCrypto.decrypt(key, body.envelope);
         setProfileMeta({ rev: serverRev });
         if ((Number(remote.updatedAt) || 0) > getProfileUpdatedAt()) { applyProfileKind(remote); return true; } // Server war neuer → konvergiert
-      } catch { setKidMismatch(true); return false; }
+      } catch { setKidMismatch("profile", true); return false; }
     }
     return pushProfileLocked(serverRev, attempt + 1, force); // lokal gewinnt / force → neu schreiben
   }
@@ -13654,7 +13684,7 @@ async function pushMergeKindLocked(name, rev, attempt = 0, force = false) {
     let body = {}; try { body = await r.json(); } catch { /* leer */ }
     setKindMeta(name, { rev: Number(body.rev) || rev + 1 });
     mergeState(name).sig = JSON.stringify(kind.payload());
-    setKidMismatch(false);
+    setKidMismatch(name, false);
     noteSyncOk();
     return true;
   }
@@ -13667,7 +13697,7 @@ async function pushMergeKindLocked(name, rev, attempt = 0, force = false) {
         // Kind-Hook: kosmetische Kinds (devices) überschreiben einen fremd-verschlüsselten
         // Blob forciert, statt den roten Mismatch-Alarm zu ziehen (Alt-Client-Reset-Fall).
         if (kind.kidMismatch === "overwrite") return pushMergeKindLocked(name, serverRev, attempt + 1, true);
-        setKidMismatch(true); return false;
+        setKidMismatch(name, true); return false;
       }
       try {
         const remote = await window.SyncCrypto.decrypt(key, body.envelope);
@@ -13676,7 +13706,7 @@ async function pushMergeKindLocked(name, rev, attempt = 0, force = false) {
         if (!_jsonEq(merged, kind.payload())) await kind.apply(merged); // lokal konvergieren, dann neu pushen
       } catch {
         if (kind.kidMismatch === "overwrite") return pushMergeKindLocked(name, serverRev, attempt + 1, true);
-        setKidMismatch(true); return false;
+        setKidMismatch(name, true); return false;
       }
     }
     return pushMergeKindLocked(name, serverRev, attempt + 1, force);
@@ -13689,6 +13719,7 @@ async function pullMergeKind(name, blob) {
   const kind = MERGE_KINDS[name];
   if (!blob || !blob.envelope) {
     setKindMeta(name, { rev: 0 });
+    setKidMismatch(name, false); // kein Server-Blob = kein fremder Schlüssel für dieses Kind → evtl. hängenden Mismatch dieses Kinds löschen (sonst bliebe der rote Hinweis stehen, wenn der Blob serverseitig verschwindet)
     if (!kind.isEmpty(kind.payload())) return pushMergeKindLocked(name, 0);
     return true;
   }
@@ -13698,7 +13729,7 @@ async function pullMergeKind(name, blob) {
     // überschreiben statt Mismatch-Alarm — z. B. nach „Sync zurücksetzen" von einem
     // Alt-Client, der dieses Kind nicht kennt und darum nicht mit-überschrieben hat.
     if (kind.kidMismatch === "overwrite") return pushMergeKindLocked(name, Number(blob.rev) || 0, 0, true);
-    setKidMismatch(true); return false;
+    setKidMismatch(name, true); return false;
   }
   let remote;
   try {
@@ -13706,9 +13737,9 @@ async function pullMergeKind(name, blob) {
     remote = await window.SyncCrypto.decrypt(key, blob.envelope);
   } catch {
     if (kind.kidMismatch === "overwrite") return pushMergeKindLocked(name, Number(blob.rev) || 0, 0, true);
-    setKidMismatch(true); return false;
+    setKidMismatch(name, true); return false;
   }
-  setKidMismatch(false);
+  setKidMismatch(name, false);
   setKindMeta(name, { rev: Number(blob.rev) || 0 });
   const local = kind.payload();
   const merged = kind.merge(local, remote);
