@@ -932,6 +932,22 @@
       </div>
     </div>
 
+    <!-- Rückfrage: ein bereits FERTIGER, noch nicht gestarteter Test würde durch das Erstellen
+         eines neuen still verdrängt (sein Ergebnis wäre danach nirgends mehr erreichbar, das
+         dafür verbrauchte Kontingent bzw. Guthaben bliebe aber verbucht). Deshalb vor dem
+         Ersetzen ausdrücklich fragen und den fertigen Test als Standardweg anbieten. -->
+    <div id="confirm-replace-ready-modal" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-replace-ready-title">
+      <div class="modal card">
+        <h2 id="confirm-replace-ready-title">Fertiger Test noch nicht gestartet</h2>
+        <p>Du hast bereits einen fertigen Test, den du noch nicht gestartet hast. Wenn du jetzt einen neuen erstellst, wird der fertige Test <strong>verworfen</strong> – das dafür verbrauchte Kontingent bzw. Guthaben wird nicht zurückerstattet.</p>
+        <div class="row wrap">
+          <button id="btn-confirm-replace-ready-start" class="primary">Fertigen Test starten</button>
+          <button id="btn-confirm-replace-ready-new" class="ghost">Trotzdem neu erstellen</button>
+          <button id="btn-confirm-replace-ready-cancel" class="ghost">Abbrechen</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Sicherheits-Rückfrage: ein gescannter Kopplungs-Code würde einen bereits eingerichteten
          Geräte-Sync ersetzen (schützt vor stillem Neu-Koppeln über einen präparierten Link). -->
     <div id="confirm-replace-seed-modal" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-replace-seed-title">

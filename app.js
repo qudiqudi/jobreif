@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.45.0";
+const APP_VERSION = "1.45.1";
 
 const CHANGELOG = [
+  {
+    version: "1.45.1",
+    date: "11.07.2026",
+    items: [
+      "Fertiger Test wird nicht mehr still verworfen: Startest du eine neue Test-Erstellung, obwohl bereits ein fertiger, noch nicht gestarteter Test auf dich wartet, fragt die App jetzt nach – du kannst den fertigen Test starten, statt ihn (und das dafür verbrauchte Kontingent bzw. Guthaben) zu verlieren.",
+    ],
+  },
   {
     version: "1.45.0",
     date: "09.07.2026",
@@ -5824,13 +5831,21 @@ function postGenerationJob(ctx, tierSent, payWithCredits) {
 async function startHostedGeneration(ctx) {
   if (actionRunning) return;
   if (hostedNeedsLogin()) { savePendingJobInput(); promptHostedLogin(); return; } // Backstop: Anmeldung Pflicht
-  // Nur EIN Test in Erstellung zugleich (deckt sich mit dem serverseitigen
-  // exclusive-Gate). Ein bereits fertiger Job ("ready") blockiert nicht — er wird
-  // durch den neuen Start ersetzt (saveActiveJob ueberschreibt ihn).
+  // Nur EIN Test in Erstellung zugleich (deckt sich mit dem serverseitigen exclusive-Gate).
   const existing = loadActiveJob();
   if (existing && existing.status !== "ready") {
     showError("Es wird gerade schon ein Test erstellt. Bitte warte, bis er fertig ist.");
     return;
+  }
+  // Ein bereits FERTIGER, noch nicht gestarteter Test ("ready") wuerde durch den neuen Start
+  // still verdraengt (saveActiveJob ueberschreibt den einzigen Job-Zeiger) — sein Ergebnis
+  // waere danach nirgends mehr erreichbar, das dafuer verbrauchte Kontingent/Guthaben aber
+  // verbucht. Deshalb ausdruecklich rueckfragen und den fertigen Test als Standardweg anbieten,
+  // statt ihn kommentarlos zu verwerfen (CLAUDE.md: kein unbeabsichtigter Kostenverlust).
+  if (existing && existing.status === "ready") {
+    const choice = await openConfirmReplaceReady();
+    if (choice === "start") { startReadyJob(); return; } // fertigen Test doch starten
+    if (choice !== "replace") return; // abgebrochen: nichts verwerfen
   }
   actionRunning = true;
   hideJobReadyBanner(); // P4: ein evtl. noch offener Hinweis gehoert zum ERSETZTEN Ready-Job
@@ -12185,6 +12200,39 @@ $("btn-confirm-replace-learn").addEventListener("click", () => {
   if (action) action();
 });
 $("btn-confirm-replace-learn-cancel").addEventListener("click", closeConfirmReplaceLearn);
+
+// Rueckfrage vor dem stillen Verdraengen eines bereits FERTIGEN, noch nicht gestarteten Tests
+// (der Client haelt nur EINEN aktiven Job-Zeiger — ein neuer Start ueberschreibt ihn). Ohne
+// diese Rueckfrage waere das fertige Ergebnis danach nirgends mehr erreichbar, das dafuer
+// verbrauchte Gratis-Kontingent bzw. Guthaben aber verbucht. Promise-basiert mit drei
+// Ausgaengen: "start" (den fertigen Test doch starten), "replace" (neu erstellen, ersetzt),
+// "cancel" (nichts tun). Der Klick loest genau einmal auf.
+let confirmReplaceReadyResolve = null;
+let confirmReplaceReadyReturnFocus = null;
+function openConfirmReplaceReady() {
+  return new Promise((resolve) => {
+    confirmReplaceReadyResolve = resolve;
+    confirmReplaceReadyReturnFocus = document.activeElement;
+    $("confirm-replace-ready-modal").classList.remove("hidden");
+    $("btn-confirm-replace-ready-start").focus();
+  });
+}
+function settleConfirmReplaceReady(outcome) {
+  const resolve = confirmReplaceReadyResolve;
+  confirmReplaceReadyResolve = null;
+  $("confirm-replace-ready-modal").classList.add("hidden");
+  // Fokus nur zurueckgeben, wenn der Nutzer auf der Eingabe-Ansicht BLEIBT. Bei "start"
+  // navigiert startReadyJob sofort in die Quiz-Ansicht — den Fokus dann NICHT auf den jetzt
+  // verborgenen Ausloeser zwingen (liefe ins Leere), gleiches Verhalten wie beim normalen
+  // "Loslegen" ueber die Ready-Karte.
+  const rf = confirmReplaceReadyReturnFocus;
+  confirmReplaceReadyReturnFocus = null;
+  if (outcome !== "start" && rf && typeof rf.focus === "function") rf.focus();
+  if (resolve) resolve(outcome);
+}
+$("btn-confirm-replace-ready-start").addEventListener("click", () => settleConfirmReplaceReady("start"));
+$("btn-confirm-replace-ready-new").addEventListener("click", () => settleConfirmReplaceReady("replace"));
+$("btn-confirm-replace-ready-cancel").addEventListener("click", () => settleConfirmReplaceReady("cancel"));
 
 // --- M6 (Security-Review): Bestaetigung vor dem ERSETZEN eines bestehenden Sync-Seeds ---------
 // Uebernimmt einen gescannten Seed in den lokalen Zustand: Besitzer-Marke loeschen (der Seed ist
