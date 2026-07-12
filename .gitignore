@@ -9,3 +9,6 @@
 # Lokale Notizen / Pläne (nicht eingecheckt)
 .local/
 scripts/gsc-status.mjs
+
+# Lokale Tooling-Artefakte (Claude Code) – nie einchecken
+.claude/
