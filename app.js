@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.47.3";
+const APP_VERSION = "1.47.4";
 
 const CHANGELOG = [
+  {
+    version: "1.47.4",
+    date: "12.07.2026",
+    items: [
+      "Kleiner Darstellungsfehler behoben: Bei langen Stellen-Titeln wurde die Fortschrittsanzeige („Frage 1 von 10“) oben rechts gequetscht und umgebrochen – sie bleibt jetzt einzeilig und sauber neben dem Titel.",
+    ],
+  },
   {
     version: "1.47.3",
     date: "12.07.2026",
