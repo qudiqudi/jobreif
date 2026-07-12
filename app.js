@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.45.7";
+const APP_VERSION = "1.45.8";
 
 const CHANGELOG = [
+  {
+    version: "1.45.8",
+    date: "12.07.2026",
+    items: [
+      "Ehrlichere Hinweise: Die geschätzte Erstellungsdauer heißt jetzt „meist in unter zwei Minuten“ (statt „unter einer Minute“), und bei einer fehlgeschlagenen Sicherheitsprüfung nennt die Meldung nun mögliche Ursachen (Verbindung oder Adblocker), falls ein Neuladen allein nicht hilft.",
+    ],
+  },
   {
     version: "1.45.7",
     date: "12.07.2026",
@@ -4162,8 +4169,8 @@ async function getTurnstileToken(action, cData) {
 function turnstileFailMessage(code) {
   const c = (typeof code === "string" && /^[\w-]{1,32}$/.test(code)) ? code : "";
   return c
-    ? `Sicherheitsprüfung fehlgeschlagen (Code ${c}). Bitte die Seite neu laden und erneut versuchen.`
-    : "Sicherheitsprüfung fehlgeschlagen. Bitte die Seite neu laden und erneut versuchen.";
+    ? `Sicherheitsprüfung fehlgeschlagen (Code ${c}). Bitte die Seite neu laden; bleibt es bestehen, hilft oft ein Blick auf Verbindung oder Adblocker.`
+    : "Sicherheitsprüfung fehlgeschlagen. Bitte die Seite neu laden; bleibt es bestehen, hilft oft ein Blick auf Verbindung oder Adblocker.";
 }
 
 // Stabile, nutzerfreundliche Meldungen fuer die Hosted-Fehlercodes. Der optionale
@@ -4192,7 +4199,7 @@ function hostedErrorMessage(status, code) {
   }
   switch (status) {
     case 403:
-      return "Sicherheitsprüfung fehlgeschlagen. Bitte die Seite neu laden und erneut versuchen.";
+      return "Sicherheitsprüfung fehlgeschlagen. Bitte die Seite neu laden; bleibt es bestehen, hilft oft ein Blick auf Verbindung oder Adblocker.";
     case 429:
       return "Gerade sind viele Anfragen unterwegs. Bitte kurz warten und erneut versuchen.";
     case 503:
@@ -4638,7 +4645,7 @@ function importErrorMessage(code, status) {
       // schaltet zusaetzlich auf den Text-Tab, damit niemand feststeckt).
       return "Das Tageslimit für das Laden per URL ist erreicht. Bitte füge die Stellenbeschreibung über „Text einfügen“ manuell ein – das geht jederzeit.";
     case "turnstile":
-      return "Sicherheitsprüfung fehlgeschlagen. Bitte die Seite neu laden und erneut versuchen.";
+      return "Sicherheitsprüfung fehlgeschlagen. Bitte die Seite neu laden; bleibt es bestehen, hilft oft ein Blick auf Verbindung oder Adblocker.";
     case "bad-url":
     case "validation":
       return "Die URL ist ungültig. Bitte eine vollständige https-Adresse der Stellenanzeige einfügen.";
@@ -6233,7 +6240,7 @@ function renderActiveJobCard(state) {
       ? "Die Erstellung ist fehlgeschlagen. Bitte erneut starten."
       : ready
       ? readyMsg
-      : "Dein Test wird erstellt – meist in unter einer Minute fertig. Du kannst die Seite ruhig verlassen und später zurückkehren.";
+      : "Dein Test wird erstellt – meist in unter zwei Minuten fertig. Du kannst die Seite ruhig verlassen und später zurückkehren.";
   }
   if (spin) spin.classList.toggle("hidden", state !== "pending");
   if (startBtn) startBtn.classList.toggle("hidden", !ready);
