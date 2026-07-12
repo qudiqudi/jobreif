@@ -1164,6 +1164,16 @@ button.ghost {
   animation: fadeUp 0.3s ease both;
 }
 
+/* Bei einem Re-Render DERSELBEN Frage (z. B. Klick auf eine Checkbox/Option
+   toggelt die Auswahl und renderQuestion() zeichnet alle Optionen neu) soll die
+   fadeUp-Eintrittsanimation NICHT erneut abspielen - sonst "verschwinden" die
+   Optionen kurz (fadeUp startet bei opacity 0) und fliegen gestaffelt wieder
+   ein. #answer-area bekommt dafuer die Klasse .no-entry-anim (siehe app.js /
+   renderQuestion). Bei einem echten Fragewechsel bleibt die Animation erhalten. */
+#answer-area.no-entry-anim .option {
+  animation: none;
+}
+
 /* Zahlenreihe-Modul (Plan 3.7): Numeric-Eingabefeld fuer die gesuchte Zahl. */
 .zahlenreihe-input { margin: 0.2rem 0 0.3rem; }
 .zr-field {
