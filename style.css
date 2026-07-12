@@ -1093,17 +1093,25 @@ button.ghost {
 .quiz-header {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
   font-size: 0.82rem;
   color: var(--muted);
   margin-bottom: 0.5rem;
 }
 
-#quiz-progress { font-family: var(--display); font-weight: 600; color: var(--text); }
+/* Titel nimmt/gibt den Platz und darf umbrechen; der Fortschritts-Zaehler rechts
+   bleibt einzeilig und ungequetscht (sonst bricht "Frage 1 von 10" bei langen
+   Stellen-Titeln in zwei Zeilen und klebt am Titel). */
+#quiz-title { flex: 1 1 auto; min-width: 0; }
+
+#quiz-progress { font-family: var(--display); font-weight: 600; color: var(--text); white-space: nowrap; }
 
 .quiz-header-right {
   display: flex;
   gap: 0.8rem;
   align-items: center;
+  flex: none;
 }
 
 #quiz-timer {
