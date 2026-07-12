@@ -46,7 +46,7 @@ const CHANGELOG = [
     version: "1.45.6",
     date: "12.07.2026",
     items: [
-      "Gratis-Kontingent zeigt sich sofort: Nach einem kostenlosen Test aktualisiert sich die Anzeige der heute noch verfügbaren Gratis-Tests jetzt direkt – vorher wurde der Zähler erst nach einem Neuladen der Seite frisch.",
+      "Gratis-Kontingent zeigt sich sofort: Nach einem kostenlosen Test aktualisiert sich die Anzeige der noch verfügbaren Gratis-Tests jetzt direkt – vorher wurde der Zähler erst nach einem Neuladen der Seite frisch.",
     ],
   },
   {
