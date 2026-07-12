@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.47.1";
+const APP_VERSION = "1.47.2";
 
 const CHANGELOG = [
+  {
+    version: "1.47.2",
+    date: "12.07.2026",
+    items: [
+      "Der Einstieg wirkt aufgeräumter: oben entfällt ein doppelter Hinweis, die Wege ohne Anmeldung sind klarer von der Hauptaktion abgesetzt, und die Datenschutz-Hinweise darunter stehen jetzt als einheitliche Reihe mit Symbolen.",
+    ],
+  },
   {
     version: "1.47.1",
     date: "12.07.2026",
