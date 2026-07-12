@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.46.0";
+const APP_VERSION = "1.47.0";
 
 const CHANGELOG = [
+  {
+    version: "1.47.0",
+    date: "12.07.2026",
+    items: [
+      "Neues Gratis-Übungsmodul „Rechtschreibung“ im Übungs-Hub sowie vier neue Lernseiten zu den aktuellen Aufgabentypen – wie gewohnt kostenlos und ohne Anmeldung.",
+    ],
+  },
   {
     version: "1.46.0",
     date: "12.07.2026",
@@ -1500,7 +1507,7 @@ const LOADING_TIPS = [
   "Wusstest du? Im Lernmodus kannst du jede Frage sofort auflösen und aus der Erklärung lernen – ideal zum Einstieg.",
   "Wusstest du? Mit den Gesprächsstufen (z. B. Telefoninterview oder Fachgespräch) passt sich dein Test der anstehenden Runde an.",
   "Wusstest du? Ein kurzes Profil in den Einstellungen macht deine Tests persönlicher – etwa passend zu deinem Quereinstieg.",
-  "Wusstest du? Zahlenreihen, Konzentration und Figuren kannst du jederzeit kostenlos üben – über „Module üben“ auf der Startseite.",
+  "Wusstest du? Zahlenreihen, Kopfrechnen, Buchstabenreihen, Konzentration, Merkfähigkeit, Rechtschreibung und Figuren kannst du jederzeit kostenlos üben – über „Module üben“ auf der Startseite.",
   "Wusstest du? Aufgaben aus deinen Tests landen im Stapel „Fällige Übungen“ und werden dir im richtigen Abstand erneut vorgelegt.",
   "Wusstest du? Der Prüfungsmodus simuliert Zeitdruck wie im echten Auswahlverfahren – im Lernmodus hast du alle Zeit der Welt.",
   "Wusstest du? In der Historie kannst du alte Versuche jederzeit noch einmal durchsehen – ohne dass neu bewertet wird.",
@@ -2900,14 +2907,69 @@ function generateMerkfaehigkeitUebung() {
   return uebPick(varianten)();
 }
 
+// Rechtschreibung: kuratierte statische Bank - nur Woerter mit EINDEUTIG einer korrekten
+// Standard-Schreibweise (bewusst KEINE Reform-Doppelformen wie Delfin/Delphin oder
+// Potenzial/Potential); Distraktoren sind Nichtwoerter, keine anderen gueltigen Woerter.
+// Reiner MC-Pfad wie Buchstabenreihen: optionen + korrekte_indizes + korrekte_antwort
+// -> bestehender MC-Score-Default, KEINE Render-/Score-Aenderung.
+const RECHTSCHREIB_BANK = [
+  { richtig: "separat", falsch: ["seperat", "separrat", "sepperat"], merke: "Von lat. „separare“ – zweimal a, kein e." },
+  { richtig: "Standard", falsch: ["Standart", "Standtard", "Standdard"], merke: "Mit d am Ende – die „Standarte“ ist eine Fahne." },
+  { richtig: "Rhythmus", falsch: ["Rythmus", "Rhytmus", "Rytmus"], merke: "Zweimal h: R-h-y-t-h-mus." },
+  { richtig: "Terrasse", falsch: ["Terasse", "Terrase", "Terrasze"], merke: "Doppel-r und Doppel-s." },
+  { richtig: "Karussell", falsch: ["Karussel", "Karusell", "Karrussell"], merke: "Ein r, Doppel-s, Doppel-l am Ende." },
+  { richtig: "Adresse", falsch: ["Addresse", "Adrese", "Addrese"], merke: "Anders als englisch „address“: nur ein d." },
+  { richtig: "aggressiv", falsch: ["agressiv", "aggresiv", "agresiv"], merke: "Doppel-g und Doppel-s." },
+  { richtig: "interessant", falsch: ["interesant", "intressant", "interessand"], merke: "Doppel-s, Endung -ant mit t." },
+  { richtig: "Lizenz", falsch: ["Lizens", "Lisenz", "Lizzenz"], merke: "Beide Male z: Li-z-en-z." },
+  { richtig: "Reparatur", falsch: ["Reperatur", "Reparratur", "Repperatur"], merke: "Zu „reparieren“ – dreimal a, kein e in der Mitte." },
+  { richtig: "Grammatik", falsch: ["Gramatik", "Grammatick", "Gramatick"], merke: "Doppel-m, dann -tik: Gram-ma-tik." },
+  { richtig: "brillant", falsch: ["brilliant", "briliant", "brilland"], merke: "Anders als englisch „brilliant“: kein i nach den beiden l." },
+  { richtig: "Bibliothek", falsch: ["Bibliotek", "Biblothek", "Bibleothek"], merke: "Mit th: Biblio-thek." },
+  { richtig: "Rhetorik", falsch: ["Rethorik", "Retorik", "Rhetorick"], merke: "Das h steht vorn: R-h-etorik." },
+  { richtig: "Maschine", falsch: ["Maschiene", "Maschinne", "Machine"], merke: "Nur i, kein ie – trotz langem Vokal." },
+  { richtig: "Dilettant", falsch: ["Dilletant", "Diletant", "Dillettant"], merke: "Ein l, Doppel-t: Di-le-ttant." },
+  { richtig: "Akquise", falsch: ["Aquise", "Akwise", "Aquiese"], merke: "Mit kq: Ak-quise (wie „akquirieren“)." },
+  { richtig: "Recherche", falsch: ["Rescherche", "Rechersche", "Recherce"], merke: "Zweimal „cherche“-Muster: Re-cher-che." },
+  { richtig: "Kommission", falsch: ["Komission", "Kommision", "Komision"], merke: "Doppel-m und Doppel-s." },
+  { richtig: "Galerie", falsch: ["Gallerie", "Galarie", "Gallarie"], merke: "Nur ein l – anders als italienisch „Galleria“." },
+  { richtig: "Ressource", falsch: ["Resource", "Ressurce", "Ressorce"], merke: "Doppel-s und -ource – anders als englisch „resource“." },
+  { richtig: "enttäuscht", falsch: ["entäuscht", "endtäuscht", "enttäucht"], merke: "ent- + täuschen: deshalb Doppel-t." },
+  { richtig: "endgültig", falsch: ["entgültig", "endgülltig", "entgülltig"], merke: "Vom „Ende“ – mit d." },
+  { richtig: "im Voraus", falsch: ["im Vorraus", "im Vorauss", "im Vohraus"], merke: "vor + aus: nur ein r." },
+  { richtig: "nämlich", falsch: ["nähmlich", "nämmlich", "nemlich"], merke: "Ohne h – Merkspruch: „Wer nämlich mit h schreibt …“." },
+  { richtig: "sympathisch", falsch: ["sympatisch", "symphatisch", "simpatisch"], merke: "Das th steht hinten: sympa-th-isch." },
+  { richtig: "Satellit", falsch: ["Sattelit", "Satelit", "Sattellit"], merke: "Ein t vorn, Doppel-l: Sa-te-llit." },
+  { richtig: "Millennium", falsch: ["Millenium", "Milennium", "Milenium"], merke: "Doppel-l UND Doppel-n (mille + annus)." },
+  { richtig: "Ingenieur", falsch: ["Ingeneur", "Ingenieuer", "Ingenör"], merke: "-ieur am Ende: Inge-nieur." },
+  { richtig: "Karriere", falsch: ["Kariere", "Karrierre", "Carriere"], merke: "Doppel-r vorn, dann -iere." },
+];
+let _lastRechtschreibIdx = -1; // Nicht zweimal direkt hintereinander dasselbe Wort.
+function generateRechtschreibungUebung() {
+  let i = Math.floor(Math.random() * RECHTSCHREIB_BANK.length);
+  if (RECHTSCHREIB_BANK.length > 1 && i === _lastRechtschreibIdx) i = (i + 1) % RECHTSCHREIB_BANK.length;
+  _lastRechtschreibIdx = i;
+  const e = RECHTSCHREIB_BANK[i];
+  const optionen = figShuffle([e.richtig, ...e.falsch]);
+  return {
+    typ: "rechtschreibung",
+    frage: "Welche Schreibweise ist korrekt?",
+    optionen, korrekte_indizes: [optionen.indexOf(e.richtig)],
+    korrekte_antwort: e.richtig,
+    material: "", zielzeichen: "", erklaerungen: [],
+    lerninfo: e.merke,
+  };
+}
+
 // Frische Uebungsaufgabe nach Typ (figural | zahlenreihe | konzentration | kopfrechnen |
-// buchstabenreihe | merkfaehigkeit).
+// buchstabenreihe | merkfaehigkeit | rechtschreibung).
 function generateUebungByType(typ) {
   if (typ === "zahlenreihe") return generateZahlenreiheUebung();
   if (typ === "konzentration") return generateKonzentrationUebung();
   if (typ === "kopfrechnen") return generateKopfrechnenUebung();
   if (typ === "buchstabenreihe") return generateBuchstabenreiheUebung();
   if (typ === "merkfaehigkeit") return generateMerkfaehigkeitUebung();
+  if (typ === "rechtschreibung") return generateRechtschreibungUebung();
   return generateFiguralPuzzle();
 }
 
@@ -9924,6 +9986,7 @@ const UEB_TYPEN = [
   { typ: "kopfrechnen", label: "Kopfrechnen" },
   { typ: "buchstabenreihe", label: "Buchstabenreihen" },
   { typ: "merkfaehigkeit", label: "Merkfähigkeit" },
+  { typ: "rechtschreibung", label: "Rechtschreibung" },
 ];
 function uebLabel(typ) { const t = UEB_TYPEN.find((x) => x.typ === typ); return t ? t.label : typ; }
 
@@ -13277,7 +13340,7 @@ function consumeUebenDeepLink() {
     u.searchParams.delete("ueben");
     history.replaceState(history.state, "", u.pathname + (u.search ? u.search : "") + u.hash);
   } catch { /* History-API nicht verfuegbar: egal */ }
-  if (["zahlenreihe", "konzentration", "figural"].includes(typ)) startPractice(typ);
+  if (UEBEN_TYP_SET.has(typ)) startPractice(typ);
   else openPracticePicker();
   return true;
 }
