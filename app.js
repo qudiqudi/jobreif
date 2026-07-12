@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.45.4";
+const APP_VERSION = "1.45.5";
 
 const CHANGELOG = [
+  {
+    version: "1.45.5",
+    date: "12.07.2026",
+    items: [
+      "URL-Import: Ist eine Stellenanzeige beim Portal nicht mehr online (z. B. weil die Stelle besetzt oder zurückgezogen wurde), sagt die App das jetzt klar – statt der irreführenden Bitte, die Adresse zu prüfen oder es erneut zu versuchen.",
+    ],
+  },
   {
     version: "1.45.4",
     date: "11.07.2026",
@@ -4589,7 +4596,9 @@ function importErrorMessage(code, status) {
       // der Code dennoch ankommen, dieselbe klare Anleitung wie der Kurzschluss.
       return LINKEDIN_BLOCKED_MSG;
     case "not-found":
-      return "Die Seite wurde nicht gefunden (404). Bitte die Adresse prüfen oder die Stellenbeschreibung über „Text einfügen“ manuell einfügen.";
+      // Bewusst NICHT „Adresse prüfen": Bei 404/410 ist die Anzeige beim Portal offline (besetzt/
+      // zurückgezogen), nicht die Adresse falsch – und erneutes Laden hilft nicht (Issue #239).
+      return "Diese Anzeige ist beim Jobportal nicht mehr verfügbar – vermutlich wurde die Stelle inzwischen besetzt oder zurückgezogen. Falls du den Anzeigentext noch hast (z. B. als Kopie oder Screenshot), kannst du ihn über „Text einfügen“ verwenden.";
     case "timeout":
       return "Das Laden der Seite hat zu lange gebraucht. Bitte erneut versuchen oder die Stellenbeschreibung über „Text einfügen“ manuell einfügen.";
     case "blocked":
