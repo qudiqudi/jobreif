@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.47.2";
+const APP_VERSION = "1.47.3";
 
 const CHANGELOG = [
+  {
+    version: "1.47.3",
+    date: "12.07.2026",
+    items: [
+      "Bessere Auflösung bei Buchstabenreihen: Bei verschachtelten Doppelreihen und Alphabet-Spiegelungen zeigt die Erklärung jetzt die konkreten Teilreihen und Schritte statt nur das Prinzip.",
+    ],
+  },
   {
     version: "1.47.2",
     date: "12.07.2026",
@@ -2812,7 +2819,7 @@ function generateBuchstabenreiheUebung() {
       const m26 = (i) => ((i % 26) + 26) % 26;
       const M = (i) => 25 - m26(i);
       const idxs = [a, M(a), a + 1, M(a + 1), a + 2];
-      return { idxs, target: M(a + 2), regel: "Paare aus Buchstabe und seinem Spiegel im Alphabet (A↔Z, B↔Y …)." };
+      return { idxs, target: M(a + 2), regel: `Abwechselnd ein Buchstabe und sein Spiegel im Alphabet (A↔Z, B↔Y …). Nach ${L(a + 2)} folgt dessen Spiegel ${L(M(a + 2))}.` };
     },
     // Parallele Doppelreihe: zwei verschachtelte Reihen mit je eigenem Schritt.
     () => {
@@ -2823,7 +2830,7 @@ function generateBuchstabenreiheUebung() {
       for (let i = 0; i < shown; i++) idxs.push(i % 2 === 0 ? start1 + (i / 2) * d1 : start2 + ((i - 1) / 2) * d2);
       const nextI = shown;
       const target = nextI % 2 === 0 ? start1 + (nextI / 2) * d1 : start2 + ((nextI - 1) / 2) * d2;
-      return { idxs, target, regel: "Zwei verschachtelte Reihen mit je eigenem Schritt – die gesuchte Reihe fortsetzen." };
+      return { idxs, target, regel: `Zwei verschachtelte Reihen: ${L(idxs[0])}, ${L(idxs[2])}, ${L(idxs[4])}, … (je +${d1}) und ${L(idxs[1])}, ${L(idxs[3])}, ${L(idxs[5])}, … (je +${d2}). Gesucht ist die Fortsetzung der ersten Reihe: ${L(target)}.` };
     },
   ];
   const fam = uebPick(families)();
