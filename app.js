@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.45.5";
+const APP_VERSION = "1.45.6";
 
 const CHANGELOG = [
+  {
+    version: "1.45.6",
+    date: "12.07.2026",
+    items: [
+      "Gratis-Kontingent zeigt sich sofort: Nach einem kostenlosen Test aktualisiert sich die Anzeige der heute noch verfügbaren Gratis-Tests jetzt direkt – vorher wurde der Zähler erst nach einem Neuladen der Seite frisch.",
+    ],
+  },
   {
     version: "1.45.5",
     date: "12.07.2026",
@@ -3468,6 +3475,13 @@ function markCreditsDirtyIfPaid(tier) {
 function refreshCreditsAfterJob(ctx) {
   markCreditsDirtyIfPaid(ctx && ctx.tier);
   if (ctx && ctx.paidOverflow) refreshBalance();
+  // Gratis-Stufe (guenstig) auf dem Hosted-Kontingent verbraucht: markCreditsDirtyIfPaid greift hier
+  // NICHT (nur bezahlte Stufen), also bliebe freeRemaining/das Badge sonst bis zum Reload stale.
+  // Nur auffrischen, wenn das Signal ueberhaupt belastbar ist (Hosted + Credits-Flag an) — sonst
+  // ein unnoetiger /api/balance-Call im BYOK/lokal-Pfad.
+  if (ctx && !ctx.paidOverflow && tierIsFree(ctx.tier) && ctx.provider === "hosted" && creditsState.creditsEnabled) {
+    refreshBalance();
+  }
 }
 
 // --- Aufladen via Paddle (Phase B, P4) -----------------------------------
