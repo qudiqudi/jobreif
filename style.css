@@ -1210,6 +1210,22 @@ button.ghost {
   user-select: none;
 }
 
+/* Merkfaehigkeit (Plan 3.x): Einpraege-Material (Zuordnungen/Ziffernfolge) - an .konz-material
+   angelehnt, aber mit umbrechenden Zeilen statt Monospace-Zaehlfluss. */
+.merk-material {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  white-space: pre-line;
+  margin: 0 0 0.7rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-soft, var(--card));
+  color: var(--text-strong);
+  user-select: none;
+}
+.merk-countdown { font-variant-numeric: tabular-nums; }
+
 /* Figural/Matrizen (Plan 3.x): 3x3-Raster (letzte Zelle = Luecke) + waehlbare Figuren-Optionen.
    Nutzt .option fuer die Optionen; die Symbole werden gross und mit etwas Sperrung dargestellt. */
 .fig-grid {

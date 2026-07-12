@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.45.8";
+const APP_VERSION = "1.46.0";
 
 const CHANGELOG = [
+  {
+    version: "1.46.0",
+    date: "12.07.2026",
+    items: [
+      "Drei neue Gratis-Übungsmodule im Übungs-Hub: Kopfrechnen, Buchstabenreihen und Merkfähigkeit trainieren zusätzlich zu den bestehenden Modulen typische Testaufgaben – wie gewohnt kostenlos und ohne Anmeldung.",
+    ],
+  },
   {
     version: "1.45.8",
     date: "12.07.2026",
@@ -1267,6 +1274,13 @@ function showView(id) {
   // die teure Opus-Stufe vorauswaehlen (Kosten-Regel: keine Tier-Aktivierung ohne frischen,
   // erkennbaren Nutzerkontext).
   if (id !== "view-input" && id !== "view-settings") pendingCreateBesteIntent = false;
+  // Merkfaehigkeit-Einpraegephase: der Countdown darf NIE weiterlaufen, sobald view-sr
+  // nicht mehr die sichtbare Ansicht ist - unabhaengig davon, ueber welchen Pfad verlassen
+  // wurde (openPracticePicker()/leavePractice() rufen clearMerkTimer() zwar schon explizit
+  // auf, aber jede Navigation - "Meine Stellen", Zurueck, ein direkter showView()/goHome()-
+  // Aufruf - laeuft letztlich hier durch showView() und faengt so auch bisher unbedachte
+  // Pfade ab).
+  if (id !== "view-sr") clearMerkTimer();
   views.forEach((v) => $(v).classList.toggle("hidden", v !== id));
   // P4: Auf der Startseite zeigt die Job-Karte den Fertig-Zustand selbst — der
   // (redundante) "Dein Test ist fertig"-Banner verschwindet dort.
@@ -2676,10 +2690,224 @@ function generateKonzentrationUebung() {
   };
 }
 
-// Frische Uebungsaufgabe nach Typ (figural | zahlenreihe | konzentration).
+// Kopfrechnen: Antwort/Faktoren werden IMMER zuerst gewuerfelt, die Aufgabe wird daraus
+// konstruiert - nie "wuerfeln und hoffen, dass es aufgeht". Garantiert exakte, saubere
+// (ganzzahlige) Loesung. Numerischer Pfad wie Zahlenreihe (scoreZahlenreihe/parseZahl).
+function generateKopfrechnenUebung() {
+  const rezepte = [
+    // Addition bzw. (aus der Summe konstruierte) Subtraktion - nie negativ.
+    () => {
+      const a = uebRandInt(120, 890), b = uebRandInt(35, 480);
+      if (Math.random() < 0.5) {
+        const summe = a + b;
+        return { frage: `${summe} − ${b} = ?`, antwort: a, lerninfo: `${summe} − ${b} = ${a}.` };
+      }
+      return { frage: `${a} + ${b} = ?`, antwort: a + b, lerninfo: `${a} + ${b} = ${a + b}.` };
+    },
+    // Multiplikation - ganzzahlig per Konstruktion.
+    () => {
+      const a = uebRandInt(6, 19), b = uebRandInt(3, 12);
+      return { frage: `${a} × ${b} = ?`, antwort: a * b, lerninfo: `${a} × ${b} = ${a * b}.` };
+    },
+    // Division - Ergebnis zuerst gewuerfelt, Dividend daraus gebildet: garantiert glatt.
+    () => {
+      const q = uebRandInt(3, 12), b = uebRandInt(4, 15);
+      const dividend = q * b;
+      return { frage: `${dividend} ÷ ${b} = ?`, antwort: q, lerninfo: `${dividend} ÷ ${b} = ${q}.` };
+    },
+    // Prozent - Grundwert Vielfaches von 20, Prozentsatz Vielfaches von 5: Wert immer ganzzahlig.
+    () => {
+      const p = uebPick([5, 10, 15, 20, 25, 30, 40, 50, 75]);
+      const G = 20 * uebRandInt(2, 25);
+      const W = (G / 20) * (p / 5);
+      return { frage: `Wie viel sind ${p} % von ${G}?`, antwort: W, lerninfo: `${p} % von ${G} = ${G} · ${p} / 100 = ${W}.` };
+    },
+    // Dreisatz - Einzelpreis zuerst gewuerfelt, Stueckzahlen daraus: ganzzahliges Ergebnis.
+    () => {
+      const u = uebRandInt(2, 9);
+      const n1 = uebRandInt(2, 6);
+      let n2 = uebRandInt(3, 12);
+      while (n2 === n1) n2 = uebRandInt(3, 12);
+      const preis1 = n1 * u, preis2 = n2 * u;
+      return {
+        frage: `${n1} Stück kosten ${preis1} €. Was kosten ${n2} Stück?`,
+        antwort: preis2,
+        lerninfo: `${preis1} € ÷ ${n1} = ${u} € pro Stück; ${n2} · ${u} € = ${preis2} €.`,
+      };
+    },
+    // Kleine Textaufgabe (Rest) - Rest zuerst gewuerfelt, Startbudget als Summe konstruiert.
+    () => {
+      const rest = uebRandInt(15, 120);
+      const ausgabe = uebRandInt(40, 300);
+      const start = rest + ausgabe;
+      return {
+        frage: `Ein Team hat ${start} € Budget und gibt ${ausgabe} € aus. Wie viel € bleiben übrig?`,
+        antwort: rest,
+        lerninfo: `${start} € − ${ausgabe} € = ${rest} €.`,
+      };
+    },
+  ];
+  const r = uebPick(rezepte)();
+  return {
+    typ: "kopfrechnen",
+    frage: r.frage,
+    optionen: [], korrekte_indizes: [],
+    korrekte_antwort: String(r.antwort),
+    material: "", zielzeichen: "", erklaerungen: [],
+    lerninfo: r.lerninfo,
+  };
+}
+
+// Buchstabenreihe: Bildungsregel ueber Alphabet-Indizes (0-25, Modulo-26 auch fuer negative
+// Schritte), Ergebnis als MC mit garantiert eindeutiger, plausibel distraktierter Loesung
+// (kein numerischer Pfad noetig - laeuft ueber den bestehenden MC-Score-Default).
+function generateBuchstabenreiheUebung() {
+  const L = (i) => String.fromCharCode(65 + (((i % 26) + 26) % 26));
+  const families = [
+    // Konstante Schrittweite.
+    () => {
+      const start = uebRandInt(0, 25);
+      const d = uebPick([1, 2, 3, 4, -1, -2, -3]);
+      const count = uebRandInt(4, 5);
+      const idxs = [];
+      for (let i = 0; i < count; i++) idxs.push(start + i * d);
+      return { idxs, target: start + count * d, regel: `Jeder Buchstabe springt um ${d} Positionen weiter (nach Z folgt wieder A).` };
+    },
+    // Alternierende Schritte +x/+y.
+    () => {
+      const start = uebRandInt(0, 25);
+      const x = uebRandInt(1, 3);
+      let y = uebRandInt(2, 5);
+      while (y === x) y = uebRandInt(2, 5);
+      const steps = [x, y];
+      const count = 5;
+      const idxs = [start];
+      for (let i = 1; i < count; i++) idxs.push(idxs[i - 1] + steps[(i - 1) % 2]);
+      return { idxs, target: idxs[count - 1] + steps[(count - 1) % 2], regel: `Die Schritte wechseln sich ab: +${x}, +${y}, +${x}, +${y} …` };
+    },
+    // Spiegelung im Alphabet (A<->Z, B<->Y, ...), interleaved mit fortlaufenden Buchstaben.
+    () => {
+      const a = uebRandInt(0, 25);
+      const m26 = (i) => ((i % 26) + 26) % 26;
+      const M = (i) => 25 - m26(i);
+      const idxs = [a, M(a), a + 1, M(a + 1), a + 2];
+      return { idxs, target: M(a + 2), regel: "Paare aus Buchstabe und seinem Spiegel im Alphabet (A↔Z, B↔Y …)." };
+    },
+    // Parallele Doppelreihe: zwei verschachtelte Reihen mit je eigenem Schritt.
+    () => {
+      const start1 = uebRandInt(0, 25), d1 = uebPick([1, 2, 3]);
+      const start2 = uebRandInt(0, 25), d2 = uebPick([1, 2, 3]);
+      const shown = 6;
+      const idxs = [];
+      for (let i = 0; i < shown; i++) idxs.push(i % 2 === 0 ? start1 + (i / 2) * d1 : start2 + ((i - 1) / 2) * d2);
+      const nextI = shown;
+      const target = nextI % 2 === 0 ? start1 + (nextI / 2) * d1 : start2 + ((nextI - 1) / 2) * d2;
+      return { idxs, target, regel: "Zwei verschachtelte Reihen mit je eigenem Schritt – die gesuchte Reihe fortsetzen." };
+    },
+  ];
+  const fam = uebPick(families)();
+  const target = fam.target;
+  const lastIdx = fam.idxs[fam.idxs.length - 1];
+  const correct = L(target);
+  const poolRaw = [target + 1, target - 1, target + 2, target - 2, lastIdx + uebRandInt(2, 6), 25 - (((target % 26) + 26) % 26)];
+  const uniq = [];
+  for (const raw of poolRaw) { const c = L(raw); if (c !== correct && !uniq.includes(c)) uniq.push(c); }
+  while (uniq.length < 3) {
+    const c = L(target + uebRandInt(3, 7) * (Math.random() < 0.5 ? 1 : -1));
+    if (c !== correct && !uniq.includes(c)) uniq.push(c);
+  }
+  const optionen = figShuffle([correct, ...uniq.slice(0, 3)]);
+  return {
+    typ: "buchstabenreihe",
+    frage: "Setzen Sie die Buchstabenreihe fort: " + fam.idxs.map(L).join(", ") + ", ?",
+    optionen, korrekte_indizes: [optionen.indexOf(correct)],
+    korrekte_antwort: correct,
+    material: "", zielzeichen: "", erklaerungen: [],
+    lerninfo: fam.regel,
+  };
+}
+
+// Merkfaehigkeit: Zwei-Phasen-Uebung (Einpraegen -> Abruf, MC-gescort). Liefert zusaetzlich
+// die additiven Felder merkmaterial/merkzeit, die NUR von renderSrCardView (Study-Phase-Guard)
+// gelesen werden - alter Code prueft q.typ explizit und bleibt unberuehrt.
+function generateMerkfaehigkeitUebung() {
+  const varianten = [
+    // A) Zuordnungen Name -> Abteilung.
+    () => {
+      const VORNAMEN = ["Anna", "Ben", "Clara", "David", "Elena", "Felix", "Greta", "Hannah"];
+      const ABTEILUNGEN = ["Einkauf", "Vertrieb", "IT", "Lager", "Personal", "Buchhaltung"];
+      const n = uebRandInt(4, 5);
+      const names = figShuffle(VORNAMEN).slice(0, n);
+      const depts = figShuffle(ABTEILUNGEN).slice(0, n);
+      const pairs = names.map((name, i) => ({ name, abt: depts[i] }));
+      const material = pairs.map((p) => `${p.name} – ${p.abt}`).join("\n");
+      const target = uebPick(pairs);
+      const korrekt = target.abt;
+      const distr = [];
+      for (const abt of figShuffle(ABTEILUNGEN.filter((a) => a !== korrekt))) {
+        if (distr.length >= 3) break;
+        if (!distr.includes(abt)) distr.push(abt);
+      }
+      const optionen = figShuffle([korrekt, ...distr.slice(0, 3)]);
+      return {
+        typ: "merkfaehigkeit",
+        frage: `In welcher Abteilung arbeitet ${target.name}?`,
+        optionen, korrekte_indizes: [optionen.indexOf(korrekt)],
+        korrekte_antwort: korrekt,
+        material: "", zielzeichen: "", erklaerungen: [],
+        merkmaterial: material, merkzeit: 20,
+        lerninfo: `Zuordnung: ${target.name} – ${korrekt}.`,
+      };
+    },
+    // B) Ziffernfolge.
+    () => {
+      const digits = [];
+      for (let i = 0; i < 6; i++) digits.push(uebRandInt(0, 9));
+      const korrekt = digits.join(" ");
+      const material = korrekt;
+      const swapAdj = digits.slice();
+      const si = uebRandInt(0, 4);
+      [swapAdj[si], swapAdj[si + 1]] = [swapAdj[si + 1], swapAdj[si]];
+      const offBy1 = digits.slice();
+      const oi = uebRandInt(0, 5);
+      offBy1[oi] = (offBy1[oi] + (Math.random() < 0.5 ? 1 : 9)) % 10;
+      const swapEnds = digits.slice();
+      [swapEnds[0], swapEnds[5]] = [swapEnds[5], swapEnds[0]];
+      const uniq = [];
+      for (const arr of [swapAdj, offBy1, swapEnds]) {
+        const s = arr.join(" ");
+        if (s !== korrekt && !uniq.includes(s)) uniq.push(s);
+      }
+      while (uniq.length < 3) {
+        const extra = digits.slice();
+        const idx = uebRandInt(0, 5);
+        extra[idx] = (extra[idx] + uebRandInt(1, 9)) % 10;
+        const s = extra.join(" ");
+        if (s !== korrekt && !uniq.includes(s)) uniq.push(s);
+      }
+      const optionen = figShuffle([korrekt, ...uniq.slice(0, 3)]);
+      return {
+        typ: "merkfaehigkeit",
+        frage: "Welche Ziffernfolge wurde gezeigt?",
+        optionen, korrekte_indizes: [optionen.indexOf(korrekt)],
+        korrekte_antwort: korrekt,
+        material: "", zielzeichen: "", erklaerungen: [],
+        merkmaterial: material, merkzeit: 12,
+        lerninfo: `Gezeigte Folge: ${korrekt}.`,
+      };
+    },
+  ];
+  return uebPick(varianten)();
+}
+
+// Frische Uebungsaufgabe nach Typ (figural | zahlenreihe | konzentration | kopfrechnen |
+// buchstabenreihe | merkfaehigkeit).
 function generateUebungByType(typ) {
   if (typ === "zahlenreihe") return generateZahlenreiheUebung();
   if (typ === "konzentration") return generateKonzentrationUebung();
+  if (typ === "kopfrechnen") return generateKopfrechnenUebung();
+  if (typ === "buchstabenreihe") return generateBuchstabenreiheUebung();
+  if (typ === "merkfaehigkeit") return generateMerkfaehigkeitUebung();
   return generateFiguralPuzzle();
 }
 
@@ -9643,7 +9871,7 @@ function scheduleSrCard(deck, id, correct) {
 }
 // Lokale, deterministische Bewertung einer SR-Karte (kein LLM): { correct, musterantwort }.
 function scoreSrCard(q, answer) {
-  if (q.typ === "zahlenreihe") {
+  if (q.typ === "zahlenreihe" || q.typ === "kopfrechnen") {
     return { correct: scoreZahlenreihe(q, answer).punkte === 10, musterantwort: String(q.korrekte_antwort || "") };
   }
   if (q.typ === "konzentration") {
@@ -9693,6 +9921,9 @@ const UEB_TYPEN = [
   { typ: "figural", label: "Figuren / Matrizen" },
   { typ: "zahlenreihe", label: "Zahlenreihen" },
   { typ: "konzentration", label: "Konzentration" },
+  { typ: "kopfrechnen", label: "Kopfrechnen" },
+  { typ: "buchstabenreihe", label: "Buchstabenreihen" },
+  { typ: "merkfaehigkeit", label: "Merkfähigkeit" },
 ];
 function uebLabel(typ) { const t = UEB_TYPEN.find((x) => x.typ === typ); return t ? t.label : typ; }
 
@@ -9748,6 +9979,7 @@ function uebStatsLine(typ, stats) {
 
 // Typ-Auswahl im view-sr-Container rendern (kein Modell, kein Token-Verbrauch).
 function openPracticePicker() {
+  clearMerkTimer();
   srSession = null;
   setSrHeader("practice");
   showView("view-sr");
@@ -9781,7 +10013,18 @@ function startPractice(typ) {
   renderSrCardView();
 }
 
+// Merkfaehigkeit (Plan 3.x): Zwei-Phasen-Uebung (Einpraegen -> Abruf). Der Countdown-Timer
+// ist bewusst robust gegen jede Navigation: ein Stale-Guard im Tick vergleicht Session/Index/
+// studied-Flag und entschaerft sich selbst, falls ein Verlassen-Pfad das explizite Clearen
+// verpasst. clearMerkTimer() wird zusaetzlich an jedem bekannten Ausstiegspunkt aufgerufen -
+// UND, als eigentlicher Fallback, zentral in showView() fuer jedes Ziel ausser "view-sr"
+// (siehe dort). Damit stoppt der Timer auch bei Pfaden, die view-sr ueber andere Routen
+// verlassen (z. B. "Meine Stellen", Browser-Zurueck, ein direkter showView()-Aufruf).
+let merkTimerId = null;
+function clearMerkTimer() { if (merkTimerId) { clearInterval(merkTimerId); merkTimerId = null; } }
+
 function renderSrCardView() {
+  clearMerkTimer();
   const wrap = $("sr-cards-container");
   if (!wrap || !srSession) return;
   wrap.innerHTML = "";
@@ -9794,6 +10037,38 @@ function renderSrCardView() {
   prog.textContent = `Karte ${s.i + 1} von ${s.cards.length}`;
   wrap.appendChild(prog);
 
+  // Study-Phase-Guard: solange die Karte noch nicht "studied" ist, erst das Merkmaterial
+  // mit Countdown zeigen und fruehzeitig returnen; die eigentliche Abruf-Frage (MC, normaler
+  // Score-Pfad) kommt erst nach "Weiter"/Ablauf im normalen Re-Render darunter.
+  if (q.typ === "merkfaehigkeit" && q.merkmaterial && !s.cards[s.i].studied) {
+    const hinweis = document.createElement("p");
+    hinweis.className = "sr-frage";
+    hinweis.textContent = "Präge dir das Folgende ein:";
+    wrap.appendChild(hinweis);
+    const matEl = document.createElement("div");
+    matEl.className = "merk-material";
+    matEl.textContent = q.merkmaterial;
+    wrap.appendChild(matEl);
+    let remain = Number(q.merkzeit) || 15;
+    const countdownEl = document.createElement("p");
+    countdownEl.className = "hint merk-countdown";
+    countdownEl.textContent = `Noch ${remain} s`;
+    wrap.appendChild(countdownEl);
+    const weiterBtn = document.createElement("button");
+    weiterBtn.className = "primary"; weiterBtn.type = "button"; weiterBtn.textContent = "Weiter";
+    wrap.appendChild(weiterBtn);
+    const proceed = () => { clearMerkTimer(); s.cards[s.i].studied = true; renderSrCardView(); };
+    weiterBtn.addEventListener("click", proceed);
+    const sess = srSession, idx = s.i, cardRef = s.cards[s.i];
+    merkTimerId = setInterval(() => {
+      if (srSession !== sess || sess.i !== idx || cardRef.studied) { clearMerkTimer(); return; }
+      remain--;
+      if (remain <= 0) { proceed(); return; }
+      countdownEl.textContent = `Noch ${remain} s`;
+    }, 1000);
+    return;
+  }
+
   const frage = document.createElement("p");
   frage.className = "sr-frage";
   frage.textContent = q.frage;
@@ -9801,7 +10076,7 @@ function renderSrCardView() {
 
   const area = document.createElement("div");
   area.className = "sr-answer";
-  if (q.typ === "zahlenreihe" || q.typ === "konzentration") {
+  if (q.typ === "zahlenreihe" || q.typ === "konzentration" || q.typ === "kopfrechnen") {
     if (q.typ === "konzentration" && q.material) {
       const mat = document.createElement("div");
       mat.className = "konz-material";
@@ -10594,6 +10869,7 @@ function goHome() {
 // volle App-Shell und nicht ans blanke Login-Gate (die gehostete Testerstellung selbst
 // bleibt anmeldepflichtig, hostedNeedsLogin()).
 function leavePractice() {
+  clearMerkTimer();
   if (hostedNeedsLogin()) showView("view-input");
   else goHome();
 }
