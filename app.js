@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.45.6";
+const APP_VERSION = "1.45.7";
 
 const CHANGELOG = [
+  {
+    version: "1.45.7",
+    date: "12.07.2026",
+    items: [
+      "Ruhigeres Antworten: Beim Anklicken einer Antwortoption flackern die Optionen nicht mehr kurz auf – die Einblend-Animation läuft jetzt nur noch beim Wechsel zur nächsten Frage, nicht bei jedem Klick.",
+    ],
+  },
   {
     version: "1.45.6",
     date: "12.07.2026",
@@ -1205,6 +1212,11 @@ function syncThemeColorMeta(t) {
 let quiz = null;      // { titel, fragen: [...] }
 let answers = [];     // index-paralleles Array mit Antworttexten
 let current = 0;
+// Zuletzt von renderQuestion() gezeichneter Frageindex. Dient nur dazu, einen
+// Re-Render DERSELBEN Frage (z. B. nach einem Options-Klick) von einem echten
+// Fragewechsel zu unterscheiden, damit die gestaffelte Options-Eintrittsanimation
+// nicht bei jedem Klick erneut abspielt (siehe renderQuestion/.no-entry-anim).
+let lastRenderedIndex = -1;
 let mode = "lernen";  // "lernen" | "pruefung"
 let reviewing = false; // Durchgehen eines bereits bewerteten Fragebogens (keine erneute Auswertung)
 // Beispieltest ohne Login (Onboarding): ein gebuendeltes statisches Quiz laeuft ueber
@@ -5790,6 +5802,7 @@ function finalizeQuiz(result, ctx) {
   revealed = new Array(quiz.fragen.length).fill(false);
   sortDisplay = {};
   current = 0;
+  lastRenderedIndex = -1; // neue Session: erste Frage soll wieder einfliegen
   reviewing = false;
   demoMode = false; // echter Test: den Beispieltest-Modus sicher verlassen
   startTime = Date.now();
@@ -6297,6 +6310,7 @@ function resumeLearnSession() {
   timer.overtime = false; timer.limitMin = 0; timer.deadline = 0;
   $("quiz-timer").classList.add("hidden");
   setQuizNotice("");
+  lastRenderedIndex = -1; // Resume gilt als Sitzungseintritt: erste Frage soll wieder einfliegen
   renderQuestion();
   showView("view-quiz");
 }
@@ -6371,6 +6385,7 @@ function beginDemoTest(data) {
   revealed = new Array(quiz.fragen.length).fill(false);
   sortDisplay = {};
   current = 0;
+  lastRenderedIndex = -1; // neue Session: erste Frage soll wieder einfliegen
   startTime = Date.now();
   stopTimer();
   timer.overtime = false; timer.limitMin = 0; timer.deadline = 0;
@@ -6536,6 +6551,14 @@ function renderQuestion() {
   const total = quiz.fragen.length;
   const isRevealed = mode === "lernen" && revealed[current];
 
+  // Re-Render derselben Frage (Toggle/Klick/Aufloesen) vs. echter Fragewechsel:
+  // Nur beim Wechsel soll die gestaffelte fadeUp-Eintrittsanimation der Optionen
+  // laufen. Sonst spielt sie bei JEDEM Klick auf eine Option erneut ab, weil
+  // renderQuestion() die Options-Buttons komplett neu erzeugt (siehe .option in
+  // style.css) - das sieht wie ein kurzes "Verschwinden" der Optionen aus.
+  const isSameQuestionRerender = current === lastRenderedIndex;
+  lastRenderedIndex = current;
+
   $("quiz-title").textContent = quiz.titel;
   $("quiz-progress").textContent = `Frage ${current + 1} von ${total}`;
   $("progress-fill").style.width = `${(current / total) * 100}%`;
@@ -6553,6 +6576,10 @@ function renderQuestion() {
 
   const area = $("answer-area");
   area.innerHTML = "";
+  // Staffel-/Eintrittsanimation der Optionen nur beim Zeichnen einer NEUEN Frage;
+  // bei einem Re-Render derselben Frage unterdrueckt die CSS-Regel zu .no-entry-anim
+  // die fadeUp-Animation (siehe .option in style.css).
+  area.classList.toggle("no-entry-anim", isSameQuestionRerender);
 
   // Beim Durchgehen eines bewerteten Fragebogens sind Antworten gesperrt.
   // Eine im Lernmodus aufgeloeste Frage friert ihre Antwort ein - aber nur,
@@ -10625,6 +10652,7 @@ function openAttempt(job, att) {
   // Nutzerreihenfolge und wird im gesperrten Zustand exakt so angezeigt.
   sortDisplay = {};
   current = 0;
+  lastRenderedIndex = -1; // neue Session: erste Frage soll wieder einfliegen
   startTime = Date.now();
   stopTimer();
   $("quiz-timer").classList.add("hidden");
@@ -12124,6 +12152,7 @@ $("btn-review-questions").addEventListener("click", () => {
   $("quiz-timer").classList.add("hidden");
   setQuizNotice("");
   current = 0;
+  lastRenderedIndex = -1; // neue Session: erste Frage soll wieder einfliegen
   renderQuestion();
   showView("view-quiz");
 });
