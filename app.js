@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.47.4";
+const APP_VERSION = "1.47.5";
 
 const CHANGELOG = [
+  {
+    version: "1.47.5",
+    date: "12.07.2026",
+    items: [
+      "Beim Gesprächstermin steht jetzt ein kurzer Hinweis, wozu die Angabe dient: Sie bleibt auf dem Gerät (bei aktivem Geräte-Sync Ende-zu-Ende-verschlüsselt synchronisiert) und hebt ein anstehendes Gespräch in „Meine Stellen“ hervor.",
+    ],
+  },
   {
     version: "1.47.4",
     date: "12.07.2026",
@@ -9544,6 +9551,12 @@ function buildCockpitPanel(job) {
   label.appendChild(input);
   dateRow.appendChild(label);
   panel.appendChild(dateRow);
+
+  const hint = document.createElement("p");
+  hint.className = "hint";
+  hint.textContent = "Bleibt auf deinem Gerät – nutzt du den Geräte-Sync, wird der Termin Ende-zu-Ende-verschlüsselt mitsynchronisiert. Ein anstehender Termin wird in „Meine Stellen“ hervorgehoben – so verlierst du kein Gespräch aus dem Blick.";
+  panel.appendChild(hint);
+
   return panel;
 }
 
