@@ -781,7 +781,8 @@ button.btn-topup.pack:hover { border-color: var(--primary); color: var(--accent-
 .trust-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  justify-content: center;
+  gap: 0.5rem;
   margin-top: 1.1rem;
 }
 .trust-badge {
@@ -807,7 +808,12 @@ button.btn-topup.pack:hover { border-color: var(--primary); color: var(--accent-
 /* S1 Ein-Aktion-Einstieg (view-input, Gast): Frage-Ueberschrift + sekundaere No-Login-Wege. */
 .input-guest-head { margin: 0 0 0.4rem; }
 .input-guest-title { margin: 0.35rem 0 0; }
-.alt-actions { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.25rem; }
+/* Fuer Gaeste ist der neutrale Quellen-Hinweis doppelt gemoppelt: der Wertversprechen-Text
+   steht schon darueber und die Tabs zeigen die zwei Wege ohnehin. Nur im Gast-Zustand raus
+   (eingeloggt/BYOK hat kein #guest-value-prop sichtbar und braucht den Hinweis weiter). */
+#guest-value-prop:not(.hidden) ~ #source-intro-hint { display: none; }
+/* margin-top gibt den No-Login-Wegen eine eigene Zone statt sie an "Test erstellen" zu quetschen. */
+.alt-actions { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 1.1rem; }
 .alt-action {
   display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;
   width: 100%; text-align: left; padding: 0.85rem 1rem; border-radius: var(--radius);
