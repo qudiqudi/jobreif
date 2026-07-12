@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.47.0";
+const APP_VERSION = "1.47.1";
 
 const CHANGELOG = [
+  {
+    version: "1.47.1",
+    date: "12.07.2026",
+    items: [
+      "Klarere Gratis-Hinweise: Sind deine kostenlosen Tests aufgebraucht, steht dort nicht mehr „für heute“ – das Gratis-Kontingent ist ein einmaliges Angebot zum Ausprobieren und erneuert sich nicht täglich. Auch die Nutzungsbedingungen benennen das jetzt korrekt.",
+    ],
+  },
   {
     version: "1.47.0",
     date: "12.07.2026",
@@ -3198,7 +3205,7 @@ function clearAuthToken() {
 // zurueck (forward-kompatibel, kein eigener Preis-Hoheitsanspruch des Clients).
 // (Die user.id wird NICHT gecacht — die Paddle-Bindung laeuft serverseitig ueber den
 // signierten Checkout-Intent, nicht ueber ein client-geliefertes customData.user_id.)
-// freeRemaining = vom Server (/api/balance) gemeldete heute noch verfuegbaren GRATIS-Tests in
+// freeRemaining = vom Server (/api/balance) gemeldete noch verfuegbaren GRATIS-Tests in
 // den Gratis-Stufen (Overflow-Signal); null = unbekannt/Server liefert es (noch) nicht.
 // firstTopupBonus = optionales additives Server-Signal (/api/balance): { eligible, credits } des
 // Erstkauf-Bonus (P9). null = Server bewirbt keinen Bonus (Feature aus ODER Nutzer nicht mehr
@@ -3608,7 +3615,7 @@ function freeTierOverflowEuro(tier) {
   return formatGuthabenEuro(tierPriceCredits(tier === "guenstig" ? "guenstig" : "standard"));
 }
 
-// Hinweis fuer die Gratis-Stufen (standard/guenstig): wie viele kostenlose Tests heute noch
+// Hinweis fuer die Gratis-Stufen (standard/guenstig): wie viele kostenlose Tests noch
 // uebrig sind bzw. — wenn aufgebraucht — dass weitere Tests Guthaben kosten (Overflow). Nur
 // bei aktivem Flag und bekanntem freeRemaining; fuer "beste" zeigt updateTierHint den Opus-Preis.
 function updateFreeTierHint(group) {
@@ -3635,7 +3642,7 @@ function updateFreeTierHint(group) {
 }
 
 // Dauerhaft sichtbares Kontingent-Badge auf der Startseite und in der Erstell-Maske (P5):
-// framt das taegliche Gratis-Kontingent von Anfang an positiv als Feature, statt es erst
+// framt das einmalige Gratis-Kontingent von Anfang an positiv als Feature, statt es erst
 // beim Aufbrauchen als Limit zu zeigen. Nur im Hosted-Modus und nur bei freeQuotaVisible()
 // — sonst bleiben beide Badges unsichtbar (dormant, kein Breaking Change). Idempotent und
 // an dieselben Auffrisch-Pfade gehaengt wie die Tier-Hinweise (renderTierControls sowie die
@@ -3670,7 +3677,7 @@ function renderFreeQuotaBadges() {
       // formatiert (kein XSS); Preis der stufenspezifischen Quelle, derselbe Helper wie im
       // Tier-Hinweis.
       const euro = freeTierOverflowEuro(tier);
-      el.innerHTML = `Alle kostenlosen Tests für heute genutzt 💪 – weitere kosten <strong>${euro}</strong>. <a href="#">Guthaben aufladen</a>`;
+      el.innerHTML = `Alle kostenlosen Tests genutzt 💪 – weitere kosten <strong>${euro}</strong>. <a href="#">Guthaben aufladen</a>`;
       const link = el.querySelector("a");
       if (link) link.onclick = (e) => { e.preventDefault(); openTopupDialog(); };
     }
@@ -6233,7 +6240,7 @@ async function startHostedGeneration(ctx) {
     }
     let paidOverflow = false; // wurde der Test per Gratis-Overflow (Kontingent aufgebraucht) bezahlt?
     let res = await postGenerationJob(ctx, tierSent, false);
-    // 402 quota-exhausted = Gratis-Tageskontingent aufgebraucht. Erst NACH ausdruecklicher
+    // 402 quota-exhausted = Gratis-Kontingent aufgebraucht. Erst NACH ausdruecklicher
     // Bestaetigung erneut senden (payWithCredits:true) — keine unbeabsichtigten Kosten.
     if (res.status === 402) {
       const body = await res.json().catch(() => ({}));
@@ -8359,7 +8366,7 @@ function openJobFocus(job, selector) {
 }
 
 // Preis-/Guthaben-Zusatz fuer den Weiter-Nudge. NUR bei aktivem Guthaben-Flag
-// (Kostenregel): weist auf das freie Tageskontingent bzw. - wenn aufgebraucht -
+// (Kostenregel): weist auf das freie Kontingent bzw. - wenn aufgebraucht -
 // die Kosten eines weiteren Tests hin. Rein informativ; der CTA startet nichts.
 function buildNudgeCreditHint() {
   if (!creditsState.creditsEnabled) return null;
@@ -12779,7 +12786,7 @@ $("btn-confirm-replace-seed").addEventListener("click", () => {
 });
 $("btn-confirm-replace-seed-cancel").addEventListener("click", closeConfirmReplaceSeed);
 
-// Rueckfrage vor dem bezahlten Overflow: ist das Gratis-Tageskontingent aufgebraucht, fragt
+// Rueckfrage vor dem bezahlten Overflow: ist das Gratis-Kontingent aufgebraucht, fragt
 // der Server mit 402 quota-exhausted zurueck. Erst NACH ausdruecklicher Bestaetigung sendet der
 // Client den Generierungs-Request erneut mit payWithCredits:true (keine unbeabsichtigten Kosten,
 // CLAUDE.md-Leitplanke). Promise-basiert: resolve(true)=erstellen, resolve(false)=abbrechen.
