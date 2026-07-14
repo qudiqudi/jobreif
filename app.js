@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.47.5";
+const APP_VERSION = "1.48.0";
 
 const CHANGELOG = [
+  {
+    version: "1.48.0",
+    date: "14.07.2026",
+    items: [
+      "Wer über eine Einstellungstest-Seite (z. B. /einstellungstest/polizei/) in die App kommt, sieht jetzt direkt, für welchen Beruf er übt – bei Prüfungsberufen wie Polizei oder Zoll mit direktem Weg zu den Übungsmodulen statt der Stellenanzeigen-Frage.",
+    ],
+  },
   {
     version: "1.47.5",
     date: "12.07.2026",
@@ -1367,6 +1374,36 @@ function updateGuestInputUi() {
   const hint = $("pending-restored-hint");
   hint.classList.add("hidden");
   hint.textContent = "";
+  // SEO-Referral-Banner: nur fuer Gaeste und nur, wenn ein Kontext erfasst wurde.
+  // SICHERHEIT: _refContext.stelle stammt aus der URL -> ausschliesslich textContent, nie innerHTML.
+  const ref = $("ref-context");
+  if (ref) {
+    ref.textContent = "";
+    if (guest && _refContext) {
+      const t = document.createElement("p");
+      t.className = "ref-context-title";
+      t.textContent = "Du bereitest dich auf den Einstellungstest " + _refContext.stelle + " vor.";
+      ref.appendChild(t);
+      const s = document.createElement("p");
+      s.className = "ref-context-sub";
+      if (_refContext.art === "pruefung") {
+        s.textContent = "Dafür gibt es keine einzelne Stellenanzeige – der offizielle Test ist standardisiert. Starte am besten mit den Übungsmodulen oder einem Beispieltest.";
+        ref.appendChild(s);
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "ghost ref-context-btn";
+        b.textContent = "Übungsmodule öffnen";
+        b.addEventListener("click", () => openPracticePicker());
+        ref.appendChild(b);
+      } else {
+        s.textContent = "Füge unten die Stellenanzeige ein – oder sieh dir erst ein Beispiel an.";
+        ref.appendChild(s);
+      }
+      ref.classList.remove("hidden");
+    } else {
+      ref.classList.add("hidden");
+    }
+  }
 }
 
 // Den Pro-Test-Tier-Selektor (#create-tier) mit der aktuellen Absicht (Override oder globaler
@@ -13386,6 +13423,32 @@ function consumeUebenDeepLink() {
   return true;
 }
 
+// SEO-Referral-Kontext (?stelle=<Beruf>&art=stelle|pruefung von den /einstellungstest/-Seiten):
+// merkt sich den Beruf fuer den Gast-Einstiegs-Banner (updateGuestInputUi). Ephemer, kein
+// localStorage. Kein early-return: das normale Routing laeuft danach weiter.
+let _refContext = null;
+function consumeSeoRefContext() {
+  let stelle = null, art = null;
+  try {
+    const q = new URLSearchParams(location.search);
+    stelle = q.get("stelle");
+    art = q.get("art");
+  } catch { return; }
+  if (stelle !== null) {
+    stelle = stelle.trim().slice(0, 120);
+    if (stelle) _refContext = { stelle, art: art === "pruefung" ? "pruefung" : "stelle" };
+  }
+  // Params aus der URL entfernen (inkl. ref), damit Reload/Teilen eine saubere Adresse hat.
+  try {
+    const u = new URL(location.href);
+    if (!u.searchParams.has("stelle") && !u.searchParams.has("art") && !u.searchParams.has("ref")) return;
+    u.searchParams.delete("stelle");
+    u.searchParams.delete("art");
+    u.searchParams.delete("ref");
+    history.replaceState(history.state, "", u.pathname + (u.search ? u.search : "") + u.hash);
+  } catch { /* History-API nicht verfuegbar: egal */ }
+}
+
 /* ---------- Welcome-Schritt nach dem ersten Login (Plan 2026, Onboarding P3) ----------
    Ein einmaliges, ueberspringbares Overlay ueber der Startliste: fragt die Trajectory
    (bestehendes Profil-Feld, geschlossenes Enum) plus optional das Erfahrungslevel ab und
@@ -13475,6 +13538,9 @@ $("welcome-modal").addEventListener("click", (e) => {
 });
 
 function routeInitialView() {
+  // SEO-Referral IMMER zuerst konsumieren + URL saeubern — auch wenn gleich ein ueben-Deep-Link
+  // das Routing uebernimmt, damit stelle/art/ref nie in der Adresse zurueckbleiben (Reload-Idempotenz).
+  consumeSeoRefContext(); // kein Redirect: setzt nur _refContext und bereinigt die URL
   if (consumeUebenDeepLink()) return; // Uebungs-Deep-Link hat Vorrang (lokal, ohne Gate)
   const provider0 = settings.provider || "hosted";
   if (provider0 === "hosted" && !settings.authToken) {

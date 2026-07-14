@@ -808,6 +808,25 @@ button.btn-topup.pack:hover { border-color: var(--primary); color: var(--accent-
 /* S1 Ein-Aktion-Einstieg (view-input, Gast): Frage-Ueberschrift + sekundaere No-Login-Wege. */
 .input-guest-head { margin: 0 0 0.4rem; }
 .input-guest-title { margin: 0.35rem 0 0; }
+/* SEO-Referral-Kontext: weiche Karte ueber der Gast-Frage, wenn der Besucher von einer
+   /einstellungstest/-Seite kommt. Farben ueber die Identitaets-Tokens (hell+dunkel). */
+.ref-context {
+  margin: 0 0 0.9rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--radius);
+  background: var(--primary-soft);
+  border: 1px solid var(--primary-soft-border);
+  overflow-wrap: anywhere; /* lange Berufsnamen (z. B. "Anlagenmechaniker fuer ...") umbrechen */
+}
+.ref-context-title {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-strong, var(--text));
+}
+.ref-context-sub { margin: 0.25rem 0 0; font-size: 0.8rem; color: var(--muted); line-height: 1.4; }
+.ref-context-btn { margin-top: 0.55rem; }
 /* Fuer Gaeste ist der neutrale Quellen-Hinweis doppelt gemoppelt: der Wertversprechen-Text
    steht schon darueber und die Tabs zeigen die zwei Wege ohnehin. Nur im Gast-Zustand raus
    (eingeloggt/BYOK hat kein #guest-value-prop sichtbar und braucht den Hinweis weiter). */
