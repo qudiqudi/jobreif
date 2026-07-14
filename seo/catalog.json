@@ -1,17 +1,44 @@
 {
   "version": 1,
   "baseUrl": "https://jobreif.de",
-  "updatedAt": "2026-06-27",
+  "updatedAt": "2026-07-14",
   "staticPages": [
-    { "loc": "/lernen/", "lastmod": "2026-06-27" },
-    { "loc": "/lernen/zahlenreihen.html", "lastmod": "2026-06-27" },
-    { "loc": "/lernen/sprachlogik.html", "lastmod": "2026-06-27" },
-    { "loc": "/lernen/konzentration.html", "lastmod": "2026-06-27" },
-    { "loc": "/lernen/figuren-matrizen.html", "lastmod": "2026-06-27" },
-    { "loc": "/lernen/kopfrechnen.html", "lastmod": "2026-07-12" },
-    { "loc": "/lernen/buchstabenreihen.html", "lastmod": "2026-07-12" },
-    { "loc": "/lernen/merkfaehigkeit.html", "lastmod": "2026-07-12" },
-    { "loc": "/lernen/rechtschreibung.html", "lastmod": "2026-07-12" }
+    {
+      "loc": "/lernen/",
+      "lastmod": "2026-06-27"
+    },
+    {
+      "loc": "/lernen/zahlenreihen.html",
+      "lastmod": "2026-06-27"
+    },
+    {
+      "loc": "/lernen/sprachlogik.html",
+      "lastmod": "2026-06-27"
+    },
+    {
+      "loc": "/lernen/konzentration.html",
+      "lastmod": "2026-06-27"
+    },
+    {
+      "loc": "/lernen/figuren-matrizen.html",
+      "lastmod": "2026-06-27"
+    },
+    {
+      "loc": "/lernen/kopfrechnen.html",
+      "lastmod": "2026-07-12"
+    },
+    {
+      "loc": "/lernen/buchstabenreihen.html",
+      "lastmod": "2026-07-12"
+    },
+    {
+      "loc": "/lernen/merkfaehigkeit.html",
+      "lastmod": "2026-07-12"
+    },
+    {
+      "loc": "/lernen/rechtschreibung.html",
+      "lastmod": "2026-07-12"
+    }
   ],
   "testTypes": {
     "fachwissen": {
@@ -42,19 +69,56 @@
       "title": "Einstellungstest Fachinformatiker Systemintegration üben",
       "description": "Übe den Einstellungstest für Fachinformatiker Systemintegration: Fachfragen aus echten Stellenanzeigen plus Sprachlogik, Zahlenreihen und figurale Aufgaben – kostenlos und mit KI-Feedback.",
       "intro": "Bereite dich gezielt auf den Einstellungstest und das Vorstellungsgespräch als Fachinformatiker für Systemintegration vor. jobreif erzeugt aus einer echten Stellenanzeige einen passgenauen Test – inklusive der typischen Eignungstest-Module, die viele IT-Arbeitgeber einsetzen.",
-      "testTypes": ["fachwissen", "sprachlogik", "zahlenreihe", "figural"],
+      "testTypes": [
+        "fachwissen",
+        "sprachlogik",
+        "zahlenreihe",
+        "figural"
+      ],
       "samples": [
         {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 3, 6, 12, 24, ?",
-          "options": ["30", "36", "48", "60"],
+          "options": [
+            "30",
+            "36",
+            "48",
+            "60"
+          ],
           "answer": "48 – jede Zahl ist das Doppelte der vorigen."
         },
         {
           "type": "sprachlogik",
           "question": "Server verhält sich zu Client wie Frage zu …?",
-          "options": ["Netzwerk", "Antwort", "Kabel", "Protokoll"],
+          "options": [
+            "Netzwerk",
+            "Antwort",
+            "Kabel",
+            "Protokoll"
+          ],
           "answer": "Antwort – ein Client stellt eine Anfrage, der Server liefert die Antwort; analog Frage → Antwort."
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Tastatur : Eingabegerät :: Bildschirm : ?",
+          "options": [
+            "Ausgabegerät",
+            "Netzwerkkabel",
+            "Betriebssystem",
+            "Datenbank"
+          ],
+          "answer": "Ausgabegerät – die Tastatur dient der Eingabe von Daten in ein System, der Bildschirm entsprechend der Ausgabe von Daten aus dem System. Die anderen Optionen bezeichnen keine Geräteklasse mit dieser Funktion."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "2, 5, 9, 14, 20, ?",
+          "options": [
+            "25",
+            "26",
+            "27",
+            "29"
+          ],
+          "answer": "27 – die Differenz zwischen den Zahlen steigt jeweils um 1 (+3, +4, +5, +6, +7), also folgt auf 20 der Wert 20 + 7 = 27."
         }
       ],
       "tipps": [
@@ -63,9 +127,18 @@
         "Lies die konkrete Stellenanzeige genau – Schwerpunkte wie Support, Servervirtualisierung oder IT-Security tauchen oft in den Fachfragen auf."
       ],
       "faq": [
-        { "q": "Was wird im Einstellungstest für Fachinformatiker Systemintegration geprüft?", "a": "Meist eine Mischung aus IT-Fachwissen (Netzwerke, Betriebssysteme, Hardware), logischem Denken (Zahlenreihen, Matrizen) und Sprachverständnis. jobreif bildet beides ab: stellenspezifische Fachfragen plus standardisierte Eignungstest-Module." },
-        { "q": "Kostet das Üben etwas?", "a": "Die allgemeinen Eignungsmodule (Zahlenreihen, Konzentration, Figuren) übst du kostenlos und ohne Anmeldung. Für einen kompletten, stellenbezogenen Test aus einer Anzeige mit KI-Feedback genügt eine kostenlose Anmeldung." },
-        { "q": "Brauche ich eine konkrete Stellenanzeige?", "a": "Es funktioniert am besten mit einer echten Anzeige (Text oder Link), weil die Fachfragen daraus abgeleitet werden. Du kannst aber auch eine allgemeine Beschreibung einfügen." }
+        {
+          "q": "Was wird im Einstellungstest für Fachinformatiker Systemintegration geprüft?",
+          "a": "Meist eine Mischung aus IT-Fachwissen (Netzwerke, Betriebssysteme, Hardware), logischem Denken (Zahlenreihen, Matrizen) und Sprachverständnis. jobreif bildet beides ab: stellenspezifische Fachfragen plus standardisierte Eignungstest-Module."
+        },
+        {
+          "q": "Kostet das Üben etwas?",
+          "a": "Die allgemeinen Eignungsmodule (Zahlenreihen, Konzentration, Figuren) übst du kostenlos und ohne Anmeldung. Für einen kompletten, stellenbezogenen Test aus einer Anzeige mit KI-Feedback genügt eine kostenlose Anmeldung."
+        },
+        {
+          "q": "Brauche ich eine konkrete Stellenanzeige?",
+          "a": "Es funktioniert am besten mit einer echten Anzeige (Text oder Link), weil die Fachfragen daraus abgeleitet werden. Du kannst aber auch eine allgemeine Beschreibung einfügen."
+        }
       ],
       "lastmod": "2026-06-27"
     },
@@ -75,18 +148,44 @@
       "title": "Einstellungstest Industriemechaniker üben",
       "description": "Einstellungstest Industriemechaniker kostenlos üben: technisches Verständnis, Zahlenreihen, Konzentration und figurale Logik – plus Fachfragen aus deiner echten Stellenanzeige mit KI-Feedback.",
       "intro": "Trainiere den Einstellungstest für Industriemechaniker mit realistischen Aufgaben. jobreif macht aus einer Stellenanzeige einen passenden Test und ergänzt die klassischen Eignungstest-Module wie Zahlenreihen, Konzentration und figurale Matrizen.",
-      "testTypes": ["fachwissen", "zahlenreihe", "konzentration", "figural"],
+      "testTypes": [
+        "fachwissen",
+        "zahlenreihe",
+        "konzentration",
+        "figural"
+      ],
       "samples": [
         {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 2, 5, 11, 23, ?",
-          "options": ["35", "41", "46", "47"],
+          "options": [
+            "35",
+            "41",
+            "46",
+            "47"
+          ],
           "answer": "47 – jeweils verdoppeln und 1 addieren (×2 + 1)."
         },
         {
           "type": "konzentration",
           "question": "Wie oft kommt der Buchstabe E in dieser Reihe vor?  B E D E F E E C E A",
           "answer": "5-mal."
+        },
+        {
+          "type": "konzentration",
+          "question": "Auf einem Fertigungsauftrag sind Maßangaben notiert. Zählen Sie, wie oft das Symbol „Ø“ (Durchmesser) in dieser Zeile vorkommt:\n\nØ12, M8, Ø6, R3, Ø20, M10, Ø8, Ø5, R10, M6, Ø14, Ø9, R2, M12, Ø18, Ø7, M4, Ø11, R5, Ø16",
+          "answer": "11 – das Symbol „Ø“ erscheint bei Ø12, Ø6, Ø20, Ø8, Ø5, Ø14, Ø9, Ø18, Ø7, Ø11 und Ø16, also 11-mal."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "An einer CNC-Maschine wird die Zustellung pro Arbeitsschritt protokolliert: 4, 7, 12, 19, 28, ?",
+          "answer": "39 – die Differenz zwischen den Zahlen wächst jeweils um 2 (+3, +5, +7, +9, +11), also 28 + 11 = 39.",
+          "options": [
+            "37",
+            "39",
+            "41",
+            "35"
+          ]
         }
       ],
       "tipps": [
@@ -95,9 +194,18 @@
         "Übe figurale und räumliche Aufgaben; sie prüfen das technische Vorstellungsvermögen, das im Beruf zählt."
       ],
       "faq": [
-        { "q": "Welche Aufgaben kommen im Einstellungstest für Industriemechaniker?", "a": "Typisch sind technisches und mathematisches Grundverständnis, räumliches Vorstellungsvermögen (figurale Aufgaben), Konzentrationsaufgaben und Fragen zum Berufsbild. jobreif deckt diese Module ab und ergänzt Fachfragen aus deiner Anzeige." },
-        { "q": "Wie realistisch sind die Aufgaben?", "a": "Die Eignungstest-Module orientieren sich an gängigen Testformaten; die Fachfragen entstehen aus der konkreten Stellenanzeige – damit übst du nah am echten Auswahlverfahren." },
-        { "q": "Läuft das auch auf dem Handy?", "a": "Ja, jobreif ist eine Web-App und funktioniert direkt im Browser auf Smartphone, Tablet und Desktop – ohne Installation." }
+        {
+          "q": "Welche Aufgaben kommen im Einstellungstest für Industriemechaniker?",
+          "a": "Typisch sind technisches und mathematisches Grundverständnis, räumliches Vorstellungsvermögen (figurale Aufgaben), Konzentrationsaufgaben und Fragen zum Berufsbild. jobreif deckt diese Module ab und ergänzt Fachfragen aus deiner Anzeige."
+        },
+        {
+          "q": "Wie realistisch sind die Aufgaben?",
+          "a": "Die Eignungstest-Module orientieren sich an gängigen Testformaten; die Fachfragen entstehen aus der konkreten Stellenanzeige – damit übst du nah am echten Auswahlverfahren."
+        },
+        {
+          "q": "Läuft das auch auf dem Handy?",
+          "a": "Ja, jobreif ist eine Web-App und funktioniert direkt im Browser auf Smartphone, Tablet und Desktop – ohne Installation."
+        }
       ],
       "lastmod": "2026-06-27"
     },
@@ -107,19 +215,50 @@
       "title": "Einstellungstest Kaufmann im Einzelhandel üben",
       "description": "Einstellungstest Kaufmann/-frau im Einzelhandel kostenlos üben: Prozentrechnen, Sprachlogik, Konzentration und Fachfragen aus echten Stellenanzeigen – mit sofortigem KI-Feedback.",
       "intro": "Bereite dich auf den Einstellungstest im Einzelhandel vor: kaufmännisches Rechnen, Sprachverständnis und Sorgfalt. jobreif erzeugt aus einer Stellenanzeige einen passgenauen Test und ergänzt die typischen Eignungstest-Aufgaben.",
-      "testTypes": ["fachwissen", "sprachlogik", "zahlenreihe", "konzentration"],
+      "testTypes": [
+        "fachwissen",
+        "sprachlogik",
+        "zahlenreihe",
+        "konzentration"
+      ],
       "samples": [
         {
           "type": "zahlenreihe",
           "question": "Ein Artikel kostet 80 €, im Schlussverkauf 25 % günstiger. Welcher Preis bleibt?",
-          "options": ["55 €", "60 €", "65 €", "70 €"],
+          "options": [
+            "55 €",
+            "60 €",
+            "65 €",
+            "70 €"
+          ],
           "answer": "60 € – 25 % von 80 € sind 20 €, also 80 − 20 = 60 €."
         },
         {
           "type": "sprachlogik",
           "question": "Kunde verhält sich zu Beratung wie Ware zu …?",
-          "options": ["Lager", "Präsentation", "Kasse", "Preis"],
+          "options": [
+            "Lager",
+            "Präsentation",
+            "Kasse",
+            "Preis"
+          ],
           "answer": "Präsentation – der Kunde erhält Beratung, die Ware wird präsentiert (beides die zugewandte Leistung)."
+        },
+        {
+          "type": "konzentration",
+          "question": "Sie kontrollieren einen ausgedruckten Kassenbon auf Übertragungsfehler. Zählen Sie, wie oft die Ziffer 7 in folgender Zahlenfolge vorkommt:\n48297183746529817364598172635948273619485726314987",
+          "answer": "7 (die Ziffer 7 kommt genau siebenmal vor: an den Positionen 5, 9, 17, 25, 34, 42 und 50)"
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Beim wöchentlichen Nachbestellen eines Aktionsartikels verdoppelt sich die Liefermenge jede Woche: 6, 12, 24, 48, 96, ? Wie lautet die nächste Zahl?",
+          "options": [
+            "144",
+            "172",
+            "192",
+            "200"
+          ],
+          "answer": "192 – jede Zahl wird mit 2 multipliziert (6→12→24→48→96→192), also 96 × 2 = 192"
         }
       ],
       "tipps": [
@@ -128,9 +267,18 @@
         "Achte bei Konzentrationsaufgaben auf Genauigkeit – im Einzelhandel zählt Sorgfalt bei Preisen und Beständen."
       ],
       "faq": [
-        { "q": "Was wird im Einstellungstest für Einzelhandelskaufleute gefragt?", "a": "Häufig kaufmännisches Rechnen (Prozente, Dreisatz), Sprachverständnis, Konzentration und Fragen zu Kundenorientierung und Warenkunde. jobreif bildet das mit Modulen plus Fachfragen aus deiner Anzeige ab." },
-        { "q": "Hilft mir das auch fürs Vorstellungsgespräch?", "a": "Ja. Neben dem Test bekommst du offene Fragen und KI-Feedback zu deinen Antworten – gutes Training für das echte Gespräch." },
-        { "q": "Werden meine Daten gespeichert?", "a": "Deine Eingaben und Ergebnisse bleiben in deinem Browser. jobreif ist auf Datensparsamkeit ausgelegt." }
+        {
+          "q": "Was wird im Einstellungstest für Einzelhandelskaufleute gefragt?",
+          "a": "Häufig kaufmännisches Rechnen (Prozente, Dreisatz), Sprachverständnis, Konzentration und Fragen zu Kundenorientierung und Warenkunde. jobreif bildet das mit Modulen plus Fachfragen aus deiner Anzeige ab."
+        },
+        {
+          "q": "Hilft mir das auch fürs Vorstellungsgespräch?",
+          "a": "Ja. Neben dem Test bekommst du offene Fragen und KI-Feedback zu deinen Antworten – gutes Training für das echte Gespräch."
+        },
+        {
+          "q": "Werden meine Daten gespeichert?",
+          "a": "Deine Eingaben und Ergebnisse bleiben in deinem Browser. jobreif ist auf Datensparsamkeit ausgelegt."
+        }
       ],
       "lastmod": "2026-06-27"
     },
@@ -140,19 +288,56 @@
       "title": "Einstellungstest Bankkaufmann üben",
       "description": "Einstellungstest Bankkaufmann/-frau kostenlos üben: Wirtschaftswissen, Zahlenreihen, Sprachlogik und Fachfragen aus echten Stellenanzeigen – mit KI-Feedback.",
       "intro": "Übe den Einstellungstest für Bankkaufleute mit realistischen Aufgaben zu Wirtschaft, Logik und Sprache. jobreif macht aus einer Stellenanzeige einen passenden Test und ergänzt die gängigen Eignungstest-Module.",
-      "testTypes": ["fachwissen", "sprachlogik", "zahlenreihe", "figural"],
+      "testTypes": [
+        "fachwissen",
+        "sprachlogik",
+        "zahlenreihe",
+        "figural"
+      ],
       "samples": [
         {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 100, 95, 85, 70, ?",
-          "options": ["55", "50", "60", "45"],
+          "options": [
+            "55",
+            "50",
+            "60",
+            "45"
+          ],
           "answer": "50 – die Abstände wachsen: −5, −10, −15, −20."
         },
         {
           "type": "sprachlogik",
           "question": "Kredit verhält sich zu Zins wie Sparen zu …?",
-          "options": ["Konto", "Rendite", "Bank", "Risiko"],
+          "options": [
+            "Konto",
+            "Rendite",
+            "Bank",
+            "Risiko"
+          ],
           "answer": "Rendite – für einen Kredit zahlt man Zins, fürs Sparen erhält man eine Rendite (jeweils der Ertrag)."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Ein Kontostand schwankt nach einem festen Muster: 8, 16, 13, 26, 23, 46, ? Wie lautet die nächste Zahl?",
+          "options": [
+            "40",
+            "43",
+            "46",
+            "49"
+          ],
+          "answer": "43 – die Reihe wechselt abwechselnd zwischen ×2 und −3: 8×2=16, 16−3=13, 13×2=26, 26−3=23, 23×2=46, 46−3=43."
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Welches Wort passt? Einzahlung verhält sich zu Auszahlung wie Gutschrift zu ...?",
+          "options": [
+            "Belastung",
+            "Zinssatz",
+            "Kontoauszug",
+            "Überweisung"
+          ],
+          "answer": "Belastung – Einzahlung/Auszahlung sind ein Gegensatzpaar (Geld kommt/geht), genauso wie Gutschrift (Zubuchung) und Belastung (Abbuchung) auf dem Konto."
         }
       ],
       "tipps": [
@@ -161,9 +346,18 @@
         "Trainiere Logik- und Sprachaufgaben; Banken legen Wert auf analytisches Denken und klare Kommunikation."
       ],
       "faq": [
-        { "q": "Welche Themen hat der Einstellungstest für Bankkaufleute?", "a": "Oft Allgemein- und Wirtschaftswissen, logisches Denken (Zahlenreihen, Matrizen), Sprachverständnis und Konzentration. jobreif deckt diese Module ab und ergänzt Fachfragen aus deiner Anzeige." },
-        { "q": "Kann ich gezielt für eine bestimmte Bank üben?", "a": "Ja – füge die konkrete Stellenanzeige ein, dann leitet jobreif die Fachfragen genau daraus ab." },
-        { "q": "Ist das kostenlos?", "a": "Die allgemeinen Eignungsmodule übst du kostenlos und ohne Anmeldung; für den kompletten, stellenbezogenen Test mit KI-Feedback genügt eine kostenlose Anmeldung. Optional gibt es höhere Qualitätsstufen." }
+        {
+          "q": "Welche Themen hat der Einstellungstest für Bankkaufleute?",
+          "a": "Oft Allgemein- und Wirtschaftswissen, logisches Denken (Zahlenreihen, Matrizen), Sprachverständnis und Konzentration. jobreif deckt diese Module ab und ergänzt Fachfragen aus deiner Anzeige."
+        },
+        {
+          "q": "Kann ich gezielt für eine bestimmte Bank üben?",
+          "a": "Ja – füge die konkrete Stellenanzeige ein, dann leitet jobreif die Fachfragen genau daraus ab."
+        },
+        {
+          "q": "Ist das kostenlos?",
+          "a": "Die allgemeinen Eignungsmodule übst du kostenlos und ohne Anmeldung; für den kompletten, stellenbezogenen Test mit KI-Feedback genügt eine kostenlose Anmeldung. Optional gibt es höhere Qualitätsstufen."
+        }
       ],
       "lastmod": "2026-06-27"
     },
@@ -173,7 +367,12 @@
       "title": "Einstellungstest Pflegefachmann / Pflegefachfrau üben",
       "description": "Einstellungstest Pflege kostenlos üben: Fachwissen, Konzentration, einfache Rechenaufgaben und Sprachlogik – plus Fragen aus echten Stellenanzeigen mit KI-Feedback.",
       "intro": "Bereite dich auf den Einstellungstest und das Bewerbungsgespräch in der Pflege vor. jobreif erstellt aus einer Stellenanzeige einen passenden Test und ergänzt typische Eignungstest-Module wie Konzentration und einfache Rechenaufgaben.",
-      "testTypes": ["fachwissen", "sprachlogik", "zahlenreihe", "konzentration"],
+      "testTypes": [
+        "fachwissen",
+        "sprachlogik",
+        "zahlenreihe",
+        "konzentration"
+      ],
       "samples": [
         {
           "type": "konzentration",
@@ -183,8 +382,29 @@
         {
           "type": "sprachlogik",
           "question": "Fieber verhält sich zu Thermometer wie Puls zu …?",
-          "options": ["Stethoskop", "Blutdruck", "Herz", "Tasten"],
+          "options": [
+            "Stethoskop",
+            "Blutdruck",
+            "Herz",
+            "Tasten"
+          ],
           "answer": "Tasten – das Fieber misst man mit dem Thermometer, den Puls ertastet man (Methode der Messung)."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Auf der Station legst du die Kontrollintervalle für die Wunddokumentation nach OP fest (in Stunden nach dem Eingriff): 3 – 6 – 12 – 24 – 48 – ? Wie lautet die nächste Zahl in der Reihe?",
+          "options": [
+            "72",
+            "84",
+            "96",
+            "108"
+          ],
+          "answer": "96 – Die Reihe verdoppelt sich bei jedem Schritt (×2): 3→6→12→24→48→96. Das Intervall zwischen den Wundkontrollen wird also jedes Mal exakt doppelt so lang."
+        },
+        {
+          "type": "konzentration",
+          "question": "Bei der Übergabe liest du die Vitalwert-Kürzel der Nachtschicht auf einem Zettel. Zähle, wie oft das Kürzel „RR“ (Blutdruck) in folgender Zeile vorkommt: HF RR AF RR BZ SpO2 RR AF HF RR BZ RR AF SpO2 RR HF BZ RR AF RR",
+          "answer": "8 – „RR“ erscheint an den Positionen 2, 4, 7, 10, 12, 15, 18 und 20 der Kürzel-Folge, macht in Summe 8 Treffer."
         }
       ],
       "tipps": [
@@ -193,9 +413,18 @@
         "Übe Konzentrationsaufgaben; im Pflegealltag ist sorgfältiges Arbeiten unter Zeitdruck entscheidend."
       ],
       "faq": [
-        { "q": "Was kommt im Einstellungstest für die Pflegeausbildung dran?", "a": "Häufig Allgemeinwissen und einfache Mathematik (z. B. Dosierung, Dreisatz), Konzentration, Sprachverständnis und Fragen zu Motivation und Berufsbild. jobreif bildet Module plus Fachfragen aus deiner Anzeige ab." },
-        { "q": "Bereitet mich das auch aufs Gespräch vor?", "a": "Ja – du bekommst offene Fragen und KI-Feedback zu deinen Antworten, ideal für das Vorstellungsgespräch in Klinik oder Pflegeeinrichtung." },
-        { "q": "Muss ich etwas installieren?", "a": "Nein. jobreif läuft direkt im Browser auf Handy und Computer, ganz ohne Installation." }
+        {
+          "q": "Was kommt im Einstellungstest für die Pflegeausbildung dran?",
+          "a": "Häufig Allgemeinwissen und einfache Mathematik (z. B. Dosierung, Dreisatz), Konzentration, Sprachverständnis und Fragen zu Motivation und Berufsbild. jobreif bildet Module plus Fachfragen aus deiner Anzeige ab."
+        },
+        {
+          "q": "Bereitet mich das auch aufs Gespräch vor?",
+          "a": "Ja – du bekommst offene Fragen und KI-Feedback zu deinen Antworten, ideal für das Vorstellungsgespräch in Klinik oder Pflegeeinrichtung."
+        },
+        {
+          "q": "Muss ich etwas installieren?",
+          "a": "Nein. jobreif läuft direkt im Browser auf Handy und Computer, ganz ohne Installation."
+        }
       ],
       "lastmod": "2026-06-27"
     },
@@ -205,19 +434,56 @@
       "title": "Einstellungstest Mechatroniker üben",
       "description": "Einstellungstest Mechatroniker kostenlos üben: technisches Verständnis, Zahlenreihen, Sprachlogik und figurale Aufgaben – plus Fachfragen aus echter Stellenanzeige mit KI-Feedback.",
       "intro": "Bereite dich auf den Einstellungstest als Mechatroniker vor: Mechanik, Elektrotechnik und Steuerungstechnik treffen hier zusammen. jobreif erstellt aus einer echten Stellenanzeige einen passgenauen Test und ergänzt die typischen Eignungstest-Module.",
-      "testTypes": ["fachwissen", "zahlenreihe", "sprachlogik", "figural"],
+      "testTypes": [
+        "fachwissen",
+        "zahlenreihe",
+        "sprachlogik",
+        "figural"
+      ],
       "samples": [
         {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 1, 2, 4, 7, 11, ?",
-          "options": ["14", "15", "16", "18"],
+          "options": [
+            "14",
+            "15",
+            "16",
+            "18"
+          ],
           "answer": "16 – die Abstände wachsen um 1: +1, +2, +3, +4, +5."
         },
         {
           "type": "sprachlogik",
           "question": "Motor verhält sich zu Antrieb wie Sensor zu …?",
-          "options": ["Messung", "Strom", "Gehäuse", "Kabel"],
+          "options": [
+            "Messung",
+            "Strom",
+            "Gehäuse",
+            "Kabel"
+          ],
           "answer": "Messung – ein Motor sorgt für Antrieb, ein Sensor für die Messung (jeweils die Funktion des Bauteils)."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "2, 5, 10, 17, 26, ?",
+          "answer": "37 (Differenzen steigen um die ungeraden Zahlen: +3, +5, +7, +9, +11; entspricht n²+1)",
+          "options": [
+            "35",
+            "37",
+            "39",
+            "41"
+          ]
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Multimeter : Messen :: Schraubenschlüssel : ?",
+          "answer": "Anziehen (Werkzeug – typische Funktion: der Multimeter dient dem Messen, der Schraubenschlüssel dem Anziehen)",
+          "options": [
+            "Anziehen",
+            "Schneiden",
+            "Löten",
+            "Isolieren"
+          ]
         }
       ],
       "tipps": [
@@ -226,9 +492,18 @@
         "Räumliches Vorstellungsvermögen lohnt sich: figurale Aufgaben und technische Skizzen kommen oft vor."
       ],
       "faq": [
-        { "q": "Was wird im Einstellungstest für Mechatroniker geprüft?", "a": "Meist technisches Verständnis (Mechanik, Elektrotechnik, Steuerungstechnik), logisches Denken (Zahlenreihen, figurale Aufgaben) und Grundrechnen. jobreif bildet diese Module ab und ergänzt Fachfragen aus deiner Anzeige." },
-        { "q": "Wie kann ich gezielt üben?", "a": "Füge eine echte Stellenanzeige ein – dann leitet jobreif die Fachfragen genau daraus ab. Die Eignungsmodule übst du zusätzlich im Üben-Bereich." },
-        { "q": "Brauche ich eine Anmeldung?", "a": "Für die allgemeinen Eignungsmodule (Zahlenreihen, Konzentration, Figuren) nicht – die übst du sofort ohne Anmeldung. Für den kompletten, stellenbezogenen Test mit KI-Feedback genügt eine kostenlose Anmeldung." }
+        {
+          "q": "Was wird im Einstellungstest für Mechatroniker geprüft?",
+          "a": "Meist technisches Verständnis (Mechanik, Elektrotechnik, Steuerungstechnik), logisches Denken (Zahlenreihen, figurale Aufgaben) und Grundrechnen. jobreif bildet diese Module ab und ergänzt Fachfragen aus deiner Anzeige."
+        },
+        {
+          "q": "Wie kann ich gezielt üben?",
+          "a": "Füge eine echte Stellenanzeige ein – dann leitet jobreif die Fachfragen genau daraus ab. Die Eignungsmodule übst du zusätzlich im Üben-Bereich."
+        },
+        {
+          "q": "Brauche ich eine Anmeldung?",
+          "a": "Für die allgemeinen Eignungsmodule (Zahlenreihen, Konzentration, Figuren) nicht – die übst du sofort ohne Anmeldung. Für den kompletten, stellenbezogenen Test mit KI-Feedback genügt eine kostenlose Anmeldung."
+        }
       ],
       "lastmod": "2026-06-27"
     },
@@ -238,18 +513,44 @@
       "title": "Einstellungstest Kfz-Mechatroniker üben",
       "description": "Einstellungstest Kfz-Mechatroniker kostenlos üben: Kfz-Technik, Zahlenreihen, Konzentration und figurale Logik – plus Fachfragen aus echter Stellenanzeige mit KI-Feedback.",
       "intro": "Übe den Einstellungstest als Kfz-Mechatroniker mit realistischen Aufgaben rund um Motor, Elektronik und Diagnose. jobreif macht aus einer Stellenanzeige einen passenden Test und ergänzt klassische Eignungstest-Module.",
-      "testTypes": ["fachwissen", "zahlenreihe", "konzentration", "figural"],
+      "testTypes": [
+        "fachwissen",
+        "zahlenreihe",
+        "konzentration",
+        "figural"
+      ],
       "samples": [
         {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 2, 6, 18, 54, ?",
-          "options": ["108", "150", "162", "216"],
+          "options": [
+            "108",
+            "150",
+            "162",
+            "216"
+          ],
           "answer": "162 – jede Zahl wird mit 3 multipliziert."
         },
         {
           "type": "konzentration",
           "question": "Wie oft kommt die Ziffer 8 in dieser Reihe vor?  8 3 8 1 8 8 2 9 8 4",
           "answer": "5-mal."
+        },
+        {
+          "type": "konzentration",
+          "question": "In der Werkstatt müssen Sie schnell und fehlerfrei Teilenummern gegenlesen. Zählen Sie, wie oft die Ziffer 4 in dieser Zeichenfolge vorkommt:\n4 7 2 4 9 4 1 3 4 6 4 8 5 4 2 4 7 4",
+          "answer": "8 – die Ziffer 4 taucht an 8 Stellen der Reihe auf (Position 1, 4, 6, 9, 11, 14, 16, 18)."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "In der Inspektionsannahme steigt die Zahl der pro Tag geprüften Fahrzeuge nach einem festen Muster: 3, 7, 13, 21, 31, ? Wie lautet die nächste Zahl?",
+          "options": [
+            "40",
+            "41",
+            "43",
+            "45"
+          ],
+          "answer": "43 – die Differenzen zwischen den Zahlen wachsen jeweils um 2 (4, 6, 8, 10, 12): 31 + 12 = 43."
         }
       ],
       "tipps": [
@@ -258,9 +559,18 @@
         "Konzentrations- und figurale Aufgaben trainieren die Genauigkeit, die bei der Fehlersuche zählt."
       ],
       "faq": [
-        { "q": "Was kommt im Einstellungstest für Kfz-Mechatroniker?", "a": "Häufig technisches Verständnis (Kfz-Technik, Elektronik), Zahlenreihen, Konzentration und räumliches Denken. jobreif deckt diese Module ab und ergänzt Fachfragen aus deiner Anzeige." },
-        { "q": "Kann ich für eine bestimmte Werkstatt oder Marke üben?", "a": "Ja – füge die konkrete Stellenanzeige ein, dann leitet jobreif die Fachfragen genau daraus ab." },
-        { "q": "Funktioniert das auf dem Handy?", "a": "Ja, jobreif läuft direkt im Browser auf Smartphone, Tablet und Desktop – ohne Installation." }
+        {
+          "q": "Was kommt im Einstellungstest für Kfz-Mechatroniker?",
+          "a": "Häufig technisches Verständnis (Kfz-Technik, Elektronik), Zahlenreihen, Konzentration und räumliches Denken. jobreif deckt diese Module ab und ergänzt Fachfragen aus deiner Anzeige."
+        },
+        {
+          "q": "Kann ich für eine bestimmte Werkstatt oder Marke üben?",
+          "a": "Ja – füge die konkrete Stellenanzeige ein, dann leitet jobreif die Fachfragen genau daraus ab."
+        },
+        {
+          "q": "Funktioniert das auf dem Handy?",
+          "a": "Ja, jobreif läuft direkt im Browser auf Smartphone, Tablet und Desktop – ohne Installation."
+        }
       ],
       "lastmod": "2026-06-27"
     },
@@ -270,19 +580,50 @@
       "title": "Einstellungstest Industriekaufmann üben",
       "description": "Einstellungstest Industriekaufmann/-frau kostenlos üben: kaufmännisches Rechnen, Sprachlogik, Konzentration und Fachfragen aus echter Stellenanzeige – mit KI-Feedback.",
       "intro": "Bereite dich auf den Einstellungstest als Industriekaufmann vor: kaufmännisches Rechnen, Wirtschaftsverständnis und Sprachgefühl. jobreif erzeugt aus einer Stellenanzeige einen passgenauen Test und ergänzt die üblichen Eignungstest-Aufgaben.",
-      "testTypes": ["fachwissen", "sprachlogik", "zahlenreihe", "konzentration"],
+      "testTypes": [
+        "fachwissen",
+        "sprachlogik",
+        "zahlenreihe",
+        "konzentration"
+      ],
       "samples": [
         {
           "type": "zahlenreihe",
           "question": "Eine Rechnung über 250 € wird mit 2 % Skonto bezahlt. Wie viel wird überwiesen?",
-          "options": ["240 €", "245 €", "247 €", "248 €"],
+          "options": [
+            "240 €",
+            "245 €",
+            "247 €",
+            "248 €"
+          ],
           "answer": "245 € – 2 % von 250 € sind 5 €, also 250 − 5 = 245 €."
         },
         {
           "type": "sprachlogik",
           "question": "Einkauf verhält sich zu Lieferant wie Verkauf zu …?",
-          "options": ["Kunde", "Lager", "Markt", "Preis"],
+          "options": [
+            "Kunde",
+            "Lager",
+            "Markt",
+            "Preis"
+          ],
           "answer": "Kunde – beim Einkauf ist der Lieferant der Partner, beim Verkauf der Kunde."
+        },
+        {
+          "type": "konzentration",
+          "question": "In der Warenwirtschaft werden Bestellcodes oft nur kurz überflogen – hier zählt jeder Buchstabe. Wie oft kommt der Großbuchstabe „B“ in der folgenden Zeichenkette vor?\n\nBLRT BBLR TBBL RBTL BRBT LBBR TLBR BBTL",
+          "answer": "13 – die Zeichenkette enthält genau 13 Mal den Buchstaben „B“ (nachgezählt: BLRT[1] BBLR[2,3] TBBL[4,5] RBTL[6] BRBT[7,8] LBBR[9,10] TLBR[11] BBTL[12,13])."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Ein Lieferant staffelt seine Mindestbestellmengen nach einem festen Faktor. Wie lautet die nächste Zahl in der Reihe: 3, 9, 27, 81, ...?",
+          "options": [
+            "162",
+            "216",
+            "243",
+            "324"
+          ],
+          "answer": "243 – jede Zahl wird mit dem Faktor 3 multipliziert (3 → 9 → 27 → 81 → 243), passend zur Mengenstaffel bei Bestellungen."
         }
       ],
       "tipps": [
@@ -291,9 +632,18 @@
         "Übe Sprachlogik und Textverständnis – Industriekaufleute kommunizieren viel schriftlich."
       ],
       "faq": [
-        { "q": "Was wird im Einstellungstest für Industriekaufleute geprüft?", "a": "Häufig kaufmännisches Rechnen, Wirtschafts- und Allgemeinwissen, Sprachverständnis und Konzentration. jobreif bildet diese Module ab und ergänzt Fachfragen aus deiner Anzeige." },
-        { "q": "Hilft das auch fürs Vorstellungsgespräch?", "a": "Ja – du bekommst offene Fragen und KI-Feedback zu deinen Antworten, ein gutes Training für das Gespräch." },
-        { "q": "Ist das kostenlos?", "a": "Die allgemeinen Eignungsmodule übst du kostenlos und ohne Anmeldung direkt im Browser; für den kompletten, stellenbezogenen Test mit KI-Feedback genügt eine kostenlose Anmeldung." }
+        {
+          "q": "Was wird im Einstellungstest für Industriekaufleute geprüft?",
+          "a": "Häufig kaufmännisches Rechnen, Wirtschafts- und Allgemeinwissen, Sprachverständnis und Konzentration. jobreif bildet diese Module ab und ergänzt Fachfragen aus deiner Anzeige."
+        },
+        {
+          "q": "Hilft das auch fürs Vorstellungsgespräch?",
+          "a": "Ja – du bekommst offene Fragen und KI-Feedback zu deinen Antworten, ein gutes Training für das Gespräch."
+        },
+        {
+          "q": "Ist das kostenlos?",
+          "a": "Die allgemeinen Eignungsmodule übst du kostenlos und ohne Anmeldung direkt im Browser; für den kompletten, stellenbezogenen Test mit KI-Feedback genügt eine kostenlose Anmeldung."
+        }
       ],
       "lastmod": "2026-06-27"
     },
@@ -303,19 +653,50 @@
       "title": "Einstellungstest Verwaltungsfachangestellte üben",
       "description": "Einstellungstest Verwaltungsfachangestellte/r kostenlos üben: Allgemeinwissen, Sprachlogik, Zahlenreihen und Konzentration – plus Fachfragen aus echter Stellenanzeige mit KI-Feedback.",
       "intro": "Übe den Einstellungstest für Verwaltungsfachangestellte mit realistischen Aufgaben zu Allgemeinwissen, Sprache und Logik. jobreif macht aus einer Stellenanzeige einen passenden Test und ergänzt die typischen Eignungstest-Module.",
-      "testTypes": ["fachwissen", "sprachlogik", "zahlenreihe", "konzentration"],
+      "testTypes": [
+        "fachwissen",
+        "sprachlogik",
+        "zahlenreihe",
+        "konzentration"
+      ],
       "samples": [
         {
           "type": "sprachlogik",
           "question": "Antrag verhält sich zu Bescheid wie Frage zu …?",
-          "options": ["Antwort", "Formular", "Akte", "Amt"],
+          "options": [
+            "Antwort",
+            "Formular",
+            "Akte",
+            "Amt"
+          ],
           "answer": "Antwort – auf einen Antrag folgt ein Bescheid, auf eine Frage eine Antwort (jeweils die Reaktion)."
         },
         {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 5, 10, 20, 40, ?",
-          "options": ["60", "70", "80", "100"],
+          "options": [
+            "60",
+            "70",
+            "80",
+            "100"
+          ],
           "answer": "80 – jede Zahl ist das Doppelte der vorigen."
+        },
+        {
+          "type": "konzentration",
+          "question": "Sie prüfen eine Liste von Aktenzeichen auf Vollständigkeit. Zählen Sie, wie oft das Aktenzeichen exakt 'AZ-2024' (Großbuchstaben, mit Bindestrich, Ziffer 0 statt Buchstabe O) in folgender Reihe vorkommt:\n\nAZ-2024  AZ-2024  AZ-2029  A2-2024  AZ-2024  AZ-2O24  AZ-2024  AZ-2042  AZ-2024  AZ-2024  AZ-2064  AZ-2024  AZ2024  AZ-2024  AZ-2024  Az-2024  AZ-2024  AZ-2029  AZ-2024  AZ-2024",
+          "answer": "12 – exakte Treffer sind die Positionen 1, 2, 5, 7, 9, 10, 12, 14, 15, 17, 19 und 20. Nicht zählen: abweichende Endziffern (AZ-2029, AZ-2042, AZ-2064), Buchstabe statt Ziffer (AZ-2O24), fehlender Bindestrich (AZ2024), falsche Ziffer im Präfix (A2-2024) und Kleinschreibung (Az-2024)."
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Rathaus verhält sich zu Bürgermeister wie Gericht zu ...?",
+          "answer": "Richter",
+          "options": [
+            "Anwalt",
+            "Kläger",
+            "Richter",
+            "Akte"
+          ]
         }
       ],
       "tipps": [
@@ -324,9 +705,18 @@
         "Trainiere klare Rechtschreibung und Grammatik; korrekte Sprache ist im Amt wichtig."
       ],
       "faq": [
-        { "q": "Was wird im Einstellungstest für Verwaltungsfachangestellte geprüft?", "a": "Häufig Allgemeinwissen, Sprachverständnis und Rechtschreibung, logisches Denken (Zahlenreihen) und Konzentration. jobreif bildet diese Module ab und ergänzt Fachfragen aus deiner Anzeige." },
-        { "q": "Kann ich für eine bestimmte Behörde üben?", "a": "Ja – füge die konkrete Stellenanzeige ein, dann leitet jobreif die Fachfragen genau daraus ab." },
-        { "q": "Brauche ich eine Anmeldung?", "a": "Für die allgemeinen Eignungsmodule (Zahlenreihen, Konzentration, Figuren) nicht – die übst du sofort ohne Anmeldung. Für den kompletten, stellenbezogenen Test mit KI-Feedback genügt eine kostenlose Anmeldung." }
+        {
+          "q": "Was wird im Einstellungstest für Verwaltungsfachangestellte geprüft?",
+          "a": "Häufig Allgemeinwissen, Sprachverständnis und Rechtschreibung, logisches Denken (Zahlenreihen) und Konzentration. jobreif bildet diese Module ab und ergänzt Fachfragen aus deiner Anzeige."
+        },
+        {
+          "q": "Kann ich für eine bestimmte Behörde üben?",
+          "a": "Ja – füge die konkrete Stellenanzeige ein, dann leitet jobreif die Fachfragen genau daraus ab."
+        },
+        {
+          "q": "Brauche ich eine Anmeldung?",
+          "a": "Für die allgemeinen Eignungsmodule (Zahlenreihen, Konzentration, Figuren) nicht – die übst du sofort ohne Anmeldung. Für den kompletten, stellenbezogenen Test mit KI-Feedback genügt eine kostenlose Anmeldung."
+        }
       ],
       "lastmod": "2026-06-27"
     },
@@ -336,7 +726,12 @@
       "title": "Einstellungstest Medizinische Fachangestellte (MFA) üben",
       "description": "Einstellungstest MFA kostenlos üben: einfache Mathematik, Konzentration, Sprachlogik und Fachfragen aus echter Stellenanzeige – mit sofortigem KI-Feedback.",
       "intro": "Bereite dich auf den Einstellungstest als Medizinische Fachangestellte (MFA) vor: Sorgfalt, Organisation und Grundrechnen stehen im Mittelpunkt. jobreif erstellt aus einer Stellenanzeige einen passenden Test und ergänzt typische Eignungstest-Aufgaben.",
-      "testTypes": ["fachwissen", "sprachlogik", "konzentration", "zahlenreihe"],
+      "testTypes": [
+        "fachwissen",
+        "sprachlogik",
+        "konzentration",
+        "zahlenreihe"
+      ],
       "samples": [
         {
           "type": "konzentration",
@@ -346,8 +741,29 @@
         {
           "type": "sprachlogik",
           "question": "Rezept verhält sich zu Medikament wie Überweisung zu …?",
-          "options": ["Facharzt", "Apotheke", "Termin", "Praxis"],
+          "options": [
+            "Facharzt",
+            "Apotheke",
+            "Termin",
+            "Praxis"
+          ],
           "answer": "Facharzt – ein Rezept führt zum Medikament, eine Überweisung zum Facharzt (jeweils das Ziel)."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "An der Anmeldung zählt eine MFA die eingehenden Anrufe pro Stunde. Wie lautet die nächste Zahl in der Reihe: 3, 6, 11, 18, 27, ?",
+          "options": [
+            "33",
+            "36",
+            "38",
+            "40"
+          ],
+          "answer": "38 – die Differenzen zwischen den Zahlen steigen um jeweils 2 (3, 5, 7, 9, 11): 27 + 11 = 38."
+        },
+        {
+          "type": "konzentration",
+          "question": "Sie sortieren Patientenkarteikarten nach Anfangsbuchstaben. Zählen Sie, wie oft der Buchstabe K in dieser Zeichenfolge vorkommt (jedes Zeichen steht für eine Karteikarte): K B T M R K L P B K R T M K B L R K P T M K B R L K P T M R",
+          "answer": "7"
         }
       ],
       "tipps": [
@@ -356,11 +772,746 @@
         "Übe Konzentrationsaufgaben – in der Praxis zählt Genauigkeit bei Terminen, Karteien und Abrechnung."
       ],
       "faq": [
-        { "q": "Was wird im Einstellungstest für MFA geprüft?", "a": "Häufig einfache Mathematik, Konzentration und Sorgfalt, Sprachverständnis und Fragen zu Organisation und Patientenumgang. jobreif bildet diese Module ab und ergänzt Fachfragen aus deiner Anzeige." },
-        { "q": "Bereitet mich das auch aufs Gespräch vor?", "a": "Ja – du bekommst offene Fragen und KI-Feedback zu deinen Antworten, ideal für das Gespräch in Praxis oder Klinik." },
-        { "q": "Muss ich etwas installieren?", "a": "Nein. jobreif läuft direkt im Browser auf Handy und Computer, ganz ohne Installation." }
+        {
+          "q": "Was wird im Einstellungstest für MFA geprüft?",
+          "a": "Häufig einfache Mathematik, Konzentration und Sorgfalt, Sprachverständnis und Fragen zu Organisation und Patientenumgang. jobreif bildet diese Module ab und ergänzt Fachfragen aus deiner Anzeige."
+        },
+        {
+          "q": "Bereitet mich das auch aufs Gespräch vor?",
+          "a": "Ja – du bekommst offene Fragen und KI-Feedback zu deinen Antworten, ideal für das Gespräch in Praxis oder Klinik."
+        },
+        {
+          "q": "Muss ich etwas installieren?",
+          "a": "Nein. jobreif läuft direkt im Browser auf Handy und Computer, ganz ohne Installation."
+        }
       ],
       "lastmod": "2026-06-27"
+    },
+    {
+      "slug": "polizei",
+      "beruf": "Polizei / Polizeivollzugsdienst",
+      "title": "Einstellungstest Polizei / Polizeivollzugsdienst üben",
+      "description": "Einstellungstest Polizei üben: Fachwissen, Sprachlogik, Zahlenreihen, Konzentration und Figuren trainieren – kostenlos mit KI-Feedback, unabhängig vom Sporttest.",
+      "intro": "Bereite dich gezielt auf den computergestützten Auswahltest der Polizei vor: jobreif erstellt aus einer echten Stellenanzeige einen passgenauen Test und ergänzt ihn um die typischen Eignungstest-Module aus Allgemeinwissen, Sprachlogik, Zahlen und Konzentration. Sporttest und Assessment-Center gehören separat dazu – hier übst du den kognitiven Teil des Auswahlverfahrens.",
+      "testTypes": [
+        "fachwissen",
+        "sprachlogik",
+        "zahlenreihe",
+        "konzentration",
+        "figural"
+      ],
+      "samples": [
+        {
+          "type": "sprachlogik",
+          "question": "Arzt verhält sich zu Krankheit wie Polizist zu …?",
+          "options": [
+            "Uniform",
+            "Verbrechen",
+            "Streife",
+            "Gesetz"
+          ],
+          "answer": "Verbrechen – ein Arzt bekämpft die Krankheit, ein Polizist das Verbrechen (jeweils das, wogegen sie vorgehen)."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 2, 5, 11, 23, 47, ?",
+          "options": [
+            "94",
+            "95",
+            "96",
+            "98"
+          ],
+          "answer": "95 – jede Zahl wird verdoppelt und plus 1 gerechnet (2→5→11→23→47→95)."
+        },
+        {
+          "type": "konzentration",
+          "question": "Zähle, wie oft der Buchstabe 'P' in dieser Reihe vorkommt: P R F P K L P F R P L K P F P R K P F P",
+          "answer": "8 – der Buchstabe P kommt in der Reihe genau achtmal vor."
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Handschellen verhalten sich zu Festnahme wie Blaulicht zu …?",
+          "options": [
+            "Werkstatt",
+            "Einsatzfahrt",
+            "Tankstelle",
+            "Ampel"
+          ],
+          "answer": "Einsatzfahrt – Handschellen gehören zur Festnahme, so wie das Blaulicht zur Einsatzfahrt gehört."
+        }
+      ],
+      "tipps": [
+        "Wiederhole Grundwissen zu Staatsaufbau, Grundgesetz und Grundrechten sowie aktuelles politisches Zeitgeschehen – das sind klassische Allgemeinwissensfragen im Auswahlverfahren.",
+        "Übe Rechtschreibung und Zeichensetzung aktiv, etwa mit Diktaten und gezielter Fehlersuche, da viele Auswahlverfahren einen sprachlichen Diktatteil enthalten.",
+        "Trainiere Kopfrechnen, Dreisatz- und Prozentaufgaben unter Zeitdruck sowie Merkfähigkeit für Gesichter, Namen und Personenbeschreibungen – beides wird in vielen Polizei-Auswahltests gezielt abgefragt."
+      ],
+      "faq": [
+        {
+          "q": "Was wird im Einstellungstest der Polizei geprüft?",
+          "a": "Typisch sind Allgemeinwissen (Staatsaufbau, Grundgesetz, aktuelles Zeitgeschehen), Deutsch (Rechtschreibung, Zeichensetzung, Diktat), Logik und Mathe (Zahlenreihen, Dreisatz, Prozentrechnen) sowie Konzentration und teils Merkfähigkeit. jobreif übt diese Aufgabentypen und stellt zusätzlich Fachfragen aus der jeweiligen Stellenanzeige bereit. Das offizielle Auswahlverfahren der Polizei ist ein standardisiertes, vertrauliches Verfahren der jeweiligen Behörde – der echte Testbogen wird hier nicht abgebildet, und ein Bestehen wird nicht garantiert."
+        },
+        {
+          "q": "Ist das Üben kostenlos?",
+          "a": "Die allgemeinen Module wie Sprachlogik, Zahlenreihen und Konzentration kannst du kostenlos und ohne Anmeldung üben. Für einen kompletten, stellenbezogenen Test mit Fachfragen aus einer echten Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
+        },
+        {
+          "q": "Ersetzt jobreif den Sporttest oder das Assessment-Center?",
+          "a": "Nein. jobreif bereitet dich auf die kognitiven Testteile vor – Allgemeinwissen, Deutsch, Logik und Konzentration. Sporttest, Assessment-Center-Übungen und die ärztliche Eignungsuntersuchung sind eigene Verfahrensschritte, die du separat trainierst bzw. wahrnimmst."
+        }
+      ],
+      "lastmod": "2026-07-14"
+    },
+    {
+      "slug": "zoll",
+      "beruf": "Zoll",
+      "title": "Einstellungstest Zoll üben",
+      "description": "Einstellungstest Zoll üben: Fachwissen, Sprachlogik, Zahlenreihen, Konzentration und Figuren trainieren – kostenlos mit KI-Feedback aus echter Stellenanzeige.",
+      "intro": "Bereite dich gezielt auf das schriftliche Auswahlverfahren des Zolls vor. jobreif erstellt aus einer echten Stellenanzeige einen passgenauen Test und ergänzt ihn um die typischen Eignungstest-Module wie Sprachlogik, Zahlenreihen und Konzentration.",
+      "testTypes": [
+        "fachwissen",
+        "sprachlogik",
+        "zahlenreihe",
+        "konzentration",
+        "figural"
+      ],
+      "samples": [
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 5, 10, 20, 40, ?",
+          "options": [
+            "60",
+            "70",
+            "80",
+            "100"
+          ],
+          "answer": "80 – jede Zahl ist das Doppelte der vorigen (Faktor 2)."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 2, 5, 11, 23, ?",
+          "options": [
+            "44",
+            "45",
+            "47",
+            "50"
+          ],
+          "answer": "47 – jede Zahl wird verdoppelt und dann um 1 erhöht (2×2+1=5, 5×2+1=11, 11×2+1=23, 23×2+1=47)."
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Einfuhr verhält sich zu Ausfuhr wie Kauf zu …?",
+          "options": [
+            "Verkauf",
+            "Preis",
+            "Ware",
+            "Vertrag"
+          ],
+          "answer": "Verkauf – Einfuhr/Ausfuhr und Kauf/Verkauf sind jeweils Gegensatzpaare wirtschaftlicher Vorgänge."
+        },
+        {
+          "type": "konzentration",
+          "question": "Zähle, wie oft der Buchstabe „Z“ in dieser Zeichenfolge vorkommt: ZOLLZONE ZWISCHEN ZWEI ZONEN",
+          "answer": "5 – der Buchstabe Z kommt in ZOLLZONE zweimal sowie je einmal in ZWISCHEN, ZWEI und ZONEN vor."
+        }
+      ],
+      "tipps": [
+        "Wiederhole die Kernaufgaben des Zolls (Warenverkehr, Schmuggelbekämpfung, Schwarzarbeit, Verbraucherschutz) und Allgemeinwissen zu Staat, Verwaltung, EU und Wirtschaft – typische Fachthemen im Auswahlverfahren.",
+        "Übe Prozent-, Zins- und Dreisatzrechnung, etwa zur Berechnung von Zollwert und Abgaben – solche Rechenaufgaben kommen im schriftlichen Test häufig vor.",
+        "Trainiere logisches Schlussfolgern aus kurzen Vorschriften- und Falltexten sowie Konzentrationsaufgaben unter Zeitdruck, da im echten Verfahren Tempo und Sorgfalt gleichermaßen zählen."
+      ],
+      "faq": [
+        {
+          "q": "Was wird im Einstellungstest beim Zoll geprüft?",
+          "a": "Das schriftliche Auswahlverfahren des Zolls prüft üblicherweise Allgemeinwissen zu Staat, Verwaltung, EU und Wirtschaft, Deutschkenntnisse (Rechtschreibung, Grammatik, Textverständnis) sowie mathematisches und logisches Denken. jobreif bildet beides ab: stellenspezifische Fachfragen aus einer echten Anzeige plus die üblichen Eignungstest-Module wie Sprachlogik, Zahlenreihen und Konzentration."
+        },
+        {
+          "q": "Ist das der offizielle Einstellungstest des Zolls?",
+          "a": "Nein. Das echte Auswahlverfahren ist eine standardisierte, vertrauliche Amtsprüfung der Zollverwaltung. jobreif bereitet dich auf die typischen Aufgabentypen vor, ersetzt den offiziellen Test aber nicht und garantiert kein Bestehen."
+        },
+        {
+          "q": "Kostet das Üben etwas?",
+          "a": "Die allgemeinen Module wie Zahlenreihen, Konzentration und Figuren übst du kostenlos und ohne Anmeldung. Für einen kompletten, auf eine konkrete Zoll-Stellenanzeige zugeschnittenen Test mit KI-Feedback genügt eine kostenlose Anmeldung."
+        }
+      ],
+      "lastmod": "2026-07-14"
+    },
+    {
+      "slug": "elektroniker-betriebstechnik",
+      "beruf": "Elektroniker für Betriebstechnik",
+      "title": "Einstellungstest Elektroniker für Betriebstechnik üben",
+      "description": "Einstellungstest Elektroniker für Betriebstechnik üben: Fachfragen zu Strom & Schaltplänen plus Zahlenreihen, Sprachlogik, Figuren – kostenlos mit KI-Feedback.",
+      "intro": "Bereite dich gezielt auf den Einstellungstest als Elektroniker für Betriebstechnik vor. jobreif erzeugt aus einer echten Stellenanzeige einen passgenauen Test mit elektrotechnischen Fachfragen – ergänzt um die typischen Eignungstest-Module wie technisches Rechnen und figurale Logik, die Industriebetriebe im Auswahlverfahren einsetzen.",
+      "testTypes": [
+        "fachwissen",
+        "zahlenreihe",
+        "sprachlogik",
+        "figural"
+      ],
+      "samples": [
+        {
+          "type": "zahlenreihe",
+          "question": "In einer Reihe verdoppelt sich die Spannung von Stufe zu Stufe: 6, 12, 24, 48, ? V",
+          "options": [
+            "72",
+            "84",
+            "96",
+            "108"
+          ],
+          "answer": "96 – jede Spannung ist doppelt so hoch wie die vorherige (Verdopplung: 48 × 2 = 96)."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 3, 6, 11, 18, ?",
+          "options": [
+            "25",
+            "26",
+            "27",
+            "29"
+          ],
+          "answer": "27 – die Differenzen steigen jeweils um 2 (+3, +5, +7, +9): 18 + 9 = 27."
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Volt verhält sich zu Spannung wie Ampere zu …?",
+          "options": [
+            "Widerstand",
+            "Strom",
+            "Leistung",
+            "Frequenz"
+          ],
+          "answer": "Strom – Volt ist die Einheit der elektrischen Spannung, Ampere die Einheit der elektrischen Stromstärke."
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Sicherung verhält sich zu Überstrom wie Isolierung zu …?",
+          "options": [
+            "Blindstrom",
+            "Stromschlag",
+            "Spannungsabfall",
+            "Frequenz"
+          ],
+          "answer": "Stromschlag – eine Sicherung schützt vor Überstrom, eine Isolierung schützt Personen vor dem Berühren spannungsführender Teile und damit vor Stromschlag."
+        }
+      ],
+      "tipps": [
+        "Beherrsche das Ohmsche Gesetz (U = R × I) sicher und übe, Widerstände in Reihen- und Parallelschaltung zu berechnen – das sind Klassiker in Fachfragen.",
+        "Präge dir gängige Schaltplansymbole und die fünf Sicherheitsregeln ein; Arbeitsschutz an elektrischen Anlagen wird in fast jedem Auswahltest abgefragt.",
+        "Trainiere Zahlenreihen und figurale Matrizen unter Zeitdruck sowie das schnelle Umrechnen von Einheiten (mA/A, kW/W, mm²) – das spart im echten Test wertvolle Minuten."
+      ],
+      "faq": [
+        {
+          "q": "Was wird im Einstellungstest für Elektroniker für Betriebstechnik geprüft?",
+          "a": "Typisch sind Fachfragen zu elektrotechnischen Grundlagen (Ohmsches Gesetz, Schaltungen, Schaltpläne, Arbeitsschutz) kombiniert mit allgemeinen Eignungstest-Modulen wie Zahlenreihen, Sprachlogik und figuralen Matrizen. jobreif deckt aus einer echten Stellenanzeige die stellenspezifischen Fachfragen ab und ergänzt die üblichen Eignungsmodule."
+        },
+        {
+          "q": "Kostet das Üben etwas?",
+          "a": "Die allgemeinen Eignungsmodule wie Zahlenreihen, Konzentration und Figuren übst du kostenlos und ohne Anmeldung. Für einen kompletten, stellenbezogenen Test mit Fachfragen aus einer Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
+        },
+        {
+          "q": "Läuft das Üben direkt im Browser?",
+          "a": "Ja, du brauchst keine Software zu installieren. Du fügst eine Stellenanzeige ein oder wählst allgemeine Übungsmodule und bearbeitest die Aufgaben direkt im Browser – am Rechner wie am Smartphone."
+        }
+      ],
+      "lastmod": "2026-07-14"
+    },
+    {
+      "slug": "anlagenmechaniker-shk",
+      "beruf": "Anlagenmechaniker für Sanitär-, Heizungs- und Klimatechnik",
+      "title": "Einstellungstest Anlagenmechaniker für Sanitär-, Heizungs- und Klimatechnik üben",
+      "description": "Einstellungstest Anlagenmechaniker SHK üben: Fachwissen aus der Stellenanzeige, technisches Rechnen, Zahlenreihen und Konzentration – kostenlos mit KI-Feedback.",
+      "intro": "Bereite dich gezielt auf den Einstellungstest als Anlagenmechaniker für Sanitär-, Heizungs- und Klimatechnik vor. jobreif erzeugt aus einer echten Stellenanzeige einen passgenauen Test – inklusive der typischen Eignungstest-Module wie Zahlenreihen und Konzentration, auf die Handwerksbetriebe bei der Auswahl achten.",
+      "testTypes": [
+        "fachwissen",
+        "zahlenreihe",
+        "konzentration",
+        "figural"
+      ],
+      "samples": [
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 2, 6, 18, 54, ?",
+          "options": [
+            "108",
+            "152",
+            "162",
+            "172"
+          ],
+          "answer": "162 – jede Zahl wird mit 3 multipliziert (2×3=6, 6×3=18, 18×3=54, 54×3=162)."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 4, 7, 12, 19, ?",
+          "options": [
+            "24",
+            "26",
+            "28",
+            "30"
+          ],
+          "answer": "28 – die Differenz zwischen den Zahlen steigt jeweils um 2 (3, 5, 7, 9), also 19+9=28."
+        },
+        {
+          "type": "konzentration",
+          "question": "Zähle, wie oft der Buchstabe „R“ in dieser Zeichenfolge vorkommt: R2 K7 R9 M3 R5 T1 R8 K2 R4 M6",
+          "answer": "5"
+        },
+        {
+          "type": "konzentration",
+          "question": "Wie oft kommt die exakte Zeichenfolge „DN20“ in dieser Reihe vor (Groß-/Kleinschreibung und Zeichen beachten): DN20 DN2O DN20 Dn20 DN25 DN20 dn20 DN20",
+          "answer": "4 – exakte Treffer sind die 1., 3., 6. und 8. Angabe; die übrigen weichen durch Buchstabe „O“ statt Ziffer „0“, Kleinschreibung oder andere Maße ab."
+        }
+      ],
+      "tipps": [
+        "Frische dein Wissen zu Rohrleitungssystemen, Fittings und Verbindungstechniken auf – das gehört zu den häufigsten Fachthemen im Test.",
+        "Übe technisches Rechnen zu Volumen, Fläche und Druck an Rohren und Behältern ohne Taschenrechner, damit du im Test sicher und schnell rechnest.",
+        "Arbeite Zählaufgaben zur Konzentration sorgfältig statt hastig ab – genau das steht bei Handwerksbetrieben stellvertretend für sauberes, präzises Arbeiten."
+      ],
+      "faq": [
+        {
+          "q": "Was wird im Einstellungstest für Anlagenmechaniker SHK geprüft?",
+          "a": "Meist eine Mischung aus fachlichem Grundwissen (Rohrleitungen, Werkstoffe, Wärmelehre), technischem Rechnen (Volumen, Fläche, Druck) sowie logischem Denken und Konzentration. jobreif bildet beides ab: stellenspezifische Fachfragen plus standardisierte Eignungstest-Module."
+        },
+        {
+          "q": "Hilft das auch für das Vorstellungsgespräch?",
+          "a": "Ja. Die aus der Stellenanzeige erzeugten Fachfragen zeigen dir, welche Themen der Betrieb wahrscheinlich anspricht – zum Beispiel Materialkunde oder Trinkwasserhygiene. Für einen kompletten, stellenbezogenen Test genügt eine kostenlose Anmeldung."
+        },
+        {
+          "q": "Läuft das Üben im Browser?",
+          "a": "Ja, du brauchst keine Software zu installieren. Die allgemeinen Module wie Zahlenreihen und Konzentration kannst du sofort und ohne Anmeldung im Browser starten."
+        }
+      ],
+      "lastmod": "2026-07-14"
+    },
+    {
+      "slug": "zerspanungsmechaniker",
+      "beruf": "Zerspanungsmechaniker",
+      "title": "Einstellungstest Zerspanungsmechaniker üben",
+      "description": "Einstellungstest Zerspanungsmechaniker üben: Fachwissen zu Drehen, Fräsen und Toleranzen plus Zahlenreihen, Konzentration und Figuren – kostenlos mit KI-Feedback.",
+      "intro": "Bereite dich gezielt auf den Einstellungstest als Zerspanungsmechaniker vor. jobreif erstellt aus einer echten Stellenanzeige einen passgenauen Test und ergänzt ihn um die typischen Eignungstest-Module wie Zahlenreihen, Konzentration und figurale Aufgaben, die in der Metallbearbeitung häufig geprüft werden.",
+      "testTypes": [
+        "fachwissen",
+        "zahlenreihe",
+        "konzentration",
+        "figural"
+      ],
+      "samples": [
+        {
+          "type": "zahlenreihe",
+          "question": "Eine Drehzahl-Reihe verdoppelt sich schrittweise: 400, 800, 1600, 3200, ?",
+          "options": [
+            "4800",
+            "5600",
+            "6400",
+            "7200"
+          ],
+          "answer": "6400 – jede Zahl ist doppelt so groß wie die vorige (geometrische Folge, Faktor 2)."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 5, 8, 12, 17, 23, ?",
+          "options": [
+            "28",
+            "29",
+            "30",
+            "31"
+          ],
+          "answer": "30 – die Differenz zwischen den Zahlen steigt jeweils um 1 (+3, +4, +5, +6, +7)."
+        },
+        {
+          "type": "konzentration",
+          "question": "Zähle, wie oft der Buchstabe 'S' in dieser Zeichenreihe vorkommt: 5 S 5 S S 8 5 S 3 S 5 S",
+          "answer": "6 – das 'S' kommt an sechs Positionen in der Reihe vor."
+        },
+        {
+          "type": "konzentration",
+          "question": "Wie oft taucht die Zahl '50' in dieser Maßreihe auf (Angaben in mm): 50 52 50 48 50 55 50 49 51 50",
+          "answer": "5 – die Zahl 50 erscheint an fünf Stellen der Reihe."
+        }
+      ],
+      "tipps": [
+        "Wiederhole die Grundlagen von Drehen, Fräsen und Bohren sowie die Berechnung von Schnittgeschwindigkeit und Drehzahl – das sind Kernfragen im Fachteil.",
+        "Übe das Lesen von Toleranzen und Passungen nach ISO-System sowie Grundwissen zu Werkstoffen wie Stahl, Aluminium und Hartmetall, damit Maßangaben schnell sitzen.",
+        "Trainiere Zahlenreihen und Konzentrationsaufgaben unter Zeitdruck – im Testcenter zählt neben rechnerischer Sicherheit vor allem die Sorgfalt, die auch an der Maschine gefragt ist."
+      ],
+      "faq": [
+        {
+          "q": "Was wird im Einstellungstest für Zerspanungsmechaniker geprüft?",
+          "a": "Meist eine Mischung aus Fachwissen (Fertigungsverfahren wie Drehen, Fräsen, Bohren, Schnittwerte, Toleranzen, Werkstoffkunde), technischem Rechnen sowie klassischen Eignungstest-Modulen wie Zahlenreihen, Konzentration und figuralen Matrizen. jobreif bildet beides ab: stellenspezifische Fachfragen aus der Anzeige plus die üblichen Testformate."
+        },
+        {
+          "q": "Kostet das Üben etwas?",
+          "a": "Die allgemeinen Eignungsmodule wie Zahlenreihen und Konzentration übst du kostenlos und ohne Anmeldung. Für einen kompletten, stellenbezogenen Test aus einer echten Stellenanzeige mit KI-Feedback reicht eine kostenlose Anmeldung."
+        },
+        {
+          "q": "Läuft der Test im Browser?",
+          "a": "Ja, du brauchst keine zusätzliche Software – der Test läuft direkt im Browser, am Rechner genauso wie am Smartphone."
+        }
+      ],
+      "lastmod": "2026-07-14"
+    },
+    {
+      "slug": "fachkraft-lagerlogistik",
+      "beruf": "Fachkraft für Lagerlogistik",
+      "title": "Einstellungstest Fachkraft für Lagerlogistik üben",
+      "description": "Einstellungstest Fachkraft für Lagerlogistik üben: Zahlenreihen, Konzentration, Sprachlogik und Fachfragen aus echten Stellenanzeigen – kostenlos mit KI-Feedback.",
+      "intro": "Bereite dich gezielt auf den Einstellungstest als Fachkraft für Lagerlogistik vor: jobreif erzeugt aus einer echten Stellenanzeige einen passgenauen Test und ergänzt ihn um die typischen Eignungstest-Module wie Zahlenreihen, Konzentration und Sprachlogik.",
+      "testTypes": [
+        "fachwissen",
+        "zahlenreihe",
+        "konzentration",
+        "sprachlogik"
+      ],
+      "samples": [
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 120, 135, 150, 165, ?",
+          "options": [
+            "175",
+            "180",
+            "185",
+            "190"
+          ],
+          "answer": "180 – jede Zahl ist 15 mehr als die vorige (konstante Zunahme, wie bei gleichmäßiger Palettenbestückung pro Stunde)."
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Kommissionierer verhält sich zu Pickliste wie Fahrer zu …?",
+          "options": [
+            "Lieferschein",
+            "Frachtbrief",
+            "Tourenplan",
+            "Ladung"
+          ],
+          "answer": "Tourenplan – der Kommissionierer arbeitet nach der Pickliste, der Fahrer nach dem Tourenplan; beide sind die Arbeitsanweisung für die jeweilige Tätigkeit."
+        },
+        {
+          "type": "konzentration",
+          "question": "Zähle, wie oft der Buchstabe „L“ in dieser Zeile vorkommt: LKW LAGER PALETTE LIEFERUNG REGAL LKW LADUNG",
+          "answer": "7"
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Ein Lagerbestand sinkt durch Auslieferungen wöchentlich um 20 %: 500, 400, 320, ?",
+          "options": [
+            "250",
+            "256",
+            "260",
+            "288"
+          ],
+          "answer": "256 – jede Zahl entspricht 80 % der vorigen (100 % minus 20 % Abgang); 320 × 0,8 = 256."
+        }
+      ],
+      "tipps": [
+        "Übe Dreisatz- und Prozentrechnung mit typischen Lagerkennzahlen (Bestand, Umschlaghäufigkeit, Auslastung) – im Test wird das oft unter Zeitdruck abgefragt.",
+        "Frische dein Prozesswissen entlang der Lagerkette auf: Wareneingang mit Lieferschein- sowie Mengen- und Qualitätskontrolle, Kommissionierverfahren wie Pick-by-Liste und Wegeoptimierung, Inventur mit Soll-Ist-Abgleich.",
+        "Wiederhole Grundwissen zu Ladungssicherung und Gefahrgut-Kennzeichnung und trainiere nebenbei Konzentrationsaufgaben – beides prüft die Sorgfalt, die im Lageralltag zählt."
+      ],
+      "faq": [
+        {
+          "q": "Was wird im Einstellungstest für Fachkraft für Lagerlogistik geprüft?",
+          "a": "Typisch ist eine Mischung aus Fachwissen zum Lagerprozess (Wareneingang, Kommissionierung, Ladungssicherung, Lagerkennzahlen) und allgemeinen Eignungstest-Modulen wie Zahlenreihen, Konzentration und Sprachlogik. jobreif deckt beides ab: stellenspezifische Fachfragen aus der echten Anzeige plus die üblichen Testmodule."
+        },
+        {
+          "q": "Kostet das Üben etwas?",
+          "a": "Die allgemeinen Module wie Zahlenreihen und Konzentration kannst du kostenlos und ohne Anmeldung üben. Für einen kompletten, stellenbezogenen Test aus einer echten Anzeige mit KI-Feedback reicht eine kostenlose Anmeldung."
+        },
+        {
+          "q": "Brauche ich eine konkrete Stellenanzeige?",
+          "a": "Am besten funktioniert es mit einer echten Anzeige als Text oder Link, weil die Fachfragen direkt daraus abgeleitet werden. Es geht aber auch mit einer allgemeinen Beschreibung der Position."
+        }
+      ],
+      "lastmod": "2026-07-14"
+    },
+    {
+      "slug": "kaufmann-bueromanagement",
+      "beruf": "Kaufmann für Büromanagement",
+      "title": "Einstellungstest Kaufmann für Büromanagement üben",
+      "description": "Einstellungstest Kaufmann für Büromanagement üben: Rechtschreibung, kaufmännisches Rechnen, Sprachlogik, Zahlenreihen und Konzentration – kostenlos mit KI-Feedback.",
+      "intro": "Bereite dich gezielt auf den Einstellungstest als Kaufmann für Büromanagement vor. jobreif macht aus einer echten Stellenanzeige einen passgenauen Test zu Geschäftskorrespondenz, kaufmännischem Rechnen und Büroorganisation – ergänzt um die typischen Eignungstest-Module Sprachlogik, Zahlenreihen und Konzentration.",
+      "testTypes": [
+        "fachwissen",
+        "sprachlogik",
+        "zahlenreihe",
+        "konzentration"
+      ],
+      "samples": [
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 5, 10, 20, 40, ?",
+          "options": [
+            "60",
+            "70",
+            "80",
+            "100"
+          ],
+          "answer": "80 – jede Zahl wird verdoppelt (5→10→20→40→80)."
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Rechnung verhält sich zu Zahlungseingang wie Bestellung zu …?",
+          "options": [
+            "Angebot",
+            "Lieferung",
+            "Mahnung",
+            "Rabatt"
+          ],
+          "answer": "Lieferung – eine Rechnung wird durch den Zahlungseingang beglichen, eine Bestellung wird durch die Lieferung erfüllt."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 3, 7, 11, 15, ?",
+          "options": [
+            "17",
+            "18",
+            "19",
+            "21"
+          ],
+          "answer": "19 – die Reihe steigt jeweils um 4 (3, 7, 11, 15, 19)."
+        },
+        {
+          "type": "konzentration",
+          "question": "Zähle, wie oft der Buchstabe 'T' vorkommt: BÜROMANAGEMENT ORGANISIERT TERMINE UND AKTEN",
+          "answer": "4 – je ein T in BÜROMANAGEMENT, ORGANISIERT, TERMINE und AKTEN."
+        }
+      ],
+      "tipps": [
+        "Übe Rechtschreibung und Kommasetzung in Geschäftstexten sowie den Aufbau von Geschäftsbriefen und E-Mails nach DIN 5008 – das ist ein häufiger Prüfschwerpunkt.",
+        "Beherrsche kaufmännisches Rechnen sicher: Rabatt, Skonto und Mehrwertsteuer solltest du im Kopf oder mit einfachen Formeln schnell berechnen können.",
+        "Trainiere Konzentrationsaufgaben unter Zeitdruck – sie prüfen die Sorgfalt, die bei Terminkoordination, Ablage und Büroorganisation im Alltag gefragt ist."
+      ],
+      "faq": [
+        {
+          "q": "Was wird im Einstellungstest für Kaufleute für Büromanagement geprüft?",
+          "a": "Typisch sind Rechtschreibung und Kommasetzung in Geschäftstexten, kaufmännisches Rechnen (Rabatt, Skonto, Mehrwertsteuer), Wissen zu Büroorganisation und DIN 5008 sowie allgemeine Eignungstest-Module wie Sprachlogik, Zahlenreihen und Konzentration. jobreif deckt beide Seiten ab: stellenspezifische Fachfragen plus die Standardmodule."
+        },
+        {
+          "q": "Ist das Üben kostenlos?",
+          "a": "Die allgemeinen Module Sprachlogik, Zahlenreihen und Konzentration übst du kostenlos und ohne Anmeldung. Für einen kompletten, auf deine Stellenanzeige zugeschnittenen Test mit KI-Feedback reicht eine kostenlose Anmeldung."
+        },
+        {
+          "q": "Läuft der Test einfach im Browser?",
+          "a": "Ja, du brauchst keine Software – Text oder Link der Stellenanzeige einfügen, Test starten und direkt im Browser bearbeiten. Am Ende bekommst du KI-Feedback zu deinen Antworten."
+        }
+      ],
+      "lastmod": "2026-07-14"
+    },
+    {
+      "slug": "steuerfachangestellte",
+      "beruf": "Steuerfachangestellte",
+      "title": "Einstellungstest Steuerfachangestellte üben",
+      "description": "Einstellungstest Steuerfachangestellte üben: Fachfragen aus echten Stellenanzeigen plus Zahlenreihen, Sprachlogik und Konzentration – kostenlos und mit KI-Feedback.",
+      "intro": "Bereite dich gezielt auf den Einstellungstest als Steuerfachangestellte:r vor. jobreif erzeugt aus einer echten Stellenanzeige einen passgenauen Test zu Steuern und Buchführung – inklusive der typischen Eignungstest-Module, die Steuerkanzleien bei der Auswahl einsetzen.",
+      "testTypes": [
+        "fachwissen",
+        "zahlenreihe",
+        "sprachlogik",
+        "konzentration"
+      ],
+      "samples": [
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 7, 14, 21, 28, ?",
+          "options": [
+            "30",
+            "34",
+            "35",
+            "42"
+          ],
+          "answer": "35 – jede Zahl ist um 7 größer als die vorige."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Ein Rechnungsbetrag wird in gleichen Schritten reduziert dargestellt. Setze die Reihe fort: 100, 92, 84, 76, ?",
+          "options": [
+            "64",
+            "66",
+            "68",
+            "70"
+          ],
+          "answer": "68 – jede Zahl ist um 8 kleiner als die vorige (konstante Differenz von 8)."
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Einkommensteuer verhält sich zu natürlichen Personen wie Körperschaftsteuer zu …?",
+          "options": [
+            "Kapitalgesellschaften",
+            "Personengesellschaften",
+            "Freiberuflern",
+            "Selbstständigen"
+          ],
+          "answer": "Kapitalgesellschaften – Körperschaftsteuer wird von juristischen Personen wie GmbH oder AG erhoben, so wie Einkommensteuer von natürlichen Personen."
+        },
+        {
+          "type": "konzentration",
+          "question": "Buchhaltungssymbole für Soll (S) und Haben (H) wurden in einer Zeile abgetippt. Zähle, wie oft „S“ (für Soll) vorkommt: S H S S H S H H S S H S",
+          "answer": "7 – die Zeile enthält siebenmal ein S (Soll) und fünfmal ein H (Haben)."
+        }
+      ],
+      "tipps": [
+        "Frische dein Grundwissen zu Steuerarten (Einkommen-, Umsatz-, Gewerbesteuer) und einfache Buchungssätze in Soll und Haben auf – das sind häufige Fachthemen.",
+        "Übe Prozent- und Dreisatzrechnung mit Steuer- und Skontobezug im Kopf, damit du unter Zeitdruck sicher rechnest.",
+        "Trainiere genaues Zahlen- und Textabgleichen: Im Berufsalltag und im Test entscheidet oft, wer Fehler in Rechnungen und Tabellen zuverlässig findet."
+      ],
+      "faq": [
+        {
+          "q": "Was wird im Einstellungstest für Steuerfachangestellte geprüft?",
+          "a": "Typisch sind Grundwissen zu Steuerarten und Buchführung, Prozent- und Dreisatzrechnung sowie Sorgfalt beim Zahlen- und Textabgleich – dazu oft allgemeine Eignungsmodule wie Zahlenreihen und Sprachlogik. jobreif bildet beides ab: stellenspezifische Fachfragen aus der echten Anzeige plus die gängigen Eignungstest-Module."
+        },
+        {
+          "q": "Kostet das Üben etwas?",
+          "a": "Die allgemeinen Eignungsmodule (Zahlenreihen, Konzentration, Sprachlogik) übst du kostenlos und ohne Anmeldung. Für einen kompletten, stellenbezogenen Test aus einer echten Anzeige mit KI-Feedback genügt eine kostenlose Anmeldung."
+        },
+        {
+          "q": "Läuft der Test im Browser?",
+          "a": "Ja, du brauchst keine Software – jobreif läuft direkt im Browser, am Rechner wie am Smartphone. Du fügst eine Stellenanzeige ein und übst danach die passenden Module direkt online."
+        }
+      ],
+      "lastmod": "2026-07-14"
+    },
+    {
+      "slug": "notfallsanitaeter",
+      "beruf": "Notfallsanitäter",
+      "title": "Einstellungstest Notfallsanitäter üben",
+      "description": "Einstellungstest Notfallsanitäter online üben: Fachwissen zu Vitalwerten und Dosierung, Sprachlogik, Zahlenreihen und Konzentration – mit KI-Feedback, kostenlos.",
+      "intro": "Bereite dich gezielt auf den Einstellungstest deiner Rettungsdienstschule oder Hilfsorganisation als Notfallsanitäter:in vor. jobreif erzeugt aus einer echten Stellenanzeige einen passgenauen Test mit Fachfragen zu Vitalwerten, Dosierung und Erstversorgung – ergänzt um die typischen Eignungstest-Module Sprachlogik, Zahlenreihen und Konzentration.",
+      "testTypes": [
+        "fachwissen",
+        "sprachlogik",
+        "zahlenreihe",
+        "konzentration"
+      ],
+      "samples": [
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 2, 5, 11, 23, ?",
+          "options": [
+            "41",
+            "44",
+            "47",
+            "50"
+          ],
+          "answer": "47 – jede Zahl wird verdoppelt und plus 1 gerechnet (23 × 2 + 1 = 47)."
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Fieber verhält sich zu Thermometer wie Blutdruck zu …?",
+          "options": [
+            "Blutdruckmessgerät",
+            "Stethoskop",
+            "Spritze",
+            "Verband"
+          ],
+          "answer": "Blutdruckmessgerät – das Thermometer misst die Körpertemperatur (Fieber), das Blutdruckmessgerät analog den Blutdruck."
+        },
+        {
+          "type": "konzentration",
+          "question": "Zähle, wie oft die Ziffer 4 in dieser Reihe vorkommt: 4 7 4 9 2 4 6 4 1 8 4 3 4",
+          "answer": "6"
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 96, 48, 24, 12, ?",
+          "options": [
+            "4",
+            "6",
+            "8",
+            "10"
+          ],
+          "answer": "6 – jede Zahl wird halbiert (12 : 2 = 6)."
+        }
+      ],
+      "tipps": [
+        "Wiederhole Vitalwerte-Normbereiche (Puls, Blutdruck, Atemfrequenz) sowie das ABCDE-Schema – das sind die häufigsten Fachfragen-Themen.",
+        "Übe Dosierungs- und Prozentrechnen (mg/kg, Tropfgeschwindigkeit) im Kopf und ohne Taschenrechner, denn im echten Test zählt Tempo genauso wie Genauigkeit.",
+        "Plane über den Eignungstest hinaus: Sporttest und Assessment-Tag mit Praxisaufgaben und Gesprächsrunden gehören bei den meisten Trägern fest zum Auswahlverfahren dazu."
+      ],
+      "faq": [
+        {
+          "q": "Was wird im Einstellungstest für Notfallsanitäter geprüft?",
+          "a": "Rettungsdienstschulen und Hilfsorganisationen prüfen meist medizinisches Grundwissen (Anatomie, Vitalwerte, Dosierungsrechnen, ABCDE-Schema) zusammen mit allgemeinen Eignungsmodulen wie Sprachlogik, Zahlenreihen und Konzentration. jobreif bildet aus einer echten Stellenanzeige stellenspezifische Fachfragen plus diese Standardmodule ab."
+        },
+        {
+          "q": "Ist das Üben kostenlos?",
+          "a": "Die allgemeinen Module Sprachlogik, Zahlenreihen und Konzentration übst du kostenlos und ohne Anmeldung. Für einen kompletten, stellenbezogenen Test mit Fachfragen aus einer Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
+        },
+        {
+          "q": "Ersetzt das Üben den Sporttest oder Assessment-Tag?",
+          "a": "Nein. jobreif bereitet dich auf den schriftlichen bzw. digitalen Eignungstest vor. Sporttest, Sanitäter-Praxisaufgaben und Auswahlgespräche am Assessment-Tag sind eigene Bausteine, die zusätzlich dazugehören und hier nicht abgedeckt werden."
+        }
+      ],
+      "lastmod": "2026-07-14"
+    },
+    {
+      "slug": "erzieher",
+      "beruf": "Erzieher / Erzieherin",
+      "title": "Einstellungstest Erzieher / Erzieherin üben",
+      "description": "Einstellungstest Erzieher üben: pädagogisches Fachwissen, Sprachlogik, Konzentration und Zahlenreihen aus echten Stellenanzeigen – kostenlos mit KI-Feedback.",
+      "intro": "Bereite dich gezielt auf den Einstellungstest beim Auswahlverfahren für Erzieher und Erzieherinnen vor. jobreif erstellt aus einer echten Stellenanzeige einen passgenauen Test und ergänzt ihn um die typischen Eignungstest-Module, mit denen Fachschulen und Träger Sprachkompetenz, pädagogisches Grundwissen und Beobachtungsfähigkeit prüfen.",
+      "testTypes": [
+        "fachwissen",
+        "sprachlogik",
+        "konzentration",
+        "zahlenreihe"
+      ],
+      "samples": [
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 3, 5, 9, 15, 23, ?",
+          "options": [
+            "30",
+            "31",
+            "33",
+            "35"
+          ],
+          "answer": "33 – die Differenz zwischen den Zahlen wächst jeweils um 2 (2, 4, 6, 8, 10)."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 2, 4, 8, 16, ?",
+          "options": [
+            "24",
+            "28",
+            "30",
+            "32"
+          ],
+          "answer": "32 – jede Zahl wird verdoppelt."
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Baby verhält sich zu Krabbeln wie Kleinkind zu …?",
+          "options": [
+            "Laufen",
+            "Sitzen",
+            "Greifen",
+            "Schlafen"
+          ],
+          "answer": "Laufen – Krabbeln ist die typische Fortbewegung im Baby-Alter, Laufen die des Kleinkindes (motorische Entwicklung)."
+        },
+        {
+          "type": "konzentration",
+          "question": "Zähle, wie oft der Buchstabe „r“ in dieser Zeichenfolge vorkommt: r a r m r t p r a m r p r a",
+          "answer": "6"
+        }
+      ],
+      "tipps": [
+        "Wiederhole die zentralen Entwicklungsphasen des Kindes (motorisch, sprachlich, sozial) sowie pädagogische Grundbegriffe wie Bildungsauftrag, Partizipation und Inklusion – diese Themen tauchen in Fachfragen und Gesprächen immer wieder auf.",
+        "Übe Sprachlogik-Aufgaben, denn im Berufsalltag zählt eine klare, kindgerechte Kommunikation mit Kindern und Eltern – viele Auswahlverfahren testen genau dieses Sprachgefühl.",
+        "Trainiere Konzentrationsaufgaben unter Zeitdruck: Sie simulieren die Aufmerksamkeit und Sorgfalt, die du bei Beobachtung und Dokumentation im Kita-Alltag brauchst."
+      ],
+      "faq": [
+        {
+          "q": "Was wird im Einstellungstest für Erzieher und Erzieherinnen geprüft?",
+          "a": "Fachschulen und Träger prüfen meist pädagogisches Grundwissen (Entwicklungsphasen des Kindes, Bildungsauftrag, Kinderschutz), Sprachkompetenz sowie logisches Denken und Konzentration. jobreif bildet beides ab: Fachfragen aus der echten Stellenanzeige plus die gängigen Eignungstest-Module."
+        },
+        {
+          "q": "Hilft das Üben auch fürs Vorstellungsgespräch?",
+          "a": "Ja. Die Fachfragen greifen Themen wie Aufsichtspflicht, Partizipation oder Beobachtung und Dokumentation auf, die auch im Gespräch häufig zur Sprache kommen – so gehst du sicherer in beide Situationen."
+        },
+        {
+          "q": "Kostet das Üben etwas?",
+          "a": "Sprachlogik, Konzentration und Zahlenreihen kannst du kostenlos und ohne Anmeldung üben. Für den vollständigen, stellenbezogenen Test mit Fachfragen aus einer echten Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
+        }
+      ],
+      "lastmod": "2026-07-14"
     }
   ]
 }

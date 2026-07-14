@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://jobreif.de/</loc>
-    <lastmod>2026-06-27</lastmod>
+    <lastmod>2026-07-14</lastmod>
   </url>
   <url>
     <loc>https://jobreif.de/lernen/</loc>
@@ -42,7 +42,7 @@
   </url>
   <url>
     <loc>https://jobreif.de/einstellungstest/</loc>
-    <lastmod>2026-06-27</lastmod>
+    <lastmod>2026-07-14</lastmod>
   </url>
   <url>
     <loc>https://jobreif.de/einstellungstest/fachinformatiker-systemintegration/</loc>
@@ -83,5 +83,45 @@
   <url>
     <loc>https://jobreif.de/einstellungstest/medizinische-fachangestellte/</loc>
     <lastmod>2026-06-27</lastmod>
+  </url>
+  <url>
+    <loc>https://jobreif.de/einstellungstest/polizei/</loc>
+    <lastmod>2026-07-14</lastmod>
+  </url>
+  <url>
+    <loc>https://jobreif.de/einstellungstest/zoll/</loc>
+    <lastmod>2026-07-14</lastmod>
+  </url>
+  <url>
+    <loc>https://jobreif.de/einstellungstest/elektroniker-betriebstechnik/</loc>
+    <lastmod>2026-07-14</lastmod>
+  </url>
+  <url>
+    <loc>https://jobreif.de/einstellungstest/anlagenmechaniker-shk/</loc>
+    <lastmod>2026-07-14</lastmod>
+  </url>
+  <url>
+    <loc>https://jobreif.de/einstellungstest/zerspanungsmechaniker/</loc>
+    <lastmod>2026-07-14</lastmod>
+  </url>
+  <url>
+    <loc>https://jobreif.de/einstellungstest/fachkraft-lagerlogistik/</loc>
+    <lastmod>2026-07-14</lastmod>
+  </url>
+  <url>
+    <loc>https://jobreif.de/einstellungstest/kaufmann-bueromanagement/</loc>
+    <lastmod>2026-07-14</lastmod>
+  </url>
+  <url>
+    <loc>https://jobreif.de/einstellungstest/steuerfachangestellte/</loc>
+    <lastmod>2026-07-14</lastmod>
+  </url>
+  <url>
+    <loc>https://jobreif.de/einstellungstest/notfallsanitaeter/</loc>
+    <lastmod>2026-07-14</lastmod>
+  </url>
+  <url>
+    <loc>https://jobreif.de/einstellungstest/erzieher/</loc>
+    <lastmod>2026-07-14</lastmod>
   </url>
 </urlset>
