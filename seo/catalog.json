@@ -77,6 +77,18 @@
       ],
       "samples": [
         {
+          "type": "fachwissen",
+          "question": "Welchen Standard-Port verwendet HTTPS für die verschlüsselte Kommunikation im Web?",
+          "options": [
+            "Port 443",
+            "Port 80",
+            "Port 22",
+            "Port 25"
+          ],
+          "answer": "Port 443 – dies ist der von der IANA festgelegte Standard-Port für HTTPS (HTTP über TLS/SSL).",
+          "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
+        },
+        {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 3, 6, 12, 24, ?",
           "options": [
@@ -140,7 +152,7 @@
           "a": "Es funktioniert am besten mit einer echten Anzeige (Text oder Link), weil die Fachfragen daraus abgeleitet werden. Du kannst aber auch eine allgemeine Beschreibung einfügen."
         }
       ],
-      "lastmod": "2026-06-27"
+      "lastmod": "2026-07-14"
     },
     {
       "slug": "industriemechaniker",
@@ -155,6 +167,18 @@
         "figural"
       ],
       "samples": [
+        {
+          "type": "fachwissen",
+          "question": "Beim spanenden Fertigungsverfahren Drehen und beim Fräsen unterscheidet sich die Hauptschnittbewegung grundlegend. Welche Aussage trifft zu?",
+          "options": [
+            "Beim Drehen rotiert das Werkstück, beim Fräsen rotiert das Werkzeug",
+            "Beim Drehen rotiert das Werkzeug, beim Fräsen rotiert das Werkstück",
+            "Sowohl beim Drehen als auch beim Fräsen rotiert ausschließlich das Werkstück",
+            "Sowohl beim Drehen als auch beim Fräsen rotiert ausschließlich das Werkzeug"
+          ],
+          "answer": "Beim Drehen rotiert das Werkstück, beim Fräsen rotiert das Werkzeug – das ist die grundlegende kinematische Unterscheidung dieser beiden spanenden Fertigungsverfahren.",
+          "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
+        },
         {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 2, 5, 11, 23, ?",
@@ -207,7 +231,7 @@
           "a": "Ja, jobreif ist eine Web-App und funktioniert direkt im Browser auf Smartphone, Tablet und Desktop – ohne Installation."
         }
       ],
-      "lastmod": "2026-06-27"
+      "lastmod": "2026-07-14"
     },
     {
       "slug": "kaufmann-im-einzelhandel",
@@ -222,6 +246,18 @@
         "konzentration"
       ],
       "samples": [
+        {
+          "type": "fachwissen",
+          "question": "Wozu dient eine Inventur im Einzelhandel?",
+          "options": [
+            "Zur Feststellung des tatsächlichen Warenbestands durch Zählen, Messen oder Wiegen",
+            "Zur Berechnung der abzuführenden Mehrwertsteuer",
+            "Zur Planung der Personaleinsatzzeiten",
+            "Zur Festlegung der Verkaufspreise durch den Hersteller"
+          ],
+          "answer": "Zur Feststellung des tatsächlichen Warenbestands durch Zählen, Messen oder Wiegen – die Inventur erfasst den Ist-Bestand aller Waren, üblicherweise zum Geschäftsjahresende.",
+          "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
+        },
         {
           "type": "zahlenreihe",
           "question": "Ein Artikel kostet 80 €, im Schlussverkauf 25 % günstiger. Welcher Preis bleibt?",
@@ -280,7 +316,7 @@
           "a": "Deine Eingaben und Ergebnisse bleiben in deinem Browser. jobreif ist auf Datensparsamkeit ausgelegt."
         }
       ],
-      "lastmod": "2026-06-27"
+      "lastmod": "2026-07-14"
     },
     {
       "slug": "bankkaufmann",
@@ -295,6 +331,18 @@
         "figural"
       ],
       "samples": [
+        {
+          "type": "fachwissen",
+          "question": "Ein Kunde legt 5.000 Euro für ein volles Jahr zu einem Zinssatz von 3 % pro Jahr fest an. Wie hoch sind die Zinsen, die er am Ende des Jahres erhält?",
+          "options": [
+            "150 Euro",
+            "1.500 Euro",
+            "15 Euro",
+            "5.150 Euro"
+          ],
+          "answer": "150 Euro – nach der Formel Z = K × p / 100 ergibt sich Z = 5.000 × 3 / 100 = 150 Euro Zinsen für das volle Jahr.",
+          "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
+        },
         {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 100, 95, 85, 70, ?",
@@ -359,7 +407,7 @@
           "a": "Die allgemeinen Eignungsmodule übst du kostenlos und ohne Anmeldung; für den kompletten, stellenbezogenen Test mit KI-Feedback genügt eine kostenlose Anmeldung. Optional gibt es höhere Qualitätsstufen."
         }
       ],
-      "lastmod": "2026-06-27"
+      "lastmod": "2026-07-14"
     },
     {
       "slug": "pflegefachmann",
@@ -374,6 +422,18 @@
         "konzentration"
       ],
       "samples": [
+        {
+          "type": "fachwissen",
+          "question": "In welchem Bereich liegt der Ruhepuls eines gesunden Erwachsenen normalerweise?",
+          "options": [
+            "60-80 Schläge pro Minute",
+            "30-40 Schläge pro Minute",
+            "110-130 Schläge pro Minute",
+            "140-160 Schläge pro Minute"
+          ],
+          "answer": "60-80 Schläge pro Minute, da dies beim gesunden Erwachsenen in Ruhe der physiologische Normbereich der Herzfrequenz ist.",
+          "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
+        },
         {
           "type": "konzentration",
           "question": "Wie oft kommt die Ziffer 3 in dieser Reihe vor?  3 8 3 1 3 5 3 9 2 3",
@@ -426,7 +486,7 @@
           "a": "Nein. jobreif läuft direkt im Browser auf Handy und Computer, ganz ohne Installation."
         }
       ],
-      "lastmod": "2026-06-27"
+      "lastmod": "2026-07-14"
     },
     {
       "slug": "mechatroniker",
@@ -441,6 +501,18 @@
         "figural"
       ],
       "samples": [
+        {
+          "type": "fachwissen",
+          "question": "An einem Bauteil liegt eine Spannung von 12 V an, sein Widerstand beträgt 4 Ω. Wie groß ist die Stromstärke nach dem Ohmschen Gesetz (I = U / R)?",
+          "options": [
+            "3 A",
+            "48 A",
+            "8 A",
+            "0,33 A"
+          ],
+          "answer": "3 A — denn nach I = U / R ergibt sich 12 V / 4 Ω = 3 A.",
+          "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
+        },
         {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 1, 2, 4, 7, 11, ?",
@@ -505,7 +577,7 @@
           "a": "Für die allgemeinen Eignungsmodule (Zahlenreihen, Konzentration, Figuren) nicht – die übst du sofort ohne Anmeldung. Für den kompletten, stellenbezogenen Test mit KI-Feedback genügt eine kostenlose Anmeldung."
         }
       ],
-      "lastmod": "2026-06-27"
+      "lastmod": "2026-07-14"
     },
     {
       "slug": "kfz-mechatroniker",
@@ -520,6 +592,18 @@
         "figural"
       ],
       "samples": [
+        {
+          "type": "fachwissen",
+          "question": "In welcher Reihenfolge laufen die vier Takte eines Viertaktmotors korrekt ab?",
+          "options": [
+            "Ansaugen – Verdichten – Arbeiten – Ausstoßen",
+            "Ansaugen – Arbeiten – Verdichten – Ausstoßen",
+            "Verdichten – Ansaugen – Ausstoßen – Arbeiten",
+            "Ansaugen – Verdichten – Ausstoßen – Arbeiten"
+          ],
+          "answer": "Ansaugen – Verdichten – Arbeiten – Ausstoßen, weil zunächst Luft bzw. Frischgemisch angesaugt, dann verdichtet, im Arbeitstakt durch die Verbrennung expandiert und danach als Abgas ausgestoßen wird.",
+          "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
+        },
         {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 2, 6, 18, 54, ?",
@@ -572,7 +656,7 @@
           "a": "Ja, jobreif läuft direkt im Browser auf Smartphone, Tablet und Desktop – ohne Installation."
         }
       ],
-      "lastmod": "2026-06-27"
+      "lastmod": "2026-07-14"
     },
     {
       "slug": "industriekaufmann",
@@ -587,6 +671,18 @@
         "konzentration"
       ],
       "samples": [
+        {
+          "type": "fachwissen",
+          "question": "Ein Industriebetrieb weist im Geschäftsjahr einen Materialverbrauch von 200.000 Euro aus. Der durchschnittliche Lagerbestand beträgt 50.000 Euro. Wie hoch ist die Lagerumschlagshäufigkeit?",
+          "options": [
+            "4",
+            "0,25",
+            "2,5",
+            "10"
+          ],
+          "answer": "4 – die Lagerumschlagshäufigkeit berechnet sich als Materialverbrauch geteilt durch durchschnittlichen Lagerbestand, also 200.000 Euro / 50.000 Euro = 4.",
+          "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
+        },
         {
           "type": "zahlenreihe",
           "question": "Eine Rechnung über 250 € wird mit 2 % Skonto bezahlt. Wie viel wird überwiesen?",
@@ -645,7 +741,7 @@
           "a": "Die allgemeinen Eignungsmodule übst du kostenlos und ohne Anmeldung direkt im Browser; für den kompletten, stellenbezogenen Test mit KI-Feedback genügt eine kostenlose Anmeldung."
         }
       ],
-      "lastmod": "2026-06-27"
+      "lastmod": "2026-07-14"
     },
     {
       "slug": "verwaltungsfachangestellte",
@@ -660,6 +756,18 @@
         "konzentration"
       ],
       "samples": [
+        {
+          "type": "fachwissen",
+          "question": "Welche der drei Gewalten im Sinne der Gewaltenteilung ist für die Rechtsprechung, also für Urteile der Gerichte, zuständig?",
+          "options": [
+            "Judikative (rechtsprechende Gewalt)",
+            "Legislative (gesetzgebende Gewalt)",
+            "Exekutive (vollziehende Gewalt)",
+            "Legislative und Exekutive gemeinsam"
+          ],
+          "answer": "Judikative (rechtsprechende Gewalt) – sie umfasst die Gerichte, die Recht sprechen, während die Legislative Gesetze erlässt und die Exekutive sie vollzieht.",
+          "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
+        },
         {
           "type": "sprachlogik",
           "question": "Antrag verhält sich zu Bescheid wie Frage zu …?",
@@ -718,7 +826,7 @@
           "a": "Für die allgemeinen Eignungsmodule (Zahlenreihen, Konzentration, Figuren) nicht – die übst du sofort ohne Anmeldung. Für den kompletten, stellenbezogenen Test mit KI-Feedback genügt eine kostenlose Anmeldung."
         }
       ],
-      "lastmod": "2026-06-27"
+      "lastmod": "2026-07-14"
     },
     {
       "slug": "medizinische-fachangestellte",
@@ -733,6 +841,18 @@
         "zahlenreihe"
       ],
       "samples": [
+        {
+          "type": "fachwissen",
+          "question": "Welches Merkmal unterscheidet die Sterilisation eindeutig von der Desinfektion?",
+          "options": [
+            "Nur bei der Sterilisation werden auch bakterielle Sporen zuverlässig abgetötet, was bei der Desinfektion nicht gewährleistet ist",
+            "Nur die Desinfektion tötet Viren zuverlässig ab, die Sterilisation wirkt ausschließlich gegen Bakterien",
+            "Die Sterilisation reduziert lediglich die Keimzahl, während die Desinfektion alle Mikroorganismen vollständig abtötet",
+            "Sterilisation und Desinfektion unterscheiden sich ausschließlich durch die Einwirkzeit, nicht durch den erreichten Wirkungsgrad"
+          ],
+          "answer": "Nur bei der Sterilisation werden auch bakterielle Sporen zuverlässig abgetötet, was bei der Desinfektion nicht gewährleistet ist – Sterilisation zielt auf die vollständige Freiheit von allen vermehrungsfähigen Mikroorganismen einschließlich Sporen, während Desinfektion nur die Keimzahl auf ein unschädliches Maß reduziert.",
+          "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
+        },
         {
           "type": "konzentration",
           "question": "Wie oft kommt der Buchstabe R in dieser Reihe vor?  R T R E R B R K R M",
@@ -785,7 +905,7 @@
           "a": "Nein. jobreif läuft direkt im Browser auf Handy und Computer, ganz ohne Installation."
         }
       ],
-      "lastmod": "2026-06-27"
+      "lastmod": "2026-07-14"
     },
     {
       "slug": "polizei",
@@ -801,6 +921,18 @@
         "figural"
       ],
       "samples": [
+        {
+          "type": "fachwissen",
+          "question": "Von welchem Verfassungsorgan wird der Bundeskanzler bzw. die Bundeskanzlerin gewählt?",
+          "options": [
+            "Vom Bundestag",
+            "Vom Bundesrat",
+            "Von der Bundesversammlung",
+            "Vom Bundespräsidenten"
+          ],
+          "answer": "Vom Bundestag – nach Art. 63 GG wählt der Bundestag den Bundeskanzler auf Vorschlag des Bundespräsidenten, der ihn anschließend ernennt.",
+          "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
+        },
         {
           "type": "sprachlogik",
           "question": "Arzt verhält sich zu Krankheit wie Polizist zu …?",
@@ -876,6 +1008,18 @@
       ],
       "samples": [
         {
+          "type": "fachwissen",
+          "question": "Was ist ein zentrales Grundprinzip der EU-Zollunion?",
+          "options": [
+            "Im Warenverkehr zwischen den EU-Mitgliedstaaten werden keine Zölle erhoben, gegenüber Drittstaaten gilt ein gemeinsamer Zolltarif",
+            "Jeder EU-Mitgliedstaat legt für Einfuhren aus Drittstaaten eigene, national unterschiedliche Zollsätze fest",
+            "Auch beim Warenverkehr zwischen EU-Mitgliedstaaten fallen Zölle an, allerdings nach einheitlichen EU-weiten Sätzen",
+            "Der gemeinsame Zolltarif gilt nur für den Warenverkehr innerhalb der EU, nicht gegenüber Drittstaaten"
+          ],
+          "answer": "Richtig ist: 'Im Warenverkehr zwischen den EU-Mitgliedstaaten werden keine Zölle erhoben, gegenüber Drittstaaten gilt ein gemeinsamer Zolltarif' – das ist das Kernprinzip der Zollunion: zollfreier Binnenmarkt nach innen, einheitlicher Außenzolltarif nach außen.",
+          "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
+        },
+        {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 5, 10, 20, 40, ?",
           "options": [
@@ -948,6 +1092,18 @@
         "figural"
       ],
       "samples": [
+        {
+          "type": "fachwissen",
+          "question": "Bevor an einer elektrischen Anlage gearbeitet werden darf, sind die fünf Sicherheitsregeln der Elektrotechnik in fester Reihenfolge einzuhalten. Welche Maßnahme steht dabei an erster Stelle?",
+          "options": [
+            "Freischalten",
+            "Gegen Wiedereinschalten sichern",
+            "Spannungsfreiheit feststellen",
+            "Erden und Kurzschließen"
+          ],
+          "answer": "Freischalten – die Anlage muss zuerst allpolig von der Spannungsquelle getrennt werden, denn alle weiteren Sicherheitsregeln setzen darauf auf.",
+          "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
+        },
         {
           "type": "zahlenreihe",
           "question": "In einer Reihe verdoppelt sich die Spannung von Stufe zu Stufe: 6, 12, 24, 48, ? V",
@@ -1028,6 +1184,18 @@
       ],
       "samples": [
         {
+          "type": "fachwissen",
+          "question": "Was unterscheidet Vorlauf und Rücklauf in einer Heizungsanlage?",
+          "options": [
+            "Der Vorlauf führt das im Wärmeerzeuger erwärmte Heizwasser zu den Heizflächen, der Rücklauf leitet das dort abgekühlte Wasser zurück zum Wärmeerzeuger.",
+            "Der Rücklauf führt das erwärmte Heizwasser zu den Heizflächen, der Vorlauf transportiert das abgekühlte Wasser zurück zum Wärmeerzeuger.",
+            "Vorlauf und Rücklauf sind zwei getrennte, unabhängige Heizkreise ohne Temperaturunterschied zwischen den Leitungen.",
+            "Der Vorlauf versorgt ausschließlich die Warmwasserbereitung, der Rücklauf ausschließlich die Heizkörper."
+          ],
+          "answer": "Der Vorlauf führt das im Wärmeerzeuger erwärmte Heizwasser zu den Heizflächen, der Rücklauf leitet das dort abgekühlte Wasser zurück zum Wärmeerzeuger. Das Heizwasser gibt auf seinem Weg durch die Heizflächen Wärme ab und kühlt dabei ab.",
+          "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
+        },
+        {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 2, 6, 18, 54, ?",
           "options": [
@@ -1095,6 +1263,18 @@
       ],
       "samples": [
         {
+          "type": "fachwissen",
+          "question": "Beim Drehen gilt für die Schnittgeschwindigkeit: vc = π × d × n (d = Werkstückdurchmesser in Metern, n = Drehzahl in 1/min). Ein Werkstück hat einen Durchmesser von 100 mm, die Drehzahl ist auf 318 1/min eingestellt. Welche Schnittgeschwindigkeit ergibt sich (nach Umrechnung von 100 mm = 0,1 m)?",
+          "options": [
+            "ca. 100 m/min",
+            "ca. 1000 m/min",
+            "ca. 31,8 m/min",
+            "ca. 10 m/min"
+          ],
+          "answer": "ca. 100 m/min, denn vc = π × 0,1 m × 318 1/min ≈ 100 m/min.",
+          "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
+        },
+        {
           "type": "zahlenreihe",
           "question": "Eine Drehzahl-Reihe verdoppelt sich schrittweise: 400, 800, 1600, 3200, ?",
           "options": [
@@ -1161,6 +1341,18 @@
         "sprachlogik"
       ],
       "samples": [
+        {
+          "type": "fachwissen",
+          "question": "Was bedeutet das FIFO-Prinzip bei der Kommissionierung im Lager?",
+          "options": [
+            "First In - First Out: Die zuerst eingelagerte Ware wird zuerst entnommen",
+            "Last In - First Out: Die zuletzt eingelagerte Ware wird zuerst entnommen",
+            "First In - Last Out: Die zuerst eingelagerte Ware wird als letzte entnommen",
+            "Free In - Free Out: Die Entnahmereihenfolge ist frei wählbar und richtet sich nicht nach dem Einlagerungszeitpunkt"
+          ],
+          "answer": "First In - First Out: Die zuerst eingelagerte Ware wird zuerst entnommen, denn FIFO stellt sicher, dass ältere Bestände vor jüngeren abfließen, was besonders bei verderblichen oder verfallsdatumsrelevanten Artikeln Lagerhüter und Wertverluste vermeidet.",
+          "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
+        },
         {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 120, 135, 150, 165, ?",
@@ -1235,6 +1427,18 @@
       ],
       "samples": [
         {
+          "type": "fachwissen",
+          "question": "Eine Rechnung über 500 Euro enthält die Zahlungsbedingung „2 % Skonto bei Zahlung innerhalb von 10 Tagen, sonst 30 Tage netto“. Der Kunde zahlt fristgerecht innerhalb der Skontofrist. Welchen Betrag überweist er?",
+          "options": [
+            "490 Euro",
+            "500 Euro",
+            "480 Euro",
+            "510 Euro"
+          ],
+          "answer": "490 Euro, denn Skonto ist ein Preisnachlass für vorzeitige Zahlung: 2 % von 500 Euro sind 10 Euro, die vom Rechnungsbetrag abgezogen werden.",
+          "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
+        },
+        {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 5, 10, 20, 40, ?",
           "options": [
@@ -1307,6 +1511,18 @@
         "konzentration"
       ],
       "samples": [
+        {
+          "type": "fachwissen",
+          "question": "Welcher Umsatzsteuersatz ist in Deutschland der Regelsteuersatz, der auf die meisten Lieferungen und Leistungen angewendet wird?",
+          "options": [
+            "19 %",
+            "7 %",
+            "16 %",
+            "21 %"
+          ],
+          "answer": "19 % – das ist der deutsche Regelsteuersatz der Umsatzsteuer, während der ermäßigte Satz von 7 % nur für bestimmte Waren und Leistungen gilt, etwa Bücher oder Zeitschriften.",
+          "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
+        },
         {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 7, 14, 21, 28, ?",
@@ -1381,6 +1597,18 @@
       ],
       "samples": [
         {
+          "type": "fachwissen",
+          "question": "Welches Verhältnis von Thoraxkompressionen zu Beatmungen gilt bei der Reanimation eines Erwachsenen (ohne gesicherten Atemweg) gemäß aktueller Leitlinien?",
+          "options": [
+            "30:2",
+            "15:2",
+            "5:1",
+            "30:5"
+          ],
+          "answer": "30:2 – nach aktuellen Leitlinien werden bei Erwachsenen 30 Thoraxkompressionen im Wechsel mit 2 Beatmungen durchgeführt, solange kein gesicherter Atemweg vorliegt.",
+          "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
+        },
+        {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 2, 5, 11, 23, ?",
           "options": [
@@ -1453,6 +1681,18 @@
         "zahlenreihe"
       ],
       "samples": [
+        {
+          "type": "fachwissen",
+          "question": "Welche der folgenden Tätigkeiten ist ein typisches Beispiel für Feinmotorik?",
+          "options": [
+            "Perlen auffädeln",
+            "Auf einem Bein hüpfen",
+            "Über eine Turnbank balancieren",
+            "Einen Ball mit beiden Händen werfen"
+          ],
+          "answer": "Perlen auffädeln, denn dabei sind präzise, kleine Hand- und Fingerbewegungen zum gezielten Greifen und Einfädeln nötig, während die übrigen Beispiele großräumige Ganzkörperbewegungen (Grobmotorik) sind.",
+          "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
+        },
         {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 3, 5, 9, 15, 23, ?",
