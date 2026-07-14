@@ -48,6 +48,7 @@
     ul.related a{font-weight:600}
     .samples li.sample{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin:12px 0;box-shadow:0 2px 8px -5px rgba(80,50,40,.25)}
     .sample-type{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--primary-dark);background:#f6e7e1;border-radius:999px;padding:3px 10px;margin-bottom:8px}
+    .sample-note{font-size:.74rem;color:var(--muted);margin:.1em 0 .5em;font-style:italic}
     .sample-q{font-weight:600;margin:.2em 0}
     ul.opts{margin:.4em 0 .2em;padding-left:1.2em}
     ul.opts li{padding:2px 0}
@@ -83,6 +84,13 @@
     <section class="block">
         <h2>Beispielaufgaben</h2>
         <ul class="samples">
+        <li class="sample">
+        <div class="sample-type">Fachwissen zur Stelle</div>
+        <p class="sample-note">Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet.</p>
+        <p class="sample-q">Bevor an einer elektrischen Anlage gearbeitet werden darf, sind die fünf Sicherheitsregeln der Elektrotechnik in fester Reihenfolge einzuhalten. Welche Maßnahme steht dabei an erster Stelle?</p>
+        <ul class="opts"><li>Freischalten</li><li>Gegen Wiedereinschalten sichern</li><li>Spannungsfreiheit feststellen</li><li>Erden und Kurzschließen</li></ul>
+        <details class="sample-a"><summary>Lösung anzeigen</summary><p>Freischalten – die Anlage muss zuerst allpolig von der Spannungsquelle getrennt werden, denn alle weiteren Sicherheitsregeln setzen darauf auf.</p></details>
+      </li>
         <li class="sample">
         <div class="sample-type">Zahlenreihen</div>
         <p class="sample-q">In einer Reihe verdoppelt sich die Spannung von Stufe zu Stufe: 6, 12, 24, 48, ? V</p>
