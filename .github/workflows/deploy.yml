@@ -51,9 +51,10 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v5
 
-  # Reicht die Sitemap nach einem Deploy per Search-Console-API neu ein, wenn
-  # sie sich geändert hat (Google lädt sie dann zeitnah neu). Ohne konfigurierte
-  # GSC_*-Secrets ist das Skript ein No-op und der Job bleibt grün.
+  # Benachrichtigt nach einem Deploy die Suchmaschinen, wenn sich sitemap.xml
+  # geändert hat: erst Bing/Yandex per IndexNow (secretlos, Key ist öffentlich
+  # by design), dann Google per Search-Console-API. Ohne konfigurierte
+  # GSC_*-Secrets ist der GSC-Schritt ein No-op und der Job bleibt grün.
   submit-sitemap:
     needs: deploy
     # Nur auf main — verhindert, dass ein manueller workflow_dispatch auf einem
@@ -89,6 +90,13 @@ jobs:
         if: steps.diff.outputs.changed == 'true'
         with:
           node-version: '20'
+
+      # IndexNow braucht keine Secrets und steht bewusst VOR dem GSC-Step:
+      # eine GSC-Fehlkonfiguration (exit 1) darf den Bing/Yandex-Ping nicht
+      # blockieren. setup-node oben deckt beide Steps ab.
+      - name: Bing/Yandex per IndexNow benachrichtigen
+        if: steps.diff.outputs.changed == 'true'
+        run: node scripts/indexnow-ping.mjs
 
       - name: Sitemap bei der Search Console neu einreichen
         if: steps.diff.outputs.changed == 'true'
