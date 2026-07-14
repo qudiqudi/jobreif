@@ -89,48 +89,37 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 3, 6, 12, 24, ?",
+          "type": "fachwissen",
+          "question": "Welches Protokoll ist der Vermittlungsschicht (Schicht 3) des OSI-Modells zuzuordnen und übernimmt die logische Adressierung sowie das Routing zwischen Netzwerken?",
           "options": [
-            "30",
-            "36",
-            "48",
-            "60"
+            "IP (Internet Protocol)",
+            "HTTP (Hypertext Transfer Protocol)",
+            "Ethernet",
+            "TCP (Transmission Control Protocol)"
           ],
-          "answer": "48 – jede Zahl ist das Doppelte der vorigen."
+          "answer": "IP (Internet Protocol) — IP arbeitet auf der Vermittlungsschicht (Schicht 3) des OSI-Modells und ist für die logische Adressierung sowie das Routing von Datenpaketen zwischen Netzwerken zuständig."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Was ist die zentrale Eigenschaft von RAID 1 (Mirroring)?",
+          "options": [
+            "Die Daten werden identisch auf mindestens zwei Festplatten gespiegelt, was Ausfallsicherheit statt zusätzlicher Kapazität bringt",
+            "Die Daten werden blockweise auf mehrere Festplatten verteilt, um Schreibgeschwindigkeit und nutzbare Kapazität zu erhöhen",
+            "Die Daten werden zusammen mit Paritätsinformationen auf mindestens drei Festplatten verteilt",
+            "Die Festplatten werden ohne Redundanz zu einem einzigen großen Volume zusammengefasst"
+          ],
+          "answer": "Die Daten werden identisch auf mindestens zwei Festplatten gespiegelt, was Ausfallsicherheit statt zusätzlicher Kapazität bringt — bei RAID 1 wird jeder Schreibvorgang auf allen gespiegelten Platten dupliziert, sodass beim Ausfall einer Platte alle Daten erhalten bleiben."
         },
         {
           "type": "sprachlogik",
-          "question": "Server verhält sich zu Client wie Frage zu …?",
+          "question": "Tastatur verhält sich zu Eingabe wie Monitor zu …?",
           "options": [
-            "Netzwerk",
-            "Antwort",
-            "Kabel",
-            "Protokoll"
+            "Ausgabe",
+            "Bildschirmschoner",
+            "Auflösung",
+            "Grafikkarte"
           ],
-          "answer": "Antwort – ein Client stellt eine Anfrage, der Server liefert die Antwort; analog Frage → Antwort."
-        },
-        {
-          "type": "sprachlogik",
-          "question": "Tastatur : Eingabegerät :: Bildschirm : ?",
-          "options": [
-            "Ausgabegerät",
-            "Netzwerkkabel",
-            "Betriebssystem",
-            "Datenbank"
-          ],
-          "answer": "Ausgabegerät – die Tastatur dient der Eingabe von Daten in ein System, der Bildschirm entsprechend der Ausgabe von Daten aus dem System. Die anderen Optionen bezeichnen keine Geräteklasse mit dieser Funktion."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "2, 5, 9, 14, 20, ?",
-          "options": [
-            "25",
-            "26",
-            "27",
-            "29"
-          ],
-          "answer": "27 – die Differenz zwischen den Zahlen steigt jeweils um 1 (+3, +4, +5, +6, +7), also folgt auf 20 der Wert 20 + 7 = 27."
+          "answer": "Ausgabe – die Tastatur dient der Eingabe von Daten in das System, der Monitor gibt Daten in Form eines Bildes wieder aus. Bildschirmschoner, Auflösung und Grafikkarte sind Eigenschaften bzw. Zubehör des Monitors, aber keine Entsprechung zu 'Eingabe'."
         }
       ],
       "tipps": [
@@ -180,36 +169,37 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 2, 5, 11, 23, ?",
+          "type": "fachwissen",
+          "question": "Ein Messschieber mit Nonius erlaubt eine bestimmte Ablesegenauigkeit. Wodurch wird diese erreicht?",
           "options": [
-            "35",
-            "41",
-            "46",
-            "47"
+            "Durch eine zusätzliche Skala am Schieber (Nonius), die den Abstand zwischen zwei Hauptskalenstrichen in z. B. 10 oder 20 Teile unterteilt und so Werte von 0,1 mm bzw. 0,05 mm ablesbar macht",
+            "Durch eine digitale Anzeige, die den Messwert automatisch auf 0,01 mm rundet",
+            "Durch die Federkraft der Messschenkel, die den Messfehler ausgleicht",
+            "Durch die Länge der Messschieberschienen, die proportional zur erreichbaren Genauigkeit ist"
           ],
-          "answer": "47 – jeweils verdoppeln und 1 addieren (×2 + 1)."
+          "answer": "Durch eine zusätzliche Skala am Schieber (Nonius), die den Abstand zwischen zwei Hauptskalenstrichen in z. B. 10 oder 20 Teile unterteilt und so Werte von 0,1 mm bzw. 0,05 mm ablesbar macht — das Nonius-Prinzip beruht darauf, dass die Teilstriche der Nebenskala geringfügig enger stehen als die der Hauptskala, wodurch sich Bruchteile eines Millimeters exakt bestimmen lassen."
         },
         {
-          "type": "konzentration",
-          "question": "Wie oft kommt der Buchstabe E in dieser Reihe vor?  B E D E F E E C E A",
-          "answer": "5-mal."
-        },
-        {
-          "type": "konzentration",
-          "question": "Auf einem Fertigungsauftrag sind Maßangaben notiert. Zählen Sie, wie oft das Symbol „Ø“ (Durchmesser) in dieser Zeile vorkommt:\n\nØ12, M8, Ø6, R3, Ø20, M10, Ø8, Ø5, R10, M6, Ø14, Ø9, R2, M12, Ø18, Ø7, M4, Ø11, R5, Ø16",
-          "answer": "11 – das Symbol „Ø“ erscheint bei Ø12, Ø6, Ø20, Ø8, Ø5, Ø14, Ø9, Ø18, Ø7, Ø11 und Ø16, also 11-mal."
+          "type": "fachwissen",
+          "question": "Wodurch unterscheiden sich Stahl und Gusseisen als Eisenwerkstoffe grundlegend voneinander?",
+          "options": [
+            "Durch den Kohlenstoffgehalt: Stahl enthält bis zu etwa 2,06 % Kohlenstoff, Gusseisen liegt darüber",
+            "Durch die Farbe des Werkstoffs im rohen Zustand",
+            "Durch den Chromgehalt, der bei Gusseisen immer höher ist als bei Stahl",
+            "Durch die elektrische Leitfähigkeit, die bei Stahl grundsätzlich höher ist"
+          ],
+          "answer": "Durch den Kohlenstoffgehalt: Stahl enthält bis zu etwa 2,06 % Kohlenstoff, Gusseisen liegt darüber — das ist die konventionelle werkstoffkundliche Einteilung im Eisen-Kohlenstoff-Diagramm: unlegierte Eisen-Kohlenstoff-Werkstoffe bis etwa 2,06 % C gelten als Stahl, darüber als Gusseisen."
         },
         {
           "type": "zahlenreihe",
-          "question": "An einer CNC-Maschine wird die Zustellung pro Arbeitsschritt protokolliert: 4, 7, 12, 19, 28, ?",
-          "answer": "39 – die Differenz zwischen den Zahlen wächst jeweils um 2 (+3, +5, +7, +9, +11), also 28 + 11 = 39.",
+          "question": "Setze die Reihe fort: 7, 10, 15, 22, 31, ?",
           "options": [
-            "37",
-            "39",
+            "40",
             "41",
-            "35"
-          ]
+            "42",
+            "44"
+          ],
+          "answer": "42 – Die Differenzen wachsen um jeweils 2 (+3, +5, +7, +9, +11): 7 → 10 → 15 → 22 → 31 → 42."
         }
       ],
       "tipps": [
@@ -259,42 +249,37 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Ein Artikel kostet 80 €, im Schlussverkauf 25 % günstiger. Welcher Preis bleibt?",
+          "type": "fachwissen",
+          "question": "Ein Artikel wird zum Einstandspreis von 60 € eingekauft und für 80 € verkauft. Wie hoch ist die Handelsspanne in Prozent vom Verkaufspreis?",
           "options": [
-            "55 €",
-            "60 €",
-            "65 €",
-            "70 €"
+            "25 %",
+            "33,3 %",
+            "20 %",
+            "40 %"
           ],
-          "answer": "60 € – 25 % von 80 € sind 20 €, also 80 − 20 = 60 €."
+          "answer": "25 % — die Handelsspanne ist die Differenz zwischen Verkaufspreis und Einstandspreis (80 € − 60 € = 20 €), bezogen auf den Verkaufspreis (20 € / 80 € = 25 %). 33,3 % wäre der Handelsaufschlag, weil er auf den Einstandspreis bezogen wird."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Für welche Warengruppe gilt im deutschen Einzelhandel typischerweise der ermäßigte Mehrwertsteuersatz von 7 %?",
+          "options": [
+            "Grundnahrungsmittel wie Brot, Milch und Obst",
+            "Elektronikartikel wie Smartphones",
+            "Kosmetikprodukte wie Parfüm",
+            "Bekleidung und Schuhe"
+          ],
+          "answer": "Grundnahrungsmittel wie Brot, Milch und Obst — für diese Waren des täglichen Bedarfs sieht das Umsatzsteuergesetz (§ 12 Abs. 2 UStG) den ermäßigten Steuersatz von 7 % vor, während Elektronik, Kosmetik sowie Bekleidung und Schuhe dem regulären Satz von 19 % unterliegen."
         },
         {
           "type": "sprachlogik",
-          "question": "Kunde verhält sich zu Beratung wie Ware zu …?",
+          "question": "Regal verhält sich zu Ware wie Kasse zu ...?",
           "options": [
-            "Lager",
-            "Präsentation",
-            "Kasse",
-            "Preis"
+            "Geld",
+            "Kassenbon",
+            "Kunde",
+            "Schublade"
           ],
-          "answer": "Präsentation – der Kunde erhält Beratung, die Ware wird präsentiert (beides die zugewandte Leistung)."
-        },
-        {
-          "type": "konzentration",
-          "question": "Sie kontrollieren einen ausgedruckten Kassenbon auf Übertragungsfehler. Zählen Sie, wie oft die Ziffer 7 in folgender Zahlenfolge vorkommt:\n48297183746529817364598172635948273619485726314987",
-          "answer": "7 (die Ziffer 7 kommt genau siebenmal vor: an den Positionen 5, 9, 17, 25, 34, 42 und 50)"
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Beim wöchentlichen Nachbestellen eines Aktionsartikels verdoppelt sich die Liefermenge jede Woche: 6, 12, 24, 48, 96, ? Wie lautet die nächste Zahl?",
-          "options": [
-            "144",
-            "172",
-            "192",
-            "200"
-          ],
-          "answer": "192 – jede Zahl wird mit 2 multipliziert (6→12→24→48→96→192), also 96 × 2 = 192"
+          "answer": "Geld – das Regal ist der Aufbewahrungsort für die Ware, die Kasse ist der Aufbewahrungsort für das Geld (Bargeld)."
         }
       ],
       "tipps": [
@@ -344,48 +329,37 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 100, 95, 85, 70, ?",
+          "type": "fachwissen",
+          "question": "Wie ist eine deutsche IBAN aufgebaut?",
           "options": [
-            "55",
-            "50",
-            "60",
-            "45"
+            "Sie besteht aus 22 Stellen und beginnt mit der Länderkennung DE",
+            "Sie besteht aus 20 Stellen und beginnt mit der Bankleitzahl",
+            "Sie besteht aus 22 Stellen und beginnt mit der Kontonummer",
+            "Sie besteht aus 34 Stellen und beginnt mit dem BIC/SWIFT-Code"
           ],
-          "answer": "50 – die Abstände wachsen: −5, −10, −15, −20."
+          "answer": "Sie besteht aus 22 Stellen und beginnt mit der Länderkennung DE – die deutsche IBAN hat exakt 22 Stellen: Länderkennung DE, zweistellige Prüfziffer, danach die achtstellige Bankleitzahl und die zehnstellige Kontonummer."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Bis zu welcher Höhe sind Kundeneinlagen in Deutschland pro Kunde und Bank regulär gesetzlich abgesichert?",
+          "options": [
+            "100.000 Euro",
+            "50.000 Euro",
+            "250.000 Euro",
+            "unbegrenzt, da Banken staatlich garantiert sind"
+          ],
+          "answer": "100.000 Euro – die gesetzliche Einlagensicherung schützt Einlagen jedes Kunden regulär bis zu 100.000 Euro je Bank (in besonderen Lebenslagen zeitweise mehr), EU-weit geregelt in der Einlagensicherungsrichtlinie 2014/49/EU."
         },
         {
           "type": "sprachlogik",
-          "question": "Kredit verhält sich zu Zins wie Sparen zu …?",
-          "options": [
-            "Konto",
-            "Rendite",
-            "Bank",
-            "Risiko"
-          ],
-          "answer": "Rendite – für einen Kredit zahlt man Zins, fürs Sparen erhält man eine Rendite (jeweils der Ertrag)."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Ein Kontostand schwankt nach einem festen Muster: 8, 16, 13, 26, 23, 46, ? Wie lautet die nächste Zahl?",
-          "options": [
-            "40",
-            "43",
-            "46",
-            "49"
-          ],
-          "answer": "43 – die Reihe wechselt abwechselnd zwischen ×2 und −3: 8×2=16, 16−3=13, 13×2=26, 26−3=23, 23×2=46, 46−3=43."
-        },
-        {
-          "type": "sprachlogik",
-          "question": "Welches Wort passt? Einzahlung verhält sich zu Auszahlung wie Gutschrift zu ...?",
+          "question": "Einzahlung verhält sich zu Gutschrift wie Auszahlung zu …?",
           "options": [
             "Belastung",
-            "Zinssatz",
-            "Kontoauszug",
-            "Überweisung"
+            "Gutschrift",
+            "Überweisung",
+            "Sparbuch"
           ],
-          "answer": "Belastung – Einzahlung/Auszahlung sind ein Gegensatzpaar (Geld kommt/geht), genauso wie Gutschrift (Zubuchung) und Belastung (Abbuchung) auf dem Konto."
+          "answer": "Belastung – eine Einzahlung erscheint als Gutschrift auf dem Konto, eine Auszahlung als Belastung (Abbuchung); beides sind die entgegengesetzten Kontobewegungen."
         }
       ],
       "tipps": [
@@ -435,36 +409,37 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "konzentration",
-          "question": "Wie oft kommt die Ziffer 3 in dieser Reihe vor?  3 8 3 1 3 5 3 9 2 3",
-          "answer": "5-mal."
+          "type": "fachwissen",
+          "question": "Ab welcher Körpertemperatur spricht man in der Pflege von Fieber?",
+          "options": [
+            "Ab ca. 35 °C",
+            "Ab ca. 36,5 °C",
+            "Ab ca. 38 °C",
+            "Ab ca. 41 °C"
+          ],
+          "answer": "Ab ca. 38 °C, denn ab diesem Wert der Körperkerntemperatur spricht man von Fieber (37,5–37,9 °C gilt als erhöhte Temperatur/subfebril, 36,5 °C ist Normaltemperatur, 35 °C liegt im Bereich der Unterkühlung/Hypothermie, 41 °C wäre bereits sehr hohes Fieber/Hyperpyrexie)."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Was ist die wichtigste pflegerische Maßnahme zur Dekubitusprophylaxe?",
+          "options": [
+            "Kräftiges Massieren geröteter Hautstellen",
+            "Tägliches heißes Vollbad zur Hautdesinfektion",
+            "Straffes Anlegen der Bettwäsche zur Fixierung der Position",
+            "Regelmäßiger Positionswechsel (Umlagerung) zur Druckentlastung"
+          ],
+          "answer": "Regelmäßiger Positionswechsel (Umlagerung) zur Druckentlastung, weil anhaltender Druck auf eine Körperstelle die Durchblutung unterbricht und dadurch Gewebeschäden entstehen, die durch häufigen Lagewechsel verhindert werden (Massieren geröteter Stellen ist sogar kontraindiziert)."
         },
         {
           "type": "sprachlogik",
-          "question": "Fieber verhält sich zu Thermometer wie Puls zu …?",
+          "question": "Fieberthermometer verhält sich zu Körpertemperatur wie Blutdruckmessgerät zu …?",
           "options": [
-            "Stethoskop",
+            "Blutzucker",
             "Blutdruck",
-            "Herz",
-            "Tasten"
+            "Manschette",
+            "Herz"
           ],
-          "answer": "Tasten – das Fieber misst man mit dem Thermometer, den Puls ertastet man (Methode der Messung)."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Auf der Station legst du die Kontrollintervalle für die Wunddokumentation nach OP fest (in Stunden nach dem Eingriff): 3 – 6 – 12 – 24 – 48 – ? Wie lautet die nächste Zahl in der Reihe?",
-          "options": [
-            "72",
-            "84",
-            "96",
-            "108"
-          ],
-          "answer": "96 – Die Reihe verdoppelt sich bei jedem Schritt (×2): 3→6→12→24→48→96. Das Intervall zwischen den Wundkontrollen wird also jedes Mal exakt doppelt so lang."
-        },
-        {
-          "type": "konzentration",
-          "question": "Bei der Übergabe liest du die Vitalwert-Kürzel der Nachtschicht auf einem Zettel. Zähle, wie oft das Kürzel „RR“ (Blutdruck) in folgender Zeile vorkommt: HF RR AF RR BZ SpO2 RR AF HF RR BZ RR AF SpO2 RR HF BZ RR AF RR",
-          "answer": "8 – „RR“ erscheint an den Positionen 2, 4, 7, 10, 12, 15, 18 und 20 der Kürzel-Folge, macht in Summe 8 Treffer."
+          "answer": "Blutdruck – ein Blutdruckmessgerät misst den Blutdruck, so wie ein Fieberthermometer die Körpertemperatur misst. Blutzucker wird mit anderen Geräten gemessen, die Manschette ist nur ein Teil des Messgeräts, und das Herz ist das Organ, nicht der Messwert."
         }
       ],
       "tipps": [
@@ -514,48 +489,37 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 1, 2, 4, 7, 11, ?",
+          "type": "fachwissen",
+          "question": "Welche Aufgabe hat die Wartungseinheit in einer pneumatischen Anlage?",
           "options": [
-            "14",
-            "15",
-            "16",
-            "18"
+            "Sie filtert, regelt den Druck und ölt die Druckluft, bevor diese zu den Aktoren gelangt",
+            "Sie erzeugt die Druckluft für die gesamte Anlage",
+            "Sie speichert Druckluft als Energiereserve für Lastspitzen",
+            "Sie wandelt die Druckluft in ein elektrisches Signal um"
           ],
-          "answer": "16 – die Abstände wachsen um 1: +1, +2, +3, +4, +5."
+          "answer": "Sie filtert, regelt den Druck und ölt die Druckluft, bevor diese zu den Aktoren gelangt – die Wartungseinheit (Filter-Regler-Öler) bereitet die Druckluft auf; erzeugt wird sie vom Kompressor, gespeichert im Druckluftbehälter."
         },
         {
-          "type": "sprachlogik",
-          "question": "Motor verhält sich zu Antrieb wie Sensor zu …?",
+          "type": "fachwissen",
+          "question": "Worauf spricht ein induktiver Näherungssensor berührungslos an?",
           "options": [
-            "Messung",
-            "Strom",
-            "Gehäuse",
-            "Kabel"
+            "Nur auf metallische (elektrisch leitfähige) Objekte",
+            "Auf jedes beliebige Material unabhängig vom Werkstoff",
+            "Nur auf transparente Objekte wie Glas",
+            "Nur auf Temperaturänderungen in der Umgebung"
           ],
-          "answer": "Messung – ein Motor sorgt für Antrieb, ein Sensor für die Messung (jeweils die Funktion des Bauteils)."
+          "answer": "Nur auf metallische (elektrisch leitfähige) Objekte – ein induktiver Näherungssensor erzeugt ein hochfrequentes Magnetfeld und reagiert ausschließlich auf leitfähige Werkstoffe; nichtmetallische Materialien erfasst er nicht."
         },
         {
           "type": "zahlenreihe",
-          "question": "2, 5, 10, 17, 26, ?",
-          "answer": "37 (Differenzen steigen um die ungeraden Zahlen: +3, +5, +7, +9, +11; entspricht n²+1)",
+          "question": "Setze die Reihe fort: 2, 5, 10, 17, 26, ?",
           "options": [
             "35",
-            "37",
-            "39",
-            "41"
-          ]
-        },
-        {
-          "type": "sprachlogik",
-          "question": "Multimeter : Messen :: Schraubenschlüssel : ?",
-          "answer": "Anziehen (Werkzeug – typische Funktion: der Multimeter dient dem Messen, der Schraubenschlüssel dem Anziehen)",
-          "options": [
-            "Anziehen",
-            "Schneiden",
-            "Löten",
-            "Isolieren"
-          ]
+            "36",
+            "38",
+            "37"
+          ],
+          "answer": "37 – die Reihe folgt der Regel n²+1: 1²+1=2, 2²+1=5, 3²+1=10, 4²+1=17, 5²+1=26, 6²+1=37. Die Differenzen steigen dabei jeweils um 2 (+3, +5, +7, +9, +11)."
         }
       ],
       "tipps": [
@@ -605,36 +569,37 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 2, 6, 18, 54, ?",
+          "type": "fachwissen",
+          "question": "Was ist die Hauptfunktion des ABS (Antiblockiersystem) im Pkw?",
           "options": [
-            "108",
-            "150",
-            "162",
-            "216"
+            "Es verhindert das Blockieren der Räder beim Bremsen und erhält die Lenkbarkeit",
+            "Es erhöht die maximale Motorleistung beim Beschleunigen",
+            "Es reguliert automatisch die Innenraumtemperatur",
+            "Es überwacht ausschließlich den Reifenluftdruck"
           ],
-          "answer": "162 – jede Zahl wird mit 3 multipliziert."
+          "answer": "Es verhindert das Blockieren der Räder beim Bremsen und erhält die Lenkbarkeit — das ABS moduliert bei starker Bremsung den Bremsdruck an den Rädern, damit diese nicht blockieren und das Fahrzeug lenk- und steuerbar bleibt."
         },
         {
-          "type": "konzentration",
-          "question": "Wie oft kommt die Ziffer 8 in dieser Reihe vor?  8 3 8 1 8 8 2 9 8 4",
-          "answer": "5-mal."
-        },
-        {
-          "type": "konzentration",
-          "question": "In der Werkstatt müssen Sie schnell und fehlerfrei Teilenummern gegenlesen. Zählen Sie, wie oft die Ziffer 4 in dieser Zeichenfolge vorkommt:\n4 7 2 4 9 4 1 3 4 6 4 8 5 4 2 4 7 4",
-          "answer": "8 – die Ziffer 4 taucht an 8 Stellen der Reihe auf (Position 1, 4, 6, 9, 11, 14, 16, 18)."
+          "type": "fachwissen",
+          "question": "Welche Aufgabe hat der Generator (Lichtmaschine) im 12-Volt-Bordnetz eines Pkw?",
+          "options": [
+            "Er lädt die Batterie während der Fahrt und versorgt die elektrischen Verbraucher",
+            "Er speichert ausschließlich die von der Batterie gelieferte Energie",
+            "Er wandelt Kraftstoff ohne Verbrennung direkt in elektrische Energie um",
+            "Er steuert die Zündfolge der Zylinder"
+          ],
+          "answer": "Er lädt die Batterie während der Fahrt und versorgt die elektrischen Verbraucher — der vom Motor angetriebene Generator erzeugt im Fahrbetrieb Strom, lädt damit die 12-Volt-Batterie nach und speist gleichzeitig die elektrischen Verbraucher des Bordnetzes."
         },
         {
           "type": "zahlenreihe",
-          "question": "In der Inspektionsannahme steigt die Zahl der pro Tag geprüften Fahrzeuge nach einem festen Muster: 3, 7, 13, 21, 31, ? Wie lautet die nächste Zahl?",
+          "question": "Setze die Reihe fort: 5, 12, 10, 17, 15, ?",
           "options": [
-            "40",
-            "41",
-            "43",
-            "45"
+            "13",
+            "20",
+            "22",
+            "24"
           ],
-          "answer": "43 – die Differenzen zwischen den Zahlen wachsen jeweils um 2 (4, 6, 8, 10, 12): 31 + 12 = 43."
+          "answer": "22 — Die Reihe wechselt abwechselnd zwischen +7 und −2: 5 +7 = 12, 12 −2 = 10, 10 +7 = 17, 17 −2 = 15, 15 +7 = 22."
         }
       ],
       "tipps": [
@@ -684,42 +649,37 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Eine Rechnung über 250 € wird mit 2 % Skonto bezahlt. Wie viel wird überwiesen?",
+          "type": "fachwissen",
+          "question": "Ein Lieferant bietet eine Ware zum Listenpreis von 1.000 € an, gewährt 10 % Liefererrabatt und 2 % Skonto; zusätzlich fallen 50 € Bezugskosten (Fracht) an. Wie wird der Bezugspreis fachlich korrekt ermittelt?",
           "options": [
-            "240 €",
-            "245 €",
-            "247 €",
-            "248 €"
+            "Listenpreis − Rabatt − Skonto + Bezugskosten",
+            "Listenpreis + Bezugskosten − Rabatt − Skonto",
+            "Listenpreis − Bezugskosten + Rabatt + Skonto",
+            "Listenpreis − Rabatt − Skonto − Bezugskosten"
           ],
-          "answer": "245 € – 2 % von 250 € sind 5 €, also 250 − 5 = 245 €."
+          "answer": "Listenpreis − Rabatt − Skonto + Bezugskosten: Vom Listeneinkaufspreis wird zuerst der Rabatt abgezogen (Zieleinkaufspreis 900 €), davon der Skonto (Bareinkaufspreis 882 €); erst danach werden die nicht skontofähigen Bezugskosten addiert, sodass sich ein Bezugspreis von 932 € ergibt."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welche Aussage zum Grundprinzip der Bilanz ist richtig?",
+          "options": [
+            "Die Bilanzsumme der Aktivseite muss stets der Bilanzsumme der Passivseite entsprechen, da die Passiva die Mittelherkunft und die Aktiva die Mittelverwendung zeigen",
+            "Die Aktivseite zeigt die Mittelherkunft, die Passivseite die Mittelverwendung des Unternehmens",
+            "Aktiva und Passiva müssen nicht übereinstimmen, da die Bilanz nur eine grobe Übersicht darstellt",
+            "Die Bilanzsumme der Passivseite darf die der Aktivseite übersteigen, wenn stille Reserven bestehen"
+          ],
+          "answer": "Die Bilanzsumme der Aktivseite muss stets der Bilanzsumme der Passivseite entsprechen, da die Passiva die Mittelherkunft und die Aktiva die Mittelverwendung zeigen: Jede Bilanz muss aus buchhalterischer Systematik zwingend ausgeglichen sein, weil jedes Vermögen (Aktiva) durch Eigen- oder Fremdkapital (Passiva) finanziert wurde."
         },
         {
           "type": "sprachlogik",
-          "question": "Einkauf verhält sich zu Lieferant wie Verkauf zu …?",
+          "question": "Einkauf verhält sich zu Beschaffung wie Vertrieb zu …?",
           "options": [
-            "Kunde",
-            "Lager",
-            "Markt",
-            "Preis"
+            "Absatz",
+            "Angebot",
+            "Produktion",
+            "Marketing"
           ],
-          "answer": "Kunde – beim Einkauf ist der Lieferant der Partner, beim Verkauf der Kunde."
-        },
-        {
-          "type": "konzentration",
-          "question": "In der Warenwirtschaft werden Bestellcodes oft nur kurz überflogen – hier zählt jeder Buchstabe. Wie oft kommt der Großbuchstabe „B“ in der folgenden Zeichenkette vor?\n\nBLRT BBLR TBBL RBTL BRBT LBBR TLBR BBTL",
-          "answer": "13 – die Zeichenkette enthält genau 13 Mal den Buchstaben „B“ (nachgezählt: BLRT[1] BBLR[2,3] TBBL[4,5] RBTL[6] BRBT[7,8] LBBR[9,10] TLBR[11] BBTL[12,13])."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Ein Lieferant staffelt seine Mindestbestellmengen nach einem festen Faktor. Wie lautet die nächste Zahl in der Reihe: 3, 9, 27, 81, ...?",
-          "options": [
-            "162",
-            "216",
-            "243",
-            "324"
-          ],
-          "answer": "243 – jede Zahl wird mit dem Faktor 3 multipliziert (3 → 9 → 27 → 81 → 243), passend zur Mengenstaffel bei Bestellungen."
+          "answer": "Absatz – Einkauf und Beschaffung bezeichnen dieselbe beschaffungsseitige Funktion (Synonyme), genauso wie Vertrieb und Absatz die absatzseitige Funktion bezeichnen."
         }
       ],
       "tipps": [
@@ -769,42 +729,37 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
+          "type": "fachwissen",
+          "question": "Innerhalb welcher Frist muss grundsätzlich Widerspruch gegen einen Verwaltungsakt eingelegt werden?",
+          "options": [
+            "Einen Monat nach Bekanntgabe des Verwaltungsakts",
+            "Zwei Wochen nach Erlass des Verwaltungsakts",
+            "Drei Monate nach Zustellung des Verwaltungsakts",
+            "Sofort, noch am Tag der Bekanntgabe"
+          ],
+          "answer": "Einen Monat nach Bekanntgabe des Verwaltungsakts – nach der Verwaltungsgerichtsordnung ist der Widerspruch grundsätzlich innerhalb eines Monats nach Bekanntgabe einzulegen."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welche Aufgabe hat der Bundesrat im föderalen System Deutschlands?",
+          "options": [
+            "Er vertritt die Interessen der Länder auf Bundesebene und wirkt an der Gesetzgebung des Bundes mit",
+            "Er ist die Vertretung der Gemeinden gegenüber dem Bund",
+            "Er wählt den Bundeskanzler oder die Bundeskanzlerin",
+            "Er entscheidet als Gericht über Streitigkeiten zwischen Bund und Ländern"
+          ],
+          "answer": "Er vertritt die Interessen der Länder auf Bundesebene und wirkt an der Gesetzgebung des Bundes mit – der Bundesrat besteht aus Mitgliedern der Landesregierungen und ist das Verfassungsorgan, über das die Länder an der Bundesgesetzgebung und -verwaltung beteiligt sind."
+        },
+        {
           "type": "sprachlogik",
           "question": "Antrag verhält sich zu Bescheid wie Frage zu …?",
           "options": [
-            "Antwort",
             "Formular",
-            "Akte",
-            "Amt"
+            "Antwort",
+            "Frist",
+            "Widerspruch"
           ],
-          "answer": "Antwort – auf einen Antrag folgt ein Bescheid, auf eine Frage eine Antwort (jeweils die Reaktion)."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 5, 10, 20, 40, ?",
-          "options": [
-            "60",
-            "70",
-            "80",
-            "100"
-          ],
-          "answer": "80 – jede Zahl ist das Doppelte der vorigen."
-        },
-        {
-          "type": "konzentration",
-          "question": "Sie prüfen eine Liste von Aktenzeichen auf Vollständigkeit. Zählen Sie, wie oft das Aktenzeichen exakt 'AZ-2024' (Großbuchstaben, mit Bindestrich, Ziffer 0 statt Buchstabe O) in folgender Reihe vorkommt:\n\nAZ-2024  AZ-2024  AZ-2029  A2-2024  AZ-2024  AZ-2O24  AZ-2024  AZ-2042  AZ-2024  AZ-2024  AZ-2064  AZ-2024  AZ2024  AZ-2024  AZ-2024  Az-2024  AZ-2024  AZ-2029  AZ-2024  AZ-2024",
-          "answer": "12 – exakte Treffer sind die Positionen 1, 2, 5, 7, 9, 10, 12, 14, 15, 17, 19 und 20. Nicht zählen: abweichende Endziffern (AZ-2029, AZ-2042, AZ-2064), Buchstabe statt Ziffer (AZ-2O24), fehlender Bindestrich (AZ2024), falsche Ziffer im Präfix (A2-2024) und Kleinschreibung (Az-2024)."
-        },
-        {
-          "type": "sprachlogik",
-          "question": "Rathaus verhält sich zu Bürgermeister wie Gericht zu ...?",
-          "answer": "Richter",
-          "options": [
-            "Anwalt",
-            "Kläger",
-            "Richter",
-            "Akte"
-          ]
+          "answer": "Antwort – so wie ein Antrag die amtliche Reaktion (den Bescheid) auslöst, löst eine Frage eine Antwort aus. Formular ist nur das Trägermedium, Widerspruch und Frist gehören zu einem späteren Verfahrensschritt und passen nicht als direkte Entsprechung."
         }
       ],
       "tipps": [
@@ -854,36 +809,37 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "konzentration",
-          "question": "Wie oft kommt der Buchstabe R in dieser Reihe vor?  R T R E R B R K R M",
-          "answer": "5-mal."
+          "type": "fachwissen",
+          "question": "Welche Hauptaufgabe erfüllen die Erythrozyten (rote Blutkörperchen) im menschlichen Blut?",
+          "options": [
+            "Transport von Sauerstoff zu den Körperzellen",
+            "Abwehr von Krankheitserregern",
+            "Blutgerinnung bei Verletzungen",
+            "Produktion von Antikörpern"
+          ],
+          "answer": "Transport von Sauerstoff zu den Körperzellen – Erythrozyten enthalten Hämoglobin, das Sauerstoff bindet und von der Lunge zu den Geweben transportiert, während Erregerabwehr, Gerinnung und Antikörperbildung anderen Blutbestandteilen (Leukozyten, Thrombozyten) obliegen."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Wofür steht die STIKO im deutschen Gesundheitswesen?",
+          "options": [
+            "Für das Gremium, das offizielle Impfempfehlungen für Deutschland ausspricht",
+            "Für die zentrale Abrechnungsstelle der Krankenkassen für Impfleistungen",
+            "Für die Zulassungsbehörde für neue Impfstoffe",
+            "Für eine verpflichtende Fortbildungseinrichtung für medizinisches Fachpersonal"
+          ],
+          "answer": "Für das Gremium, das offizielle Impfempfehlungen für Deutschland ausspricht – die Ständige Impfkommission (STIKO) am Robert Koch-Institut erarbeitet die fachlichen Empfehlungen, wer wann gegen welche Krankheiten geimpft werden soll, ist aber weder Zulassungsbehörde (das ist das Paul-Ehrlich-Institut) noch Abrechnungsstelle."
         },
         {
           "type": "sprachlogik",
-          "question": "Rezept verhält sich zu Medikament wie Überweisung zu …?",
+          "question": "Rezept verhält sich zu Apotheke wie Überweisung zu ...?",
           "options": [
             "Facharzt",
-            "Apotheke",
-            "Termin",
-            "Praxis"
+            "Krankenkasse",
+            "Diagnose",
+            "Wartezimmer"
           ],
-          "answer": "Facharzt – ein Rezept führt zum Medikament, eine Überweisung zum Facharzt (jeweils das Ziel)."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "An der Anmeldung zählt eine MFA die eingehenden Anrufe pro Stunde. Wie lautet die nächste Zahl in der Reihe: 3, 6, 11, 18, 27, ?",
-          "options": [
-            "33",
-            "36",
-            "38",
-            "40"
-          ],
-          "answer": "38 – die Differenzen zwischen den Zahlen steigen um jeweils 2 (3, 5, 7, 9, 11): 27 + 11 = 38."
-        },
-        {
-          "type": "konzentration",
-          "question": "Sie sortieren Patientenkarteikarten nach Anfangsbuchstaben. Zählen Sie, wie oft der Buchstabe K in dieser Zeichenfolge vorkommt (jedes Zeichen steht für eine Karteikarte): K B T M R K L P B K R T M K B L R K P T M K B R L K P T M R",
-          "answer": "7"
+          "answer": "Facharzt – ein Rezept wird in der Apotheke eingelöst, eine Überweisung führt die Patientin oder den Patienten zum Facharzt. Beides sind Dokumente, die im Praxisalltag zu einem bestimmten Zielort weiterleiten."
         }
       ],
       "tipps": [
@@ -934,42 +890,37 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "sprachlogik",
-          "question": "Arzt verhält sich zu Krankheit wie Polizist zu …?",
+          "type": "fachwissen",
+          "question": "Was besagt Artikel 1 des Grundgesetzes?",
           "options": [
-            "Uniform",
-            "Verbrechen",
-            "Streife",
-            "Gesetz"
+            "Die Würde des Menschen ist unantastbar.",
+            "Alle Menschen sind vor dem Gesetz gleich.",
+            "Die Bundesrepublik Deutschland ist ein demokratischer und sozialer Bundesstaat.",
+            "Jeder hat das Recht auf freie Entfaltung seiner Persönlichkeit."
           ],
-          "answer": "Verbrechen – ein Arzt bekämpft die Krankheit, ein Polizist das Verbrechen (jeweils das, wogegen sie vorgehen)."
+          "answer": "Die Würde des Menschen ist unantastbar. - Artikel 1 Absatz 1 GG stellt diesen Satz als obersten, unveränderlichen Verfassungsgrundsatz voran, den alle staatliche Gewalt zu achten und zu schützen hat. Die Gleichheit vor dem Gesetz steht in Art. 3, der Bundesstaatsgrundsatz in Art. 20, die freie Entfaltung der Persönlichkeit in Art. 2."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 2, 5, 11, 23, 47, ?",
+          "type": "fachwissen",
+          "question": "Welche Funktion nimmt der Bundespräsident in der Bundesrepublik Deutschland ein?",
           "options": [
-            "94",
-            "95",
-            "96",
-            "98"
+            "Er ist das Staatsoberhaupt und vertritt Deutschland völkerrechtlich nach außen.",
+            "Er ist der Chef der Bundesregierung und leitet die Kabinettssitzungen.",
+            "Er führt den Vorsitz im Bundesverfassungsgericht.",
+            "Er ist im Frieden der Oberbefehlshaber der Bundeswehr."
           ],
-          "answer": "95 – jede Zahl wird verdoppelt und plus 1 gerechnet (2→5→11→23→47→95)."
-        },
-        {
-          "type": "konzentration",
-          "question": "Zähle, wie oft der Buchstabe 'P' in dieser Reihe vorkommt: P R F P K L P F R P L K P F P R K P F P",
-          "answer": "8 – der Buchstabe P kommt in der Reihe genau achtmal vor."
+          "answer": "Er ist das Staatsoberhaupt und vertritt Deutschland völkerrechtlich nach außen. - Als Staatsoberhaupt repräsentiert der Bundespräsident die Bundesrepublik Deutschland und schließt gemäß Art. 59 Abs. 1 GG völkerrechtliche Verträge im Namen des Bundes. Chef der Bundesregierung ist der Bundeskanzler; der Vorsitz im Bundesverfassungsgericht liegt bei dessen Präsidenten; Oberbefehlshaber der Bundeswehr im Frieden ist der Bundesminister der Verteidigung (Art. 65a GG)."
         },
         {
           "type": "sprachlogik",
-          "question": "Handschellen verhalten sich zu Festnahme wie Blaulicht zu …?",
+          "question": "Streife verhält sich zu Prävention wie Ermittlung zu ...?",
           "options": [
-            "Werkstatt",
-            "Einsatzfahrt",
-            "Tankstelle",
-            "Ampel"
+            "Aufklärung",
+            "Festnahme",
+            "Anzeige",
+            "Observation"
           ],
-          "answer": "Einsatzfahrt – Handschellen gehören zur Festnahme, so wie das Blaulicht zur Einsatzfahrt gehört."
+          "answer": "Aufklärung – die Streife dient der Prävention (Verhindern von Straftaten durch Präsenz), die Ermittlung dient analog der Aufklärung (Klärung bereits begangener Straftaten). Festnahme, Anzeige und Observation sind einzelne Maßnahmen innerhalb der Ermittlung, aber nicht deren übergeordnetes Ziel."
         }
       ],
       "tipps": [
@@ -1016,46 +967,41 @@
             "Auch beim Warenverkehr zwischen EU-Mitgliedstaaten fallen Zölle an, allerdings nach einheitlichen EU-weiten Sätzen",
             "Der gemeinsame Zolltarif gilt nur für den Warenverkehr innerhalb der EU, nicht gegenüber Drittstaaten"
           ],
-          "answer": "Richtig ist: 'Im Warenverkehr zwischen den EU-Mitgliedstaaten werden keine Zölle erhoben, gegenüber Drittstaaten gilt ein gemeinsamer Zolltarif' – das ist das Kernprinzip der Zollunion: zollfreier Binnenmarkt nach innen, einheitlicher Außenzolltarif nach außen.",
+          "answer": "Im Warenverkehr zwischen den EU-Mitgliedstaaten werden keine Zölle erhoben, gegenüber Drittstaaten gilt ein gemeinsamer Zolltarif – das ist das Kernprinzip der Zollunion: zollfreier Binnenmarkt nach innen, einheitlicher Außenzolltarif nach außen.",
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 5, 10, 20, 40, ?",
+          "type": "fachwissen",
+          "question": "Welche Aufgabe gehört zum Zuständigkeitsbereich der Finanzkontrolle Schwarzarbeit (FKS) beim Zoll?",
           "options": [
-            "60",
-            "70",
-            "80",
-            "100"
+            "Kontrolle der Einhaltung von Mindestlohn- und Sozialversicherungspflichten bei Arbeitgebern",
+            "Erhebung der Kraftfahrzeugsteuer für private Halter",
+            "Ausstellung von Reisepässen bei der Einreisekontrolle",
+            "Überwachung der Preisbindung im Buchhandel"
           ],
-          "answer": "80 – jede Zahl ist das Doppelte der vorigen (Faktor 2)."
+          "answer": "Kontrolle der Einhaltung von Mindestlohn- und Sozialversicherungspflichten bei Arbeitgebern, denn die FKS ist die Organisationseinheit des Zolls, die Schwarzarbeit und illegale Beschäftigung bekämpft, indem sie u. a. Mindestlohn- und Sozialversicherungsvorgaben bei Arbeitgebern überprüft."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 2, 5, 11, 23, ?",
+          "type": "fachwissen",
+          "question": "Welcher Behörde bzw. welchem Geschäftsbereich ist der Zoll in Deutschland organisatorisch zugeordnet?",
           "options": [
-            "44",
-            "45",
-            "47",
-            "50"
+            "Der Bundesfinanzverwaltung im Geschäftsbereich des Bundesministeriums der Finanzen",
+            "Der Bundespolizei im Geschäftsbereich des Bundesministeriums des Innern",
+            "Den Landesfinanzbehörden der einzelnen Bundesländer",
+            "Dem Auswärtigen Amt als Teil des diplomatischen Dienstes"
           ],
-          "answer": "47 – jede Zahl wird verdoppelt und dann um 1 erhöht (2×2+1=5, 5×2+1=11, 11×2+1=23, 23×2+1=47)."
+          "answer": "Der Bundesfinanzverwaltung im Geschäftsbereich des Bundesministeriums der Finanzen, denn der Zoll ist eine Bundesbehörde und gehört organisatorisch zur Bundesfinanzverwaltung, die dem Bundesfinanzministerium untersteht."
         },
         {
           "type": "sprachlogik",
-          "question": "Einfuhr verhält sich zu Ausfuhr wie Kauf zu …?",
+          "question": "Import verhält sich zu Einfuhr wie Export zu …?",
           "options": [
-            "Verkauf",
-            "Preis",
-            "Ware",
-            "Vertrag"
+            "Ausfuhr",
+            "Ausland",
+            "Fracht",
+            "Abgabe"
           ],
-          "answer": "Verkauf – Einfuhr/Ausfuhr und Kauf/Verkauf sind jeweils Gegensatzpaare wirtschaftlicher Vorgänge."
-        },
-        {
-          "type": "konzentration",
-          "question": "Zähle, wie oft der Buchstabe „Z“ in dieser Zeichenfolge vorkommt: ZOLLZONE ZWISCHEN ZWEI ZONEN",
-          "answer": "5 – der Buchstabe Z kommt in ZOLLZONE zweimal sowie je einmal in ZWISCHEN, ZWEI und ZONEN vor."
+          "answer": "Ausfuhr – denn 'Einfuhr' ist das deutsche Synonym zu 'Import', also ist 'Ausfuhr' das Synonym zu 'Export'."
         }
       ],
       "tipps": [
@@ -1105,48 +1051,37 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "In einer Reihe verdoppelt sich die Spannung von Stufe zu Stufe: 6, 12, 24, 48, ? V",
+          "type": "fachwissen",
+          "question": "Welche Farbkombination kennzeichnet den Schutzleiter (PE)?",
           "options": [
-            "72",
-            "84",
-            "96",
-            "108"
+            "Grün-Gelb",
+            "Blau",
+            "Braun",
+            "Schwarz"
           ],
-          "answer": "96 – jede Spannung ist doppelt so hoch wie die vorherige (Verdopplung: 48 × 2 = 96)."
+          "answer": "Grün-Gelb – die Farbkombination Grün-Gelb ist Leitern mit Schutzfunktion vorbehalten (Schutzleiter PE; ein PEN-Leiter wird ebenfalls grün-gelb mit blauen Endmarkierungen gekennzeichnet). Blau steht für den Neutralleiter, Braun und Schwarz sind typische Außenleiterfarben."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welche Spannungswerte liegen in einem 400-V-Niederspannungs-Drehstromnetz jeweils zwischen zwei Außenleitern und zwischen einem Außenleiter und dem Neutralleiter an?",
+          "options": [
+            "400 V zwischen zwei Außenleitern, 230 V zwischen Außenleiter und Neutralleiter",
+            "230 V zwischen zwei Außenleitern, 400 V zwischen Außenleiter und Neutralleiter",
+            "230 V zwischen zwei Außenleitern, 230 V zwischen Außenleiter und Neutralleiter",
+            "400 V zwischen zwei Außenleitern, 400 V zwischen Außenleiter und Neutralleiter"
+          ],
+          "answer": "400 V zwischen zwei Außenleitern, 230 V zwischen Außenleiter und Neutralleiter – das folgt aus der Sternschaltung, bei der die Leiterspannung das √3-Fache der Strangspannung beträgt."
         },
         {
           "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 3, 6, 11, 18, ?",
+          "question": "Setze die Reihe fort: 2, 7, 14, 23, 34, ?",
           "options": [
-            "25",
-            "26",
-            "27",
-            "29"
+            "43",
+            "45",
+            "47",
+            "49"
           ],
-          "answer": "27 – die Differenzen steigen jeweils um 2 (+3, +5, +7, +9): 18 + 9 = 27."
-        },
-        {
-          "type": "sprachlogik",
-          "question": "Volt verhält sich zu Spannung wie Ampere zu …?",
-          "options": [
-            "Widerstand",
-            "Strom",
-            "Leistung",
-            "Frequenz"
-          ],
-          "answer": "Strom – Volt ist die Einheit der elektrischen Spannung, Ampere die Einheit der elektrischen Stromstärke."
-        },
-        {
-          "type": "sprachlogik",
-          "question": "Sicherung verhält sich zu Überstrom wie Isolierung zu …?",
-          "options": [
-            "Blindstrom",
-            "Stromschlag",
-            "Spannungsabfall",
-            "Frequenz"
-          ],
-          "answer": "Stromschlag – eine Sicherung schützt vor Überstrom, eine Isolierung schützt Personen vor dem Berühren spannungsführender Teile und damit vor Stromschlag."
+          "answer": "47 – Regel: Quadratzahlen minus 2 (n²−2): 2²−2=2, 3²−2=7, 4²−2=14, 5²−2=23, 6²−2=34, 7²−2=47. Die Differenzen zwischen den Gliedern steigen jeweils um 2 (+5, +7, +9, +11, +13)."
         }
       ],
       "tipps": [
@@ -1196,36 +1131,37 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 2, 6, 18, 54, ?",
+          "type": "fachwissen",
+          "question": "Welche Mindesttemperatur soll bei einer zentralen Trinkwarmwasser-Großanlage nach DVGW W 551 am Austritt des Trinkwassererwärmers eingehalten werden (Legionellenschutz)?",
           "options": [
-            "108",
-            "152",
-            "162",
-            "172"
+            "45 °C",
+            "50 °C",
+            "60 °C",
+            "70 °C"
           ],
-          "answer": "162 – jede Zahl wird mit 3 multipliziert (2×3=6, 6×3=18, 18×3=54, 54×3=162)."
+          "answer": "60 °C – nach DVGW W 551 soll bei zentralen Großanlagen die Warmwassertemperatur am Austritt des Trinkwassererwärmers mindestens 60 °C betragen; darunter (ca. 25–55 °C) vermehren sich Legionellen stark."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Bis zu welcher Arbeitstemperatur spricht man beim Verbinden von Kupferrohren von Weichlöten, oberhalb der es als Hartlöten bezeichnet wird?",
+          "options": [
+            "250 °C",
+            "350 °C",
+            "450 °C",
+            "550 °C"
+          ],
+          "answer": "450 °C – Lötverfahren mit einer Arbeitstemperatur bis 450 °C gelten als Weichlöten, oberhalb von 450 °C spricht man von Hartlöten (DIN ISO 857-2)."
         },
         {
           "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 4, 7, 12, 19, ?",
+          "question": "Setze die Reihe fort: 6, 15, 24, 33, ?",
           "options": [
-            "24",
-            "26",
-            "28",
-            "30"
+            "39",
+            "41",
+            "42",
+            "44"
           ],
-          "answer": "28 – die Differenz zwischen den Zahlen steigt jeweils um 2 (3, 5, 7, 9), also 19+9=28."
-        },
-        {
-          "type": "konzentration",
-          "question": "Zähle, wie oft der Buchstabe „R“ in dieser Zeichenfolge vorkommt: R2 K7 R9 M3 R5 T1 R8 K2 R4 M6",
-          "answer": "5"
-        },
-        {
-          "type": "konzentration",
-          "question": "Wie oft kommt die exakte Zeichenfolge „DN20“ in dieser Reihe vor (Groß-/Kleinschreibung und Zeichen beachten): DN20 DN2O DN20 Dn20 DN25 DN20 dn20 DN20",
-          "answer": "4 – exakte Treffer sind die 1., 3., 6. und 8. Angabe; die übrigen weichen durch Buchstabe „O“ statt Ziffer „0“, Kleinschreibung oder andere Maße ab."
+          "answer": "42 — die Reihe steigt mit einer konstanten Differenz von +9 (6→15→24→33→42)."
         }
       ],
       "tipps": [
@@ -1275,36 +1211,37 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Eine Drehzahl-Reihe verdoppelt sich schrittweise: 400, 800, 1600, 3200, ?",
+          "type": "fachwissen",
+          "question": "Im Passungssystem Einheitsbohrung besitzt die Bohrung bei jeder Paarung stets das Toleranzfeld H (z. B. H7), ihr Grundabmaß liegt also auf dem Nennmaß. Wodurch wird bei diesem System festgelegt, ob eine Spiel-, Übergangs- oder Presspassung entsteht?",
           "options": [
-            "4800",
-            "5600",
-            "6400",
-            "7200"
+            "Durch die Wahl des Wellentoleranzfelds (z. B. h6, k6, p6)",
+            "Durch den Mittelwert aus Bohrungs- und Wellentoleranzfeld",
+            "Durch die Oberflächenrauheit der Bohrungswand",
+            "Durch die Wärmebehandlung des Wellenwerkstoffs"
           ],
-          "answer": "6400 – jede Zahl ist doppelt so groß wie die vorige (geometrische Folge, Faktor 2)."
+          "answer": "Durch die Wahl des Wellentoleranzfelds (z. B. h6, k6, p6) — da die Bohrung im System Einheitsbohrung stets das Toleranzfeld H erhält, bestimmt das gewählte Wellentoleranzfeld mit seiner Lage und Breite den Passungscharakter."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Nach DIN 66217 wird für CNC-Maschinen ein einheitliches Koordinatensystem mit den Achsen X, Y und Z definiert. Wo liegt bei einer Fräsmaschine die Z-Achse?",
+          "options": [
+            "In der Spindel- bzw. Werkzeugachse",
+            "Waagerecht in der Aufspannebene des Werkstücks, quer zur X-Achse",
+            "Senkrecht zur Z-Achse in der Tischebene",
+            "Entlang der Vorschubrichtung des Werkstücktisches"
+          ],
+          "answer": "In der Spindel- bzw. Werkzeugachse — nach DIN 66217 verläuft die Z-Achse definitionsgemäß immer parallel zur Spindelachse, mit der positiven Richtung vom Werkstück weg zum Werkzeug hin."
         },
         {
           "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 5, 8, 12, 17, 23, ?",
+          "question": "Setze die Reihe fort: 6, 8, 12, 20, 36, ?",
           "options": [
-            "28",
-            "29",
-            "30",
-            "31"
+            "64",
+            "68",
+            "72",
+            "66"
           ],
-          "answer": "30 – die Differenz zwischen den Zahlen steigt jeweils um 1 (+3, +4, +5, +6, +7)."
-        },
-        {
-          "type": "konzentration",
-          "question": "Zähle, wie oft der Buchstabe 'S' in dieser Zeichenreihe vorkommt: 5 S 5 S S 8 5 S 3 S 5 S",
-          "answer": "6 – das 'S' kommt an sechs Positionen in der Reihe vor."
-        },
-        {
-          "type": "konzentration",
-          "question": "Wie oft taucht die Zahl '50' in dieser Maßreihe auf (Angaben in mm): 50 52 50 48 50 55 50 49 51 50",
-          "answer": "5 – die Zahl 50 erscheint an fünf Stellen der Reihe."
+          "answer": "68 – Regel: jedes Glied wird verdoppelt und dann um 4 vermindert (36 × 2 − 4 = 68)."
         }
       ],
       "tipps": [
@@ -1354,42 +1291,37 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 120, 135, 150, 165, ?",
+          "type": "fachwissen",
+          "question": "Was unterscheidet die Kommissionierprinzipien „Mann-zur-Ware“ und „Ware-zum-Mann“ grundlegend voneinander?",
           "options": [
-            "175",
-            "180",
-            "185",
-            "190"
+            "Bei „Mann-zur-Ware“ bewegt sich der Kommissionierer zu den Lagerplätzen, bei „Ware-zum-Mann“ wird die Ware per Fördertechnik zum stationären Arbeitsplatz gebracht.",
+            "„Mann-zur-Ware“ bezeichnet die vollautomatische Kommissionierung durch Roboter, „Ware-zum-Mann“ die rein manuelle Kommissionierung ohne technische Hilfsmittel.",
+            "Bei „Ware-zum-Mann“ durchsucht der Kommissionierer das gesamte Lager, während er bei „Mann-zur-Ware“ an einem festen Arbeitsplatz verbleibt.",
+            "Beide Begriffe beschreiben identische Abläufe und unterscheiden sich nur in der verwendeten Lagerhardware."
           ],
-          "answer": "180 – jede Zahl ist 15 mehr als die vorige (konstante Zunahme, wie bei gleichmäßiger Palettenbestückung pro Stunde)."
+          "answer": "Bei „Mann-zur-Ware“ bewegt sich der Kommissionierer zu den Lagerplätzen, bei „Ware-zum-Mann“ wird die Ware per Fördertechnik zum stationären Arbeitsplatz gebracht. Das ist die zentrale Unterscheidung der beiden Kommissioniergrundprinzipien."
         },
         {
-          "type": "sprachlogik",
-          "question": "Kommissionierer verhält sich zu Pickliste wie Fahrer zu …?",
+          "type": "fachwissen",
+          "question": "Welcher Gefahrgutklasse werden entzündbare flüssige Stoffe wie Benzin nach ADR/GGVSEB zugeordnet?",
           "options": [
-            "Lieferschein",
-            "Frachtbrief",
-            "Tourenplan",
-            "Ladung"
+            "Klasse 3",
+            "Klasse 8",
+            "Klasse 2",
+            "Klasse 9"
           ],
-          "answer": "Tourenplan – der Kommissionierer arbeitet nach der Pickliste, der Fahrer nach dem Tourenplan; beide sind die Arbeitsanweisung für die jeweilige Tätigkeit."
-        },
-        {
-          "type": "konzentration",
-          "question": "Zähle, wie oft der Buchstabe „L“ in dieser Zeile vorkommt: LKW LAGER PALETTE LIEFERUNG REGAL LKW LADUNG",
-          "answer": "7"
+          "answer": "Klasse 3 – sie umfasst entzündbare flüssige Stoffe wie Benzin, Diesel oder Lösemittel."
         },
         {
           "type": "zahlenreihe",
-          "question": "Ein Lagerbestand sinkt durch Auslieferungen wöchentlich um 20 %: 500, 400, 320, ?",
+          "question": "Setze die Reihe fort: 5, 50, 12, 45, 19, 40, ?",
           "options": [
-            "250",
-            "256",
-            "260",
-            "288"
+            "14",
+            "21",
+            "26",
+            "35"
           ],
-          "answer": "256 – jede Zahl entspricht 80 % der vorigen (100 % minus 20 % Abgang); 320 × 0,8 = 256."
+          "answer": "26 – Die Reihe besteht aus zwei verschachtelten Folgen: An den ungeraden Positionen steigen die Zahlen um 7 (5, 12, 19, 26 …), an den geraden Positionen sinken sie um 5 (50, 45, 40, …). Der gesuchte Wert liegt an ungerader Position, also 19 + 7 = 26."
         }
       ],
       "tipps": [
@@ -1439,42 +1371,37 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 5, 10, 20, 40, ?",
+          "type": "fachwissen",
+          "question": "Was versteht die DSGVO unter „personenbezogenen Daten“?",
           "options": [
-            "60",
-            "70",
-            "80",
-            "100"
+            "Alle Informationen, die sich auf eine identifizierte oder identifizierbare natürliche Person beziehen, z. B. Name oder E-Mail-Adresse",
+            "Nur Informationen über Unternehmen und andere juristische Personen",
+            "Ausschließlich Finanzdaten wie Kontoauszüge und Rechnungsbeträge",
+            "Nur Daten, die in Papierform vorliegen, nicht aber digital gespeicherte Daten"
           ],
-          "answer": "80 – jede Zahl wird verdoppelt (5→10→20→40→80)."
+          "answer": "Alle Informationen, die sich auf eine identifizierte oder identifizierbare natürliche Person beziehen, z. B. Name oder E-Mail-Adresse — denn die DSGVO (Art. 4 Nr. 1) definiert personenbezogene Daten genau so, unabhängig vom Speichermedium oder der Rechtsform des Betroffenen."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welches Maß hat das im Büroalltag am häufigsten verwendete Papierformat DIN A4?",
+          "options": [
+            "210 x 297 mm",
+            "148 x 210 mm",
+            "297 x 420 mm",
+            "216 x 279 mm"
+          ],
+          "answer": "210 x 297 mm — dies ist das in der Norm DIN 476 bzw. ISO 216 festgelegte Maß des Papierformats A4."
         },
         {
           "type": "sprachlogik",
-          "question": "Rechnung verhält sich zu Zahlungseingang wie Bestellung zu …?",
+          "question": "Termin verhält sich zu Kalender wie Datei zu …?",
           "options": [
-            "Angebot",
-            "Lieferung",
-            "Mahnung",
-            "Rabatt"
+            "Ordner",
+            "Computer",
+            "Anhang",
+            "Drucker"
           ],
-          "answer": "Lieferung – eine Rechnung wird durch den Zahlungseingang beglichen, eine Bestellung wird durch die Lieferung erfüllt."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 3, 7, 11, 15, ?",
-          "options": [
-            "17",
-            "18",
-            "19",
-            "21"
-          ],
-          "answer": "19 – die Reihe steigt jeweils um 4 (3, 7, 11, 15, 19)."
-        },
-        {
-          "type": "konzentration",
-          "question": "Zähle, wie oft der Buchstabe 'T' vorkommt: BÜROMANAGEMENT ORGANISIERT TERMINE UND AKTEN",
-          "answer": "4 – je ein T in BÜROMANAGEMENT, ORGANISIERT, TERMINE und AKTEN."
+          "answer": "Ordner – ein Termin wird im Kalender festgehalten und strukturiert verwaltet, eine Datei wird entsprechend in einem Ordner abgelegt und organisiert."
         }
       ],
       "tipps": [
@@ -1524,42 +1451,37 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 7, 14, 21, 28, ?",
+          "type": "fachwissen",
+          "question": "Wie lautet die korrekte Grundform eines Buchungssatzes in der doppelten Buchführung?",
           "options": [
-            "30",
-            "34",
-            "35",
-            "42"
+            "Soll-Konto an Haben-Konto",
+            "Haben-Konto an Soll-Konto",
+            "Aktivkonto an Aktivkonto, unabhängig von Soll und Haben",
+            "Der Buchungssatz nennt nur ein Konto, die Gegenbuchung erfolgt automatisch"
           ],
-          "answer": "35 – jede Zahl ist um 7 größer als die vorige."
+          "answer": "Soll-Konto an Haben-Konto — im Buchungssatz wird stets zuerst das zu belastende (Soll-)Konto und danach das zu erkennende (Haben-)Konto genannt."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Was kennzeichnet die lineare Abschreibung (AfA) eines abnutzbaren Wirtschaftsguts?",
+          "options": [
+            "Die Anschaffungs- oder Herstellungskosten werden gleichmäßig über die Nutzungsdauer verteilt, sodass jährlich derselbe Abschreibungsbetrag anfällt",
+            "Der Abschreibungsbetrag sinkt von Jahr zu Jahr, weil ein fester Prozentsatz vom jeweiligen Restbuchwert berechnet wird",
+            "Die gesamten Anschaffungskosten werden bereits im Jahr der Anschaffung vollständig abgeschrieben",
+            "Die Abschreibung richtet sich nach der tatsächlich produzierten Stückzahl und schwankt daher jedes Jahr"
+          ],
+          "answer": "Die Anschaffungs- oder Herstellungskosten werden gleichmäßig über die Nutzungsdauer verteilt, sodass jährlich derselbe Abschreibungsbetrag anfällt — das ist das Kennzeichen der linearen AfA im Unterschied zur degressiven oder leistungsabhängigen Abschreibung."
         },
         {
           "type": "zahlenreihe",
-          "question": "Ein Rechnungsbetrag wird in gleichen Schritten reduziert dargestellt. Setze die Reihe fort: 100, 92, 84, 76, ?",
+          "question": "Setze die Reihe fort: 2, 7, 22, 67, ?",
           "options": [
-            "64",
-            "66",
-            "68",
-            "70"
+            "200",
+            "201",
+            "202",
+            "203"
           ],
-          "answer": "68 – jede Zahl ist um 8 kleiner als die vorige (konstante Differenz von 8)."
-        },
-        {
-          "type": "sprachlogik",
-          "question": "Einkommensteuer verhält sich zu natürlichen Personen wie Körperschaftsteuer zu …?",
-          "options": [
-            "Kapitalgesellschaften",
-            "Personengesellschaften",
-            "Freiberuflern",
-            "Selbstständigen"
-          ],
-          "answer": "Kapitalgesellschaften – Körperschaftsteuer wird von juristischen Personen wie GmbH oder AG erhoben, so wie Einkommensteuer von natürlichen Personen."
-        },
-        {
-          "type": "konzentration",
-          "question": "Buchhaltungssymbole für Soll (S) und Haben (H) wurden in einer Zeile abgetippt. Zähle, wie oft „S“ (für Soll) vorkommt: S H S S H S H H S S H S",
-          "answer": "7 – die Zeile enthält siebenmal ein S (Soll) und fünfmal ein H (Haben)."
+          "answer": "202 – Regel: jedes Glied wird verdreifacht und dann um 1 erhöht (×3 + 1): 2→7 (2×3+1), 7→22 (7×3+1), 22→67 (22×3+1), 67→202 (67×3+1)."
         }
       ],
       "tipps": [
@@ -1609,42 +1531,37 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 2, 5, 11, 23, ?",
+          "type": "fachwissen",
+          "question": "Bei welcher Patientensituation ist die stabile Seitenlage die richtige Maßnahme?",
           "options": [
-            "41",
-            "44",
-            "47",
-            "50"
+            "Bewusstlose Person mit normaler, ausreichender Atmung",
+            "Bewusstlose Person ohne erkennbare Atmung",
+            "Ansprechbare Person mit akuten Brustschmerzen",
+            "Bewusstlose Person mit Verdacht auf Wirbelsäulenverletzung, ohne dass eine Atemkontrolle erfolgt ist"
           ],
-          "answer": "47 – jede Zahl wird verdoppelt und plus 1 gerechnet (23 × 2 + 1 = 47)."
+          "answer": "Bewusstlose Person mit normaler, ausreichender Atmung – die stabile Seitenlage hält bei erhaltener Spontanatmung die Atemwege frei und verhindert das Aspirieren von Erbrochenem, während bei fehlender Atmung sofort mit der Reanimation begonnen werden muss."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welche Aussage zur Notrufnummer 112 trifft zu?",
+          "options": [
+            "112 ist die einheitliche europäische Notrufnummer und erreicht in allen EU-Staaten Rettungsdienst und Feuerwehr",
+            "112 ist ausschließlich eine deutsche Nummer und dient allein der Alarmierung der Polizei",
+            "112 kann nur aus dem Festnetz gewählt werden, nicht aus Mobilfunknetzen",
+            "112 ersetzt in Deutschland vollständig die Erreichbarkeit der Feuerwehr über die 110"
+          ],
+          "answer": "112 ist die einheitliche europäische Notrufnummer und erreicht in allen EU-Staaten Rettungsdienst und Feuerwehr – sie wurde EU-weit als kostenfreier, einheitlicher Notruf eingeführt und ist auch aus Mobilfunknetzen ohne Vorwahl erreichbar."
         },
         {
           "type": "sprachlogik",
-          "question": "Fieber verhält sich zu Thermometer wie Blutdruck zu …?",
+          "question": "Schiene verhält sich zu Fraktur wie Verband zu …?",
           "options": [
-            "Blutdruckmessgerät",
-            "Stethoskop",
-            "Spritze",
-            "Verband"
+            "Wunde",
+            "Pflaster",
+            "Prellung",
+            "Mullbinde"
           ],
-          "answer": "Blutdruckmessgerät – das Thermometer misst die Körpertemperatur (Fieber), das Blutdruckmessgerät analog den Blutdruck."
-        },
-        {
-          "type": "konzentration",
-          "question": "Zähle, wie oft die Ziffer 4 in dieser Reihe vorkommt: 4 7 4 9 2 4 6 4 1 8 4 3 4",
-          "answer": "6"
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 96, 48, 24, 12, ?",
-          "options": [
-            "4",
-            "6",
-            "8",
-            "10"
-          ],
-          "answer": "6 – jede Zahl wird halbiert (12 : 2 = 6)."
+          "answer": "Wunde. Eine Schiene ist das Hilfsmittel zur Versorgung einer Fraktur, ein Verband ist entsprechend das Hilfsmittel zur Versorgung einer Wunde – die anderen Optionen sind entweder selbst Hilfsmittel (Pflaster, Mullbinde) oder keine passende Zielverletzung (Prellung wird nicht primär verbunden)."
         }
       ],
       "tipps": [
@@ -1694,42 +1611,37 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 3, 5, 9, 15, 23, ?",
+          "type": "fachwissen",
+          "question": "Nach Piagets Entwicklungsstufen umfasst die sensomotorische Phase etwa welchen Zeitraum?",
           "options": [
-            "30",
-            "31",
-            "33",
-            "35"
+            "Die ersten zwei Lebensjahre",
+            "Das dritte bis fünfte Lebensjahr",
+            "Das sechste bis zehnte Lebensjahr",
+            "Die gesamte Grundschulzeit"
           ],
-          "answer": "33 – die Differenz zwischen den Zahlen wächst jeweils um 2 (2, 4, 6, 8, 10)."
+          "answer": "Die ersten zwei Lebensjahre, weil Piaget diese Phase von der Geburt bis etwa zum zweiten Lebensjahr ansetzt, in der Kinder die Welt vorrangig über Sinneswahrnehmung und motorische Handlungen begreifen."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 2, 4, 8, 16, ?",
+          "type": "fachwissen",
+          "question": "Welche Spielform bezeichnet man als Rollenspiel bzw. Symbolspiel?",
           "options": [
-            "24",
-            "28",
-            "30",
-            "32"
+            "Das So-tun-als-ob-Spiel, bei dem Kinder Gegenstände oder sich selbst symbolisch für etwas anderes einsetzen",
+            "Das wiederholte Aneinanderreihen von Bauklötzen nach Farben",
+            "Das gemeinsame Singen eines Liedes im Stuhlkreis",
+            "Das freie Toben auf dem Außengelände ohne festgelegte Handlung"
           ],
-          "answer": "32 – jede Zahl wird verdoppelt."
+          "answer": "Das So-tun-als-ob-Spiel, bei dem Kinder Gegenstände oder sich selbst symbolisch für etwas anderes einsetzen, weil genau das die Definition von Rollen- bzw. Symbolspiel ausmacht."
         },
         {
           "type": "sprachlogik",
-          "question": "Baby verhält sich zu Krabbeln wie Kleinkind zu …?",
+          "question": "Vorlesen verhält sich zu Buch wie Singen zu …?",
           "options": [
-            "Laufen",
-            "Sitzen",
-            "Greifen",
-            "Schlafen"
+            "Lied",
+            "Melodie",
+            "Stimme",
+            "Note"
           ],
-          "answer": "Laufen – Krabbeln ist die typische Fortbewegung im Baby-Alter, Laufen die des Kleinkindes (motorische Entwicklung)."
-        },
-        {
-          "type": "konzentration",
-          "question": "Zähle, wie oft der Buchstabe „r“ in dieser Zeichenfolge vorkommt: r a r m r t p r a m r p r a",
-          "answer": "6"
+          "answer": "Lied – beim Vorlesen ist das Buch die Vorlage, beim Singen das Lied; beides ist der jeweils wiedergegebene Inhalt."
         }
       ],
       "tipps": [
