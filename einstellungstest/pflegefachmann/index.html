@@ -48,6 +48,7 @@
     ul.related a{font-weight:600}
     .samples li.sample{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin:12px 0;box-shadow:0 2px 8px -5px rgba(80,50,40,.25)}
     .sample-type{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--primary-dark);background:#f6e7e1;border-radius:999px;padding:3px 10px;margin-bottom:8px}
+    .sample-note{font-size:.74rem;color:var(--muted);margin:.1em 0 .5em;font-style:italic}
     .sample-q{font-weight:600;margin:.2em 0}
     ul.opts{margin:.4em 0 .2em;padding-left:1.2em}
     ul.opts li{padding:2px 0}
@@ -84,28 +85,29 @@
         <h2>Beispielaufgaben</h2>
         <ul class="samples">
         <li class="sample">
-        <div class="sample-type">Konzentration &amp; Sorgfalt</div>
-        <p class="sample-q">Wie oft kommt die Ziffer 3 in dieser Reihe vor?  3 8 3 1 3 5 3 9 2 3</p>
-        
-        <details class="sample-a"><summary>Lösung anzeigen</summary><p>5-mal.</p></details>
+        <div class="sample-type">Fachwissen zur Stelle</div>
+        <p class="sample-note">Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet.</p>
+        <p class="sample-q">In welchem Bereich liegt der Ruhepuls eines gesunden Erwachsenen normalerweise?</p>
+        <ul class="opts"><li>60-80 Schläge pro Minute</li><li>30-40 Schläge pro Minute</li><li>110-130 Schläge pro Minute</li><li>140-160 Schläge pro Minute</li></ul>
+        <details class="sample-a"><summary>Lösung anzeigen</summary><p>60-80 Schläge pro Minute, da dies beim gesunden Erwachsenen in Ruhe der physiologische Normbereich der Herzfrequenz ist.</p></details>
+      </li>
+        <li class="sample">
+        <div class="sample-type">Fachwissen zur Stelle</div>
+        <p class="sample-q">Ab welcher Körpertemperatur spricht man in der Pflege von Fieber?</p>
+        <ul class="opts"><li>Ab ca. 35 °C</li><li>Ab ca. 36,5 °C</li><li>Ab ca. 38 °C</li><li>Ab ca. 41 °C</li></ul>
+        <details class="sample-a"><summary>Lösung anzeigen</summary><p>Ab ca. 38 °C, denn ab diesem Wert der Körperkerntemperatur spricht man von Fieber (37,5–37,9 °C gilt als erhöhte Temperatur/subfebril, 36,5 °C ist Normaltemperatur, 35 °C liegt im Bereich der Unterkühlung/Hypothermie, 41 °C wäre bereits sehr hohes Fieber/Hyperpyrexie).</p></details>
+      </li>
+        <li class="sample">
+        <div class="sample-type">Fachwissen zur Stelle</div>
+        <p class="sample-q">Was ist die wichtigste pflegerische Maßnahme zur Dekubitusprophylaxe?</p>
+        <ul class="opts"><li>Kräftiges Massieren geröteter Hautstellen</li><li>Tägliches heißes Vollbad zur Hautdesinfektion</li><li>Straffes Anlegen der Bettwäsche zur Fixierung der Position</li><li>Regelmäßiger Positionswechsel (Umlagerung) zur Druckentlastung</li></ul>
+        <details class="sample-a"><summary>Lösung anzeigen</summary><p>Regelmäßiger Positionswechsel (Umlagerung) zur Druckentlastung, weil anhaltender Druck auf eine Körperstelle die Durchblutung unterbricht und dadurch Gewebeschäden entstehen, die durch häufigen Lagewechsel verhindert werden (Massieren geröteter Stellen ist sogar kontraindiziert).</p></details>
       </li>
         <li class="sample">
         <div class="sample-type">Sprachlogik &amp; Analogien</div>
-        <p class="sample-q">Fieber verhält sich zu Thermometer wie Puls zu …?</p>
-        <ul class="opts"><li>Stethoskop</li><li>Blutdruck</li><li>Herz</li><li>Tasten</li></ul>
-        <details class="sample-a"><summary>Lösung anzeigen</summary><p>Tasten – das Fieber misst man mit dem Thermometer, den Puls ertastet man (Methode der Messung).</p></details>
-      </li>
-        <li class="sample">
-        <div class="sample-type">Zahlenreihen</div>
-        <p class="sample-q">Auf der Station legst du die Kontrollintervalle für die Wunddokumentation nach OP fest (in Stunden nach dem Eingriff): 3 – 6 – 12 – 24 – 48 – ? Wie lautet die nächste Zahl in der Reihe?</p>
-        <ul class="opts"><li>72</li><li>84</li><li>96</li><li>108</li></ul>
-        <details class="sample-a"><summary>Lösung anzeigen</summary><p>96 – Die Reihe verdoppelt sich bei jedem Schritt (×2): 3→6→12→24→48→96. Das Intervall zwischen den Wundkontrollen wird also jedes Mal exakt doppelt so lang.</p></details>
-      </li>
-        <li class="sample">
-        <div class="sample-type">Konzentration &amp; Sorgfalt</div>
-        <p class="sample-q">Bei der Übergabe liest du die Vitalwert-Kürzel der Nachtschicht auf einem Zettel. Zähle, wie oft das Kürzel „RR“ (Blutdruck) in folgender Zeile vorkommt: HF RR AF RR BZ SpO2 RR AF HF RR BZ RR AF SpO2 RR HF BZ RR AF RR</p>
-        
-        <details class="sample-a"><summary>Lösung anzeigen</summary><p>8 – „RR“ erscheint an den Positionen 2, 4, 7, 10, 12, 15, 18 und 20 der Kürzel-Folge, macht in Summe 8 Treffer.</p></details>
+        <p class="sample-q">Fieberthermometer verhält sich zu Körpertemperatur wie Blutdruckmessgerät zu …?</p>
+        <ul class="opts"><li>Blutzucker</li><li>Blutdruck</li><li>Manschette</li><li>Herz</li></ul>
+        <details class="sample-a"><summary>Lösung anzeigen</summary><p>Blutdruck – ein Blutdruckmessgerät misst den Blutdruck, so wie ein Fieberthermometer die Körpertemperatur misst. Blutzucker wird mit anderen Geräten gemessen, die Manschette ist nur ein Teil des Messgeräts, und das Herz ist das Organ, nicht der Messwert.</p></details>
       </li>
         </ul>
       </section>

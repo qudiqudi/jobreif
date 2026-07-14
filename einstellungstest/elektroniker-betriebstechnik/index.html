@@ -48,6 +48,7 @@
     ul.related a{font-weight:600}
     .samples li.sample{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin:12px 0;box-shadow:0 2px 8px -5px rgba(80,50,40,.25)}
     .sample-type{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--primary-dark);background:#f6e7e1;border-radius:999px;padding:3px 10px;margin-bottom:8px}
+    .sample-note{font-size:.74rem;color:var(--muted);margin:.1em 0 .5em;font-style:italic}
     .sample-q{font-weight:600;margin:.2em 0}
     ul.opts{margin:.4em 0 .2em;padding-left:1.2em}
     ul.opts li{padding:2px 0}
@@ -84,28 +85,29 @@
         <h2>Beispielaufgaben</h2>
         <ul class="samples">
         <li class="sample">
-        <div class="sample-type">Zahlenreihen</div>
-        <p class="sample-q">In einer Reihe verdoppelt sich die Spannung von Stufe zu Stufe: 6, 12, 24, 48, ? V</p>
-        <ul class="opts"><li>72</li><li>84</li><li>96</li><li>108</li></ul>
-        <details class="sample-a"><summary>Lösung anzeigen</summary><p>96 – jede Spannung ist doppelt so hoch wie die vorherige (Verdopplung: 48 × 2 = 96).</p></details>
+        <div class="sample-type">Fachwissen zur Stelle</div>
+        <p class="sample-note">Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet.</p>
+        <p class="sample-q">Bevor an einer elektrischen Anlage gearbeitet werden darf, sind die fünf Sicherheitsregeln der Elektrotechnik in fester Reihenfolge einzuhalten. Welche Maßnahme steht dabei an erster Stelle?</p>
+        <ul class="opts"><li>Freischalten</li><li>Gegen Wiedereinschalten sichern</li><li>Spannungsfreiheit feststellen</li><li>Erden und Kurzschließen</li></ul>
+        <details class="sample-a"><summary>Lösung anzeigen</summary><p>Freischalten – die Anlage muss zuerst allpolig von der Spannungsquelle getrennt werden, denn alle weiteren Sicherheitsregeln setzen darauf auf.</p></details>
+      </li>
+        <li class="sample">
+        <div class="sample-type">Fachwissen zur Stelle</div>
+        <p class="sample-q">Welche Farbkombination kennzeichnet den Schutzleiter (PE)?</p>
+        <ul class="opts"><li>Grün-Gelb</li><li>Blau</li><li>Braun</li><li>Schwarz</li></ul>
+        <details class="sample-a"><summary>Lösung anzeigen</summary><p>Grün-Gelb – die Farbkombination Grün-Gelb ist Leitern mit Schutzfunktion vorbehalten (Schutzleiter PE; ein PEN-Leiter wird ebenfalls grün-gelb mit blauen Endmarkierungen gekennzeichnet). Blau steht für den Neutralleiter, Braun und Schwarz sind typische Außenleiterfarben.</p></details>
+      </li>
+        <li class="sample">
+        <div class="sample-type">Fachwissen zur Stelle</div>
+        <p class="sample-q">Welche Spannungswerte liegen in einem 400-V-Niederspannungs-Drehstromnetz jeweils zwischen zwei Außenleitern und zwischen einem Außenleiter und dem Neutralleiter an?</p>
+        <ul class="opts"><li>400 V zwischen zwei Außenleitern, 230 V zwischen Außenleiter und Neutralleiter</li><li>230 V zwischen zwei Außenleitern, 400 V zwischen Außenleiter und Neutralleiter</li><li>230 V zwischen zwei Außenleitern, 230 V zwischen Außenleiter und Neutralleiter</li><li>400 V zwischen zwei Außenleitern, 400 V zwischen Außenleiter und Neutralleiter</li></ul>
+        <details class="sample-a"><summary>Lösung anzeigen</summary><p>400 V zwischen zwei Außenleitern, 230 V zwischen Außenleiter und Neutralleiter – das folgt aus der Sternschaltung, bei der die Leiterspannung das √3-Fache der Strangspannung beträgt.</p></details>
       </li>
         <li class="sample">
         <div class="sample-type">Zahlenreihen</div>
-        <p class="sample-q">Setze die Reihe fort: 3, 6, 11, 18, ?</p>
-        <ul class="opts"><li>25</li><li>26</li><li>27</li><li>29</li></ul>
-        <details class="sample-a"><summary>Lösung anzeigen</summary><p>27 – die Differenzen steigen jeweils um 2 (+3, +5, +7, +9): 18 + 9 = 27.</p></details>
-      </li>
-        <li class="sample">
-        <div class="sample-type">Sprachlogik &amp; Analogien</div>
-        <p class="sample-q">Volt verhält sich zu Spannung wie Ampere zu …?</p>
-        <ul class="opts"><li>Widerstand</li><li>Strom</li><li>Leistung</li><li>Frequenz</li></ul>
-        <details class="sample-a"><summary>Lösung anzeigen</summary><p>Strom – Volt ist die Einheit der elektrischen Spannung, Ampere die Einheit der elektrischen Stromstärke.</p></details>
-      </li>
-        <li class="sample">
-        <div class="sample-type">Sprachlogik &amp; Analogien</div>
-        <p class="sample-q">Sicherung verhält sich zu Überstrom wie Isolierung zu …?</p>
-        <ul class="opts"><li>Blindstrom</li><li>Stromschlag</li><li>Spannungsabfall</li><li>Frequenz</li></ul>
-        <details class="sample-a"><summary>Lösung anzeigen</summary><p>Stromschlag – eine Sicherung schützt vor Überstrom, eine Isolierung schützt Personen vor dem Berühren spannungsführender Teile und damit vor Stromschlag.</p></details>
+        <p class="sample-q">Setze die Reihe fort: 2, 7, 14, 23, 34, ?</p>
+        <ul class="opts"><li>43</li><li>45</li><li>47</li><li>49</li></ul>
+        <details class="sample-a"><summary>Lösung anzeigen</summary><p>47 – Regel: Quadratzahlen minus 2 (n²−2): 2²−2=2, 3²−2=7, 4²−2=14, 5²−2=23, 6²−2=34, 7²−2=47. Die Differenzen zwischen den Gliedern steigen jeweils um 2 (+5, +7, +9, +11, +13).</p></details>
       </li>
         </ul>
       </section>

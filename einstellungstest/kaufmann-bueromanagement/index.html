@@ -48,6 +48,7 @@
     ul.related a{font-weight:600}
     .samples li.sample{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin:12px 0;box-shadow:0 2px 8px -5px rgba(80,50,40,.25)}
     .sample-type{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--primary-dark);background:#f6e7e1;border-radius:999px;padding:3px 10px;margin-bottom:8px}
+    .sample-note{font-size:.74rem;color:var(--muted);margin:.1em 0 .5em;font-style:italic}
     .sample-q{font-weight:600;margin:.2em 0}
     ul.opts{margin:.4em 0 .2em;padding-left:1.2em}
     ul.opts li{padding:2px 0}
@@ -84,28 +85,29 @@
         <h2>Beispielaufgaben</h2>
         <ul class="samples">
         <li class="sample">
-        <div class="sample-type">Zahlenreihen</div>
-        <p class="sample-q">Setze die Reihe fort: 5, 10, 20, 40, ?</p>
-        <ul class="opts"><li>60</li><li>70</li><li>80</li><li>100</li></ul>
-        <details class="sample-a"><summary>Lösung anzeigen</summary><p>80 – jede Zahl wird verdoppelt (5→10→20→40→80).</p></details>
+        <div class="sample-type">Fachwissen zur Stelle</div>
+        <p class="sample-note">Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet.</p>
+        <p class="sample-q">Eine Rechnung über 500 Euro enthält die Zahlungsbedingung „2 % Skonto bei Zahlung innerhalb von 10 Tagen, sonst 30 Tage netto“. Der Kunde zahlt fristgerecht innerhalb der Skontofrist. Welchen Betrag überweist er?</p>
+        <ul class="opts"><li>490 Euro</li><li>500 Euro</li><li>480 Euro</li><li>510 Euro</li></ul>
+        <details class="sample-a"><summary>Lösung anzeigen</summary><p>490 Euro, denn Skonto ist ein Preisnachlass für vorzeitige Zahlung: 2 % von 500 Euro sind 10 Euro, die vom Rechnungsbetrag abgezogen werden.</p></details>
+      </li>
+        <li class="sample">
+        <div class="sample-type">Fachwissen zur Stelle</div>
+        <p class="sample-q">Was versteht die DSGVO unter „personenbezogenen Daten“?</p>
+        <ul class="opts"><li>Alle Informationen, die sich auf eine identifizierte oder identifizierbare natürliche Person beziehen, z. B. Name oder E-Mail-Adresse</li><li>Nur Informationen über Unternehmen und andere juristische Personen</li><li>Ausschließlich Finanzdaten wie Kontoauszüge und Rechnungsbeträge</li><li>Nur Daten, die in Papierform vorliegen, nicht aber digital gespeicherte Daten</li></ul>
+        <details class="sample-a"><summary>Lösung anzeigen</summary><p>Alle Informationen, die sich auf eine identifizierte oder identifizierbare natürliche Person beziehen, z. B. Name oder E-Mail-Adresse — denn die DSGVO (Art. 4 Nr. 1) definiert personenbezogene Daten genau so, unabhängig vom Speichermedium oder der Rechtsform des Betroffenen.</p></details>
+      </li>
+        <li class="sample">
+        <div class="sample-type">Fachwissen zur Stelle</div>
+        <p class="sample-q">Welches Maß hat das im Büroalltag am häufigsten verwendete Papierformat DIN A4?</p>
+        <ul class="opts"><li>210 x 297 mm</li><li>148 x 210 mm</li><li>297 x 420 mm</li><li>216 x 279 mm</li></ul>
+        <details class="sample-a"><summary>Lösung anzeigen</summary><p>210 x 297 mm — dies ist das in der Norm DIN 476 bzw. ISO 216 festgelegte Maß des Papierformats A4.</p></details>
       </li>
         <li class="sample">
         <div class="sample-type">Sprachlogik &amp; Analogien</div>
-        <p class="sample-q">Rechnung verhält sich zu Zahlungseingang wie Bestellung zu …?</p>
-        <ul class="opts"><li>Angebot</li><li>Lieferung</li><li>Mahnung</li><li>Rabatt</li></ul>
-        <details class="sample-a"><summary>Lösung anzeigen</summary><p>Lieferung – eine Rechnung wird durch den Zahlungseingang beglichen, eine Bestellung wird durch die Lieferung erfüllt.</p></details>
-      </li>
-        <li class="sample">
-        <div class="sample-type">Zahlenreihen</div>
-        <p class="sample-q">Setze die Reihe fort: 3, 7, 11, 15, ?</p>
-        <ul class="opts"><li>17</li><li>18</li><li>19</li><li>21</li></ul>
-        <details class="sample-a"><summary>Lösung anzeigen</summary><p>19 – die Reihe steigt jeweils um 4 (3, 7, 11, 15, 19).</p></details>
-      </li>
-        <li class="sample">
-        <div class="sample-type">Konzentration &amp; Sorgfalt</div>
-        <p class="sample-q">Zähle, wie oft der Buchstabe &#39;T&#39; vorkommt: BÜROMANAGEMENT ORGANISIERT TERMINE UND AKTEN</p>
-        
-        <details class="sample-a"><summary>Lösung anzeigen</summary><p>4 – je ein T in BÜROMANAGEMENT, ORGANISIERT, TERMINE und AKTEN.</p></details>
+        <p class="sample-q">Termin verhält sich zu Kalender wie Datei zu …?</p>
+        <ul class="opts"><li>Ordner</li><li>Computer</li><li>Anhang</li><li>Drucker</li></ul>
+        <details class="sample-a"><summary>Lösung anzeigen</summary><p>Ordner – ein Termin wird im Kalender festgehalten und strukturiert verwaltet, eine Datei wird entsprechend in einem Ordner abgelegt und organisiert.</p></details>
       </li>
         </ul>
       </section>

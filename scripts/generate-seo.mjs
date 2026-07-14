@@ -174,8 +174,12 @@ function renderSample(s, types) {
   const opts = Array.isArray(s.options) && s.options.length
     ? `<ul class="opts">${s.options.map((o) => `<li>${esc(o)}</li>`).join("")}</ul>`
     : "";
+  // Optionale Meta-Zeile (z. B. bei Fachwissen-Beispielen die ehrliche Rahmung,
+  // dass die echte Frage aus der eingefuegten Stellenanzeige abgeleitet wird).
+  const note = typeof s.note === "string" && s.note.trim()
+    ? `\n        <p class="sample-note">${esc(s.note)}</p>` : "";
   return `<li class="sample">
-        <div class="sample-type">${label}</div>
+        <div class="sample-type">${label}</div>${note}
         <p class="sample-q">${esc(s.question)}</p>
         ${opts}
         <details class="sample-a"><summary>Lösung anzeigen</summary><p>${esc(s.answer)}</p></details>
@@ -293,6 +297,7 @@ ${BASE_CSS}
     ul.related a{font-weight:600}
     .samples li.sample{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin:12px 0;box-shadow:0 2px 8px -5px rgba(80,50,40,.25)}
     .sample-type{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--primary-dark);background:#f6e7e1;border-radius:999px;padding:3px 10px;margin-bottom:8px}
+    .sample-note{font-size:.74rem;color:var(--muted);margin:.1em 0 .5em;font-style:italic}
     .sample-q{font-weight:600;margin:.2em 0}
     ul.opts{margin:.4em 0 .2em;padding-left:1.2em}
     ul.opts li{padding:2px 0}
