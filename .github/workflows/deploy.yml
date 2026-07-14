@@ -50,3 +50,55 @@ jobs:
 
       - id: deployment
         uses: actions/deploy-pages@v5
+
+  # Reicht die Sitemap nach einem Deploy per Search-Console-API neu ein, wenn
+  # sie sich geändert hat (Google lädt sie dann zeitnah neu). Ohne konfigurierte
+  # GSC_*-Secrets ist das Skript ein No-op und der Job bleibt grün.
+  submit-sitemap:
+    needs: deploy
+    # Nur auf main — verhindert, dass ein manueller workflow_dispatch auf einem
+    # anderen Branch dessen Skript-Version mit den Repo-Secrets ausfuehrt.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      # fetch-depth: 0 → volle History, damit der Vergleich gegen den Push-Vorstand
+      # (github.event.before) auch mehrere Commits pro Push zuverlaessig abdeckt.
+      - uses: actions/checkout@v7.0.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Prüfen, ob sich sitemap.xml in diesem Push geändert hat
+        id: diff
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"    # manueller Trigger = absichtlich einreichen
+          elif [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"    # kein Vorstand greifbar (neuer Branch) -> lieber einmal zu viel (Submit ist idempotent)
+          elif git diff --quiet "$BEFORE" "$GITHUB_SHA" -- sitemap.xml; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"   # sitemap.xml im ganzen Push unveraendert
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v5
+        if: steps.diff.outputs.changed == 'true'
+        with:
+          node-version: '20'
+
+      - name: Sitemap bei der Search Console neu einreichen
+        if: steps.diff.outputs.changed == 'true'
+        # Optionale GSC_SITE/GSC_SITEMAP/GSC_QUOTA_PROJECT werden mitgereicht; sind
+        # sie nicht als Secret gesetzt, sind sie leer und das Skript nimmt seine Defaults.
+        env:
+          GSC_CLIENT_ID: ${{ secrets.GSC_CLIENT_ID }}
+          GSC_CLIENT_SECRET: ${{ secrets.GSC_CLIENT_SECRET }}
+          GSC_REFRESH_TOKEN: ${{ secrets.GSC_REFRESH_TOKEN }}
+          GSC_SITE: ${{ secrets.GSC_SITE }}
+          GSC_SITEMAP: ${{ secrets.GSC_SITEMAP }}
+          GSC_QUOTA_PROJECT: ${{ secrets.GSC_QUOTA_PROJECT }}
+        run: node scripts/gsc-submit.mjs
