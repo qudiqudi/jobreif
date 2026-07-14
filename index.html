@@ -587,6 +587,9 @@
            (routeInitialView). Eyebrow + Frage + Kurztext; eingeloggte/BYOK sehen stattdessen
            die neutrale „Stellenbeschreibung"-Ueberschrift (updateGuestInputUi toggelt beides). -->
       <div id="guest-value-prop" class="hidden input-guest-head">
+        <!-- SEO-Referral-Kontext: wird von updateGuestInputUi per textContent gefuellt,
+             wenn der Besucher von einer /einstellungstest/-Seite kommt (?stelle=&art=). -->
+        <div id="ref-context" class="ref-context hidden" role="status"></div>
         <span class="eyebrow">Kostenlos starten</span>
         <h2 class="input-guest-title">Für welche Stelle willst du fit werden?</h2>
         <p class="hint">Füge die Anzeige ein – Qualität und Details stellst du gleich ein. Anmelden musst du dich erst kurz bevor dein Test erstellt wird.</p>

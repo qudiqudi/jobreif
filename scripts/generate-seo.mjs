@@ -40,6 +40,10 @@ const LERNEN = {
 };
 const MAX_RELATED = 6;
 
+// Amtspruefungs-Berufe: standardisierter Behoerdentest statt einzelner Stellenanzeige.
+// Die App zeigt fuer sie im Gast-Einstieg einen anderen Kontext-Hinweis (art=pruefung).
+const EXAM_SLUGS = new Set(["polizei", "zoll"]);
+
 // --- HTML/XML-Escaping (selbst, ohne Abhaengigkeit) -------------------------
 function esc(s) {
   return String(s)
@@ -252,7 +256,8 @@ function renderPage(p, cat) {
   }
   const ldHtml = ld.map((o) => `<script type="application/ld+json">${jsonLd(o)}</script>`).join("\n  ");
 
-  const ctaUrl = `${baseUrl}/?ref=einstellungstest-${p.slug}`;
+  const kind = EXAM_SLUGS.has(p.slug) ? "pruefung" : "stelle";
+  const ctaUrl = `${baseUrl}/?ref=einstellungstest-${p.slug}&stelle=${encodeURIComponent(p.beruf)}&art=${kind}`;
 
   return `<!doctype html>
 <html lang="de">
