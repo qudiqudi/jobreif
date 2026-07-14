@@ -89,48 +89,26 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 3, 6, 12, 24, ?",
-          "options": [
-            "30",
-            "36",
-            "48",
-            "60"
-          ],
-          "answer": "48 – jede Zahl ist das Doppelte der vorigen."
-        },
-        {
           "type": "sprachlogik",
-          "question": "Server verhält sich zu Client wie Frage zu …?",
+          "question": "Tastatur verhält sich zu Eingabe wie Monitor zu …?",
           "options": [
-            "Netzwerk",
-            "Antwort",
-            "Kabel",
-            "Protokoll"
+            "Ausgabe",
+            "Bildschirmschoner",
+            "Auflösung",
+            "Grafikkarte"
           ],
-          "answer": "Antwort – ein Client stellt eine Anfrage, der Server liefert die Antwort; analog Frage → Antwort."
-        },
-        {
-          "type": "sprachlogik",
-          "question": "Tastatur : Eingabegerät :: Bildschirm : ?",
-          "options": [
-            "Ausgabegerät",
-            "Netzwerkkabel",
-            "Betriebssystem",
-            "Datenbank"
-          ],
-          "answer": "Ausgabegerät – die Tastatur dient der Eingabe von Daten in ein System, der Bildschirm entsprechend der Ausgabe von Daten aus dem System. Die anderen Optionen bezeichnen keine Geräteklasse mit dieser Funktion."
+          "answer": "Ausgabe – die Tastatur dient der Eingabe von Daten in das System, der Monitor gibt Daten in Form eines Bildes wieder aus. Bildschirmschoner, Auflösung und Grafikkarte sind Eigenschaften bzw. Zubehör des Monitors, aber keine Entsprechung zu 'Eingabe'."
         },
         {
           "type": "zahlenreihe",
-          "question": "2, 5, 9, 14, 20, ?",
+          "question": "Setze die Reihe fort: 1, 3, 7, 15, 31, ?",
           "options": [
-            "25",
-            "26",
-            "27",
-            "29"
+            "63",
+            "62",
+            "47",
+            "61"
           ],
-          "answer": "27 – die Differenz zwischen den Zahlen steigt jeweils um 1 (+3, +4, +5, +6, +7), also folgt auf 20 der Wert 20 + 7 = 27."
+          "answer": "63 – Regel: jedes Glied wird verdoppelt und dann um 1 erhöht (×2 + 1): 31 × 2 + 1 = 63."
         }
       ],
       "tipps": [
@@ -181,35 +159,19 @@
         },
         {
           "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 2, 5, 11, 23, ?",
+          "question": "Setze die Reihe fort: 7, 10, 15, 22, 31, ?",
           "options": [
-            "35",
+            "40",
             "41",
-            "46",
-            "47"
+            "42",
+            "44"
           ],
-          "answer": "47 – jeweils verdoppeln und 1 addieren (×2 + 1)."
+          "answer": "42 – Die Differenzen wachsen um jeweils 2 (+3, +5, +7, +9, +11): 7 → 10 → 15 → 22 → 31 → 42."
         },
         {
           "type": "konzentration",
-          "question": "Wie oft kommt der Buchstabe E in dieser Reihe vor?  B E D E F E E C E A",
-          "answer": "5-mal."
-        },
-        {
-          "type": "konzentration",
-          "question": "Auf einem Fertigungsauftrag sind Maßangaben notiert. Zählen Sie, wie oft das Symbol „Ø“ (Durchmesser) in dieser Zeile vorkommt:\n\nØ12, M8, Ø6, R3, Ø20, M10, Ø8, Ø5, R10, M6, Ø14, Ø9, R2, M12, Ø18, Ø7, M4, Ø11, R5, Ø16",
-          "answer": "11 – das Symbol „Ø“ erscheint bei Ø12, Ø6, Ø20, Ø8, Ø5, Ø14, Ø9, Ø18, Ø7, Ø11 und Ø16, also 11-mal."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "An einer CNC-Maschine wird die Zustellung pro Arbeitsschritt protokolliert: 4, 7, 12, 19, 28, ?",
-          "answer": "39 – die Differenz zwischen den Zahlen wächst jeweils um 2 (+3, +5, +7, +9, +11), also 28 + 11 = 39.",
-          "options": [
-            "37",
-            "39",
-            "41",
-            "35"
-          ]
+          "question": "Zählen Sie in der folgenden Wortzeile aus dem Werkstatt-Vokabular alle Vorkommen des Buchstabens 'e': 'Feile – Welle – Gewinde – Fräser – Ventil – Passfeder – Kegelrad'.",
+          "answer": "12 – Feile (2), Welle (2), Gewinde (2), Fräser (1), Ventil (1), Passfeder (2), Kegelrad (2) ergeben zusammen 12 Vorkommen von 'e'."
         }
       ],
       "tipps": [
@@ -259,42 +221,31 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Ein Artikel kostet 80 €, im Schlussverkauf 25 % günstiger. Welcher Preis bleibt?",
+          "type": "sprachlogik",
+          "question": "Regal verhält sich zu Ware wie Kasse zu ...?",
           "options": [
-            "55 €",
-            "60 €",
-            "65 €",
-            "70 €"
+            "Geld",
+            "Kassenbon",
+            "Kunde",
+            "Schublade"
           ],
-          "answer": "60 € – 25 % von 80 € sind 20 €, also 80 − 20 = 60 €."
+          "answer": "Geld – das Regal ist der Aufbewahrungsort für die Ware, die Kasse ist der Aufbewahrungsort für das Geld (Bargeld)."
         },
         {
-          "type": "sprachlogik",
-          "question": "Kunde verhält sich zu Beratung wie Ware zu …?",
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 8, 16, 13, 26, 23, ?",
           "options": [
-            "Lager",
-            "Präsentation",
-            "Kasse",
-            "Preis"
+            "46",
+            "20",
+            "43",
+            "49"
           ],
-          "answer": "Präsentation – der Kunde erhält Beratung, die Ware wird präsentiert (beides die zugewandte Leistung)."
+          "answer": "46 – die Reihe wechselt abwechselnd zwischen ×2 und −3: 8×2=16, 16−3=13, 13×2=26, 26−3=23, 23×2=46."
         },
         {
           "type": "konzentration",
-          "question": "Sie kontrollieren einen ausgedruckten Kassenbon auf Übertragungsfehler. Zählen Sie, wie oft die Ziffer 7 in folgender Zahlenfolge vorkommt:\n48297183746529817364598172635948273619485726314987",
-          "answer": "7 (die Ziffer 7 kommt genau siebenmal vor: an den Positionen 5, 9, 17, 25, 34, 42 und 50)"
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Beim wöchentlichen Nachbestellen eines Aktionsartikels verdoppelt sich die Liefermenge jede Woche: 6, 12, 24, 48, 96, ? Wie lautet die nächste Zahl?",
-          "options": [
-            "144",
-            "172",
-            "192",
-            "200"
-          ],
-          "answer": "192 – jede Zahl wird mit 2 multipliziert (6→12→24→48→96→192), also 96 × 2 = 192"
+          "question": "Zähle in der folgenden Zeile mit Artikel- und EAN-Nummern, wie oft die Ziffer '7' vorkommt: EAN 4007817924 / Art. 73917 / Art. 58472 / EAN 4017895",
+          "answer": "6 – die Ziffer '7' kommt in 4007817924 zweimal, in 73917 zweimal, in 58472 einmal und in 4017895 einmal vor, insgesamt also 6-mal."
         }
       ],
       "tipps": [
@@ -344,48 +295,26 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 100, 95, 85, 70, ?",
-          "options": [
-            "55",
-            "50",
-            "60",
-            "45"
-          ],
-          "answer": "50 – die Abstände wachsen: −5, −10, −15, −20."
-        },
-        {
           "type": "sprachlogik",
-          "question": "Kredit verhält sich zu Zins wie Sparen zu …?",
-          "options": [
-            "Konto",
-            "Rendite",
-            "Bank",
-            "Risiko"
-          ],
-          "answer": "Rendite – für einen Kredit zahlt man Zins, fürs Sparen erhält man eine Rendite (jeweils der Ertrag)."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Ein Kontostand schwankt nach einem festen Muster: 8, 16, 13, 26, 23, 46, ? Wie lautet die nächste Zahl?",
-          "options": [
-            "40",
-            "43",
-            "46",
-            "49"
-          ],
-          "answer": "43 – die Reihe wechselt abwechselnd zwischen ×2 und −3: 8×2=16, 16−3=13, 13×2=26, 26−3=23, 23×2=46, 46−3=43."
-        },
-        {
-          "type": "sprachlogik",
-          "question": "Welches Wort passt? Einzahlung verhält sich zu Auszahlung wie Gutschrift zu ...?",
+          "question": "Einzahlung verhält sich zu Gutschrift wie Auszahlung zu …?",
           "options": [
             "Belastung",
-            "Zinssatz",
-            "Kontoauszug",
-            "Überweisung"
+            "Gutschrift",
+            "Überweisung",
+            "Sparbuch"
           ],
-          "answer": "Belastung – Einzahlung/Auszahlung sind ein Gegensatzpaar (Geld kommt/geht), genauso wie Gutschrift (Zubuchung) und Belastung (Abbuchung) auf dem Konto."
+          "answer": "Belastung – eine Einzahlung erscheint als Gutschrift auf dem Konto, eine Auszahlung als Belastung (Abbuchung); beides sind die entgegengesetzten Kontobewegungen."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 16, 24, 36, 54, ?",
+          "options": [
+            "72",
+            "81",
+            "90",
+            "108"
+          ],
+          "answer": "81 — jedes Glied ergibt sich aus dem vorherigen mal 1,5 (16 × 1,5 = 24, 24 × 1,5 = 36, 36 × 1,5 = 54, 54 × 1,5 = 81)."
         }
       ],
       "tipps": [
@@ -435,36 +364,31 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "konzentration",
-          "question": "Wie oft kommt die Ziffer 3 in dieser Reihe vor?  3 8 3 1 3 5 3 9 2 3",
-          "answer": "5-mal."
-        },
-        {
           "type": "sprachlogik",
-          "question": "Fieber verhält sich zu Thermometer wie Puls zu …?",
+          "question": "Fieberthermometer verhält sich zu Körpertemperatur wie Blutdruckmessgerät zu …?",
           "options": [
-            "Stethoskop",
+            "Blutzucker",
             "Blutdruck",
-            "Herz",
-            "Tasten"
+            "Manschette",
+            "Herz"
           ],
-          "answer": "Tasten – das Fieber misst man mit dem Thermometer, den Puls ertastet man (Methode der Messung)."
+          "answer": "Blutdruck – ein Blutdruckmessgerät misst den Blutdruck, so wie ein Fieberthermometer die Körpertemperatur misst. Blutzucker wird mit anderen Geräten gemessen, die Manschette ist nur ein Teil des Messgeräts, und das Herz ist das Organ, nicht der Messwert."
         },
         {
           "type": "zahlenreihe",
-          "question": "Auf der Station legst du die Kontrollintervalle für die Wunddokumentation nach OP fest (in Stunden nach dem Eingriff): 3 – 6 – 12 – 24 – 48 – ? Wie lautet die nächste Zahl in der Reihe?",
+          "question": "Setze die Reihe fort: 84, 77, 70, 63, ?",
           "options": [
-            "72",
-            "84",
-            "96",
-            "108"
+            "49",
+            "55",
+            "56",
+            "58"
           ],
-          "answer": "96 – Die Reihe verdoppelt sich bei jedem Schritt (×2): 3→6→12→24→48→96. Das Intervall zwischen den Wundkontrollen wird also jedes Mal exakt doppelt so lang."
+          "answer": "56 – die Reihe fällt jeweils um konstant 7 (84−7=77, 77−7=70, 70−7=63, 63−7=56)."
         },
         {
           "type": "konzentration",
-          "question": "Bei der Übergabe liest du die Vitalwert-Kürzel der Nachtschicht auf einem Zettel. Zähle, wie oft das Kürzel „RR“ (Blutdruck) in folgender Zeile vorkommt: HF RR AF RR BZ SpO2 RR AF HF RR BZ RR AF SpO2 RR HF BZ RR AF RR",
-          "answer": "8 – „RR“ erscheint an den Positionen 2, 4, 7, 10, 12, 15, 18 und 20 der Kürzel-Folge, macht in Summe 8 Treffer."
+          "question": "Zähle in der folgenden Medikations-/Dosierzeile, wie oft die Einheit 'mg' vorkommt: Ibuprofen 400 mg – NaCl 500 ml – Paracetamol 500 mg – Insulin 8 IE – Kochsalz 250 ml – ASS 100 mg",
+          "answer": "3 – 'mg' erscheint bei Ibuprofen 400 mg, Paracetamol 500 mg und ASS 100 mg. NaCl-Lösung und Kochsalzlösung sind in ml angegeben, Insulin in IE – hier ist Sorgfalt gefragt, um mg nicht mit ml zu verwechseln."
         }
       ],
       "tipps": [
@@ -515,47 +439,25 @@
         },
         {
           "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 1, 2, 4, 7, 11, ?",
-          "options": [
-            "14",
-            "15",
-            "16",
-            "18"
-          ],
-          "answer": "16 – die Abstände wachsen um 1: +1, +2, +3, +4, +5."
-        },
-        {
-          "type": "sprachlogik",
-          "question": "Motor verhält sich zu Antrieb wie Sensor zu …?",
-          "options": [
-            "Messung",
-            "Strom",
-            "Gehäuse",
-            "Kabel"
-          ],
-          "answer": "Messung – ein Motor sorgt für Antrieb, ein Sensor für die Messung (jeweils die Funktion des Bauteils)."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "2, 5, 10, 17, 26, ?",
-          "answer": "37 (Differenzen steigen um die ungeraden Zahlen: +3, +5, +7, +9, +11; entspricht n²+1)",
+          "question": "Setze die Reihe fort: 2, 5, 10, 17, 26, ?",
           "options": [
             "35",
-            "37",
-            "39",
-            "41"
-          ]
+            "36",
+            "38",
+            "37"
+          ],
+          "answer": "37 – die Reihe folgt der Regel n²+1: 1²+1=2, 2²+1=5, 3²+1=10, 4²+1=17, 5²+1=26, 6²+1=37. Die Differenzen steigen dabei jeweils um 2 (+3, +5, +7, +9, +11)."
         },
         {
           "type": "sprachlogik",
-          "question": "Multimeter : Messen :: Schraubenschlüssel : ?",
-          "answer": "Anziehen (Werkzeug – typische Funktion: der Multimeter dient dem Messen, der Schraubenschlüssel dem Anziehen)",
+          "question": "Sensor verhält sich zu erfassen wie Aktor zu …?",
           "options": [
-            "Anziehen",
-            "Schneiden",
-            "Löten",
-            "Isolieren"
-          ]
+            "ausführen",
+            "messen",
+            "speichern",
+            "regeln"
+          ],
+          "answer": "ausführen (bzw. bewegen) – ein Aktor wandelt ein Steuersignal in eine Bewegung bzw. Aktion um, so wie ein Sensor eine physikalische Größe erfasst; messen beschreibt die Sensorfunktion selbst, speichern und regeln gehören zu anderen Bauteilen bzw. Prozessen."
         }
       ],
       "tipps": [
@@ -606,35 +508,19 @@
         },
         {
           "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 2, 6, 18, 54, ?",
+          "question": "Setze die Reihe fort: 5, 12, 10, 17, 15, ?",
           "options": [
-            "108",
-            "150",
-            "162",
-            "216"
+            "13",
+            "20",
+            "22",
+            "24"
           ],
-          "answer": "162 – jede Zahl wird mit 3 multipliziert."
+          "answer": "22 — Die Reihe wechselt abwechselnd zwischen +7 und −2: 5 +7 = 12, 12 −2 = 10, 10 +7 = 17, 17 −2 = 15, 15 +7 = 22."
         },
         {
           "type": "konzentration",
-          "question": "Wie oft kommt die Ziffer 8 in dieser Reihe vor?  8 3 8 1 8 8 2 9 8 4",
-          "answer": "5-mal."
-        },
-        {
-          "type": "konzentration",
-          "question": "In der Werkstatt müssen Sie schnell und fehlerfrei Teilenummern gegenlesen. Zählen Sie, wie oft die Ziffer 4 in dieser Zeichenfolge vorkommt:\n4 7 2 4 9 4 1 3 4 6 4 8 5 4 2 4 7 4",
-          "answer": "8 – die Ziffer 4 taucht an 8 Stellen der Reihe auf (Position 1, 4, 6, 9, 11, 14, 16, 18)."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "In der Inspektionsannahme steigt die Zahl der pro Tag geprüften Fahrzeuge nach einem festen Muster: 3, 7, 13, 21, 31, ? Wie lautet die nächste Zahl?",
-          "options": [
-            "40",
-            "41",
-            "43",
-            "45"
-          ],
-          "answer": "43 – die Differenzen zwischen den Zahlen wachsen jeweils um 2 (4, 6, 8, 10, 12): 31 + 12 = 43."
+          "question": "Zähle, wie oft die Ziffer '0' in diesen Kfz-Messwerten vorkommt: Reifendruck 2,0 bar · Drehmoment 190 Nm · Öl 5W-30 · Bordspannung 12,0 V · Leistung 100 PS",
+          "answer": "6 – die Ziffer '0' erscheint in 2,0 (einmal), 190 (einmal), 5W-30 (einmal), 12,0 (einmal) und 100 (zweimal), zusammen also sechsmal."
         }
       ],
       "tipps": [
@@ -684,42 +570,31 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Eine Rechnung über 250 € wird mit 2 % Skonto bezahlt. Wie viel wird überwiesen?",
+          "type": "sprachlogik",
+          "question": "Einkauf verhält sich zu Beschaffung wie Vertrieb zu …?",
           "options": [
-            "240 €",
-            "245 €",
-            "247 €",
-            "248 €"
+            "Absatz",
+            "Angebot",
+            "Produktion",
+            "Marketing"
           ],
-          "answer": "245 € – 2 % von 250 € sind 5 €, also 250 − 5 = 245 €."
+          "answer": "Absatz – Einkauf und Beschaffung bezeichnen dieselbe beschaffungsseitige Funktion (Synonyme), genauso wie Vertrieb und Absatz die absatzseitige Funktion bezeichnen."
         },
         {
-          "type": "sprachlogik",
-          "question": "Einkauf verhält sich zu Lieferant wie Verkauf zu …?",
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 3, 5, 9, 17, 33, ?",
           "options": [
-            "Kunde",
-            "Lager",
-            "Markt",
-            "Preis"
+            "63",
+            "64",
+            "65",
+            "66"
           ],
-          "answer": "Kunde – beim Einkauf ist der Lieferant der Partner, beim Verkauf der Kunde."
+          "answer": "65 – die Differenz zwischen den Zahlen verdoppelt sich jeweils (+2, +4, +8, +16, +32), daher 33 + 32 = 65."
         },
         {
           "type": "konzentration",
-          "question": "In der Warenwirtschaft werden Bestellcodes oft nur kurz überflogen – hier zählt jeder Buchstabe. Wie oft kommt der Großbuchstabe „B“ in der folgenden Zeichenkette vor?\n\nBLRT BBLR TBBL RBTL BRBT LBBR TLBR BBTL",
-          "answer": "13 – die Zeichenkette enthält genau 13 Mal den Buchstaben „B“ (nachgezählt: BLRT[1] BBLR[2,3] TBBL[4,5] RBTL[6] BRBT[7,8] LBBR[9,10] TLBR[11] BBTL[12,13])."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Ein Lieferant staffelt seine Mindestbestellmengen nach einem festen Faktor. Wie lautet die nächste Zahl in der Reihe: 3, 9, 27, 81, ...?",
-          "options": [
-            "162",
-            "216",
-            "243",
-            "324"
-          ],
-          "answer": "243 – jede Zahl wird mit dem Faktor 3 multipliziert (3 → 9 → 27 → 81 → 243), passend zur Mengenstaffel bei Bestellungen."
+          "question": "Zähle in dieser Zeile mit Bestellnummern alle Vorkommen der Ziffer '8': BST-4820 / BST-8148 / BST-2809 / BST-8388 / BST-1682",
+          "answer": "8"
         }
       ],
       "tipps": [
@@ -772,39 +647,28 @@
           "type": "sprachlogik",
           "question": "Antrag verhält sich zu Bescheid wie Frage zu …?",
           "options": [
-            "Antwort",
             "Formular",
-            "Akte",
-            "Amt"
+            "Antwort",
+            "Frist",
+            "Widerspruch"
           ],
-          "answer": "Antwort – auf einen Antrag folgt ein Bescheid, auf eine Frage eine Antwort (jeweils die Reaktion)."
+          "answer": "Antwort – so wie ein Antrag die amtliche Reaktion (den Bescheid) auslöst, löst eine Frage eine Antwort aus. Formular ist nur das Trägermedium, Widerspruch und Frist gehören zu einem späteren Verfahrensschritt und passen nicht als direkte Entsprechung."
         },
         {
           "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 5, 10, 20, 40, ?",
+          "question": "Setze die Reihe fort: 1, 4, 5, 9, 14, ?",
           "options": [
-            "60",
-            "70",
-            "80",
-            "100"
+            "20",
+            "21",
+            "23",
+            "25"
           ],
-          "answer": "80 – jede Zahl ist das Doppelte der vorigen."
+          "answer": "23 – Regel: Jede Zahl ist die Summe der beiden vorherigen (Fibonacci-Prinzip): 5+9=14, 9+14=23."
         },
         {
           "type": "konzentration",
-          "question": "Sie prüfen eine Liste von Aktenzeichen auf Vollständigkeit. Zählen Sie, wie oft das Aktenzeichen exakt 'AZ-2024' (Großbuchstaben, mit Bindestrich, Ziffer 0 statt Buchstabe O) in folgender Reihe vorkommt:\n\nAZ-2024  AZ-2024  AZ-2029  A2-2024  AZ-2024  AZ-2O24  AZ-2024  AZ-2042  AZ-2024  AZ-2024  AZ-2064  AZ-2024  AZ2024  AZ-2024  AZ-2024  Az-2024  AZ-2024  AZ-2029  AZ-2024  AZ-2024",
-          "answer": "12 – exakte Treffer sind die Positionen 1, 2, 5, 7, 9, 10, 12, 14, 15, 17, 19 und 20. Nicht zählen: abweichende Endziffern (AZ-2029, AZ-2042, AZ-2064), Buchstabe statt Ziffer (AZ-2O24), fehlender Bindestrich (AZ2024), falsche Ziffer im Präfix (A2-2024) und Kleinschreibung (Az-2024)."
-        },
-        {
-          "type": "sprachlogik",
-          "question": "Rathaus verhält sich zu Bürgermeister wie Gericht zu ...?",
-          "answer": "Richter",
-          "options": [
-            "Anwalt",
-            "Kläger",
-            "Richter",
-            "Akte"
-          ]
+          "question": "Zähle in der folgenden Zeile mit Aktenzeichen, wie oft der Bindestrich '-' vorkommt (Schrägstriche '/' zählen nicht mit): 'Az. 31-05/22 · Az. 40/17-03 · Az. 22-08-11 · Az. 15-09'",
+          "answer": "5"
         }
       ],
       "tipps": [
@@ -854,36 +718,31 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "konzentration",
-          "question": "Wie oft kommt der Buchstabe R in dieser Reihe vor?  R T R E R B R K R M",
-          "answer": "5-mal."
-        },
-        {
           "type": "sprachlogik",
-          "question": "Rezept verhält sich zu Medikament wie Überweisung zu …?",
+          "question": "Rezept verhält sich zu Apotheke wie Überweisung zu ...?",
           "options": [
             "Facharzt",
-            "Apotheke",
-            "Termin",
-            "Praxis"
+            "Krankenkasse",
+            "Diagnose",
+            "Wartezimmer"
           ],
-          "answer": "Facharzt – ein Rezept führt zum Medikament, eine Überweisung zum Facharzt (jeweils das Ziel)."
+          "answer": "Facharzt – ein Rezept wird in der Apotheke eingelöst, eine Überweisung führt die Patientin oder den Patienten zum Facharzt. Beides sind Dokumente, die im Praxisalltag zu einem bestimmten Zielort weiterleiten."
+        },
+        {
+          "type": "konzentration",
+          "question": "Zähle in der folgenden Zeile mit ICD-Codes aus der Praxissoftware, wie oft ein Code mit dem Buchstaben 'J' beginnt: J06.9 · I10 · J45.0 · K52.9 · J20.9 · I25.1 · J02.9",
+          "answer": "4 (J06.9, J45.0, J20.9 und J02.9 beginnen mit 'J'; die Codes mit 'I' und 'K' zählen nicht mit)"
         },
         {
           "type": "zahlenreihe",
-          "question": "An der Anmeldung zählt eine MFA die eingehenden Anrufe pro Stunde. Wie lautet die nächste Zahl in der Reihe: 3, 6, 11, 18, 27, ?",
+          "question": "Setze die Reihe fort: 90, 88, 84, 78, 70, ?",
           "options": [
-            "33",
-            "36",
-            "38",
-            "40"
+            "58",
+            "60",
+            "62",
+            "64"
           ],
-          "answer": "38 – die Differenzen zwischen den Zahlen steigen um jeweils 2 (3, 5, 7, 9, 11): 27 + 11 = 38."
-        },
-        {
-          "type": "konzentration",
-          "question": "Sie sortieren Patientenkarteikarten nach Anfangsbuchstaben. Zählen Sie, wie oft der Buchstabe K in dieser Zeichenfolge vorkommt (jedes Zeichen steht für eine Karteikarte): K B T M R K L P B K R T M K B L R K P T M K B R L K P T M R",
-          "answer": "7"
+          "answer": "60 – die Differenz zwischen den Zahlen wächst jeweils um 2 (−2, −4, −6, −8, −10), also 70 − 10 = 60"
         }
       ],
       "tipps": [
@@ -935,41 +794,30 @@
         },
         {
           "type": "sprachlogik",
-          "question": "Arzt verhält sich zu Krankheit wie Polizist zu …?",
+          "question": "Streife verhält sich zu Prävention wie Ermittlung zu ...?",
           "options": [
-            "Uniform",
-            "Verbrechen",
-            "Streife",
-            "Gesetz"
+            "Aufklärung",
+            "Festnahme",
+            "Anzeige",
+            "Observation"
           ],
-          "answer": "Verbrechen – ein Arzt bekämpft die Krankheit, ein Polizist das Verbrechen (jeweils das, wogegen sie vorgehen)."
+          "answer": "Aufklärung – die Streife dient der Prävention (Verhindern von Straftaten durch Präsenz), die Ermittlung dient analog der Aufklärung (Klärung bereits begangener Straftaten). Festnahme, Anzeige und Observation sind einzelne Maßnahmen innerhalb der Ermittlung, aber nicht deren übergeordnetes Ziel."
         },
         {
           "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 2, 5, 11, 23, 47, ?",
+          "question": "Setze die Reihe fort: 3, 20, 6, 17, 12, 14, ?",
           "options": [
-            "94",
-            "95",
-            "96",
-            "98"
+            "21",
+            "24",
+            "26",
+            "28"
           ],
-          "answer": "95 – jede Zahl wird verdoppelt und plus 1 gerechnet (2→5→11→23→47→95)."
+          "answer": "24 – die Reihe besteht aus zwei ineinander verschachtelten Teilreihen: An den ungeraden Positionen wird jeweils verdoppelt (3, 6, 12, 24 …), an den geraden Positionen wird jeweils 3 subtrahiert (20, 17, 14 …). Position 7 gehört zur Verdopplungsreihe, also 12 × 2 = 24."
         },
         {
           "type": "konzentration",
-          "question": "Zähle, wie oft der Buchstabe 'P' in dieser Reihe vorkommt: P R F P K L P F R P L K P F P R K P F P",
-          "answer": "8 – der Buchstabe P kommt in der Reihe genau achtmal vor."
-        },
-        {
-          "type": "sprachlogik",
-          "question": "Handschellen verhalten sich zu Festnahme wie Blaulicht zu …?",
-          "options": [
-            "Werkstatt",
-            "Einsatzfahrt",
-            "Tankstelle",
-            "Ampel"
-          ],
-          "answer": "Einsatzfahrt – Handschellen gehören zur Festnahme, so wie das Blaulicht zur Einsatzfahrt gehört."
+          "question": "Zähle in folgender Zeile mit Kfz-Kennzeichen, wie viele der Kennzeichen den Buchstaben 'B' enthalten (egal an welcher Stelle): 'B-AK 3021 · M-XR 447 · BN-KL 88 · HB-TZ 904 · K-BB 152 · B-MW 7'",
+          "answer": "5 – enthalten sind: B-AK 3021, BN-KL 88, HB-TZ 904, K-BB 152 und B-MW 7. Nur M-XR 447 enthält kein 'B'. Solche schnellen Abgleiche sind typisch für die Fahndung nach Kennzeichen im Streifendienst."
         }
       ],
       "tipps": [
@@ -1020,42 +868,31 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 5, 10, 20, 40, ?",
-          "options": [
-            "60",
-            "70",
-            "80",
-            "100"
-          ],
-          "answer": "80 – jede Zahl ist das Doppelte der vorigen (Faktor 2)."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 2, 5, 11, 23, ?",
-          "options": [
-            "44",
-            "45",
-            "47",
-            "50"
-          ],
-          "answer": "47 – jede Zahl wird verdoppelt und dann um 1 erhöht (2×2+1=5, 5×2+1=11, 11×2+1=23, 23×2+1=47)."
-        },
-        {
           "type": "sprachlogik",
-          "question": "Einfuhr verhält sich zu Ausfuhr wie Kauf zu …?",
+          "question": "Import verhält sich zu Einfuhr wie Export zu …?",
           "options": [
-            "Verkauf",
-            "Preis",
-            "Ware",
-            "Vertrag"
+            "Ausfuhr",
+            "Ausland",
+            "Fracht",
+            "Abgabe"
           ],
-          "answer": "Verkauf – Einfuhr/Ausfuhr und Kauf/Verkauf sind jeweils Gegensatzpaare wirtschaftlicher Vorgänge."
+          "answer": "Ausfuhr – denn 'Einfuhr' ist das deutsche Synonym zu 'Import', also ist 'Ausfuhr' das Synonym zu 'Export'."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 4, 12, 7, 21, 16, ?",
+          "options": [
+            "48",
+            "43",
+            "51",
+            "11"
+          ],
+          "answer": "48 – die Reihe wechselt abwechselnd ×3 und −5: 4×3=12, 12−5=7, 7×3=21, 21−5=16, 16×3=48."
         },
         {
           "type": "konzentration",
-          "question": "Zähle, wie oft der Buchstabe „Z“ in dieser Zeichenfolge vorkommt: ZOLLZONE ZWISCHEN ZWEI ZONEN",
-          "answer": "5 – der Buchstabe Z kommt in ZOLLZONE zweimal sowie je einmal in ZWISCHEN, ZWEI und ZONEN vor."
+          "question": "Zähle in der folgenden Zeile mit Containercodes, wie oft der Buchstabe 'U' vorkommt: MSKU 402318-7 · TGHU 918264-3 · MSCU 550912-1 · HLXU 774035-9 · MSKU 118840-2",
+          "answer": "5 – das 'U' steht jeweils am Ende der vier Buchstaben eines ISO-Containercodes (MSKU, TGHU, MSCU, HLXU, MSKU)."
         }
       ],
       "tipps": [
@@ -1106,47 +943,25 @@
         },
         {
           "type": "zahlenreihe",
-          "question": "In einer Reihe verdoppelt sich die Spannung von Stufe zu Stufe: 6, 12, 24, 48, ? V",
+          "question": "Setze die Reihe fort: 2, 7, 14, 23, 34, ?",
           "options": [
-            "72",
-            "84",
-            "96",
-            "108"
+            "43",
+            "45",
+            "47",
+            "49"
           ],
-          "answer": "96 – jede Spannung ist doppelt so hoch wie die vorherige (Verdopplung: 48 × 2 = 96)."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 3, 6, 11, 18, ?",
-          "options": [
-            "25",
-            "26",
-            "27",
-            "29"
-          ],
-          "answer": "27 – die Differenzen steigen jeweils um 2 (+3, +5, +7, +9): 18 + 9 = 27."
+          "answer": "47 – Regel: Quadratzahlen minus 2 (n²−2): 2²−2=2, 3²−2=7, 4²−2=14, 5²−2=23, 6²−2=34, 7²−2=47. Die Differenzen zwischen den Gliedern steigen jeweils um 2 (+5, +7, +9, +11, +13)."
         },
         {
           "type": "sprachlogik",
-          "question": "Volt verhält sich zu Spannung wie Ampere zu …?",
+          "question": "Kupfer verhält sich zu Leiter wie Kunststoff zu …?",
           "options": [
+            "Isolator",
+            "Kabel",
             "Widerstand",
-            "Strom",
-            "Leistung",
-            "Frequenz"
+            "Gehäuse"
           ],
-          "answer": "Strom – Volt ist die Einheit der elektrischen Spannung, Ampere die Einheit der elektrischen Stromstärke."
-        },
-        {
-          "type": "sprachlogik",
-          "question": "Sicherung verhält sich zu Überstrom wie Isolierung zu …?",
-          "options": [
-            "Blindstrom",
-            "Stromschlag",
-            "Spannungsabfall",
-            "Frequenz"
-          ],
-          "answer": "Stromschlag – eine Sicherung schützt vor Überstrom, eine Isolierung schützt Personen vor dem Berühren spannungsführender Teile und damit vor Stromschlag."
+          "answer": "Isolator – Kupfer leitet elektrischen Strom sehr gut und ist deshalb ein typischer Leiter. Kunststoff dagegen leitet praktisch nicht und wird als Isolator eingesetzt, um stromführende Teile sicher zu trennen."
         }
       ],
       "tipps": [
@@ -1197,35 +1012,19 @@
         },
         {
           "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 2, 6, 18, 54, ?",
+          "question": "Setze die Reihe fort: 6, 15, 24, 33, ?",
           "options": [
-            "108",
-            "152",
-            "162",
-            "172"
+            "39",
+            "41",
+            "42",
+            "44"
           ],
-          "answer": "162 – jede Zahl wird mit 3 multipliziert (2×3=6, 6×3=18, 18×3=54, 54×3=162)."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 4, 7, 12, 19, ?",
-          "options": [
-            "24",
-            "26",
-            "28",
-            "30"
-          ],
-          "answer": "28 – die Differenz zwischen den Zahlen steigt jeweils um 2 (3, 5, 7, 9), also 19+9=28."
+          "answer": "42 — die Reihe steigt mit einer konstanten Differenz von +9 (6→15→24→33→42)."
         },
         {
           "type": "konzentration",
-          "question": "Zähle, wie oft der Buchstabe „R“ in dieser Zeichenfolge vorkommt: R2 K7 R9 M3 R5 T1 R8 K2 R4 M6",
-          "answer": "5"
-        },
-        {
-          "type": "konzentration",
-          "question": "Wie oft kommt die exakte Zeichenfolge „DN20“ in dieser Reihe vor (Groß-/Kleinschreibung und Zeichen beachten): DN20 DN2O DN20 Dn20 DN25 DN20 dn20 DN20",
-          "answer": "4 – exakte Treffer sind die 1., 3., 6. und 8. Angabe; die übrigen weichen durch Buchstabe „O“ statt Ziffer „0“, Kleinschreibung oder andere Maße ab."
+          "question": "Auf einem Materialzettel für die Baustelle steht folgende Rohrnennweiten-Zeile: 'DN 20 · DN 25 · DN 32 · DN 25 · DN 15 · DN 25 · DN 40 · DN 25'. Wie oft kommt 'DN 25' in dieser Zeile vor?",
+          "answer": "4-mal — 'DN 25' erscheint an der 2., 4., 6. und 8. Position der Zeile."
         }
       ],
       "tipps": [
@@ -1276,35 +1075,19 @@
         },
         {
           "type": "zahlenreihe",
-          "question": "Eine Drehzahl-Reihe verdoppelt sich schrittweise: 400, 800, 1600, 3200, ?",
+          "question": "Setze die Reihe fort: 6, 8, 12, 20, 36, ?",
           "options": [
-            "4800",
-            "5600",
-            "6400",
-            "7200"
+            "64",
+            "68",
+            "72",
+            "66"
           ],
-          "answer": "6400 – jede Zahl ist doppelt so groß wie die vorige (geometrische Folge, Faktor 2)."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 5, 8, 12, 17, 23, ?",
-          "options": [
-            "28",
-            "29",
-            "30",
-            "31"
-          ],
-          "answer": "30 – die Differenz zwischen den Zahlen steigt jeweils um 1 (+3, +4, +5, +6, +7)."
+          "answer": "68 – Regel: jedes Glied wird verdoppelt und dann um 4 vermindert (36 × 2 − 4 = 68)."
         },
         {
           "type": "konzentration",
-          "question": "Zähle, wie oft der Buchstabe 'S' in dieser Zeichenreihe vorkommt: 5 S 5 S S 8 5 S 3 S 5 S",
-          "answer": "6 – das 'S' kommt an sechs Positionen in der Reihe vor."
-        },
-        {
-          "type": "konzentration",
-          "question": "Wie oft taucht die Zahl '50' in dieser Maßreihe auf (Angaben in mm): 50 52 50 48 50 55 50 49 51 50",
-          "answer": "5 – die Zahl 50 erscheint an fünf Stellen der Reihe."
+          "question": "Auf einem Messprotokoll stehen folgende Toleranzangaben nebeneinander: ±0,5 · ±0,05 · ±0,5 · ±0,05 · ±0,05 · ±0,5 · ±0,05. Wie oft kommt die Toleranz '±0,05' vor?",
+          "answer": "4 – die Toleranz '±0,05' erscheint an der 2., 4., 5. und 7. Stelle der Zeile."
         }
       ],
       "tipps": [
@@ -1355,41 +1138,30 @@
         },
         {
           "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 120, 135, 150, 165, ?",
+          "question": "Setze die Reihe fort: 5, 50, 12, 45, 19, 40, ?",
           "options": [
-            "175",
-            "180",
-            "185",
-            "190"
+            "14",
+            "21",
+            "26",
+            "35"
           ],
-          "answer": "180 – jede Zahl ist 15 mehr als die vorige (konstante Zunahme, wie bei gleichmäßiger Palettenbestückung pro Stunde)."
-        },
-        {
-          "type": "sprachlogik",
-          "question": "Kommissionierer verhält sich zu Pickliste wie Fahrer zu …?",
-          "options": [
-            "Lieferschein",
-            "Frachtbrief",
-            "Tourenplan",
-            "Ladung"
-          ],
-          "answer": "Tourenplan – der Kommissionierer arbeitet nach der Pickliste, der Fahrer nach dem Tourenplan; beide sind die Arbeitsanweisung für die jeweilige Tätigkeit."
+          "answer": "26 – Die Reihe besteht aus zwei verschachtelten Folgen: An den ungeraden Positionen steigen die Zahlen um 7 (5, 12, 19, 26 …), an den geraden Positionen sinken sie um 5 (50, 45, 40, …). Der gesuchte Wert liegt an ungerader Position, also 19 + 7 = 26."
         },
         {
           "type": "konzentration",
-          "question": "Zähle, wie oft der Buchstabe „L“ in dieser Zeile vorkommt: LKW LAGER PALETTE LIEFERUNG REGAL LKW LADUNG",
-          "answer": "7"
+          "question": "Kommissionier-Pickliste – Lagerplatz-Codes: „12-03-B · 07-11-A · 09-03-B · 12-08-C · 03-03-B · 11-05-A · 08-02-B“. Zähle, wie viele Stellplätze auf Ebene „B“ liegen (Code endet auf B).",
+          "answer": "4 – Auf Ebene B liegen die Codes 12-03-B, 09-03-B, 03-03-B und 08-02-B."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Ein Lagerbestand sinkt durch Auslieferungen wöchentlich um 20 %: 500, 400, 320, ?",
+          "type": "sprachlogik",
+          "question": "Gabelstapler verhält sich zu heben wie Förderband zu …?",
           "options": [
-            "250",
-            "256",
-            "260",
-            "288"
+            "transportieren",
+            "rollen",
+            "lagern",
+            "verpacken"
           ],
-          "answer": "256 – jede Zahl entspricht 80 % der vorigen (100 % minus 20 % Abgang); 320 × 0,8 = 256."
+          "answer": "transportieren – Der Gabelstapler dient primär dem Heben und Versetzen von Lasten, das Förderband dient primär dem kontinuierlichen Transportieren von Gütern zwischen zwei Punkten. „Rollen“ beschreibt nur die Bewegungsart, „lagern“ und „verpacken“ sind eigenständige Lagerlogistik-Tätigkeiten, aber nicht die Kernfunktion eines Förderbands."
         }
       ],
       "tipps": [
@@ -1439,42 +1211,31 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 5, 10, 20, 40, ?",
-          "options": [
-            "60",
-            "70",
-            "80",
-            "100"
-          ],
-          "answer": "80 – jede Zahl wird verdoppelt (5→10→20→40→80)."
-        },
-        {
           "type": "sprachlogik",
-          "question": "Rechnung verhält sich zu Zahlungseingang wie Bestellung zu …?",
+          "question": "Termin verhält sich zu Kalender wie Datei zu …?",
           "options": [
-            "Angebot",
-            "Lieferung",
-            "Mahnung",
-            "Rabatt"
+            "Ordner",
+            "Computer",
+            "Anhang",
+            "Drucker"
           ],
-          "answer": "Lieferung – eine Rechnung wird durch den Zahlungseingang beglichen, eine Bestellung wird durch die Lieferung erfüllt."
+          "answer": "Ordner – ein Termin wird im Kalender festgehalten und strukturiert verwaltet, eine Datei wird entsprechend in einem Ordner abgelegt und organisiert."
         },
         {
           "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 3, 7, 11, 15, ?",
+          "question": "Setze die Reihe fort: 4, 16, 8, 20, 10, ?",
           "options": [
-            "17",
-            "18",
-            "19",
-            "21"
+            "5",
+            "20",
+            "22",
+            "34"
           ],
-          "answer": "19 – die Reihe steigt jeweils um 4 (3, 7, 11, 15, 19)."
+          "answer": "22 – die Reihe wechselt abwechselnd zwischen +12 und ÷2: 4 +12 = 16, 16 ÷2 = 8, 8 +12 = 20, 20 ÷2 = 10, 10 +12 = 22."
         },
         {
           "type": "konzentration",
-          "question": "Zähle, wie oft der Buchstabe 'T' vorkommt: BÜROMANAGEMENT ORGANISIERT TERMINE UND AKTEN",
-          "answer": "4 – je ein T in BÜROMANAGEMENT, ORGANISIERT, TERMINE und AKTEN."
+          "question": "Zähle in dieser E-Mail-Verteilerliste, wie viele Adressen auf '.de' enden: mueller@firma.de · info@partner.com · schmidt@kunde.de · office@lieferant.com · weber@firma.de · kontakt@agentur.de",
+          "answer": "4 – auf '.de' enden mueller@firma.de, schmidt@kunde.de, weber@firma.de und kontakt@agentur.de (die beiden '.com'-Adressen info@partner.com und office@lieferant.com zählen nicht mit)."
         }
       ],
       "tipps": [
@@ -1525,41 +1286,30 @@
         },
         {
           "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 7, 14, 21, 28, ?",
+          "question": "Setze die Reihe fort: 2, 7, 22, 67, ?",
           "options": [
-            "30",
-            "34",
-            "35",
-            "42"
+            "200",
+            "201",
+            "202",
+            "203"
           ],
-          "answer": "35 – jede Zahl ist um 7 größer als die vorige."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Ein Rechnungsbetrag wird in gleichen Schritten reduziert dargestellt. Setze die Reihe fort: 100, 92, 84, 76, ?",
-          "options": [
-            "64",
-            "66",
-            "68",
-            "70"
-          ],
-          "answer": "68 – jede Zahl ist um 8 kleiner als die vorige (konstante Differenz von 8)."
+          "answer": "202 – Regel: jedes Glied wird verdreifacht und dann um 1 erhöht (×3 + 1): 2→7 (2×3+1), 7→22 (7×3+1), 22→67 (22×3+1), 67→202 (67×3+1)."
         },
         {
           "type": "sprachlogik",
-          "question": "Einkommensteuer verhält sich zu natürlichen Personen wie Körperschaftsteuer zu …?",
+          "question": "Einnahme verhält sich zu Ausgabe wie Forderung zu ...?",
           "options": [
-            "Kapitalgesellschaften",
-            "Personengesellschaften",
-            "Freiberuflern",
-            "Selbstständigen"
+            "Verbindlichkeit",
+            "Rechnung",
+            "Mahnung",
+            "Guthaben"
           ],
-          "answer": "Kapitalgesellschaften – Körperschaftsteuer wird von juristischen Personen wie GmbH oder AG erhoben, so wie Einkommensteuer von natürlichen Personen."
+          "answer": "Verbindlichkeit – Einnahme und Ausgabe bilden ein buchhalterisches Gegensatzpaar (Geld fließt zu vs. ab); ebenso ist die Forderung (Anspruch gegenüber Dritten) das Gegenstück zur Verbindlichkeit (eigene Zahlungspflicht gegenüber Dritten)."
         },
         {
           "type": "konzentration",
-          "question": "Buchhaltungssymbole für Soll (S) und Haben (H) wurden in einer Zeile abgetippt. Zähle, wie oft „S“ (für Soll) vorkommt: S H S S H S H H S S H S",
-          "answer": "7 – die Zeile enthält siebenmal ein S (Soll) und fünfmal ein H (Haben)."
+          "question": "In der folgenden Zeile mit Steuernummern sollen beim Abgleich fürs Fristenbuch alle Vorkommen der Ziffer „9“ gezählt werden: „29/491/08193 · 12/939/04927 · 31/209/11498 · 45/391/09912“. Wie oft kommt die Ziffer 9 insgesamt vor?",
+          "answer": "11 – Verteilung: 29/491/08193 → 3 Neunen, 12/939/04927 → 3 Neunen, 31/209/11498 → 2 Neunen, 45/391/09912 → 3 Neunen; Summe = 11."
         }
       ],
       "tipps": [
@@ -1609,42 +1359,31 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 2, 5, 11, 23, ?",
+          "type": "sprachlogik",
+          "question": "Schiene verhält sich zu Fraktur wie Verband zu …?",
           "options": [
-            "41",
-            "44",
-            "47",
-            "50"
+            "Wunde",
+            "Pflaster",
+            "Prellung",
+            "Mullbinde"
           ],
-          "answer": "47 – jede Zahl wird verdoppelt und plus 1 gerechnet (23 × 2 + 1 = 47)."
+          "answer": "Wunde. Eine Schiene ist das Hilfsmittel zur Versorgung einer Fraktur, ein Verband ist entsprechend das Hilfsmittel zur Versorgung einer Wunde – die anderen Optionen sind entweder selbst Hilfsmittel (Pflaster, Mullbinde) oder keine passende Zielverletzung (Prellung wird nicht primär verbunden)."
         },
         {
-          "type": "sprachlogik",
-          "question": "Fieber verhält sich zu Thermometer wie Blutdruck zu …?",
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 3, 4, 7, 11, 18, ?",
           "options": [
-            "Blutdruckmessgerät",
-            "Stethoskop",
-            "Spritze",
-            "Verband"
+            "29",
+            "27",
+            "25",
+            "32"
           ],
-          "answer": "Blutdruckmessgerät – das Thermometer misst die Körpertemperatur (Fieber), das Blutdruckmessgerät analog den Blutdruck."
+          "answer": "29. Jede Zahl ist die Summe der beiden vorangehenden: 3+4=7, 4+7=11, 7+11=18, 11+18=29."
         },
         {
           "type": "konzentration",
-          "question": "Zähle, wie oft die Ziffer 4 in dieser Reihe vorkommt: 4 7 4 9 2 4 6 4 1 8 4 3 4",
-          "answer": "6"
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 96, 48, 24, 12, ?",
-          "options": [
-            "4",
-            "6",
-            "8",
-            "10"
-          ],
-          "answer": "6 – jede Zahl wird halbiert (12 : 2 = 6)."
+          "question": "Überfliege folgende Protokollzeile wie im Einsatz und zähle, wie oft das Zeichen „%“ vorkommt: „SpO2 96 % · RR 120/80 · HF 88 · SpO2 92 % · AF 16 · BZ 110 mg/dl · SpO2 89 %“",
+          "answer": "3 – das Prozentzeichen erscheint bei den drei SpO2-Werten (96 %, 92 %, 89 %); die übrigen Vitalwerte (RR, HF, AF, BZ) enthalten kein %."
         }
       ],
       "tipps": [
@@ -1694,42 +1433,31 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 3, 5, 9, 15, 23, ?",
-          "options": [
-            "30",
-            "31",
-            "33",
-            "35"
-          ],
-          "answer": "33 – die Differenz zwischen den Zahlen wächst jeweils um 2 (2, 4, 6, 8, 10)."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 2, 4, 8, 16, ?",
-          "options": [
-            "24",
-            "28",
-            "30",
-            "32"
-          ],
-          "answer": "32 – jede Zahl wird verdoppelt."
-        },
-        {
           "type": "sprachlogik",
-          "question": "Baby verhält sich zu Krabbeln wie Kleinkind zu …?",
+          "question": "Vorlesen verhält sich zu Buch wie Singen zu …?",
           "options": [
-            "Laufen",
-            "Sitzen",
-            "Greifen",
-            "Schlafen"
+            "Lied",
+            "Melodie",
+            "Stimme",
+            "Note"
           ],
-          "answer": "Laufen – Krabbeln ist die typische Fortbewegung im Baby-Alter, Laufen die des Kleinkindes (motorische Entwicklung)."
+          "answer": "Lied – beim Vorlesen ist das Buch die Vorlage, beim Singen das Lied; beides ist der jeweils wiedergegebene Inhalt."
         },
         {
           "type": "konzentration",
-          "question": "Zähle, wie oft der Buchstabe „r“ in dieser Zeichenfolge vorkommt: r a r m r t p r a m r p r a",
-          "answer": "6"
+          "question": "Beim Morgenkreis gehst du die Anwesenheitsliste der Gruppe durch: Lena · Ben · Luca · Emma · Leon · Mia · Lotte · Paul · Lina · Noah. Wie viele Kindernamen beginnen mit dem Buchstaben 'L'?",
+          "answer": "5 – Lena, Luca, Leon, Lotte und Lina beginnen mit 'L'."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 6, 8, 11, 15, 20, ?",
+          "options": [
+            "24",
+            "25",
+            "26",
+            "27"
+          ],
+          "answer": "26 – die Differenz zwischen den Zahlen wächst mit jedem Schritt um 1 (+2, +3, +4, +5, +6), also 20 + 6 = 26."
         }
       ],
       "tipps": [
