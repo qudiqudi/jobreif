@@ -21,6 +21,7 @@ jobs:
           node --check app.js
           node --check sw.js
           node --check scripts/generate-seo.mjs
+          node --check scripts/indexnow-ping.mjs
           node --check assets/sync-crypto.js
           node --check assets/sync-qr.js
           node --check assets/vendor/qrcodegen.js
