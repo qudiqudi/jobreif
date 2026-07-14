@@ -89,6 +89,28 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
+          "type": "fachwissen",
+          "question": "Welches Protokoll ist der Vermittlungsschicht (Schicht 3) des OSI-Modells zuzuordnen und übernimmt die logische Adressierung sowie das Routing zwischen Netzwerken?",
+          "options": [
+            "IP (Internet Protocol)",
+            "HTTP (Hypertext Transfer Protocol)",
+            "Ethernet",
+            "TCP (Transmission Control Protocol)"
+          ],
+          "answer": "IP (Internet Protocol) — IP arbeitet auf der Vermittlungsschicht (Schicht 3) des OSI-Modells und ist für die logische Adressierung sowie das Routing von Datenpaketen zwischen Netzwerken zuständig."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Was ist die zentrale Eigenschaft von RAID 1 (Mirroring)?",
+          "options": [
+            "Die Daten werden identisch auf mindestens zwei Festplatten gespiegelt, was Ausfallsicherheit statt zusätzlicher Kapazität bringt",
+            "Die Daten werden blockweise auf mehrere Festplatten verteilt, um Schreibgeschwindigkeit und nutzbare Kapazität zu erhöhen",
+            "Die Daten werden zusammen mit Paritätsinformationen auf mindestens drei Festplatten verteilt",
+            "Die Festplatten werden ohne Redundanz zu einem einzigen großen Volume zusammengefasst"
+          ],
+          "answer": "Die Daten werden identisch auf mindestens zwei Festplatten gespiegelt, was Ausfallsicherheit statt zusätzlicher Kapazität bringt — bei RAID 1 wird jeder Schreibvorgang auf allen gespiegelten Platten dupliziert, sodass beim Ausfall einer Platte alle Daten erhalten bleiben."
+        },
+        {
           "type": "sprachlogik",
           "question": "Tastatur verhält sich zu Eingabe wie Monitor zu …?",
           "options": [
@@ -98,17 +120,6 @@
             "Grafikkarte"
           ],
           "answer": "Ausgabe – die Tastatur dient der Eingabe von Daten in das System, der Monitor gibt Daten in Form eines Bildes wieder aus. Bildschirmschoner, Auflösung und Grafikkarte sind Eigenschaften bzw. Zubehör des Monitors, aber keine Entsprechung zu 'Eingabe'."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 1, 3, 7, 15, 31, ?",
-          "options": [
-            "63",
-            "62",
-            "47",
-            "61"
-          ],
-          "answer": "63 – Regel: jedes Glied wird verdoppelt und dann um 1 erhöht (×2 + 1): 31 × 2 + 1 = 63."
         }
       ],
       "tipps": [
@@ -158,6 +169,28 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
+          "type": "fachwissen",
+          "question": "Ein Messschieber mit Nonius erlaubt eine bestimmte Ablesegenauigkeit. Wodurch wird diese erreicht?",
+          "options": [
+            "Durch eine zusätzliche Skala am Schieber (Nonius), die den Abstand zwischen zwei Hauptskalenstrichen in z. B. 10 oder 20 Teile unterteilt und so Werte von 0,1 mm bzw. 0,05 mm ablesbar macht",
+            "Durch eine digitale Anzeige, die den Messwert automatisch auf 0,01 mm rundet",
+            "Durch die Federkraft der Messschenkel, die den Messfehler ausgleicht",
+            "Durch die Länge der Messschieberschienen, die proportional zur erreichbaren Genauigkeit ist"
+          ],
+          "answer": "Durch eine zusätzliche Skala am Schieber (Nonius), die den Abstand zwischen zwei Hauptskalenstrichen in z. B. 10 oder 20 Teile unterteilt und so Werte von 0,1 mm bzw. 0,05 mm ablesbar macht — das Nonius-Prinzip beruht darauf, dass die Teilstriche der Nebenskala geringfügig enger stehen als die der Hauptskala, wodurch sich Bruchteile eines Millimeters exakt bestimmen lassen."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Wodurch unterscheiden sich Stahl und Gusseisen als Eisenwerkstoffe grundlegend voneinander?",
+          "options": [
+            "Durch den Kohlenstoffgehalt: Stahl enthält bis zu etwa 2,06 % Kohlenstoff, Gusseisen liegt darüber",
+            "Durch die Farbe des Werkstoffs im rohen Zustand",
+            "Durch den Chromgehalt, der bei Gusseisen immer höher ist als bei Stahl",
+            "Durch die elektrische Leitfähigkeit, die bei Stahl grundsätzlich höher ist"
+          ],
+          "answer": "Durch den Kohlenstoffgehalt: Stahl enthält bis zu etwa 2,06 % Kohlenstoff, Gusseisen liegt darüber — das ist die konventionelle werkstoffkundliche Einteilung im Eisen-Kohlenstoff-Diagramm: unlegierte Eisen-Kohlenstoff-Werkstoffe bis etwa 2,06 % C gelten als Stahl, darüber als Gusseisen."
+        },
+        {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 7, 10, 15, 22, 31, ?",
           "options": [
@@ -167,11 +200,6 @@
             "44"
           ],
           "answer": "42 – Die Differenzen wachsen um jeweils 2 (+3, +5, +7, +9, +11): 7 → 10 → 15 → 22 → 31 → 42."
-        },
-        {
-          "type": "konzentration",
-          "question": "Zählen Sie in der folgenden Wortzeile aus dem Werkstatt-Vokabular alle Vorkommen des Buchstabens 'e': 'Feile – Welle – Gewinde – Fräser – Ventil – Passfeder – Kegelrad'.",
-          "answer": "12 – Feile (2), Welle (2), Gewinde (2), Fräser (1), Ventil (1), Passfeder (2), Kegelrad (2) ergeben zusammen 12 Vorkommen von 'e'."
         }
       ],
       "tipps": [
@@ -221,6 +249,28 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
+          "type": "fachwissen",
+          "question": "Ein Artikel wird zum Einstandspreis von 60 € eingekauft und für 80 € verkauft. Wie hoch ist die Handelsspanne in Prozent vom Verkaufspreis?",
+          "options": [
+            "25 %",
+            "33,3 %",
+            "20 %",
+            "40 %"
+          ],
+          "answer": "25 % — die Handelsspanne ist die Differenz zwischen Verkaufspreis und Einstandspreis (80 € − 60 € = 20 €), bezogen auf den Verkaufspreis (20 € / 80 € = 25 %). 33,3 % wäre der Handelsaufschlag, weil er auf den Einstandspreis bezogen wird."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Für welche Warengruppe gilt im deutschen Einzelhandel typischerweise der ermäßigte Mehrwertsteuersatz von 7 %?",
+          "options": [
+            "Grundnahrungsmittel wie Brot, Milch und Obst",
+            "Elektronikartikel wie Smartphones",
+            "Kosmetikprodukte wie Parfüm",
+            "Bekleidung und Schuhe"
+          ],
+          "answer": "Grundnahrungsmittel wie Brot, Milch und Obst — für diese Waren des täglichen Bedarfs sieht das Umsatzsteuergesetz (§ 12 Abs. 2 UStG) den ermäßigten Steuersatz von 7 % vor, während Elektronik, Kosmetik sowie Bekleidung und Schuhe dem regulären Satz von 19 % unterliegen."
+        },
+        {
           "type": "sprachlogik",
           "question": "Regal verhält sich zu Ware wie Kasse zu ...?",
           "options": [
@@ -230,22 +280,6 @@
             "Schublade"
           ],
           "answer": "Geld – das Regal ist der Aufbewahrungsort für die Ware, die Kasse ist der Aufbewahrungsort für das Geld (Bargeld)."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 8, 16, 13, 26, 23, ?",
-          "options": [
-            "46",
-            "20",
-            "43",
-            "49"
-          ],
-          "answer": "46 – die Reihe wechselt abwechselnd zwischen ×2 und −3: 8×2=16, 16−3=13, 13×2=26, 26−3=23, 23×2=46."
-        },
-        {
-          "type": "konzentration",
-          "question": "Zähle in der folgenden Zeile mit Artikel- und EAN-Nummern, wie oft die Ziffer '7' vorkommt: EAN 4007817924 / Art. 73917 / Art. 58472 / EAN 4017895",
-          "answer": "6 – die Ziffer '7' kommt in 4007817924 zweimal, in 73917 zweimal, in 58472 einmal und in 4017895 einmal vor, insgesamt also 6-mal."
         }
       ],
       "tipps": [
@@ -295,6 +329,28 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
+          "type": "fachwissen",
+          "question": "Wie ist eine deutsche IBAN aufgebaut?",
+          "options": [
+            "Sie besteht aus 22 Stellen und beginnt mit der Länderkennung DE",
+            "Sie besteht aus 20 Stellen und beginnt mit der Bankleitzahl",
+            "Sie besteht aus 22 Stellen und beginnt mit der Kontonummer",
+            "Sie besteht aus 34 Stellen und beginnt mit dem BIC/SWIFT-Code"
+          ],
+          "answer": "Sie besteht aus 22 Stellen und beginnt mit der Länderkennung DE – die deutsche IBAN hat exakt 22 Stellen: Länderkennung DE, zweistellige Prüfziffer, danach die achtstellige Bankleitzahl und die zehnstellige Kontonummer."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Bis zu welcher Höhe sind Kundeneinlagen in Deutschland pro Kunde und Bank regulär gesetzlich abgesichert?",
+          "options": [
+            "100.000 Euro",
+            "50.000 Euro",
+            "250.000 Euro",
+            "unbegrenzt, da Banken staatlich garantiert sind"
+          ],
+          "answer": "100.000 Euro – die gesetzliche Einlagensicherung schützt Einlagen jedes Kunden regulär bis zu 100.000 Euro je Bank (in besonderen Lebenslagen zeitweise mehr), EU-weit geregelt in der Einlagensicherungsrichtlinie 2014/49/EU."
+        },
+        {
           "type": "sprachlogik",
           "question": "Einzahlung verhält sich zu Gutschrift wie Auszahlung zu …?",
           "options": [
@@ -304,17 +360,6 @@
             "Sparbuch"
           ],
           "answer": "Belastung – eine Einzahlung erscheint als Gutschrift auf dem Konto, eine Auszahlung als Belastung (Abbuchung); beides sind die entgegengesetzten Kontobewegungen."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 16, 24, 36, 54, ?",
-          "options": [
-            "72",
-            "81",
-            "90",
-            "108"
-          ],
-          "answer": "81 — jedes Glied ergibt sich aus dem vorherigen mal 1,5 (16 × 1,5 = 24, 24 × 1,5 = 36, 36 × 1,5 = 54, 54 × 1,5 = 81)."
         }
       ],
       "tipps": [
@@ -364,6 +409,28 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
+          "type": "fachwissen",
+          "question": "Ab welcher Körpertemperatur spricht man in der Pflege von Fieber?",
+          "options": [
+            "Ab ca. 35 °C",
+            "Ab ca. 36,5 °C",
+            "Ab ca. 38 °C",
+            "Ab ca. 41 °C"
+          ],
+          "answer": "Ab ca. 38 °C, denn ab diesem Wert der Körperkerntemperatur spricht man von Fieber (37,5–37,9 °C gilt als erhöhte Temperatur/subfebril, 36,5 °C ist Normaltemperatur, 35 °C liegt im Bereich der Unterkühlung/Hypothermie, 41 °C wäre bereits sehr hohes Fieber/Hyperpyrexie)."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Was ist die wichtigste pflegerische Maßnahme zur Dekubitusprophylaxe?",
+          "options": [
+            "Kräftiges Massieren geröteter Hautstellen",
+            "Tägliches heißes Vollbad zur Hautdesinfektion",
+            "Straffes Anlegen der Bettwäsche zur Fixierung der Position",
+            "Regelmäßiger Positionswechsel (Umlagerung) zur Druckentlastung"
+          ],
+          "answer": "Regelmäßiger Positionswechsel (Umlagerung) zur Druckentlastung, weil anhaltender Druck auf eine Körperstelle die Durchblutung unterbricht und dadurch Gewebeschäden entstehen, die durch häufigen Lagewechsel verhindert werden (Massieren geröteter Stellen ist sogar kontraindiziert)."
+        },
+        {
           "type": "sprachlogik",
           "question": "Fieberthermometer verhält sich zu Körpertemperatur wie Blutdruckmessgerät zu …?",
           "options": [
@@ -373,22 +440,6 @@
             "Herz"
           ],
           "answer": "Blutdruck – ein Blutdruckmessgerät misst den Blutdruck, so wie ein Fieberthermometer die Körpertemperatur misst. Blutzucker wird mit anderen Geräten gemessen, die Manschette ist nur ein Teil des Messgeräts, und das Herz ist das Organ, nicht der Messwert."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 84, 77, 70, 63, ?",
-          "options": [
-            "49",
-            "55",
-            "56",
-            "58"
-          ],
-          "answer": "56 – die Reihe fällt jeweils um konstant 7 (84−7=77, 77−7=70, 70−7=63, 63−7=56)."
-        },
-        {
-          "type": "konzentration",
-          "question": "Zähle in der folgenden Medikations-/Dosierzeile, wie oft die Einheit 'mg' vorkommt: Ibuprofen 400 mg – NaCl 500 ml – Paracetamol 500 mg – Insulin 8 IE – Kochsalz 250 ml – ASS 100 mg",
-          "answer": "3 – 'mg' erscheint bei Ibuprofen 400 mg, Paracetamol 500 mg und ASS 100 mg. NaCl-Lösung und Kochsalzlösung sind in ml angegeben, Insulin in IE – hier ist Sorgfalt gefragt, um mg nicht mit ml zu verwechseln."
         }
       ],
       "tipps": [
@@ -438,6 +489,28 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
+          "type": "fachwissen",
+          "question": "Welche Aufgabe hat die Wartungseinheit in einer pneumatischen Anlage?",
+          "options": [
+            "Sie filtert, regelt den Druck und ölt die Druckluft, bevor diese zu den Aktoren gelangt",
+            "Sie erzeugt die Druckluft für die gesamte Anlage",
+            "Sie speichert Druckluft als Energiereserve für Lastspitzen",
+            "Sie wandelt die Druckluft in ein elektrisches Signal um"
+          ],
+          "answer": "Sie filtert, regelt den Druck und ölt die Druckluft, bevor diese zu den Aktoren gelangt – die Wartungseinheit (Filter-Regler-Öler) bereitet die Druckluft auf; erzeugt wird sie vom Kompressor, gespeichert im Druckluftbehälter."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Worauf spricht ein induktiver Näherungssensor berührungslos an?",
+          "options": [
+            "Nur auf metallische (elektrisch leitfähige) Objekte",
+            "Auf jedes beliebige Material unabhängig vom Werkstoff",
+            "Nur auf transparente Objekte wie Glas",
+            "Nur auf Temperaturänderungen in der Umgebung"
+          ],
+          "answer": "Nur auf metallische (elektrisch leitfähige) Objekte – ein induktiver Näherungssensor erzeugt ein hochfrequentes Magnetfeld und reagiert ausschließlich auf leitfähige Werkstoffe; nichtmetallische Materialien erfasst er nicht."
+        },
+        {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 2, 5, 10, 17, 26, ?",
           "options": [
@@ -447,17 +520,6 @@
             "37"
           ],
           "answer": "37 – die Reihe folgt der Regel n²+1: 1²+1=2, 2²+1=5, 3²+1=10, 4²+1=17, 5²+1=26, 6²+1=37. Die Differenzen steigen dabei jeweils um 2 (+3, +5, +7, +9, +11)."
-        },
-        {
-          "type": "sprachlogik",
-          "question": "Sensor verhält sich zu erfassen wie Aktor zu …?",
-          "options": [
-            "ausführen",
-            "messen",
-            "speichern",
-            "regeln"
-          ],
-          "answer": "ausführen (bzw. bewegen) – ein Aktor wandelt ein Steuersignal in eine Bewegung bzw. Aktion um, so wie ein Sensor eine physikalische Größe erfasst; messen beschreibt die Sensorfunktion selbst, speichern und regeln gehören zu anderen Bauteilen bzw. Prozessen."
         }
       ],
       "tipps": [
@@ -507,6 +569,28 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
+          "type": "fachwissen",
+          "question": "Was ist die Hauptfunktion des ABS (Antiblockiersystem) im Pkw?",
+          "options": [
+            "Es verhindert das Blockieren der Räder beim Bremsen und erhält die Lenkbarkeit",
+            "Es erhöht die maximale Motorleistung beim Beschleunigen",
+            "Es reguliert automatisch die Innenraumtemperatur",
+            "Es überwacht ausschließlich den Reifenluftdruck"
+          ],
+          "answer": "Es verhindert das Blockieren der Räder beim Bremsen und erhält die Lenkbarkeit — das ABS moduliert bei starker Bremsung den Bremsdruck an den Rädern, damit diese nicht blockieren und das Fahrzeug lenk- und steuerbar bleibt."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welche Aufgabe hat der Generator (Lichtmaschine) im 12-Volt-Bordnetz eines Pkw?",
+          "options": [
+            "Er lädt die Batterie während der Fahrt und versorgt die elektrischen Verbraucher",
+            "Er speichert ausschließlich die von der Batterie gelieferte Energie",
+            "Er wandelt Kraftstoff ohne Verbrennung direkt in elektrische Energie um",
+            "Er steuert die Zündfolge der Zylinder"
+          ],
+          "answer": "Er lädt die Batterie während der Fahrt und versorgt die elektrischen Verbraucher — der vom Motor angetriebene Generator erzeugt im Fahrbetrieb Strom, lädt damit die 12-Volt-Batterie nach und speist gleichzeitig die elektrischen Verbraucher des Bordnetzes."
+        },
+        {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 5, 12, 10, 17, 15, ?",
           "options": [
@@ -516,11 +600,6 @@
             "24"
           ],
           "answer": "22 — Die Reihe wechselt abwechselnd zwischen +7 und −2: 5 +7 = 12, 12 −2 = 10, 10 +7 = 17, 17 −2 = 15, 15 +7 = 22."
-        },
-        {
-          "type": "konzentration",
-          "question": "Zähle, wie oft die Ziffer '0' in diesen Kfz-Messwerten vorkommt: Reifendruck 2,0 bar · Drehmoment 190 Nm · Öl 5W-30 · Bordspannung 12,0 V · Leistung 100 PS",
-          "answer": "6 – die Ziffer '0' erscheint in 2,0 (einmal), 190 (einmal), 5W-30 (einmal), 12,0 (einmal) und 100 (zweimal), zusammen also sechsmal."
         }
       ],
       "tipps": [
@@ -570,6 +649,28 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
+          "type": "fachwissen",
+          "question": "Ein Lieferant bietet eine Ware zum Listenpreis von 1.000 € an, gewährt 10 % Liefererrabatt und 2 % Skonto; zusätzlich fallen 50 € Bezugskosten (Fracht) an. Wie wird der Bezugspreis fachlich korrekt ermittelt?",
+          "options": [
+            "Listenpreis − Rabatt − Skonto + Bezugskosten",
+            "Listenpreis + Bezugskosten − Rabatt − Skonto",
+            "Listenpreis − Bezugskosten + Rabatt + Skonto",
+            "Listenpreis − Rabatt − Skonto − Bezugskosten"
+          ],
+          "answer": "Listenpreis − Rabatt − Skonto + Bezugskosten: Vom Listeneinkaufspreis wird zuerst der Rabatt abgezogen (Zieleinkaufspreis 900 €), davon der Skonto (Bareinkaufspreis 882 €); erst danach werden die nicht skontofähigen Bezugskosten addiert, sodass sich ein Bezugspreis von 932 € ergibt."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welche Aussage zum Grundprinzip der Bilanz ist richtig?",
+          "options": [
+            "Die Bilanzsumme der Aktivseite muss stets der Bilanzsumme der Passivseite entsprechen, da die Passiva die Mittelherkunft und die Aktiva die Mittelverwendung zeigen",
+            "Die Aktivseite zeigt die Mittelherkunft, die Passivseite die Mittelverwendung des Unternehmens",
+            "Aktiva und Passiva müssen nicht übereinstimmen, da die Bilanz nur eine grobe Übersicht darstellt",
+            "Die Bilanzsumme der Passivseite darf die der Aktivseite übersteigen, wenn stille Reserven bestehen"
+          ],
+          "answer": "Die Bilanzsumme der Aktivseite muss stets der Bilanzsumme der Passivseite entsprechen, da die Passiva die Mittelherkunft und die Aktiva die Mittelverwendung zeigen: Jede Bilanz muss aus buchhalterischer Systematik zwingend ausgeglichen sein, weil jedes Vermögen (Aktiva) durch Eigen- oder Fremdkapital (Passiva) finanziert wurde."
+        },
+        {
           "type": "sprachlogik",
           "question": "Einkauf verhält sich zu Beschaffung wie Vertrieb zu …?",
           "options": [
@@ -579,22 +680,6 @@
             "Marketing"
           ],
           "answer": "Absatz – Einkauf und Beschaffung bezeichnen dieselbe beschaffungsseitige Funktion (Synonyme), genauso wie Vertrieb und Absatz die absatzseitige Funktion bezeichnen."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 3, 5, 9, 17, 33, ?",
-          "options": [
-            "63",
-            "64",
-            "65",
-            "66"
-          ],
-          "answer": "65 – die Differenz zwischen den Zahlen verdoppelt sich jeweils (+2, +4, +8, +16, +32), daher 33 + 32 = 65."
-        },
-        {
-          "type": "konzentration",
-          "question": "Zähle in dieser Zeile mit Bestellnummern alle Vorkommen der Ziffer '8': BST-4820 / BST-8148 / BST-2809 / BST-8388 / BST-1682",
-          "answer": "8"
         }
       ],
       "tipps": [
@@ -644,6 +729,28 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
+          "type": "fachwissen",
+          "question": "Innerhalb welcher Frist muss grundsätzlich Widerspruch gegen einen Verwaltungsakt eingelegt werden?",
+          "options": [
+            "Einen Monat nach Bekanntgabe des Verwaltungsakts",
+            "Zwei Wochen nach Erlass des Verwaltungsakts",
+            "Drei Monate nach Zustellung des Verwaltungsakts",
+            "Sofort, noch am Tag der Bekanntgabe"
+          ],
+          "answer": "Einen Monat nach Bekanntgabe des Verwaltungsakts – nach der Verwaltungsgerichtsordnung ist der Widerspruch grundsätzlich innerhalb eines Monats nach Bekanntgabe einzulegen."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welche Aufgabe hat der Bundesrat im föderalen System Deutschlands?",
+          "options": [
+            "Er vertritt die Interessen der Länder auf Bundesebene und wirkt an der Gesetzgebung des Bundes mit",
+            "Er ist die Vertretung der Gemeinden gegenüber dem Bund",
+            "Er wählt den Bundeskanzler oder die Bundeskanzlerin",
+            "Er entscheidet als Gericht über Streitigkeiten zwischen Bund und Ländern"
+          ],
+          "answer": "Er vertritt die Interessen der Länder auf Bundesebene und wirkt an der Gesetzgebung des Bundes mit – der Bundesrat besteht aus Mitgliedern der Landesregierungen und ist das Verfassungsorgan, über das die Länder an der Bundesgesetzgebung und -verwaltung beteiligt sind."
+        },
+        {
           "type": "sprachlogik",
           "question": "Antrag verhält sich zu Bescheid wie Frage zu …?",
           "options": [
@@ -653,22 +760,6 @@
             "Widerspruch"
           ],
           "answer": "Antwort – so wie ein Antrag die amtliche Reaktion (den Bescheid) auslöst, löst eine Frage eine Antwort aus. Formular ist nur das Trägermedium, Widerspruch und Frist gehören zu einem späteren Verfahrensschritt und passen nicht als direkte Entsprechung."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 1, 4, 5, 9, 14, ?",
-          "options": [
-            "20",
-            "21",
-            "23",
-            "25"
-          ],
-          "answer": "23 – Regel: Jede Zahl ist die Summe der beiden vorherigen (Fibonacci-Prinzip): 5+9=14, 9+14=23."
-        },
-        {
-          "type": "konzentration",
-          "question": "Zähle in der folgenden Zeile mit Aktenzeichen, wie oft der Bindestrich '-' vorkommt (Schrägstriche '/' zählen nicht mit): 'Az. 31-05/22 · Az. 40/17-03 · Az. 22-08-11 · Az. 15-09'",
-          "answer": "5"
         }
       ],
       "tipps": [
@@ -718,6 +809,28 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
+          "type": "fachwissen",
+          "question": "Welche Hauptaufgabe erfüllen die Erythrozyten (rote Blutkörperchen) im menschlichen Blut?",
+          "options": [
+            "Transport von Sauerstoff zu den Körperzellen",
+            "Abwehr von Krankheitserregern",
+            "Blutgerinnung bei Verletzungen",
+            "Produktion von Antikörpern"
+          ],
+          "answer": "Transport von Sauerstoff zu den Körperzellen – Erythrozyten enthalten Hämoglobin, das Sauerstoff bindet und von der Lunge zu den Geweben transportiert, während Erregerabwehr, Gerinnung und Antikörperbildung anderen Blutbestandteilen (Leukozyten, Thrombozyten) obliegen."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Wofür steht die STIKO im deutschen Gesundheitswesen?",
+          "options": [
+            "Für das Gremium, das offizielle Impfempfehlungen für Deutschland ausspricht",
+            "Für die zentrale Abrechnungsstelle der Krankenkassen für Impfleistungen",
+            "Für die Zulassungsbehörde für neue Impfstoffe",
+            "Für eine verpflichtende Fortbildungseinrichtung für medizinisches Fachpersonal"
+          ],
+          "answer": "Für das Gremium, das offizielle Impfempfehlungen für Deutschland ausspricht – die Ständige Impfkommission (STIKO) am Robert Koch-Institut erarbeitet die fachlichen Empfehlungen, wer wann gegen welche Krankheiten geimpft werden soll, ist aber weder Zulassungsbehörde (das ist das Paul-Ehrlich-Institut) noch Abrechnungsstelle."
+        },
+        {
           "type": "sprachlogik",
           "question": "Rezept verhält sich zu Apotheke wie Überweisung zu ...?",
           "options": [
@@ -727,22 +840,6 @@
             "Wartezimmer"
           ],
           "answer": "Facharzt – ein Rezept wird in der Apotheke eingelöst, eine Überweisung führt die Patientin oder den Patienten zum Facharzt. Beides sind Dokumente, die im Praxisalltag zu einem bestimmten Zielort weiterleiten."
-        },
-        {
-          "type": "konzentration",
-          "question": "Zähle in der folgenden Zeile mit ICD-Codes aus der Praxissoftware, wie oft ein Code mit dem Buchstaben 'J' beginnt: J06.9 · I10 · J45.0 · K52.9 · J20.9 · I25.1 · J02.9",
-          "answer": "4 (J06.9, J45.0, J20.9 und J02.9 beginnen mit 'J'; die Codes mit 'I' und 'K' zählen nicht mit)"
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 90, 88, 84, 78, 70, ?",
-          "options": [
-            "58",
-            "60",
-            "62",
-            "64"
-          ],
-          "answer": "60 – die Differenz zwischen den Zahlen wächst jeweils um 2 (−2, −4, −6, −8, −10), also 70 − 10 = 60"
         }
       ],
       "tipps": [
@@ -793,6 +890,28 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
+          "type": "fachwissen",
+          "question": "Was besagt Artikel 1 des Grundgesetzes?",
+          "options": [
+            "Die Würde des Menschen ist unantastbar.",
+            "Alle Menschen sind vor dem Gesetz gleich.",
+            "Die Bundesrepublik Deutschland ist ein demokratischer und sozialer Bundesstaat.",
+            "Jeder hat das Recht auf freie Entfaltung seiner Persönlichkeit."
+          ],
+          "answer": "Die Würde des Menschen ist unantastbar. - Artikel 1 Absatz 1 GG stellt diesen Satz als obersten, unveränderlichen Verfassungsgrundsatz voran, den alle staatliche Gewalt zu achten und zu schützen hat. Die Gleichheit vor dem Gesetz steht in Art. 3, der Bundesstaatsgrundsatz in Art. 20, die freie Entfaltung der Persönlichkeit in Art. 2."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welche Funktion nimmt der Bundespräsident in der Bundesrepublik Deutschland ein?",
+          "options": [
+            "Er ist das Staatsoberhaupt und vertritt Deutschland völkerrechtlich nach außen.",
+            "Er ist der Chef der Bundesregierung und leitet die Kabinettssitzungen.",
+            "Er führt den Vorsitz im Bundesverfassungsgericht.",
+            "Er ist im Frieden der Oberbefehlshaber der Bundeswehr."
+          ],
+          "answer": "Er ist das Staatsoberhaupt und vertritt Deutschland völkerrechtlich nach außen. - Als Staatsoberhaupt repräsentiert der Bundespräsident die Bundesrepublik Deutschland und schließt gemäß Art. 59 Abs. 1 GG völkerrechtliche Verträge im Namen des Bundes. Chef der Bundesregierung ist der Bundeskanzler; der Vorsitz im Bundesverfassungsgericht liegt bei dessen Präsidenten; Oberbefehlshaber der Bundeswehr im Frieden ist der Bundesminister der Verteidigung (Art. 65a GG)."
+        },
+        {
           "type": "sprachlogik",
           "question": "Streife verhält sich zu Prävention wie Ermittlung zu ...?",
           "options": [
@@ -802,22 +921,6 @@
             "Observation"
           ],
           "answer": "Aufklärung – die Streife dient der Prävention (Verhindern von Straftaten durch Präsenz), die Ermittlung dient analog der Aufklärung (Klärung bereits begangener Straftaten). Festnahme, Anzeige und Observation sind einzelne Maßnahmen innerhalb der Ermittlung, aber nicht deren übergeordnetes Ziel."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 3, 20, 6, 17, 12, 14, ?",
-          "options": [
-            "21",
-            "24",
-            "26",
-            "28"
-          ],
-          "answer": "24 – die Reihe besteht aus zwei ineinander verschachtelten Teilreihen: An den ungeraden Positionen wird jeweils verdoppelt (3, 6, 12, 24 …), an den geraden Positionen wird jeweils 3 subtrahiert (20, 17, 14 …). Position 7 gehört zur Verdopplungsreihe, also 12 × 2 = 24."
-        },
-        {
-          "type": "konzentration",
-          "question": "Zähle in folgender Zeile mit Kfz-Kennzeichen, wie viele der Kennzeichen den Buchstaben 'B' enthalten (egal an welcher Stelle): 'B-AK 3021 · M-XR 447 · BN-KL 88 · HB-TZ 904 · K-BB 152 · B-MW 7'",
-          "answer": "5 – enthalten sind: B-AK 3021, BN-KL 88, HB-TZ 904, K-BB 152 und B-MW 7. Nur M-XR 447 enthält kein 'B'. Solche schnellen Abgleiche sind typisch für die Fahndung nach Kennzeichen im Streifendienst."
         }
       ],
       "tipps": [
@@ -864,8 +967,30 @@
             "Auch beim Warenverkehr zwischen EU-Mitgliedstaaten fallen Zölle an, allerdings nach einheitlichen EU-weiten Sätzen",
             "Der gemeinsame Zolltarif gilt nur für den Warenverkehr innerhalb der EU, nicht gegenüber Drittstaaten"
           ],
-          "answer": "Richtig ist: 'Im Warenverkehr zwischen den EU-Mitgliedstaaten werden keine Zölle erhoben, gegenüber Drittstaaten gilt ein gemeinsamer Zolltarif' – das ist das Kernprinzip der Zollunion: zollfreier Binnenmarkt nach innen, einheitlicher Außenzolltarif nach außen.",
+          "answer": "Im Warenverkehr zwischen den EU-Mitgliedstaaten werden keine Zölle erhoben, gegenüber Drittstaaten gilt ein gemeinsamer Zolltarif – das ist das Kernprinzip der Zollunion: zollfreier Binnenmarkt nach innen, einheitlicher Außenzolltarif nach außen.",
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welche Aufgabe gehört zum Zuständigkeitsbereich der Finanzkontrolle Schwarzarbeit (FKS) beim Zoll?",
+          "options": [
+            "Kontrolle der Einhaltung von Mindestlohn- und Sozialversicherungspflichten bei Arbeitgebern",
+            "Erhebung der Kraftfahrzeugsteuer für private Halter",
+            "Ausstellung von Reisepässen bei der Einreisekontrolle",
+            "Überwachung der Preisbindung im Buchhandel"
+          ],
+          "answer": "Kontrolle der Einhaltung von Mindestlohn- und Sozialversicherungspflichten bei Arbeitgebern, denn die FKS ist die Organisationseinheit des Zolls, die Schwarzarbeit und illegale Beschäftigung bekämpft, indem sie u. a. Mindestlohn- und Sozialversicherungsvorgaben bei Arbeitgebern überprüft."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welcher Behörde bzw. welchem Geschäftsbereich ist der Zoll in Deutschland organisatorisch zugeordnet?",
+          "options": [
+            "Der Bundesfinanzverwaltung im Geschäftsbereich des Bundesministeriums der Finanzen",
+            "Der Bundespolizei im Geschäftsbereich des Bundesministeriums des Innern",
+            "Den Landesfinanzbehörden der einzelnen Bundesländer",
+            "Dem Auswärtigen Amt als Teil des diplomatischen Dienstes"
+          ],
+          "answer": "Der Bundesfinanzverwaltung im Geschäftsbereich des Bundesministeriums der Finanzen, denn der Zoll ist eine Bundesbehörde und gehört organisatorisch zur Bundesfinanzverwaltung, die dem Bundesfinanzministerium untersteht."
         },
         {
           "type": "sprachlogik",
@@ -877,22 +1002,6 @@
             "Abgabe"
           ],
           "answer": "Ausfuhr – denn 'Einfuhr' ist das deutsche Synonym zu 'Import', also ist 'Ausfuhr' das Synonym zu 'Export'."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 4, 12, 7, 21, 16, ?",
-          "options": [
-            "48",
-            "43",
-            "51",
-            "11"
-          ],
-          "answer": "48 – die Reihe wechselt abwechselnd ×3 und −5: 4×3=12, 12−5=7, 7×3=21, 21−5=16, 16×3=48."
-        },
-        {
-          "type": "konzentration",
-          "question": "Zähle in der folgenden Zeile mit Containercodes, wie oft der Buchstabe 'U' vorkommt: MSKU 402318-7 · TGHU 918264-3 · MSCU 550912-1 · HLXU 774035-9 · MSKU 118840-2",
-          "answer": "5 – das 'U' steht jeweils am Ende der vier Buchstaben eines ISO-Containercodes (MSKU, TGHU, MSCU, HLXU, MSKU)."
         }
       ],
       "tipps": [
@@ -942,6 +1051,28 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
+          "type": "fachwissen",
+          "question": "Welche Farbkombination kennzeichnet den Schutzleiter (PE)?",
+          "options": [
+            "Grün-Gelb",
+            "Blau",
+            "Braun",
+            "Schwarz"
+          ],
+          "answer": "Grün-Gelb – die Farbkombination Grün-Gelb ist Leitern mit Schutzfunktion vorbehalten (Schutzleiter PE; ein PEN-Leiter wird ebenfalls grün-gelb mit blauen Endmarkierungen gekennzeichnet). Blau steht für den Neutralleiter, Braun und Schwarz sind typische Außenleiterfarben."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welche Spannungswerte liegen in einem 400-V-Niederspannungs-Drehstromnetz jeweils zwischen zwei Außenleitern und zwischen einem Außenleiter und dem Neutralleiter an?",
+          "options": [
+            "400 V zwischen zwei Außenleitern, 230 V zwischen Außenleiter und Neutralleiter",
+            "230 V zwischen zwei Außenleitern, 400 V zwischen Außenleiter und Neutralleiter",
+            "230 V zwischen zwei Außenleitern, 230 V zwischen Außenleiter und Neutralleiter",
+            "400 V zwischen zwei Außenleitern, 400 V zwischen Außenleiter und Neutralleiter"
+          ],
+          "answer": "400 V zwischen zwei Außenleitern, 230 V zwischen Außenleiter und Neutralleiter – das folgt aus der Sternschaltung, bei der die Leiterspannung das √3-Fache der Strangspannung beträgt."
+        },
+        {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 2, 7, 14, 23, 34, ?",
           "options": [
@@ -951,17 +1082,6 @@
             "49"
           ],
           "answer": "47 – Regel: Quadratzahlen minus 2 (n²−2): 2²−2=2, 3²−2=7, 4²−2=14, 5²−2=23, 6²−2=34, 7²−2=47. Die Differenzen zwischen den Gliedern steigen jeweils um 2 (+5, +7, +9, +11, +13)."
-        },
-        {
-          "type": "sprachlogik",
-          "question": "Kupfer verhält sich zu Leiter wie Kunststoff zu …?",
-          "options": [
-            "Isolator",
-            "Kabel",
-            "Widerstand",
-            "Gehäuse"
-          ],
-          "answer": "Isolator – Kupfer leitet elektrischen Strom sehr gut und ist deshalb ein typischer Leiter. Kunststoff dagegen leitet praktisch nicht und wird als Isolator eingesetzt, um stromführende Teile sicher zu trennen."
         }
       ],
       "tipps": [
@@ -1011,6 +1131,28 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
+          "type": "fachwissen",
+          "question": "Welche Mindesttemperatur soll bei einer zentralen Trinkwarmwasser-Großanlage nach DVGW W 551 am Austritt des Trinkwassererwärmers eingehalten werden (Legionellenschutz)?",
+          "options": [
+            "45 °C",
+            "50 °C",
+            "60 °C",
+            "70 °C"
+          ],
+          "answer": "60 °C – nach DVGW W 551 soll bei zentralen Großanlagen die Warmwassertemperatur am Austritt des Trinkwassererwärmers mindestens 60 °C betragen; darunter (ca. 25–55 °C) vermehren sich Legionellen stark."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Bis zu welcher Arbeitstemperatur spricht man beim Verbinden von Kupferrohren von Weichlöten, oberhalb der es als Hartlöten bezeichnet wird?",
+          "options": [
+            "250 °C",
+            "350 °C",
+            "450 °C",
+            "550 °C"
+          ],
+          "answer": "450 °C – Lötverfahren mit einer Arbeitstemperatur bis 450 °C gelten als Weichlöten, oberhalb von 450 °C spricht man von Hartlöten (DIN ISO 857-2)."
+        },
+        {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 6, 15, 24, 33, ?",
           "options": [
@@ -1020,11 +1162,6 @@
             "44"
           ],
           "answer": "42 — die Reihe steigt mit einer konstanten Differenz von +9 (6→15→24→33→42)."
-        },
-        {
-          "type": "konzentration",
-          "question": "Auf einem Materialzettel für die Baustelle steht folgende Rohrnennweiten-Zeile: 'DN 20 · DN 25 · DN 32 · DN 25 · DN 15 · DN 25 · DN 40 · DN 25'. Wie oft kommt 'DN 25' in dieser Zeile vor?",
-          "answer": "4-mal — 'DN 25' erscheint an der 2., 4., 6. und 8. Position der Zeile."
         }
       ],
       "tipps": [
@@ -1074,6 +1211,28 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
+          "type": "fachwissen",
+          "question": "Im Passungssystem Einheitsbohrung besitzt die Bohrung bei jeder Paarung stets das Toleranzfeld H (z. B. H7), ihr Grundabmaß liegt also auf dem Nennmaß. Wodurch wird bei diesem System festgelegt, ob eine Spiel-, Übergangs- oder Presspassung entsteht?",
+          "options": [
+            "Durch die Wahl des Wellentoleranzfelds (z. B. h6, k6, p6)",
+            "Durch den Mittelwert aus Bohrungs- und Wellentoleranzfeld",
+            "Durch die Oberflächenrauheit der Bohrungswand",
+            "Durch die Wärmebehandlung des Wellenwerkstoffs"
+          ],
+          "answer": "Durch die Wahl des Wellentoleranzfelds (z. B. h6, k6, p6) — da die Bohrung im System Einheitsbohrung stets das Toleranzfeld H erhält, bestimmt das gewählte Wellentoleranzfeld mit seiner Lage und Breite den Passungscharakter."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Nach DIN 66217 wird für CNC-Maschinen ein einheitliches Koordinatensystem mit den Achsen X, Y und Z definiert. Wo liegt bei einer Fräsmaschine die Z-Achse?",
+          "options": [
+            "In der Spindel- bzw. Werkzeugachse",
+            "Waagerecht in der Aufspannebene des Werkstücks, quer zur X-Achse",
+            "Senkrecht zur Z-Achse in der Tischebene",
+            "Entlang der Vorschubrichtung des Werkstücktisches"
+          ],
+          "answer": "In der Spindel- bzw. Werkzeugachse — nach DIN 66217 verläuft die Z-Achse definitionsgemäß immer parallel zur Spindelachse, mit der positiven Richtung vom Werkstück weg zum Werkzeug hin."
+        },
+        {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 6, 8, 12, 20, 36, ?",
           "options": [
@@ -1083,11 +1242,6 @@
             "66"
           ],
           "answer": "68 – Regel: jedes Glied wird verdoppelt und dann um 4 vermindert (36 × 2 − 4 = 68)."
-        },
-        {
-          "type": "konzentration",
-          "question": "Auf einem Messprotokoll stehen folgende Toleranzangaben nebeneinander: ±0,5 · ±0,05 · ±0,5 · ±0,05 · ±0,05 · ±0,5 · ±0,05. Wie oft kommt die Toleranz '±0,05' vor?",
-          "answer": "4 – die Toleranz '±0,05' erscheint an der 2., 4., 5. und 7. Stelle der Zeile."
         }
       ],
       "tipps": [
@@ -1137,6 +1291,28 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
+          "type": "fachwissen",
+          "question": "Was unterscheidet die Kommissionierprinzipien „Mann-zur-Ware“ und „Ware-zum-Mann“ grundlegend voneinander?",
+          "options": [
+            "Bei „Mann-zur-Ware“ bewegt sich der Kommissionierer zu den Lagerplätzen, bei „Ware-zum-Mann“ wird die Ware per Fördertechnik zum stationären Arbeitsplatz gebracht.",
+            "„Mann-zur-Ware“ bezeichnet die vollautomatische Kommissionierung durch Roboter, „Ware-zum-Mann“ die rein manuelle Kommissionierung ohne technische Hilfsmittel.",
+            "Bei „Ware-zum-Mann“ durchsucht der Kommissionierer das gesamte Lager, während er bei „Mann-zur-Ware“ an einem festen Arbeitsplatz verbleibt.",
+            "Beide Begriffe beschreiben identische Abläufe und unterscheiden sich nur in der verwendeten Lagerhardware."
+          ],
+          "answer": "Bei „Mann-zur-Ware“ bewegt sich der Kommissionierer zu den Lagerplätzen, bei „Ware-zum-Mann“ wird die Ware per Fördertechnik zum stationären Arbeitsplatz gebracht. Das ist die zentrale Unterscheidung der beiden Kommissioniergrundprinzipien."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welcher Gefahrgutklasse werden entzündbare flüssige Stoffe wie Benzin nach ADR/GGVSEB zugeordnet?",
+          "options": [
+            "Klasse 3",
+            "Klasse 8",
+            "Klasse 2",
+            "Klasse 9"
+          ],
+          "answer": "Klasse 3 – sie umfasst entzündbare flüssige Stoffe wie Benzin, Diesel oder Lösemittel."
+        },
+        {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 5, 50, 12, 45, 19, 40, ?",
           "options": [
@@ -1146,22 +1322,6 @@
             "35"
           ],
           "answer": "26 – Die Reihe besteht aus zwei verschachtelten Folgen: An den ungeraden Positionen steigen die Zahlen um 7 (5, 12, 19, 26 …), an den geraden Positionen sinken sie um 5 (50, 45, 40, …). Der gesuchte Wert liegt an ungerader Position, also 19 + 7 = 26."
-        },
-        {
-          "type": "konzentration",
-          "question": "Kommissionier-Pickliste – Lagerplatz-Codes: „12-03-B · 07-11-A · 09-03-B · 12-08-C · 03-03-B · 11-05-A · 08-02-B“. Zähle, wie viele Stellplätze auf Ebene „B“ liegen (Code endet auf B).",
-          "answer": "4 – Auf Ebene B liegen die Codes 12-03-B, 09-03-B, 03-03-B und 08-02-B."
-        },
-        {
-          "type": "sprachlogik",
-          "question": "Gabelstapler verhält sich zu heben wie Förderband zu …?",
-          "options": [
-            "transportieren",
-            "rollen",
-            "lagern",
-            "verpacken"
-          ],
-          "answer": "transportieren – Der Gabelstapler dient primär dem Heben und Versetzen von Lasten, das Förderband dient primär dem kontinuierlichen Transportieren von Gütern zwischen zwei Punkten. „Rollen“ beschreibt nur die Bewegungsart, „lagern“ und „verpacken“ sind eigenständige Lagerlogistik-Tätigkeiten, aber nicht die Kernfunktion eines Förderbands."
         }
       ],
       "tipps": [
@@ -1211,6 +1371,28 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
+          "type": "fachwissen",
+          "question": "Was versteht die DSGVO unter „personenbezogenen Daten“?",
+          "options": [
+            "Alle Informationen, die sich auf eine identifizierte oder identifizierbare natürliche Person beziehen, z. B. Name oder E-Mail-Adresse",
+            "Nur Informationen über Unternehmen und andere juristische Personen",
+            "Ausschließlich Finanzdaten wie Kontoauszüge und Rechnungsbeträge",
+            "Nur Daten, die in Papierform vorliegen, nicht aber digital gespeicherte Daten"
+          ],
+          "answer": "Alle Informationen, die sich auf eine identifizierte oder identifizierbare natürliche Person beziehen, z. B. Name oder E-Mail-Adresse — denn die DSGVO (Art. 4 Nr. 1) definiert personenbezogene Daten genau so, unabhängig vom Speichermedium oder der Rechtsform des Betroffenen."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welches Maß hat das im Büroalltag am häufigsten verwendete Papierformat DIN A4?",
+          "options": [
+            "210 x 297 mm",
+            "148 x 210 mm",
+            "297 x 420 mm",
+            "216 x 279 mm"
+          ],
+          "answer": "210 x 297 mm — dies ist das in der Norm DIN 476 bzw. ISO 216 festgelegte Maß des Papierformats A4."
+        },
+        {
           "type": "sprachlogik",
           "question": "Termin verhält sich zu Kalender wie Datei zu …?",
           "options": [
@@ -1220,22 +1402,6 @@
             "Drucker"
           ],
           "answer": "Ordner – ein Termin wird im Kalender festgehalten und strukturiert verwaltet, eine Datei wird entsprechend in einem Ordner abgelegt und organisiert."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 4, 16, 8, 20, 10, ?",
-          "options": [
-            "5",
-            "20",
-            "22",
-            "34"
-          ],
-          "answer": "22 – die Reihe wechselt abwechselnd zwischen +12 und ÷2: 4 +12 = 16, 16 ÷2 = 8, 8 +12 = 20, 20 ÷2 = 10, 10 +12 = 22."
-        },
-        {
-          "type": "konzentration",
-          "question": "Zähle in dieser E-Mail-Verteilerliste, wie viele Adressen auf '.de' enden: mueller@firma.de · info@partner.com · schmidt@kunde.de · office@lieferant.com · weber@firma.de · kontakt@agentur.de",
-          "answer": "4 – auf '.de' enden mueller@firma.de, schmidt@kunde.de, weber@firma.de und kontakt@agentur.de (die beiden '.com'-Adressen info@partner.com und office@lieferant.com zählen nicht mit)."
         }
       ],
       "tipps": [
@@ -1285,6 +1451,28 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
+          "type": "fachwissen",
+          "question": "Wie lautet die korrekte Grundform eines Buchungssatzes in der doppelten Buchführung?",
+          "options": [
+            "Soll-Konto an Haben-Konto",
+            "Haben-Konto an Soll-Konto",
+            "Aktivkonto an Aktivkonto, unabhängig von Soll und Haben",
+            "Der Buchungssatz nennt nur ein Konto, die Gegenbuchung erfolgt automatisch"
+          ],
+          "answer": "Soll-Konto an Haben-Konto — im Buchungssatz wird stets zuerst das zu belastende (Soll-)Konto und danach das zu erkennende (Haben-)Konto genannt."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Was kennzeichnet die lineare Abschreibung (AfA) eines abnutzbaren Wirtschaftsguts?",
+          "options": [
+            "Die Anschaffungs- oder Herstellungskosten werden gleichmäßig über die Nutzungsdauer verteilt, sodass jährlich derselbe Abschreibungsbetrag anfällt",
+            "Der Abschreibungsbetrag sinkt von Jahr zu Jahr, weil ein fester Prozentsatz vom jeweiligen Restbuchwert berechnet wird",
+            "Die gesamten Anschaffungskosten werden bereits im Jahr der Anschaffung vollständig abgeschrieben",
+            "Die Abschreibung richtet sich nach der tatsächlich produzierten Stückzahl und schwankt daher jedes Jahr"
+          ],
+          "answer": "Die Anschaffungs- oder Herstellungskosten werden gleichmäßig über die Nutzungsdauer verteilt, sodass jährlich derselbe Abschreibungsbetrag anfällt — das ist das Kennzeichen der linearen AfA im Unterschied zur degressiven oder leistungsabhängigen Abschreibung."
+        },
+        {
           "type": "zahlenreihe",
           "question": "Setze die Reihe fort: 2, 7, 22, 67, ?",
           "options": [
@@ -1294,22 +1482,6 @@
             "203"
           ],
           "answer": "202 – Regel: jedes Glied wird verdreifacht und dann um 1 erhöht (×3 + 1): 2→7 (2×3+1), 7→22 (7×3+1), 22→67 (22×3+1), 67→202 (67×3+1)."
-        },
-        {
-          "type": "sprachlogik",
-          "question": "Einnahme verhält sich zu Ausgabe wie Forderung zu ...?",
-          "options": [
-            "Verbindlichkeit",
-            "Rechnung",
-            "Mahnung",
-            "Guthaben"
-          ],
-          "answer": "Verbindlichkeit – Einnahme und Ausgabe bilden ein buchhalterisches Gegensatzpaar (Geld fließt zu vs. ab); ebenso ist die Forderung (Anspruch gegenüber Dritten) das Gegenstück zur Verbindlichkeit (eigene Zahlungspflicht gegenüber Dritten)."
-        },
-        {
-          "type": "konzentration",
-          "question": "In der folgenden Zeile mit Steuernummern sollen beim Abgleich fürs Fristenbuch alle Vorkommen der Ziffer „9“ gezählt werden: „29/491/08193 · 12/939/04927 · 31/209/11498 · 45/391/09912“. Wie oft kommt die Ziffer 9 insgesamt vor?",
-          "answer": "11 – Verteilung: 29/491/08193 → 3 Neunen, 12/939/04927 → 3 Neunen, 31/209/11498 → 2 Neunen, 45/391/09912 → 3 Neunen; Summe = 11."
         }
       ],
       "tipps": [
@@ -1359,6 +1531,28 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
+          "type": "fachwissen",
+          "question": "Bei welcher Patientensituation ist die stabile Seitenlage die richtige Maßnahme?",
+          "options": [
+            "Bewusstlose Person mit normaler, ausreichender Atmung",
+            "Bewusstlose Person ohne erkennbare Atmung",
+            "Ansprechbare Person mit akuten Brustschmerzen",
+            "Bewusstlose Person mit Verdacht auf Wirbelsäulenverletzung, ohne dass eine Atemkontrolle erfolgt ist"
+          ],
+          "answer": "Bewusstlose Person mit normaler, ausreichender Atmung – die stabile Seitenlage hält bei erhaltener Spontanatmung die Atemwege frei und verhindert das Aspirieren von Erbrochenem, während bei fehlender Atmung sofort mit der Reanimation begonnen werden muss."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welche Aussage zur Notrufnummer 112 trifft zu?",
+          "options": [
+            "112 ist die einheitliche europäische Notrufnummer und erreicht in allen EU-Staaten Rettungsdienst und Feuerwehr",
+            "112 ist ausschließlich eine deutsche Nummer und dient allein der Alarmierung der Polizei",
+            "112 kann nur aus dem Festnetz gewählt werden, nicht aus Mobilfunknetzen",
+            "112 ersetzt in Deutschland vollständig die Erreichbarkeit der Feuerwehr über die 110"
+          ],
+          "answer": "112 ist die einheitliche europäische Notrufnummer und erreicht in allen EU-Staaten Rettungsdienst und Feuerwehr – sie wurde EU-weit als kostenfreier, einheitlicher Notruf eingeführt und ist auch aus Mobilfunknetzen ohne Vorwahl erreichbar."
+        },
+        {
           "type": "sprachlogik",
           "question": "Schiene verhält sich zu Fraktur wie Verband zu …?",
           "options": [
@@ -1368,22 +1562,6 @@
             "Mullbinde"
           ],
           "answer": "Wunde. Eine Schiene ist das Hilfsmittel zur Versorgung einer Fraktur, ein Verband ist entsprechend das Hilfsmittel zur Versorgung einer Wunde – die anderen Optionen sind entweder selbst Hilfsmittel (Pflaster, Mullbinde) oder keine passende Zielverletzung (Prellung wird nicht primär verbunden)."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 3, 4, 7, 11, 18, ?",
-          "options": [
-            "29",
-            "27",
-            "25",
-            "32"
-          ],
-          "answer": "29. Jede Zahl ist die Summe der beiden vorangehenden: 3+4=7, 4+7=11, 7+11=18, 11+18=29."
-        },
-        {
-          "type": "konzentration",
-          "question": "Überfliege folgende Protokollzeile wie im Einsatz und zähle, wie oft das Zeichen „%“ vorkommt: „SpO2 96 % · RR 120/80 · HF 88 · SpO2 92 % · AF 16 · BZ 110 mg/dl · SpO2 89 %“",
-          "answer": "3 – das Prozentzeichen erscheint bei den drei SpO2-Werten (96 %, 92 %, 89 %); die übrigen Vitalwerte (RR, HF, AF, BZ) enthalten kein %."
         }
       ],
       "tipps": [
@@ -1433,6 +1611,28 @@
           "note": "Beispiel – im echten Test aus deiner Stellenanzeige abgeleitet."
         },
         {
+          "type": "fachwissen",
+          "question": "Nach Piagets Entwicklungsstufen umfasst die sensomotorische Phase etwa welchen Zeitraum?",
+          "options": [
+            "Die ersten zwei Lebensjahre",
+            "Das dritte bis fünfte Lebensjahr",
+            "Das sechste bis zehnte Lebensjahr",
+            "Die gesamte Grundschulzeit"
+          ],
+          "answer": "Die ersten zwei Lebensjahre, weil Piaget diese Phase von der Geburt bis etwa zum zweiten Lebensjahr ansetzt, in der Kinder die Welt vorrangig über Sinneswahrnehmung und motorische Handlungen begreifen."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welche Spielform bezeichnet man als Rollenspiel bzw. Symbolspiel?",
+          "options": [
+            "Das So-tun-als-ob-Spiel, bei dem Kinder Gegenstände oder sich selbst symbolisch für etwas anderes einsetzen",
+            "Das wiederholte Aneinanderreihen von Bauklötzen nach Farben",
+            "Das gemeinsame Singen eines Liedes im Stuhlkreis",
+            "Das freie Toben auf dem Außengelände ohne festgelegte Handlung"
+          ],
+          "answer": "Das So-tun-als-ob-Spiel, bei dem Kinder Gegenstände oder sich selbst symbolisch für etwas anderes einsetzen, weil genau das die Definition von Rollen- bzw. Symbolspiel ausmacht."
+        },
+        {
           "type": "sprachlogik",
           "question": "Vorlesen verhält sich zu Buch wie Singen zu …?",
           "options": [
@@ -1442,22 +1642,6 @@
             "Note"
           ],
           "answer": "Lied – beim Vorlesen ist das Buch die Vorlage, beim Singen das Lied; beides ist der jeweils wiedergegebene Inhalt."
-        },
-        {
-          "type": "konzentration",
-          "question": "Beim Morgenkreis gehst du die Anwesenheitsliste der Gruppe durch: Lena · Ben · Luca · Emma · Leon · Mia · Lotte · Paul · Lina · Noah. Wie viele Kindernamen beginnen mit dem Buchstaben 'L'?",
-          "answer": "5 – Lena, Luca, Leon, Lotte und Lina beginnen mit 'L'."
-        },
-        {
-          "type": "zahlenreihe",
-          "question": "Setze die Reihe fort: 6, 8, 11, 15, 20, ?",
-          "options": [
-            "24",
-            "25",
-            "26",
-            "27"
-          ],
-          "answer": "26 – die Differenz zwischen den Zahlen wächst mit jedem Schritt um 1 (+2, +3, +4, +5, +6), also 20 + 6 = 26."
         }
       ],
       "tipps": [
