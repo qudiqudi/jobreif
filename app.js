@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.49.0";
+const APP_VERSION = "1.50.0";
 
 const CHANGELOG = [
+  {
+    version: "1.50.0",
+    date: "19.07.2026",
+    items: [
+      "Übungs-Hub: Matrizen-Aufgaben gibt es jetzt auch als größeres 4×4-Raster (zusätzlich zu 3×3), und bei den Zahlenreihen erscheint gelegentlich ein Zahlengitter, bei dem sowohl jede Zeile als auch jede Spalte einem gleichmäßigen Schritt folgt.",
+    ],
+  },
   {
     version: "1.49.0",
     date: "19.07.2026",
@@ -2399,7 +2406,7 @@ function normalizeQuizData(result, jobText = "") {
     // taucht aus irgendeinem Grund ein typ='figural' in den Eingangsdaten auf (z. B. Import oder
     // eine kuenftige Serverquelle), erzeugt der Client das konkrete, garantiert eindeutige Raetsel
     // SELBST (LLMs liefern valide Matrizen unzuverlaessig) - statt eine leere Aufgabe zu rendern.
-    const figPz = typ === "figural" ? generateFiguralPuzzle() : null;
+    const figPz = typ === "figural" ? generateFiguralPuzzle(3) : null; // Tests bleiben 3x3
 
     const quellen = Array.isArray(q.quellen)
       ? q.quellen
@@ -2644,82 +2651,101 @@ function figPuzzleObj(matrix, optionen, correct, regel) {
   };
 }
 
-// Familie A: feste Form je Reihe, feste Anzahl je Spalte.
-function figFamilyShapeRowCountCol() {
-  const shapes = figPick(FIG_SHAPES, 3);
-  const counts = figShuffle([1, 2, 3]);
+// Kleiner Helfer: ein NxN-Gitter aus einer cell(r, c)-Funktion bauen.
+function figBuildGrid(N, cell) {
+  return Array.from({ length: N }, (_, r) => Array.from({ length: N }, (_, c) => cell(r, c)));
+}
+
+// Familie A: feste Form je Reihe, feste Anzahl je Spalte. Parametrisiert auf NxN (3 oder 4);
+// die Luecke ist immer matrix[N-1][N-1].
+function figFamilyShapeRowCountCol(N) {
+  const shapes = figPick(FIG_SHAPES, N);
+  const counts = figShuffle(Array.from({ length: N }, (_, i) => i + 1));
   const cell = (r, c) => figRepeat(shapes[r], counts[c]);
-  const matrix = [0, 1, 2].map((r) => [0, 1, 2].map((c) => cell(r, c)));
-  const correct = cell(2, 2);
-  matrix[2][2] = "";
-  const cands = [
-    figRepeat(shapes[2], counts[1]), figRepeat(shapes[0], counts[2]),
-    figRepeat(shapes[1], counts[2]), figRepeat(shapes[2], counts[2] === 3 ? 4 : counts[2] + 1),
-    figRepeat(shapes[0], counts[0]),
-  ];
+  const matrix = figBuildGrid(N, cell);
+  const correct = cell(N - 1, N - 1);
+  matrix[N - 1][N - 1] = "";
+  const cands = [];
+  // (a) richtige Form, falsche Anzahl
+  for (let j = 0; j < N; j++) if (j !== N - 1) cands.push(figRepeat(shapes[N - 1], counts[j]));
+  // (b) falsche Form, richtige Anzahl
+  for (let i = 0; i < N; i++) if (i !== N - 1) cands.push(figRepeat(shapes[i], counts[N - 1]));
+  // (c) richtige Form, Anzahl ausserhalb des Wertebereichs
+  cands.push(figRepeat(shapes[N - 1], N + 1));
   return figPuzzleObj(matrix, figFinalizeOptions(correct, cands), correct, "pro Reihe eine feste Form, pro Spalte eine feste Anzahl.");
 }
 // Familie B: feste Anzahl je Reihe, feste Form je Spalte (Transponierte von A).
-function figFamilyCountRowShapeCol() {
-  const shapes = figPick(FIG_SHAPES, 3);
-  const counts = figShuffle([1, 2, 3]);
+function figFamilyCountRowShapeCol(N) {
+  const shapes = figPick(FIG_SHAPES, N);
+  const counts = figShuffle(Array.from({ length: N }, (_, i) => i + 1));
   const cell = (r, c) => figRepeat(shapes[c], counts[r]);
-  const matrix = [0, 1, 2].map((r) => [0, 1, 2].map((c) => cell(r, c)));
-  const correct = cell(2, 2);
-  matrix[2][2] = "";
-  const cands = [
-    figRepeat(shapes[1], counts[2]), figRepeat(shapes[2], counts[0]),
-    figRepeat(shapes[2], counts[1]), figRepeat(shapes[0], counts[2]),
-    figRepeat(shapes[2], counts[2] === 3 ? 4 : counts[2] + 1),
-  ];
+  const matrix = figBuildGrid(N, cell);
+  const correct = cell(N - 1, N - 1);
+  matrix[N - 1][N - 1] = "";
+  const cands = [];
+  // (a) falsche Form, richtige Anzahl
+  for (let j = 0; j < N; j++) if (j !== N - 1) cands.push(figRepeat(shapes[j], counts[N - 1]));
+  // (b) richtige Form, falsche Anzahl
+  for (let i = 0; i < N; i++) if (i !== N - 1) cands.push(figRepeat(shapes[N - 1], counts[i]));
+  // (c) richtige Form, Anzahl ausserhalb des Wertebereichs
+  cands.push(figRepeat(shapes[N - 1], N + 1));
   return figPuzzleObj(matrix, figFinalizeOptions(correct, cands), correct, "pro Spalte eine feste Form, pro Reihe eine feste Anzahl.");
 }
-// Familie C: die Formen wandern diagonal (cell = shapes[(r+c) mod 3]).
-function figFamilyDiagonalCycle() {
-  const shapes = figPick(FIG_SHAPES, 3);
-  const cell = (r, c) => shapes[(r + c) % 3];
-  const matrix = [0, 1, 2].map((r) => [0, 1, 2].map((c) => cell(r, c)));
-  const correct = cell(2, 2);
-  matrix[2][2] = "";
+// Familie C: die Formen wandern diagonal (cell = shapes[(r+c) mod N]).
+function figFamilyDiagonalCycle(N) {
+  const shapes = figPick(FIG_SHAPES, N);
+  const cell = (r, c) => shapes[(r + c) % N];
+  const matrix = figBuildGrid(N, cell);
+  const correct = cell(N - 1, N - 1);
+  matrix[N - 1][N - 1] = "";
   const unused = FIG_SHAPES.filter((s) => !shapes.includes(s));
-  const cands = [shapes[0], shapes[2], ...unused];
+  const cands = [...shapes.filter((s) => s !== correct), ...unused];
   return figPuzzleObj(matrix, figFinalizeOptions(correct, cands), correct, "die Formen wandern diagonal durch.");
 }
 
 // Familie D: Kombination - jede Zelle traegt ZWEI Symbole; das erste bestimmt die Reihe,
 // das zweite die Spalte (disjunkte Symbolmengen, damit die Regel eindeutig ablesbar ist).
-function figFamilyComboRowCol() {
-  const both = figPick(FIG_SHAPES, 6);
-  const rowSh = both.slice(0, 3), colSh = both.slice(3, 6);
+// Braucht 2N distinkte Symbole - FIG_SHAPES hat 14, reicht fuer N bis 7.
+function figFamilyComboRowCol(N) {
+  const both = figPick(FIG_SHAPES, 2 * N);
+  const rowSh = both.slice(0, N), colSh = both.slice(N, 2 * N);
   const cell = (r, c) => rowSh[r] + colSh[c];
-  const matrix = [0, 1, 2].map((r) => [0, 1, 2].map((c) => cell(r, c)));
-  const correct = cell(2, 2);
-  matrix[2][2] = "";
-  const cands = [
-    rowSh[2] + colSh[1], rowSh[1] + colSh[2], rowSh[0] + colSh[2],
-    rowSh[2] + colSh[0], rowSh[1] + colSh[1],
-  ];
+  const matrix = figBuildGrid(N, cell);
+  const correct = cell(N - 1, N - 1);
+  matrix[N - 1][N - 1] = "";
+  const cands = [];
+  for (let j = 0; j < N; j++) if (j !== N - 1) cands.push(rowSh[N - 1] + colSh[j]);
+  for (let i = 0; i < N; i++) if (i !== N - 1) cands.push(rowSh[i] + colSh[N - 1]);
+  // zusaetzliche gemischte Paare (beide Indizes falsch), falls noch Platz fuer Kandidaten ist
+  for (let i = 0; i < N - 1 && cands.length < 8; i++) {
+    for (let j = 0; j < N - 1 && cands.length < 8; j++) cands.push(rowSh[i] + colSh[j]);
+  }
   return figPuzzleObj(matrix, figFinalizeOptions(correct, cands), correct, "erstes Symbol je Reihe, zweites Symbol je Spalte.");
 }
-// Familie E: gleiche Form, aber die ANZAHL wandert diagonal (1, 2, 3 je Diagonale).
-function figFamilyDiagonalCount() {
+// Familie E: gleiche Form, aber die ANZAHL wandert diagonal (1..N je Diagonale).
+function figFamilyDiagonalCount(N) {
   const sh = figPick(FIG_SHAPES, 1)[0];
-  const cnt = (r, c) => ((r + c) % 3) + 1;
+  const cnt = (r, c) => ((r + c) % N) + 1;
   const cell = (r, c) => figRepeat(sh, cnt(r, c));
-  const matrix = [0, 1, 2].map((r) => [0, 1, 2].map((c) => cell(r, c)));
-  const correct = cell(2, 2);
-  matrix[2][2] = "";
-  const cands = [figRepeat(sh, 1), figRepeat(sh, 2), figRepeat(sh, 3), figRepeat(sh, 4)];
-  return figPuzzleObj(matrix, figFinalizeOptions(correct, cands), correct, "gleiche Form, die Anzahl wandert diagonal (1, 2, 3).");
+  const matrix = figBuildGrid(N, cell);
+  const correct = cell(N - 1, N - 1);
+  matrix[N - 1][N - 1] = "";
+  const cands = [];
+  for (let k = 1; k <= N + 1; k++) cands.push(figRepeat(sh, k));
+  return figPuzzleObj(matrix, figFinalizeOptions(correct, cands), correct, "gleiche Form, die Anzahl wandert diagonal (1 bis " + N + ").");
 }
 
 // Ein vollstaendiges, garantiert eindeutiges Figural-Raetsel bauen (zufaellige Familie).
-function generateFiguralPuzzle() {
+// size steuert die Rastergroesse: Default/alles ausser exakt 4 ergibt 3x3 (bestehendes
+// Verhalten fuer Assessment-Tests bleibt unangetastet); nur size === 4 aktiviert 4x4
+// (bisher nur vom Üben-Modul genutzt, siehe generateUebungByType).
+function generateFiguralPuzzle(size = 3) {
+  const N = size === 4 ? 4 : 3;
   const families = [
     figFamilyShapeRowCountCol, figFamilyCountRowShapeCol, figFamilyDiagonalCycle,
     figFamilyComboRowCol, figFamilyDiagonalCount,
   ];
-  return families[Math.floor(Math.random() * families.length)]();
+  return families[Math.floor(Math.random() * families.length)](N);
 }
 
 /* ---------- Uebungs-Hub (Plan 3.x): clientseitige On-Demand-Generatoren ----------
@@ -2729,8 +2755,89 @@ function generateFiguralPuzzle() {
 function uebRandInt(min, max) { return min + Math.floor(Math.random() * (max - min + 1)); }
 function uebPick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
+// Zahlenmatrix (additive Erweiterung): NxN-Gitter (3x3 oder 4x4), in dem JEDE Zeile und JEDE
+// Spalte eine arithmetische Folge mit konstantem Schritt ist. Das komplette Gitter wird zuerst
+// aus einer geschlossenen Formel berechnet, danach wird genau EINE Zelle geleert - die Luecke
+// ist dadurch aus ihrer Zeile UND ihrer Spalte identisch und eindeutig rekonstruierbar (beide
+// Rekonstruktionen treffen per Konstruktion denselben Formelwert, da das Gitter nicht zeilen-/
+// spaltenweise, sondern als Ganzes aus derselben Formel entsteht). typ bleibt "zahlenreihe"
+// (identischer Score-/Eingabepfad wie die klassische Reihe); matrix ist ein rein additives Feld.
+function generateZahlenmatrixUebung() {
+  const N = Math.random() < 0.5 ? 3 : 4;
+  const families = [
+    // Linear steigend: pro Zeile Schritt q, pro Spalte Schritt p (bewusst verschieden).
+    () => {
+      const a = uebRandInt(1, 15);
+      let p = uebRandInt(2, 9), q = uebRandInt(2, 9);
+      if (p === q) q = q < 9 ? q + 1 : q - 1;
+      return { cell: (r, c) => a + p * r + q * c, regel: `pro Zeile +${q}, pro Spalte +${p}` };
+    },
+    // Linear fallend bzw. gemischt (fallend/steigend je Achse) - Parametergrenzen halten
+    // alle Werte positiv und zweistellig.
+    () => {
+      if (Math.random() < 0.5) {
+        const a = uebRandInt(60, 90);
+        const p = uebRandInt(2, 6), q = uebRandInt(2, 6);
+        return { cell: (r, c) => a - p * r - q * c, regel: `pro Zeile -${q}, pro Spalte -${p}` };
+      }
+      const a = uebRandInt(30, 50);
+      const p = uebRandInt(2, 6), q = uebRandInt(2, 6);
+      return { cell: (r, c) => a + p * r - q * c, regel: `pro Zeile -${q}, pro Spalte +${p}` };
+    },
+    // Bilinear: die Schritte wachsen von Zeile zu Zeile/Spalte zu Spalte, bleiben aber
+    // INNERHALB jeder einzelnen Zeile bzw. Spalte exakt arithmetisch.
+    () => {
+      const a = uebRandInt(1, 10), b = uebRandInt(1, 6), d = uebRandInt(1, 6), e = uebRandInt(1, 3);
+      return { cell: (r, c) => a + b * r + d * c + e * r * c, regel: "von Zeile zu Zeile und Spalte zu Spalte wachsende Schritte" };
+    },
+    // Einmaleins-Tabelle mit arithmetischen Kopfreihen: Zeilen-/Spaltenwerte steigen
+    // gleichmaessig, die Zelle ist ihr Produkt - jede Zeile/Spalte bleibt dadurch arithmetisch.
+    () => {
+      const g = uebRandInt(2, 3), h = uebRandInt(1, 2), u = uebRandInt(2, 3), v = uebRandInt(1, 2);
+      const rowVal = (r) => g + h * r, colVal = (c) => u + v * c;
+      return { cell: (r, c) => rowVal(r) * colVal(c), regel: "Kopfzeile × Kopfspalte (beide gleichmäßig steigend)" };
+    },
+  ];
+  const buildGrid = (famFn) => {
+    const fam = famFn();
+    return { grid: Array.from({ length: N }, (_, r) => Array.from({ length: N }, (_, c) => fam.cell(r, c))), regel: fam.regel };
+  };
+  // Positionen mit zweistelligem Wert (10..99) sammeln - die Luecke wird NUR aus diesen gewaehlt,
+  // damit die GESUCHTE Zahl garantiert zweistellig ist (sichtbare Zellen duerfen einstellig sein).
+  const twoDigit = (grid) => {
+    const out = [];
+    grid.forEach((row, r) => row.forEach((v, c) => { if (v >= 10 && v <= 99) out.push([r, c]); }));
+    return out;
+  };
+  // Sehr kleine Parameter (z. B. linear a=1, Schritte 2/2) koennen ein rein einstelliges Gitter
+  // ergeben; dann neu wuerfeln. Deterministischer Rueckfall: linear steigend mit Basis >=40, dessen
+  // Zellen bei N<=4 stets in 10..99 liegen - so gibt es IMMER mindestens eine gueltige Lueckenposition.
+  let g = buildGrid(uebPick(families));
+  let cells = twoDigit(g.grid);
+  for (let attempt = 0; cells.length === 0 && attempt < 40; attempt++) { g = buildGrid(uebPick(families)); cells = twoDigit(g.grid); }
+  if (cells.length === 0) {
+    const a = uebRandInt(40, 55), p = uebRandInt(2, 6), q = uebRandInt(2, 6);
+    g = { grid: Array.from({ length: N }, (_, r) => Array.from({ length: N }, (_, c) => a + p * r + q * c)), regel: `pro Zeile +${q}, pro Spalte +${p}` };
+    cells = twoDigit(g.grid);
+  }
+  const [mr, mc] = cells[Math.floor(Math.random() * cells.length)];
+  const matrix = g.grid.map((row, r) => row.map((v, c) => (r === mr && c === mc ? "" : String(v))));
+  return {
+    typ: "zahlenreihe",
+    frage: "Welche Zahl gehört in das leere Feld? Jede Zeile und jede Spalte verändert sich mit gleichmäßigem Schritt.",
+    optionen: [], korrekte_indizes: [],
+    korrekte_antwort: String(g.grid[mr][mc]),
+    material: "", zielzeichen: "", erklaerungen: [],
+    matrix,
+    lerninfo: "Bildungsregel: " + g.regel + ".",
+  };
+}
+
 // Zahlenreihe: zufaellige, ganzzahlige Bildungsregel; 5-6 Glieder, das naechste ist gesucht.
+// Mit ca. 40% Wahrscheinlichkeit gibt es stattdessen eine Zahlenmatrix (siehe oben) - additiv,
+// typ und alle bestehenden Felder bleiben gleich, scoreZahlenreihe/der Eingabepfad aendern sich nicht.
 function generateZahlenreiheUebung() {
+  if (Math.random() < 0.4) return generateZahlenmatrixUebung();
   const rules = [
     () => { const a = uebRandInt(1, 12), d = uebRandInt(2, 9); return { seq: (n) => a + n * d, regel: `konstante Differenz +${d}` }; },
     () => { const a = uebRandInt(40, 80), d = uebRandInt(2, 9); return { seq: (n) => a - n * d, regel: `konstante Differenz -${d}` }; },
@@ -3138,7 +3245,8 @@ function generateUebungByType(typ) {
   if (typ === "merkfaehigkeit") return generateMerkfaehigkeitUebung();
   if (typ === "rechtschreibung") return generateRechtschreibungUebung();
   if (typ === "assoziationen") return generateAssoziationenUebung();
-  return generateFiguralPuzzle();
+  // Nur hier (Üben-Modul) mischt die Rastergroesse 3x3/4x4 - Assessment-Tests bleiben 3x3.
+  return generateFiguralPuzzle(Math.random() < 0.5 ? 3 : 4);
 }
 
 // Haengt einem Standardtest (kein Vertiefungsbogen) GENAU EINE clientgenerierte Figural-Aufgabe
@@ -3152,7 +3260,7 @@ function appendFiguralQuestion(quiz) {
   // (Produktentscheidung; spiegelt die Backend-Logik eignungsfrei()).
   if (quiz.gespraechsstufe !== "assessment") return;
   if (quiz.fragen.some((f) => f && f.typ === "figural")) return;
-  const pz = generateFiguralPuzzle();
+  const pz = generateFiguralPuzzle(3); // Tests bleiben 3x3
   // id robust aus dem Maximum der vorhandenen ids ableiten, NICHT aus fragen.length:
   // normalizeQuizData vergibt ids nach Original-Index und laesst bei uebersprungenen
   // (kaputten) Eintraegen Luecken - fragen.length+1 koennte dann eine bestehende id
@@ -7225,14 +7333,42 @@ function renderQuestion() {
     current === total - 1 ? (reviewing ? "Zur Auswertung" : "Auswerten") : "Weiter";
 }
 
-// Rendert eine Figural-/Matrizen-Aufgabe in #answer-area: ein 3x3-Raster (letzte Zelle ist die
-// Luecke '?') ueber den waehlbaren Figuren-Optionen. Single-Choice; Antwort als Optionstext in
-// answers[current]. Aufloese-/Review-Einfaerbung wie bei MC (richtig gruen, falsch gewaehlt rot).
-function renderFigural(q, area, locked, isRevealed) {
+// Baut ein zeilenweises Vorlese-Label fuer eine Zahlenmatrix. Anders als beim Figural-Raster
+// (rein visuelles Muster, geloest ueber die Optionen) IST die Zahlenmatrix selbst der
+// Aufgabeninhalt - deshalb kein aria-hidden, sondern ein vollstaendiges aria-label statt
+// einzeln vorgelesener Zellen.
+function buildMatrixAriaLabel(matrix) {
+  const rows = matrix.map((row, i) => {
+    const vals = (Array.isArray(row) ? row : []).map((v) => (v ? v : "Lücke")).join(", ");
+    return `Zeile ${i + 1}: ${vals}`;
+  });
+  return "Zahlengitter. " + rows.join("; ") + ".";
+}
+
+// Baut ein div.fig-grid aus einer Matrix (Zeilen aus Strings; leere Zelle "" = Luecke, als "?"
+// dargestellt). Setzt die Spaltenzahl dynamisch (3 oder 4 - der Fallback 3 greift nur, wenn
+// matrix leer/kaputt ist) statt der frueher fest im CSS verdrahteten 3 Spalten; bei 4 Spalten
+// zusaetzlich etwas mehr Breite, damit die (bei manchen Familien laengeren) Zellinhalte nicht
+// umbrechen. Geteilt von renderFigural, dem Figural-Zweig in renderSrCardView UND der
+// Zahlenmatrix-Anzeige im Üben-Modul.
+// opts.ariaHidden: rein visuelles Figural-Muster (Antwort steckt in den Optionen).
+// opts.ariaLabel: die Matrix IST der Aufgabeninhalt (Zahlenmatrix) - Zellen selbst vor
+// Screenreadern verstecken, stattdessen das Label vorlesen.
+function buildFigGrid(matrix, opts) {
   const grid = document.createElement("div");
   grid.className = "fig-grid";
-  grid.setAttribute("aria-hidden", "true"); // rein visuelles Muster; geloest wird ueber die Optionen
-  (q.matrix || []).forEach((row) => {
+  const n = (Array.isArray(matrix) && Array.isArray(matrix[0]) ? matrix[0].length : 3) || 3;
+  grid.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+  // 4x4 (nur Üben-Modul): etwas breiter, plus eigene Klasse fuer eine dezent kleinere
+  // Zellschrift (manche Familien haben bis zu N Glyphen pro Zelle) - CSS in style.css.
+  if (n >= 4) { grid.style.maxWidth = "21rem"; grid.classList.add("fig-grid-lg"); }
+  if (opts && opts.ariaLabel) {
+    grid.setAttribute("role", "img");
+    grid.setAttribute("aria-label", opts.ariaLabel);
+  } else {
+    grid.setAttribute("aria-hidden", "true");
+  }
+  (matrix || []).forEach((row) => {
     (Array.isArray(row) ? row : []).forEach((cellStr) => {
       const cell = document.createElement("div");
       const empty = !cellStr;
@@ -7241,7 +7377,15 @@ function renderFigural(q, area, locked, isRevealed) {
       grid.appendChild(cell);
     });
   });
-  area.appendChild(grid);
+  return grid;
+}
+
+// Rendert eine Figural-/Matrizen-Aufgabe in #answer-area: ein NxN-Raster (3x3 oder 4x4; letzte
+// Zelle ist die Luecke '?') ueber den waehlbaren Figuren-Optionen. Single-Choice; Antwort als
+// Optionstext in answers[current]. Aufloese-/Review-Einfaerbung wie bei MC (richtig gruen,
+// falsch gewaehlt rot).
+function renderFigural(q, area, locked, isRevealed) {
+  area.appendChild(buildFigGrid(q.matrix, { ariaHidden: true }));
 
   const optWrap = document.createElement("div");
   optWrap.className = "fig-options";
@@ -10321,6 +10465,12 @@ function renderSrCardView() {
       mat.textContent = q.material;
       area.appendChild(mat);
     }
+    // Zahlenmatrix (additiv, generateZahlenmatrixUebung): vor dem Eingabefeld das Gitter
+    // zeigen. Die Matrix ist hier der Aufgabeninhalt selbst - deshalb aria-label statt
+    // aria-hidden. Alte Karten ohne matrix-Feld rendern unveraendert (Guard).
+    if (q.typ === "zahlenreihe" && Array.isArray(q.matrix) && q.matrix.length) {
+      area.appendChild(buildFigGrid(q.matrix, { ariaLabel: buildMatrixAriaLabel(q.matrix) }));
+    }
     const input = document.createElement("input");
     input.type = "text"; input.inputMode = "decimal"; input.autocomplete = "off"; input.className = "zr-field";
     input.setAttribute("aria-label", q.typ === "konzentration" ? "Deine Antwort als Anzahl" : "Deine Antwort als Zahl");
@@ -10338,20 +10488,9 @@ function renderSrCardView() {
     }
     area.appendChild(input);
   } else {
-    // Figural: ueber den Optionen das 3x3-Raster (letzte Zelle = Luecke) zeigen.
+    // Figural: ueber den Optionen das NxN-Raster (3x3 oder 4x4; letzte Zelle = Luecke) zeigen.
     if (q.typ === "figural" && Array.isArray(q.matrix)) {
-      const grid = document.createElement("div");
-      grid.className = "fig-grid"; grid.setAttribute("aria-hidden", "true");
-      q.matrix.forEach((row) => {
-        (Array.isArray(row) ? row : []).forEach((cellStr) => {
-          const cell = document.createElement("div");
-          const empty = !cellStr;
-          cell.className = "fig-cell" + (empty ? " fig-cell-missing" : "");
-          cell.textContent = empty ? "?" : cellStr;
-          grid.appendChild(cell);
-        });
-      });
-      area.appendChild(grid);
+      area.appendChild(buildFigGrid(q.matrix, { ariaHidden: true }));
     }
     (q.optionen || []).forEach((opt) => {
       const btn = document.createElement("button");
