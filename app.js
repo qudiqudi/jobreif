@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.48.0";
+const APP_VERSION = "1.49.0";
 
 const CHANGELOG = [
+  {
+    version: "1.49.0",
+    date: "19.07.2026",
+    items: [
+      "Neues Gratis-Übungsmodul „Assoziationen“: verbale Analogien (z. B. „Blatt verhält sich zu Baum wie Seite zu …?“) und „Welches Wort passt nicht?“ – wie gewohnt frisch generiert, sofort lokal ausgewertet und ohne Anmeldung.",
+    ],
+  },
   {
     version: "1.48.0",
     date: "14.07.2026",
@@ -3033,8 +3040,96 @@ function generateRechtschreibungUebung() {
   };
 }
 
+// Assoziationen: verbale Analogien (a : b wie c : ?) und "Welches Wort passt nicht?" -
+// kuratierte statische Bank, deterministisch clientseitig ausgewertet (kein Server/Token noetig).
+const ASSOZIATIONEN_ANALOGIEN = [
+  { a: "Blatt", b: "Baum", c: "Seite", richtig: "Buch", distraktoren: ["Bibliothek", "Leser", "Autor"], merke: "Ein Blatt ist Teil eines Baumes, so wie eine Seite Teil eines Buches ist." },
+  { a: "Hund", b: "Tier", c: "Tulpe", richtig: "Pflanze", distraktoren: ["Wurzel", "Strauch", "Garten"], merke: "Hund ist ein Tier, Tulpe ist eine Pflanze – beide sind Unterbegriffe zu ihrem Oberbegriff." },
+  { a: "Rad", b: "Auto", c: "Flügel", richtig: "Flugzeug", distraktoren: ["Pilot", "Himmel", "Landebahn"], merke: "Das Rad gehört zum Auto, der Flügel gehört zum Flugzeug." },
+  { a: "Apfel", b: "Obst", c: "Karotte", richtig: "Gemüse", distraktoren: ["Salat", "Beet", "Ernte"], merke: "Apfel ist ein Obst, Karotte ist ein Gemüse – jeweils der passende Oberbegriff." },
+  { a: "Finger", b: "Hand", c: "Zehe", richtig: "Fuß", distraktoren: ["Knie", "Ferse", "Schuh"], merke: "Der Finger ist Teil der Hand, die Zehe ist Teil des Fußes." },
+  { a: "Tanne", b: "Baum", c: "Rose", richtig: "Blume", distraktoren: ["Dorn", "Beet", "Duft"], merke: "Tanne ist ein Baum, Rose ist eine Blume – beide sind Unterbegriffe zu ihrem Oberbegriff." },
+  { a: "Motor", b: "Auto", c: "Herz", richtig: "Körper", distraktoren: ["Blut", "Ader", "Puls"], merke: "Der Motor ist Teil des Autos, das Herz ist Teil des Körpers." },
+  { a: "Hell", b: "Dunkel", c: "Schnell", richtig: "Langsam", distraktoren: ["Laut", "Müde", "Vorsichtig"], merke: "Hell ist das Gegenteil von Dunkel, wie Schnell das Gegenteil von Langsam ist." },
+  { a: "Stark", b: "Schwach", c: "Hart", richtig: "Weich", distraktoren: ["Rau", "Fest", "Stabil"], merke: "Stark ist das Gegenteil von Schwach, wie Hart das Gegenteil von Weich ist." },
+  { a: "Regen", b: "Wolkenbruch", c: "Wind", richtig: "Sturm", distraktoren: ["Brise", "Lüftchen", "Zugluft"], merke: "Ein Wolkenbruch ist gesteigerter Regen, wie ein Sturm gesteigerter Wind ist." },
+  { a: "Laut", b: "Leise", c: "Hoch", richtig: "Niedrig", distraktoren: ["Weit", "Dick", "Kurz"], merke: "Laut ist das Gegenteil von Leise, wie Hoch das Gegenteil von Niedrig ist." },
+  { a: "Warm", b: "Heiß", c: "Kühl", richtig: "Kalt", distraktoren: ["Frisch", "Mild", "Lau"], merke: "Heiß ist gesteigertes Warm, wie Kalt gesteigertes Kühl ist." },
+  { a: "Groß", b: "Klein", c: "Breit", richtig: "Schmal", distraktoren: ["Hoch", "Tief", "Lang"], merke: "Groß ist das Gegenteil von Klein, wie Breit das Gegenteil von Schmal ist." },
+  { a: "Ärger", b: "Wut", c: "Freude", richtig: "Begeisterung", distraktoren: ["Zufriedenheit", "Gelassenheit", "Ruhe"], merke: "Wut ist gesteigerter Ärger, wie Begeisterung gesteigerte Freude ist." },
+  { a: "Staubsauger", b: "saugen", c: "Bohrer", richtig: "bohren", distraktoren: ["schrauben", "hämmern", "sägen"], merke: "Das Gerät dient genau der genannten Tätigkeit." },
+  { a: "Lehrer", b: "Schule", c: "Richter", richtig: "Gericht", distraktoren: ["Kanzlei", "Polizeiwache", "Gefängnis"], merke: "Der Beruf wird an diesem festen Ort ausgeübt." },
+  { a: "Bäcker", b: "backen", c: "Schneider", richtig: "nähen", distraktoren: ["weben", "stricken", "bügeln"], merke: "Diese Tätigkeit ist die Kernarbeit des Berufs." },
+  { a: "Schere", b: "schneiden", c: "Kamm", richtig: "kämmen", distraktoren: ["bürsten", "rasieren", "föhnen"], merke: "Mit diesem Werkzeug wird genau diese Handlung ausgeführt." },
+  { a: "Hund", b: "bellen", c: "Kuh", richtig: "muhen", distraktoren: ["wiehern", "blöken", "grunzen"], merke: "Jedes Tier hat seinen typischen Laut: Der Hund bellt, die Kuh muht." },
+  { a: "Maler", b: "malen", c: "Sänger", richtig: "singen", distraktoren: ["tanzen", "spielen", "dirigieren"], merke: "Der Beruf ist nach seiner Haupttätigkeit benannt." },
+  { a: "Pinsel", b: "streichen", c: "Feile", richtig: "feilen", distraktoren: ["bohren", "hobeln", "sägen"], merke: "Mit dem Werkzeug wird genau die dazugehörige Tätigkeit ausgeführt." },
+  { a: "Anfang", b: "Beginn", c: "Ende", richtig: "Schluss", distraktoren: ["Mitte", "Pause", "Rand"], merke: "Anfang und Beginn bedeuten dasselbe, ebenso Ende und Schluss." },
+  { a: "Mut", b: "Tapferkeit", c: "Angst", richtig: "Furcht", distraktoren: ["Wut", "Trauer", "Ekel"], merke: "Mut und Tapferkeit sind bedeutungsgleich, ebenso Angst und Furcht." },
+  { a: "Freude", b: "Fröhlichkeit", c: "Trauer", richtig: "Kummer", distraktoren: ["Wut", "Angst", "Scham"], merke: "Freude und Fröhlichkeit sind Synonyme, ebenso Trauer und Kummer." },
+  { a: "Regen", b: "nass", c: "Feuer", richtig: "heiß", distraktoren: ["kalt", "dunkel", "laut"], merke: "Regen macht nass, Feuer macht heiß – die typische Wirkung." },
+  { a: "Fleiß", b: "Erfolg", c: "Übung", richtig: "Können", distraktoren: ["Talent", "Geduld", "Glück"], merke: "Fleiß führt zu Erfolg, Übung führt zu Können." },
+  { a: "Schlafmangel", b: "Müdigkeit", c: "Nahrungsmangel", richtig: "Hunger", distraktoren: ["Durst", "Kälte", "Langeweile"], merke: "Fehlt Schlaf, wird man müde; fehlt Nahrung, bekommt man Hunger." },
+  { a: "Auto", b: "Wagen", c: "Sofa", richtig: "Couch", distraktoren: ["Sessel", "Tisch", "Bett"], merke: "Auto und Wagen meinen dasselbe, ebenso Sofa und Couch." },
+];
+const ASSOZIATIONEN_ODD = [
+  { woerter: ["Storch", "Fuchs", "Dachs", "Igel"], oddIndex: 0, merke: "Storch ist ein Vogel, die anderen drei sind Säugetiere." },
+  { woerter: ["Eiche", "Tulpe", "Buche", "Ahorn"], oddIndex: 1, merke: "Tulpe ist eine Blume, die anderen drei sind Laubbäume." },
+  { woerter: ["Hecht", "Karpfen", "Frosch", "Forelle"], oddIndex: 2, merke: "Frosch ist ein Amphibium, die anderen drei sind Fische." },
+  { woerter: ["Hammer", "Zange", "Schraubenzieher", "Nagel"], oddIndex: 3, merke: "Der Nagel ist Befestigungsmaterial, die anderen drei sind Werkzeuge." },
+  { woerter: ["Kreis", "Dreieck", "Fünfeck", "Sechseck"], oddIndex: 0, merke: "Der Kreis hat keine Ecken, die anderen drei sind Vielecke." },
+  { woerter: ["Rot", "Orange", "Gelb", "Grün"], oddIndex: 3, merke: "Grün ist eine kalte Farbe, Rot, Orange und Gelb sind warme Farben." },
+  { woerter: ["Buchhalter", "Tischler", "Klempner", "Zimmerer"], oddIndex: 0, merke: "Buchhalter arbeitet im Büro, die anderen drei üben ein Handwerk aus." },
+  { woerter: ["Säge", "Zollstock", "Schere", "Messer"], oddIndex: 1, merke: "Der Zollstock dient zum Messen, die anderen drei zum Schneiden." },
+  { woerter: ["Sessel", "Sofa", "Lampe", "Stuhl"], oddIndex: 2, merke: "Die Lampe spendet Licht, die anderen drei dienen zum Sitzen." },
+  { woerter: ["Herd", "Backofen", "Kühlschrank", "Waschbecken"], oddIndex: 3, merke: "Das Waschbecken ist kein technisches Gerät, Herd, Backofen und Kühlschrank sind Küchengeräte." },
+  { woerter: ["Verkäufer", "Maurer", "Dachdecker", "Elektriker"], oddIndex: 0, merke: "Der Verkäufer arbeitet im Laden, die anderen drei auf der Baustelle." },
+  { woerter: ["Schrank", "Spiegel", "Regal", "Kommode"], oddIndex: 1, merke: "Der Spiegel dient zum Hineinschauen, die anderen drei zum Verstauen von Dingen." },
+  { woerter: ["Neun", "Vier", "Acht", "Sechs"], oddIndex: 0, merke: "Neun ist die einzige ungerade Zahl, Vier, Acht und Sechs sind durch zwei teilbar." },
+  { woerter: ["April", "Freitag", "Juni", "September"], oddIndex: 1, merke: "Freitag ist ein Wochentag, die anderen drei sind Monate des Jahres." },
+  { woerter: ["Sekunde", "Minute", "Meter", "Stunde"], oddIndex: 2, merke: "Meter misst eine Länge, Sekunde, Minute und Stunde messen Zeit." },
+  { woerter: ["Fußball", "Handball", "Basketball", "Schwimmen"], oddIndex: 3, merke: "Schwimmen kommt ohne Ball aus, die anderen drei sind Ballsportarten." },
+  { woerter: ["Gitarre", "Flöte", "Trompete", "Klarinette"], oddIndex: 0, merke: "Die Gitarre ist ein Saiteninstrument, Flöte, Trompete und Klarinette werden geblasen." },
+  { woerter: ["Schwimmen", "Segeln", "Tennis", "Rudern"], oddIndex: 2, merke: "Tennis wird an Land mit einem Ball gespielt, die anderen drei finden im oder auf dem Wasser statt." },
+];
+// Getrennte Guards je Untertyp: nicht zweimal direkt hintereinander dieselbe Analogie bzw.
+// dieselbe Odd-one-out-Aufgabe (ein gemeinsamer Index wuerde Aufgaben im anderen Array grundlos sperren).
+let _lastAnalogieIdx = -1, _lastOddIdx = -1;
+function generateAssoziationenUebung() {
+  const nutzeAnalogie = Math.random() < 0.5;
+  if (nutzeAnalogie) {
+    let i = Math.floor(Math.random() * ASSOZIATIONEN_ANALOGIEN.length);
+    if (ASSOZIATIONEN_ANALOGIEN.length > 1 && i === _lastAnalogieIdx) i = (i + 1) % ASSOZIATIONEN_ANALOGIEN.length;
+    _lastAnalogieIdx = i;
+    const e = ASSOZIATIONEN_ANALOGIEN[i];
+    const optionen = figShuffle([e.richtig, ...e.distraktoren]);
+    return {
+      typ: "assoziationen",
+      frage: `Wie heißt das gesuchte Wort?\n${e.a} verhält sich zu ${e.b} wie ${e.c} zu … ?`,
+      optionen, korrekte_indizes: [optionen.indexOf(e.richtig)],
+      korrekte_antwort: e.richtig,
+      material: "", zielzeichen: "", erklaerungen: [],
+      lerninfo: e.merke,
+    };
+  }
+  let i = Math.floor(Math.random() * ASSOZIATIONEN_ODD.length);
+  if (ASSOZIATIONEN_ODD.length > 1 && i === _lastOddIdx) i = (i + 1) % ASSOZIATIONEN_ODD.length;
+  _lastOddIdx = i;
+  const o = ASSOZIATIONEN_ODD[i];
+  const korrekt = o.woerter[o.oddIndex];
+  const optionen = figShuffle(o.woerter.slice());
+  return {
+    typ: "assoziationen",
+    frage: "Welches Wort passt nicht zu den anderen?",
+    optionen, korrekte_indizes: [optionen.indexOf(korrekt)],
+    korrekte_antwort: korrekt,
+    material: "", zielzeichen: "", erklaerungen: [],
+    lerninfo: o.merke,
+  };
+}
+
 // Frische Uebungsaufgabe nach Typ (figural | zahlenreihe | konzentration | kopfrechnen |
-// buchstabenreihe | merkfaehigkeit | rechtschreibung).
+// buchstabenreihe | merkfaehigkeit | rechtschreibung | assoziationen).
 function generateUebungByType(typ) {
   if (typ === "zahlenreihe") return generateZahlenreiheUebung();
   if (typ === "konzentration") return generateKonzentrationUebung();
@@ -3042,6 +3137,7 @@ function generateUebungByType(typ) {
   if (typ === "buchstabenreihe") return generateBuchstabenreiheUebung();
   if (typ === "merkfaehigkeit") return generateMerkfaehigkeitUebung();
   if (typ === "rechtschreibung") return generateRechtschreibungUebung();
+  if (typ === "assoziationen") return generateAssoziationenUebung();
   return generateFiguralPuzzle();
 }
 
@@ -10065,6 +10161,7 @@ const UEB_TYPEN = [
   { typ: "buchstabenreihe", label: "Buchstabenreihen" },
   { typ: "merkfaehigkeit", label: "Merkfähigkeit" },
   { typ: "rechtschreibung", label: "Rechtschreibung" },
+  { typ: "assoziationen", label: "Assoziationen" },
 ];
 function uebLabel(typ) { const t = UEB_TYPEN.find((x) => x.typ === typ); return t ? t.label : typ; }
 

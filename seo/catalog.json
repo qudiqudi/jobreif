@@ -1,7 +1,7 @@
 {
   "version": 1,
   "baseUrl": "https://jobreif.de",
-  "updatedAt": "2026-07-14",
+  "updatedAt": "2026-07-19",
   "staticPages": [
     {
       "loc": "/lernen/",
@@ -38,6 +38,10 @@
     {
       "loc": "/lernen/rechtschreibung.html",
       "lastmod": "2026-07-12"
+    },
+    {
+      "loc": "/lernen/assoziationen.html",
+      "lastmod": "2026-07-19"
     }
   ],
   "testTypes": {
