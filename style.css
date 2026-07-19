@@ -1295,6 +1295,11 @@ button.ghost {
 .fig-options { display: flex; flex-wrap: wrap; gap: 8px; }
 .fig-option { font-size: 1.2rem; letter-spacing: 0.05em; min-width: 3.4rem; text-align: center; }
 
+/* 4x4-Raster (nur Üben-Modul, gridTemplateColumns wird inline per JS gesetzt): manche
+   Familien haben bis zu 4 Glyphen je Zelle - Schrift etwas kleiner, damit nichts umbricht. */
+.fig-grid-lg .fig-cell { font-size: 0.85rem; letter-spacing: 0.02em; }
+.fig-grid-lg .fig-cell-missing { font-size: 1.3rem; }
+
 /* Spaced Repetition (Plan 3.8): Review-Karten. Nutzt .zr-field und .option wie im Quiz. */
 .sr-progress { margin: 0 0 0.6rem; }
 .sr-frage { font-family: var(--display); font-size: 1.05rem; color: var(--text-strong); margin: 0 0 0.9rem; }
