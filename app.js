@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.50.0";
+const APP_VERSION = "1.50.1";
 
 const CHANGELOG = [
+  {
+    version: "1.50.1",
+    date: "19.07.2026",
+    items: [
+      "Übungs-Hub: Untertitel im Übungsmodus klarer formuliert – die Auswertung passiert sofort und komplett auf deinem Gerät, ganz ohne Server.",
+    ],
+  },
   {
     version: "1.50.0",
     date: "19.07.2026",
@@ -10282,7 +10289,7 @@ function setSrHeader(mode) {
   const t = $("sr-title"), sub = $("sr-subtitle");
   if (t) t.textContent = mode === "practice" ? "Module üben" : "Übungen wiederholen";
   if (sub) sub.textContent = mode === "practice"
-    ? "Frisch generierte Aufgaben, sofort und exakt auf deinem Gerät ausgewertet."
+    ? "Immer neue Aufgaben – sofort und direkt auf deinem Gerät ausgewertet, ganz ohne Server."
     : "Zahlenreihen, Sprachlogik und Konzentration aus deinen Tests – im Abstand wiederholt, damit sie sitzen. Wird sofort auf deinem Gerät bewertet.";
 }
 
