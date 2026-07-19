@@ -1,0 +1,36 @@
+# jobreif.de
+
+> Kostenloser Einstellungstest-Simulator: erstellt aus einer echten Stellenanzeige (Text einfügen oder URL-Import) einen passgenauen, simulierten Einstellungstest mit KI-Feedback – als PWA direkt im Browser, ohne Installation.
+
+jobreif.de kombiniert stellenbezogene Fachfragen aus der Anzeige mit den typischen Eignungstest-Modulen (Zahlenreihen, Sprachlogik/Analogien, Konzentration, figurale Matrizen). Es gibt einen Lernmodus (jede Frage direkt auflösbar, mit Erklärung und Quellen) und einen Prüfungsmodus mit Zeitlimit; die KI-Auswertung liefert Punkte, Feedback und Musterantworten. Schwierigkeit, Fragenanzahl und optional die Gesprächsstufe sind einstellbar.
+
+Die allgemeinen Übungsmodule sind sofort und ohne Anmeldung kostenlos. Für einen kompletten, stellenbezogenen Test mit KI-Feedback genügt eine kostenlose Anmeldung; optionale höhere Qualitätsstufen sind bezahlt. Die App läuft als PWA offlinefähig im Browser; Verlauf und Ergebnisse werden lokal im Browser gespeichert. Im gehosteten Standardmodus werden die zum Erstellen und Auswerten nötigen Inhalte (z. B. Anzeigentext, Fragen und Antworten) an die jobreif-Server gesendet und dort verarbeitet. Wer das nicht möchte, kann stattdessen einen eigenen API-Schlüssel (Anthropic, OpenAI, DeepSeek) hinterlegen oder ein lokales Modell nutzen – dann gehen die Daten direkt an den gewählten Anbieter bzw. bleiben vollständig lokal.
+
+## App
+
+- [Einstellungstest-Simulator (App-Start)](https://jobreif.de/): Aus einer Stellenanzeige einen simulierten Einstellungstest erstellen – Lern- und Prüfungsmodus, KI-Auswertung mit Feedback.
+
+## Einstellungstest nach Beruf
+
+- [Einstellungstest nach Beruf (Übersicht)](https://jobreif.de/einstellungstest/): Hub mit allen Berufsseiten – was im jeweiligen Einstellungstest vorkommt und wie man gezielt übt.
+- [Einstellungstest Polizei](https://jobreif.de/einstellungstest/polizei/): Ablauf, typische Aufgaben und Übung für den Polizei-Eignungstest.
+- [Einstellungstest Zoll](https://jobreif.de/einstellungstest/zoll/): Vorbereitung auf das Auswahlverfahren beim Zoll.
+- [Einstellungstest Verwaltungsfachangestellte](https://jobreif.de/einstellungstest/verwaltungsfachangestellte/): Üben für den Auswahltest der öffentlichen Verwaltung.
+- [Einstellungstest Fachinformatiker Systemintegration](https://jobreif.de/einstellungstest/fachinformatiker-systemintegration/): Typische Aufgaben im IT-Ausbildungs-Auswahltest.
+- [Einstellungstest Kaufmann im Einzelhandel](https://jobreif.de/einstellungstest/kaufmann-im-einzelhandel/): Vorbereitung auf den Auswahltest im Einzelhandel.
+- [Einstellungstest Pflegefachmann/-frau](https://jobreif.de/einstellungstest/pflegefachmann/): Üben für den Auswahltest in der Pflegeausbildung.
+- [Einstellungstest Bankkaufmann](https://jobreif.de/einstellungstest/bankkaufmann/): Typische Aufgaben im Auswahlverfahren der Banken.
+- [Einstellungstest KFZ-Mechatroniker](https://jobreif.de/einstellungstest/kfz-mechatroniker/): Vorbereitung auf den Test im KFZ-Handwerk.
+- [Einstellungstest Notfallsanitäter](https://jobreif.de/einstellungstest/notfallsanitaeter/): Üben für das Auswahlverfahren im Rettungsdienst.
+- [Einstellungstest Erzieher/in](https://jobreif.de/einstellungstest/erzieher/): Vorbereitung auf den Auswahltest für die Erzieherausbildung.
+- [Einstellungstest Medizinische Fachangestellte](https://jobreif.de/einstellungstest/medizinische-fachangestellte/): Üben für den MFA-Auswahltest.
+
+## Übungsmodule (kostenlos, ohne Anmeldung)
+
+- [Einstellungstest üben – alle Aufgabentypen](https://jobreif.de/lernen/): Übungs-Hub mit kostenlosen, sofort startbaren Modulen zu den klassischen Eignungstest-Aufgaben.
+- [Zahlenreihen](https://jobreif.de/lernen/zahlenreihen.html): Zahlenreihen fortsetzen – mit Beispielen und Lösungswegen.
+- [Sprachlogik / Wortanalogien](https://jobreif.de/lernen/sprachlogik.html): Sprachliche Logik und Analogien üben.
+- [Konzentration](https://jobreif.de/lernen/konzentration.html): Konzentrationstest-Aufgaben unter Zeitdruck.
+- [Figuren & Matrizen](https://jobreif.de/lernen/figuren-matrizen.html): Figurale Matrizen und logisches Denken.
+- [Kopfrechnen](https://jobreif.de/lernen/kopfrechnen.html): Kopfrechnen wie im Einstellungstest.
+- [Merkfähigkeit](https://jobreif.de/lernen/merkfaehigkeit.html): Merkfähigkeitsaufgaben trainieren.
