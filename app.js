@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.50.1";
+const APP_VERSION = "1.50.2";
 
 const CHANGELOG = [
+  {
+    version: "1.50.2",
+    date: "20.07.2026",
+    items: [
+      "Übungs-Hub: Zahlen- und Buchstabenreihen brechen auf schmalen Bildschirmen nicht mehr mitten in der Reihe um – die Aufgabenstellung steht in einer Zeile, die Reihe zusammenhängend darunter.",
+    ],
+  },
   {
     version: "1.50.1",
     date: "19.07.2026",
@@ -7126,6 +7133,41 @@ function setupRadioGroup(container, opts) {
   });
 }
 
+// Line-Break-Policy fuer Modul-Aufgaben: Der Anweisungssatz bricht normal (wortweise) um, aber
+// ein eingebetteter Ausdruck - eine Zahlen-/Buchstabenreihe oder eine Rechenaufgabe - soll als
+// zusammenhaengende Einheit lesbar bleiben und NICHT mitten im Ausdruck auf die Anweisungszeile
+// umbrechen (auf schmalen Screens strandete sonst z. B. das erste Reihenglied oben neben
+// "... fort:", der Rest sprang in die naechste Zeile). Erwartet, dass das Ziel-Element
+// white-space: pre-line traegt. Rueckgabe ist reiner Text (mit \n als echten Umbruechen);
+// Fragen ohne erkennbaren Ausdruck bleiben unveraendert (defensiv - auch alte/serverseitige).
+function frageAnzeigeText(q) {
+  const frage = q && typeof q.frage === "string" ? q.frage : "";
+  const typ = q && q.typ;
+  // Rechenaufgabe: NUR die kompakte Gleichung (nur Ziffern/Operatoren, keine Buchstaben) als
+  // Ganzes zusammenhalten, damit "= ?" nicht umbricht. Textaufgaben ("Wie viel sind 75 % von
+  // 500?", "Ein Team hat … uebrig?") enthalten Buchstaben und sollen normal wortweise
+  // umbrechen - sonst wuerde die lange Zeile auf schmalen Screens ueberlaufen.
+  if (typ === "kopfrechnen") {
+    return /[A-Za-zÄÖÜäöüß]/.test(frage) ? frage : frage.replace(/ /g, " ");
+  }
+  // Zahlen-/Buchstabenreihe (NICHT die Zahlenmatrix - die zeigt ein Gitter statt eines
+  // Inline-Ausdrucks): Anweisung und Reihe auf getrennte Zeilen. Die Reihe bricht dann nur
+  // zwischen ganzen Gliedern um, und das abschliessende "?" bleibt an das letzte Glied gebunden.
+  const istReihe = typ === "buchstabenreihe" ||
+    (typ === "zahlenreihe" && !(q && Array.isArray(q.matrix) && q.matrix.length));
+  if (istReihe) {
+    const idx = frage.indexOf(": ");
+    if (idx !== -1) {
+      const lead = frage.slice(0, idx + 1);
+      const reihe = frage.slice(idx + 2).replace(/\s+\?$/, " ?");
+      return lead + "\n" + reihe;
+    }
+  }
+  // Sonst unveraendert - ein authored \n (z. B. Assoziationen) wird dank pre-line als echter
+  // Zeilenumbruch wiedergegeben, statt wie bisher zu Leerraum zusammenzufallen.
+  return frage;
+}
+
 function renderQuestion() {
   const q = quiz.fragen[current];
   const total = quiz.fragen.length;
@@ -7143,7 +7185,7 @@ function renderQuestion() {
   $("quiz-progress").textContent = `Frage ${current + 1} von ${total}`;
   $("progress-fill").style.width = `${(current / total) * 100}%`;
   $("question-category").textContent = q.kategorie;
-  $("question-text").textContent = q.frage;
+  $("question-text").textContent = frageAnzeigeText(q);
 
   // Schwierigkeit nur im Lernmodus sichtbar
   const diffEl = $("question-difficulty");
@@ -8224,7 +8266,7 @@ function renderResult(result, durationMs) {
       <p class="fb"></p>
       <p class="fb"></p>
       <p class="fb src"></p>`;
-    div.querySelector(".q").textContent = q.frage;
+    div.querySelector(".q").textContent = frageAnzeigeText(q);
     if (mode === "lernen" && q.schwierigkeit) {
       const badge = document.createElement("span");
       badge.className = "diff-badge " + q.schwierigkeit;
@@ -10460,7 +10502,7 @@ function renderSrCardView() {
 
   const frage = document.createElement("p");
   frage.className = "sr-frage";
-  frage.textContent = q.frage;
+  frage.textContent = frageAnzeigeText(q);
   wrap.appendChild(frage);
 
   const area = document.createElement("div");
