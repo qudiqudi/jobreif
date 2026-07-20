@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.50.2";
+const APP_VERSION = "1.50.3";
 
 const CHANGELOG = [
+  {
+    version: "1.50.3",
+    date: "20.07.2026",
+    items: [
+      "Übungs-Hub: In den Modulen Rechtschreibung und Assoziationen wiederholen sich die Aufgaben innerhalb einer Runde nicht mehr und tauchen auch über mehrere Runden hinweg deutlich später wieder auf. Der Rechtschreib-Pool ist zudem von 30 auf 50 Wörter gewachsen.",
+    ],
+  },
   {
     version: "1.50.2",
     date: "20.07.2026",
@@ -3107,6 +3114,24 @@ function generateMerkfaehigkeitUebung() {
   return uebPick(varianten)();
 }
 
+// Zieht einen Index aus [0,len) und meidet die zuletzt gezogenen Indizes (Verlaufsfenster je
+// key). Ersetzt den bisherigen "nicht zweimal in Folge"-Guard: bei einer Uebungsrunde (Batch
+// von UEB_BATCH Karten, unabhaengig gezogen) wiederholte sich sonst statistisch schnell dieselbe
+// Aufgabe. Fenster = halbe Bank (mind. UEB_BATCH), aber nie die ganze Bank -> `erlaubt` ist immer
+// nicht leer, kein Spin. Rein clientseitig, deterministisch scorebar wie bisher.
+const _uebRecent = {}; // key -> zuletzt gezogene Indizes (aeltester zuerst)
+function uebNextIndex(key, len) {
+  if (len <= 1) return 0;
+  const recent = _uebRecent[key] || (_uebRecent[key] = []);
+  const fenster = Math.min(len - 1, Math.max(UEB_BATCH, Math.floor(len / 2)));
+  const erlaubt = [];
+  for (let k = 0; k < len; k++) if (!recent.includes(k)) erlaubt.push(k);
+  const i = erlaubt[Math.floor(Math.random() * erlaubt.length)];
+  recent.push(i);
+  while (recent.length > fenster) recent.shift();
+  return i;
+}
+
 // Rechtschreibung: kuratierte statische Bank - nur Woerter mit EINDEUTIG einer korrekten
 // Standard-Schreibweise (bewusst KEINE Reform-Doppelformen wie Delfin/Delphin oder
 // Potenzial/Potential); Distraktoren sind Nichtwoerter, keine anderen gueltigen Woerter.
@@ -3143,12 +3168,29 @@ const RECHTSCHREIB_BANK = [
   { richtig: "Millennium", falsch: ["Millenium", "Milennium", "Milenium"], merke: "Doppel-l UND Doppel-n (mille + annus)." },
   { richtig: "Ingenieur", falsch: ["Ingeneur", "Ingenieuer", "Ingenör"], merke: "-ieur am Ende: Inge-nieur." },
   { richtig: "Karriere", falsch: ["Kariere", "Karrierre", "Carriere"], merke: "Doppel-r vorn, dann -iere." },
+  { richtig: "Kompromiss", falsch: ["Kompromis", "Kompromies", "Kommpromiss"], merke: "Ein m vorn, Endung -miss mit Doppel-s." },
+  { richtig: "Diskussion", falsch: ["Diskusion", "Diszkussion", "Diskussjon"], merke: "Doppel-s in der Mitte." },
+  { richtig: "Effizienz", falsch: ["Efizienz", "Effizens", "Effiziens"], merke: "Doppel-f, dann -zienz mit z." },
+  { richtig: "Appell", falsch: ["Apell", "Appel", "Apel"], merke: "Doppel-p und Doppel-l." },
+  { richtig: "Batterie", falsch: ["Baterie", "Batterrie", "Battery"], merke: "Doppel-t, dann -erie." },
+  { richtig: "Disziplin", falsch: ["Diszplin", "Disiplin", "Dissziplin"], merke: "-szi-: Di-szi-plin." },
+  { richtig: "Existenz", falsch: ["Existens", "Exsistenz", "Existtenz"], merke: "Ein s, z am Ende: Exis-tenz." },
+  { richtig: "Garantie", falsch: ["Garrantie", "Garanti", "Garantiee"], merke: "Ein r, Endung -tie." },
+  { richtig: "Hierarchie", falsch: ["Hierachie", "Hirarchie", "Hierarchiee"], merke: "hier-arch-ie: r vor „arch“." },
+  { richtig: "Initiative", falsch: ["Iniative", "Initative", "Initiatieve"], merke: "-tia-: Ini-tia-tive." },
+  { richtig: "Kollege", falsch: ["Kolege", "Kollge", "Kollegge"], merke: "Doppel-l, ein g." },
+  { richtig: "Niveau", falsch: ["Nivau", "Nievau", "Niweau"], merke: "Franz. -eau: Ni-veau." },
+  { richtig: "Original", falsch: ["Orginal", "Originahl", "Orriginal"], merke: "O-ri-gi-nal – jeder Vokal einzeln." },
+  { richtig: "parallel", falsch: ["paralel", "parrallel", "paralell"], merke: "Ein r, Doppel-l in der Mitte, ein l am Ende." },
+  { richtig: "Privileg", falsch: ["Priveleg", "Privilleg", "Privilech"], merke: "Pri-vi-leg – i-e-Wechsel, ein l." },
+  { richtig: "Qualität", falsch: ["Qualtität", "Kwalität", "Qualiät"], merke: "Qua-li-tät – kein zweites t." },
+  { richtig: "Routine", falsch: ["Rutine", "Routiene", "Rouine"], merke: "Franz. Rou-tine – nur i, kein ie." },
+  { richtig: "Situation", falsch: ["Situazion", "Sitation", "Situatoin"], merke: "-tuation: Si-tu-a-tion mit t." },
+  { richtig: "Temperatur", falsch: ["Temeratur", "Temperratur", "Tempratur"], merke: "Tem-pe-ra-tur – jeder Vokal einzeln." },
+  { richtig: "Tradition", falsch: ["Tradizion", "Traditon", "Traddition"], merke: "-dition mit t: Tra-di-tion." },
 ];
-let _lastRechtschreibIdx = -1; // Nicht zweimal direkt hintereinander dasselbe Wort.
 function generateRechtschreibungUebung() {
-  let i = Math.floor(Math.random() * RECHTSCHREIB_BANK.length);
-  if (RECHTSCHREIB_BANK.length > 1 && i === _lastRechtschreibIdx) i = (i + 1) % RECHTSCHREIB_BANK.length;
-  _lastRechtschreibIdx = i;
+  const i = uebNextIndex("rechtschreibung", RECHTSCHREIB_BANK.length);
   const e = RECHTSCHREIB_BANK[i];
   const optionen = figShuffle([e.richtig, ...e.falsch]);
   return {
@@ -3213,15 +3255,12 @@ const ASSOZIATIONEN_ODD = [
   { woerter: ["Gitarre", "Flöte", "Trompete", "Klarinette"], oddIndex: 0, merke: "Die Gitarre ist ein Saiteninstrument, Flöte, Trompete und Klarinette werden geblasen." },
   { woerter: ["Schwimmen", "Segeln", "Tennis", "Rudern"], oddIndex: 2, merke: "Tennis wird an Land mit einem Ball gespielt, die anderen drei finden im oder auf dem Wasser statt." },
 ];
-// Getrennte Guards je Untertyp: nicht zweimal direkt hintereinander dieselbe Analogie bzw.
-// dieselbe Odd-one-out-Aufgabe (ein gemeinsamer Index wuerde Aufgaben im anderen Array grundlos sperren).
-let _lastAnalogieIdx = -1, _lastOddIdx = -1;
+// Getrennte Verlaufsfenster je Untertyp: Analogien und Odd-one-out ziehen unabhaengig, damit
+// eine Aufgabe im anderen Array nicht grundlos gesperrt wird (uebNextIndex je eigenem key).
 function generateAssoziationenUebung() {
   const nutzeAnalogie = Math.random() < 0.5;
   if (nutzeAnalogie) {
-    let i = Math.floor(Math.random() * ASSOZIATIONEN_ANALOGIEN.length);
-    if (ASSOZIATIONEN_ANALOGIEN.length > 1 && i === _lastAnalogieIdx) i = (i + 1) % ASSOZIATIONEN_ANALOGIEN.length;
-    _lastAnalogieIdx = i;
+    const i = uebNextIndex("assoz-analogie", ASSOZIATIONEN_ANALOGIEN.length);
     const e = ASSOZIATIONEN_ANALOGIEN[i];
     const optionen = figShuffle([e.richtig, ...e.distraktoren]);
     return {
@@ -3233,9 +3272,7 @@ function generateAssoziationenUebung() {
       lerninfo: e.merke,
     };
   }
-  let i = Math.floor(Math.random() * ASSOZIATIONEN_ODD.length);
-  if (ASSOZIATIONEN_ODD.length > 1 && i === _lastOddIdx) i = (i + 1) % ASSOZIATIONEN_ODD.length;
-  _lastOddIdx = i;
+  const i = uebNextIndex("assoz-odd", ASSOZIATIONEN_ODD.length);
   const o = ASSOZIATIONEN_ODD[i];
   const korrekt = o.woerter[o.oddIndex];
   const optionen = figShuffle(o.woerter.slice());
