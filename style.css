@@ -1181,6 +1181,9 @@ button.ghost {
   letter-spacing: -0.01em;
   color: var(--text-strong);
   text-wrap: pretty;
+  /* Modul-Aufgaben: authored \n (frageAnzeigeText) als echten Umbruch wiedergeben, damit eine
+     Zahlen-/Buchstabenreihe auf eigener Zeile zusammenhaengend statt mitten im Ausdruck bricht. */
+  white-space: pre-line;
   animation: fadeUp 0.32s ease both;
 }
 
@@ -1302,7 +1305,7 @@ button.ghost {
 
 /* Spaced Repetition (Plan 3.8): Review-Karten. Nutzt .zr-field und .option wie im Quiz. */
 .sr-progress { margin: 0 0 0.6rem; }
-.sr-frage { font-family: var(--display); font-size: 1.05rem; color: var(--text-strong); margin: 0 0 0.9rem; }
+.sr-frage { font-family: var(--display); font-size: 1.05rem; color: var(--text-strong); margin: 0 0 0.9rem; white-space: pre-line; }
 .sr-answer { margin: 0 0 0.9rem; }
 .sr-solution { font-weight: 600; margin: 0.2rem 0 0.5rem; }
 .sr-solution.ok { color: var(--green); }
@@ -1654,7 +1657,7 @@ button.ghost {
   margin-bottom: 0.7rem;
 }
 
-.detail-item .q { font-weight: 600; margin: 0 0 0.3rem; color: var(--text-strong); }
+.detail-item .q { font-weight: 600; margin: 0 0 0.3rem; color: var(--text-strong); white-space: pre-line; }
 .detail-item .a { margin: 0 0 0.3rem; font-size: 0.9rem; }
 .detail-item .fb { margin: 0; font-size: 0.88rem; color: var(--muted); }
 .detail-item .points { float: right; font-family: var(--display); font-weight: 800; }
