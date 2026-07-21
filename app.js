@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.51.0";
+const APP_VERSION = "1.52.0";
 
 const CHANGELOG = [
+  {
+    version: "1.52.0",
+    date: "21.07.2026",
+    items: [
+      "Die Gesprächsstufe (Allgemein, Telefoninterview, Assessment-Center) lässt sich jetzt direkt auf der Stellen-Seite beim Start eines Tests wählen — genau wie die Schwierigkeit. Sie wird pro Stelle gemerkt: „Test wiederholen“ nutzt automatisch wieder dieselbe Stufe. Verfügbar mit Anmeldung.",
+    ],
+  },
   {
     version: "1.51.0",
     date: "21.07.2026",
@@ -9685,6 +9692,10 @@ async function saveAttempt(result, durationMs, evalCost, evalTokens) {
       // Die clientseitig angehaengte Figural-Aufgabe NICHT mitzaehlen - sonst wuerde
       // "Test wiederholen" die angeforderte Fragenzahl bei jedem Lauf um eins hochtreiben.
       num: quiz.fragen.filter((f) => f && f.typ !== "figural").length,
+      // Gewaehlte Gespraechsstufe mitpersistieren, damit "Test wiederholen" dieselbe
+      // Interviewsituation nutzt. Quelle ist quiz.gespraechsstufe (die tatsaechlich
+      // angewandte Stufe), nicht das live <select>. "" = Allgemein.
+      stufe: GESPRAECHSSTUFEN.includes(quiz.gespraechsstufe) ? quiz.gespraechsstufe : "",
     };
   }
 
@@ -10752,7 +10763,14 @@ function normalizeTestConfig(c) {
   const c2 = c && typeof c === "object" ? c : {};
   let num = Number(c2.num);
   if (!Number.isFinite(num) || num < 1) num = 10;
-  return { mode: c2.mode === "pruefung" ? "pruefung" : "lernen", difficulty: valid(c2.difficulty), num: clampNum(num) };
+  return {
+    mode: c2.mode === "pruefung" ? "pruefung" : "lernen",
+    difficulty: valid(c2.difficulty),
+    num: clampNum(num),
+    // Aeltere Eintraege ohne das Feld sowie nicht mehr angebotene Werte ("fachgespraech",
+    // "leitung") landen defensiv bei "" (Allgemein).
+    stufe: GESPRAECHSSTUFEN.includes(c2.stufe) ? c2.stufe : "",
+  };
 }
 
 // Wie viele Themenfelder eine Vertiefung mit so vielen Fragen sinnvoll abdecken
@@ -11041,6 +11059,35 @@ function buildStartPanel(job) {
   });
   diffWrap.appendChild(diffBtns);
   controls.appendChild(diffWrap);
+
+  // Gespraechsstufe: nur anbieten, wenn sie tatsaechlich wirkt (Hosted + angemeldet);
+  // BYOK/lokalen Nutzern und Gaesten keine wirkungslose Auswahl zeigen.
+  if ((settings.provider || "hosted") === "hosted" && settings.authToken) {
+    const stufeWrap = document.createElement("div");
+    stufeWrap.className = "start-opt-row";
+    const stufeLabel = document.createElement("span");
+    stufeLabel.className = "start-opt-label";
+    stufeLabel.textContent = "Gesprächsstufe";
+    stufeWrap.appendChild(stufeLabel);
+    const stufeBtns = document.createElement("div");
+    stufeBtns.className = "start-opt-choices";
+    [["", "Allgemein", "Allgemein"], ["telefon", "Telefon", "Telefoninterview"], ["assessment", "Assessment", "Assessment-Center"]].forEach(([val, label, full]) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip" + (state.stufe === val ? " active" : "");
+      b.textContent = label;
+      b.title = full;
+      b.setAttribute("aria-label", full);
+      b.addEventListener("click", () => {
+        state.stufe = val;
+        stufeBtns.querySelectorAll(".chip").forEach((c) => c.classList.remove("active"));
+        b.classList.add("active");
+      });
+      stufeBtns.appendChild(b);
+    });
+    stufeWrap.appendChild(stufeBtns);
+    controls.appendChild(stufeWrap);
+  }
 
   // Anzahl Fragen (Stepper 4-20 / guenstig 4-15, ersetzt das frühere Dropdown)
   const numWrap = document.createElement("div");
@@ -11367,6 +11414,11 @@ function startTestForJob(job, testMode, cfg) {
   if (mEl) mEl.checked = true;
   const dEl = document.querySelector(`input[name="difficulty"][value="${cfg.difficulty}"]`);
   if (dEl) dEl.checked = true;
+  // Gespraechsstufe der Stelle ins geteilte <select> uebernehmen - generateQuiz liest
+  // gespraechsstufePayload() daraus. Immer setzen (auch ""), damit kein veralteter
+  // Wert aus der Eingabemaske oder einer anderen Stelle in diesen Lauf leckt.
+  const stufeEl = $("gespraechsstufe");
+  if (stufeEl) stufeEl.value = GESPRAECHSSTUFEN.includes(cfg.stufe) ? cfg.stufe : "";
   const numInput = $("num-questions");
   // Stepper setzt den Wert geklemmt (4-20, guenstig 4-15) und zieht Anzeige/Buttons mit; aeltere
   // Eintraege mit abweichendem cfg.num werden so defensiv in den Bereich gebracht.
