@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.52.0";
+const APP_VERSION = "1.52.1";
 
 const CHANGELOG = [
+  {
+    version: "1.52.1",
+    date: "21.07.2026",
+    items: [
+      "Kleiner Anzeigefehler behoben: Beim Auswerten zeigte der Fortschritt manchmal eine kleinere Gesamtzahl als der Test hatte (z. B. „7 von 7“, obwohl der Test 11 Fragen umfasste). Grund: Aufgaben, die sofort auf deinem Gerät ausgewertet werden (Zahlenreihen, Konzentration, Figuren/Matrizen, Mehrfachauswahl und Reihenfolge), wurden im Fortschritt nicht mitgezählt. Sie zählen jetzt als bereits erledigt, sodass die Auswertungsanzeige zur Fragenzahl oben im Test passt.",
+    ],
+  },
   {
     version: "1.52.0",
     date: "21.07.2026",
@@ -8069,10 +8076,15 @@ async function runEvaluation(opts = {}) {
         gesamt: { prozent: 0, zusammenfassung: "", staerken: [], verbesserungen: [] },
       });
     } else {
-      // Progress zaehlt nur die Modell-Fragen (lokal gescorte laufen nicht ueber
-      // den Stream) - sonst bliebe der Balken haengen.
-      const total = payload.length;
-      setLoadingProgress(0, total, "Das Modell prüft deine Antworten...");
+      // Progress zeigt ALLE Fragen des Tests - konsistent mit der Zaehlung "Frage X von Y"
+      // oben im Quiz. Die lokal/deterministisch gescorten Fragen (Reihenfolge, Mehrfach-MC,
+      // Zahlenreihe, Konzentration, Figural) sind bereits bewertet und zaehlen als erledigt;
+      // ueber den Stream laufen nur die Modell-Fragen (die anderen wuerden den Balken haengen
+      // lassen). Frueher stand hier nur die Modell-Anzahl als Nenner - dann las man z. B.
+      // "7 von 7", obwohl der Test 11 Fragen hatte (verwirrend/inkonsistent).
+      const bereitsLokal = localResults.length;
+      const total = quiz.fragen.length; // == bereitsLokal + payload.length
+      setLoadingProgress(bereitsLokal, total, "Das Modell prüft deine Antworten...");
       const evalHostedPayload = {
         jobText: quiz.jobText,
         payload,
@@ -8086,8 +8098,9 @@ async function runEvaluation(opts = {}) {
       };
       const { data: rawResult, cost, tokens } = await callLLM(system, user, EVAL_SCHEMA, (acc) => {
         const seen = (acc.match(/"feedback"\s*:/g) || []).length;
-        setLoadingProgress(seen, total, seen > 0
-          ? `Antwort ${Math.min(seen, total)} von ${total} wird bewertet...`
+        const done = Math.min(bereitsLokal + seen, total);
+        setLoadingProgress(done, total, seen > 0
+          ? `Antwort ${done} von ${total} wird bewertet...`
           : "Antworten werden ausgewertet...");
       }, { hosted: { action: "evaluate", payload: evalHostedPayload, ...(opts.fallbackTier ? { tierOverride: opts.fallbackTier } : {}) } });
       evalCost = cost;
