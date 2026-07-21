@@ -3104,6 +3104,24 @@ button.danger:disabled:hover { background: transparent; border-color: color-mix(
   flex: none;
 }
 
+/* Fortschritt aus Teilergebnis-Zaehlern (additiv, s. renderActiveJobCard): schmaler Balken
+   unter der Statuszeile. flex-basis 100% erzwingt den Umbruch in der flex-wrap-Karte, wie
+   beim Uebungsangebot weiter unten. */
+.active-job-progress { flex-basis: 100%; }
+.active-job-progress-bar {
+  height: 6px;
+  background: var(--primary-soft-border);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+#active-job-progress-fill {
+  height: 100%;
+  width: 0;
+  background: var(--primary);
+  border-radius: var(--radius-pill);
+  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 /* Offener-Lerntest-Karte (Punkt 3): Aktionen rechts gruppiert */
 .resume-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 

@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.53.0";
+const APP_VERSION = "1.54.0";
 
 const CHANGELOG = [
+  {
+    version: "1.54.0",
+    date: "22.07.2026",
+    items: [
+      "Die Karte für einen im Hintergrund entstehenden Test zeigt jetzt, wo die Erstellung gerade steht (z. B. „5 von 16 Fragen fertig“) statt nur eines Ladesymbols – sobald der Server erste Fragen liefert.",
+    ],
+  },
   {
     version: "1.53.0",
     date: "21.07.2026",
@@ -6789,7 +6796,37 @@ async function pollActiveJob() {
     // Fehlgeschlagener Opus-Job wird serverseitig ggf. rueckerstattet → Guthaben nachziehen.
     refreshCreditsAfterJob(job.ctx);
   } else {
-    renderActiveJobCard("pending");
+    // Fortschritt (additiv, Feature-Detect): das Backend kann seit "Teilergebnisse waehrend
+    // der Erstellung" zwei Zaehler mitschicken. Nur GENAU diese zwei Zahlen auswerten - kein
+    // Fragen-Payload/Opt-in in diesem PR. Defensiv: alte/kaputte Antworten (Feld fehlt, kein
+    // Number, erwartet <= 0) fallen auf undefined zurueck -> renderActiveJobCard zeigt dann
+    // wie bisher nur den Spinner (kein JS-Fehler, kein Balken).
+    let progress;
+    const p = data.partial;
+    if (p && typeof p === "object"
+        && Number.isFinite(Number(p.fragenFertig))
+        && Number.isFinite(Number(p.fragenErwartet))
+        && Number(p.fragenErwartet) > 0) {
+      // Math.max(0, ...) zusaetzlich zum spezifizierten Math.min: ein negativer fragenFertig-
+      // Wert ist zwar nach obiger Pruefung "endlich" und wuerde die Zaehler-Gate passieren,
+      // wuerde aber ohne die Untergrenze als "-3 von 10 Fragen fertig" angezeigt (Codex-Review).
+      progress = {
+        fertig: Math.max(0, Math.min(Number(p.fragenFertig), Number(p.fragenErwartet))),
+        erwartet: Number(p.fragenErwartet),
+      };
+    }
+    // Nur rendern, wenn der lokale Zeiger waehrend des Requests noch auf DIESEN Job zeigt -
+    // ein spaet eintreffender Poll fuer einen inzwischen ersetzten/verworfenen Job
+    // (State-Wechsel waehrend des Requests) darf weder dessen Karte noch den Monotonie-Merker
+    // eines ANDEREN Jobs verfaelschen (Codex-Review). Das Weiterpollen selbst MUSS aber in
+    // jedem Fall passieren (auch beim fruehen Return) - der Timer, der diesen Lauf gestartet
+    // hat, ist verbraucht, und es gibt keinen anderen Wiederanlauf (kein storage-Listener; nur
+    // resumeActiveJob() beim Seitenstart). Ohne das haengende scheduleJobPoll wuerde ein
+    // veralteter Poll die gesamte Poll-Kette fuer den ANDEREN, tatsaechlich aktiven Job
+    // abreissen (Verifikations-Befund).
+    const stillActive = loadActiveJob();
+    if (!stillActive || stillActive.jobId !== job.jobId) { scheduleJobPoll(3000); return; }
+    renderActiveJobCard("pending", progress);
     scheduleJobPoll(3000);
   }
 }
@@ -6867,13 +6904,35 @@ function hideJobReadyBanner() {
   if (b) b.classList.add("hidden");
 }
 
+// Monotonie-Merker fuer den Fortschrittsbalken (pollActiveJob -> renderActiveJobCard): eine
+// kurzzeitig stale Poll-Antwort (Retry/Replay) darf den Balken nie zurueckspringen lassen.
+// Pro jobId der bisher hoechste gesehene fertig-Wert; wechselt die jobId (neuer Test
+// gestartet), wird unten zurueckgesetzt. Modul-Variable bewusst nicht persistiert (Spec:
+// kein neuer localStorage-Zustand) - ein Reload verliert den Merker, was harmlos ist, weil
+// der naechste Poll ohnehin den aktuellen Zaehlerstand liefert.
+let _progressMaxJobId = null;
+let _progressMaxFertig = 0;
+// Letzter GENAU aus dem Poll uebernommener Fortschritt (Codex-Review): renderHome() ruft
+// renderActiveJobCard bei jedem Karten-Refresh OHNE progress-Argument auf (Zeile ~10850,
+// ausserhalb dieses PRs) - ohne diesen Fallback wuerde die Karte zwischen zwei Polls (bis zu
+// 3 s) auf den reinen Spinner-Text zurueckfallen und der sichtbare Balken kurz verschwinden.
+let _progressLastJobId = null;
+let _progressLast = null;
+
 // Status-Karte fuer den Hintergrund-Job auf der Startliste. state: "pending"|"ready"|"error"|null.
-function renderActiveJobCard(state) {
+// progress (optional, nur bei state "pending"): { fertig, erwartet } aus den Teilergebnis-
+// Zaehlern des Backends (s. pollActiveJob) - ohne das Feld faellt auf den letzten bekannten
+// Stand (s. o.) bzw. auf das unveraenderte Spinner-Rendering zurueck.
+function renderActiveJobCard(state, progress) {
   const card = $("active-job-card");
   if (!card) return;
   if (!state) {
     card.classList.add("hidden");
     renderPendingPracticeOffer(false); // Modul-Wahl zuruecksetzen, Angebot schliessen
+    // Merker mit aufraeumen: kein Job mehr aktiv, ein evtl. spaeter wiederverwendeter jobId-
+    // Wert (Tests, oder derselbe Job nach Fehler+Neustart) darf nicht am alten Stand kleben.
+    _progressMaxJobId = null; _progressMaxFertig = 0;
+    _progressLastJobId = null; _progressLast = null;
     renderHome(); // Empty-Hinweis/Liste wieder korrekt herstellen
     return;
   }
@@ -6883,7 +6942,35 @@ function renderActiveJobCard(state) {
   const textEl = $("active-job-text");
   const spin = $("active-job-spinner");
   const startBtn = $("active-job-start");
+  const progressBox = $("active-job-progress");
+  const progressFill = $("active-job-progress-fill");
   const ready = state === "ready";
+  const aj = loadActiveJob();
+  const curJobId = aj && aj.jobId ? aj.jobId : null;
+  // Merker jobId-scoped zuruecksetzen: ein neuer/anderer Job (oder keiner mehr, s. o. der
+  // fruehe Rueckgabe-Zweig deckt state===null bereits ab) darf nie am alten Maximum kleben.
+  if (curJobId !== _progressMaxJobId) {
+    _progressMaxJobId = curJobId; _progressMaxFertig = 0;
+    _progressLastJobId = curJobId; _progressLast = null;
+  }
+  // Aufruf ohne eigene Zaehler (z. B. renderHome()-Refresh): auf den zuletzt gepollten Stand
+  // DESSELBEN Jobs zurueckfallen, statt den Balken kurz verschwinden zu lassen.
+  if (!progress && state === "pending" && curJobId === _progressLastJobId && _progressLast) {
+    progress = _progressLast;
+  }
+  // Monoton wachsend anzeigen: eine kleinere (stale) Zahl als zuvor faellt auf den bisherigen
+  // Hoechststand zurueck, statt den Balken/Text zurueckspringen zu lassen. Zusaetzlich auf das
+  // AKTUELLE erwartet gedeckelt: sollte sich (theoretisch) zwischen zwei Polls die erwartete
+  // Gesamtzahl aendern, darf "fertig" nie groesser als die gerade angezeigte Gesamtzahl sein
+  // (sonst z. B. "8 von 6 Fragen fertig", Codex-Review).
+  let displayFertig = 0;
+  if (progress) {
+    displayFertig = progress.fertig > _progressMaxFertig ? progress.fertig : _progressMaxFertig;
+    displayFertig = Math.min(displayFertig, progress.erwartet);
+    _progressMaxFertig = displayFertig;
+    _progressLastJobId = curJobId;
+    _progressLast = { fertig: displayFertig, erwartet: progress.erwartet };
+  }
   if (textEl) {
     // Im Ready-Zustand den Job-Titel mitnennen, damit sich zwei fertige Karten
     // unterscheiden lassen (defensiv: alte/teil-gespeicherte Jobs ohne Titel
@@ -6912,10 +6999,23 @@ function renderActiveJobCard(state) {
       ? "Die Erstellung ist fehlgeschlagen. Bitte erneut starten."
       : ready
       ? readyMsg
-      : "Dein Test wird erstellt – meist in unter zwei Minuten fertig. Du kannst die Seite ruhig verlassen und später zurückkehren.";
+      // Bei vorhandenem Fortschritt (Teilergebnis-Zaehler) statt des reinen Spinner-Texts die
+      // konkrete Zahl - ehrlicher als eine geschaetzte Zeitangabe. Ohne Zaehler (altes Backend
+      // oder noch kein fertiger Teil) die neue, ehrliche Standard-Formulierung.
+      : progress
+      ? `${displayFertig} von ${progress.erwartet} Fragen fertig`
+      : "Dein Test wird erstellt – die ersten Fragen sind meist nach etwa einer Minute da. Du kannst die Seite ruhig verlassen und später zurückkehren.";
   }
   if (spin) spin.classList.toggle("hidden", state !== "pending");
   if (startBtn) startBtn.classList.toggle("hidden", !ready);
+  if (progressBox) {
+    const showBar = state === "pending" && !!progress;
+    progressBox.classList.toggle("hidden", !showBar);
+    if (showBar && progressFill) {
+      const pct = Math.max(0, Math.min(100, (displayFertig / progress.erwartet) * 100));
+      progressFill.style.width = pct + "%";
+    }
+  }
   renderPendingPracticeOffer(state === "pending"); // P4: Wartezeit-Uebungsangebot
   card.classList.remove("hidden");
 }
