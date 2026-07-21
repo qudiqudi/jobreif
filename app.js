@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.52.1";
+const APP_VERSION = "1.53.0";
 
 const CHANGELOG = [
+  {
+    version: "1.53.0",
+    date: "21.07.2026",
+    items: [
+      "Assessment-Center-Tests: Du bekommst jetzt die von dir gewählte Anzahl Fragen vollständig als stellenbezogene Fragen – die allgemeinen Eignungsaufgaben (Zahlenreihe, Konzentration, Figuren/Matrizen) kommen zusätzlich gratis obendrauf. Bisher zählten ein Teil dieser Eignungsaufgaben zur gewählten Anzahl mit; jetzt sind sie ein kostenloser Zusatz. Bestellst du z. B. 10 Fragen, enthält der Test 10 stellenbezogene plus die Eignungsaufgaben – also mehr als 10 insgesamt. Im Prüfungsmodus rechnet das Zeitlimit die Zusatzaufgaben mit ein.",
+    ],
+  },
   {
     version: "1.52.1",
     date: "21.07.2026",
@@ -2444,7 +2451,7 @@ function normalizeQuizData(result, jobText = "") {
     }
 
     // Figural (Plan 3.x): die Figural-Aufgabe wird im Normalfall clientseitig in finalizeQuiz
-    // INJIZIERT (appendFiguralQuestion), nicht vom Server geliefert. Dieser Zweig ist defensiv:
+    // INJIZIERT (appendEignungsmodule), nicht vom Server geliefert. Dieser Zweig ist defensiv:
     // taucht aus irgendeinem Grund ein typ='figural' in den Eingangsdaten auf (z. B. Import oder
     // eine kuenftige Serverquelle), erzeugt der Client das konkrete, garantiert eindeutige Raetsel
     // SELBST (LLMs liefern valide Matrizen unzuverlaessig) - statt eine leere Aufgabe zu rendern.
@@ -2878,8 +2885,11 @@ function generateZahlenmatrixUebung() {
 // Zahlenreihe: zufaellige, ganzzahlige Bildungsregel; 5-6 Glieder, das naechste ist gesucht.
 // Mit ca. 40% Wahrscheinlichkeit gibt es stattdessen eine Zahlenmatrix (siehe oben) - additiv,
 // typ und alle bestehenden Felder bleiben gleich, scoreZahlenreihe/der Eingabepfad aendern sich nicht.
-function generateZahlenreiheUebung() {
-  if (Math.random() < 0.4) return generateZahlenmatrixUebung();
+// opts.plainOnly erzwingt die klassische EINZEILIGE Reihe (keine Matrix): der Test-Renderer zeigt fuer
+// typ='zahlenreihe' nur ein Eingabefeld - das Matrizen-Gitter gibt es nur im Üben-Hub. Eine on-top an
+// einen Test gehaengte Zahlenmatrix waere dort ohne sichtbares Gitter unloesbar.
+function generateZahlenreiheUebung(opts) {
+  if (!(opts && opts.plainOnly) && Math.random() < 0.4) return generateZahlenmatrixUebung();
   const rules = [
     () => { const a = uebRandInt(1, 12), d = uebRandInt(2, 9); return { seq: (n) => a + n * d, regel: `konstante Differenz +${d}` }; },
     () => { const a = uebRandInt(40, 80), d = uebRandInt(2, 9); return { seq: (n) => a - n * d, regel: `konstante Differenz -${d}` }; },
@@ -3321,40 +3331,64 @@ function generateUebungByType(typ) {
   return generateFiguralPuzzle(Math.random() < 0.5 ? 3 : 4);
 }
 
-// Haengt einem Standardtest (kein Vertiefungsbogen) GENAU EINE clientgenerierte Figural-Aufgabe
-// an. Vollstaendig client-eigen (kein Server/Token noetig) - garantiert eindeutig, lokal scorebar.
-// Idempotent: ist schon eine Figural-Aufgabe vorhanden (z. B. defensiv aus normalize), nichts tun.
-function appendFiguralQuestion(quiz) {
+// Haengt einem Standardtest im Assessment-Center die standardisierten Eignungs-/Uebungsmodul-
+// Aufgaben an: Figural (Matrizen), Zahlenreihe und Konzentration - je GENAU EINE. Vollstaendig
+// clientgeneriert (kein Server/Token noetig), garantiert eindeutig und lokal scorebar.
+//
+// Diese Aufgaben kommen bewusst ON-TOP: sie zaehlen NICHT zu den bestellten N stellenbezogenen
+// Fragen, die das Modell liefert, sondern kommen gratis obendrauf (10 bestellt -> z. B. 13 im
+// Test). So bekommt der Nutzer die volle bezahlte Anzahl stellenbezogener Fragen aus dem Modell,
+// und die generischen Eignungsbausteine sind ein kostenloser Zusatz. Nur im Assessment-Center
+// (echte Verfahren enthalten diese kognitiven Tests); im Standard-Fragebogen und im
+// Vertiefungsbogen bleiben sie weg (Produktentscheidung; spiegelt die Backend-Logik).
+//
+// Duplikat-Schutz: eine Aufgabe wird nur angehaengt, wenn der Test ihren Typ noch NICHT enthaelt.
+// Liefert das Backend uebergangsweise noch eine solche Aufgabe im N-Set, entsteht dadurch keine
+// Doppelung - die Reihenfolge des Client-/Backend-Deploys ist damit unkritisch.
+function appendEignungsmodule(quiz) {
   if (!quiz || !Array.isArray(quiz.fragen) || !quiz.fragen.length) return;
   if (Array.isArray(quiz.vertiefungFelder) && quiz.vertiefungFelder.length) return;
-  // Generische Matrizenaufgaben sind ein Eignungstest und gehoeren NUR ins Assessment-Center.
-  // In jedem anderen Test - auch im Standard-Fragebogen ohne gewaehlte Stufe - bleiben sie weg
-  // (Produktentscheidung; spiegelt die Backend-Logik eignungsfrei()).
   if (quiz.gespraechsstufe !== "assessment") return;
-  if (quiz.fragen.some((f) => f && f.typ === "figural")) return;
-  const pz = generateFiguralPuzzle(3); // Tests bleiben 3x3
-  // id robust aus dem Maximum der vorhandenen ids ableiten, NICHT aus fragen.length:
-  // normalizeQuizData vergibt ids nach Original-Index und laesst bei uebersprungenen
-  // (kaputten) Eintraegen Luecken - fragen.length+1 koennte dann eine bestehende id
-  // treffen, und der id-basierte Ergebnis-Merge (runEvaluation) wuerde Ergebnisse
-  // vermischen.
+  if (!quiz.fragen.some((f) => f && f.typ === "figural")) {
+    const pz = generateFiguralPuzzle(3); // Tests bleiben 3x3
+    appendModulFrage(quiz, {
+      typ: "figural", kategorie: "Logisches Denken",
+      frage: pz.frage, optionen: pz.optionen, korrekte_antwort: pz.korrekte_antwort,
+      korrekte_indizes: pz.korrekte_indizes, matrix: pz.matrix, lerninfo: pz.lerninfo,
+    });
+  }
+  if (!quiz.fragen.some((f) => f && f.typ === "zahlenreihe")) {
+    // plainOnly: nur die einzeilige Reihe - eine Zahlenmatrix haette im Test kein sichtbares Gitter.
+    appendModulFrage(quiz, { ...generateZahlenreiheUebung({ plainOnly: true }), kategorie: "Logisches Denken" });
+  }
+  if (!quiz.fragen.some((f) => f && f.typ === "konzentration")) {
+    appendModulFrage(quiz, { ...generateKonzentrationUebung(), kategorie: "Konzentration" });
+  }
+}
+
+// Haengt eine vollstaendig aufgefuellte Modul-Frage an quiz.fragen an. Die id robust aus dem
+// Maximum der vorhandenen ids ableiten, NICHT aus fragen.length: normalizeQuizData vergibt ids
+// nach Original-Index und laesst bei uebersprungenen (kaputten) Eintraegen Luecken - fragen.length+1
+// koennte dann eine bestehende id treffen, und der id-basierte Ergebnis-Merge (runEvaluation)
+// wuerde Ergebnisse vermischen. Alle Felder defensiv fuellen (gleiche Form wie normalizeQuizData).
+function appendModulFrage(quiz, p) {
   const maxId = quiz.fragen.reduce((m, f) => Math.max(m, Number(f && f.id) || 0), 0);
   quiz.fragen.push({
     id: maxId + 1,
-    typ: "figural",
-    kategorie: "Logisches Denken",
+    typ: p.typ,
+    kategorie: p.kategorie || "Eignungstest",
     schwierigkeit: "mittel",
-    frage: pz.frage,
-    optionen: pz.optionen,
-    korrekte_antwort: pz.korrekte_antwort,
-    korrekte_indizes: pz.korrekte_indizes,
-    erklaerungen: [],
-    elemente: [],
-    korrekte_reihenfolge: [],
-    material: "",
-    zielzeichen: "",
-    matrix: pz.matrix,
-    lerninfo: pz.lerninfo,
+    frage: p.frage || "",
+    optionen: Array.isArray(p.optionen) ? p.optionen : [],
+    korrekte_antwort: p.korrekte_antwort != null ? p.korrekte_antwort : "",
+    korrekte_indizes: Array.isArray(p.korrekte_indizes) ? p.korrekte_indizes : [],
+    erklaerungen: Array.isArray(p.erklaerungen) ? p.erklaerungen : [],
+    elemente: Array.isArray(p.elemente) ? p.elemente : [],
+    korrekte_reihenfolge: Array.isArray(p.korrekte_reihenfolge) ? p.korrekte_reihenfolge : [],
+    material: typeof p.material === "string" ? p.material : "",
+    zielzeichen: typeof p.zielzeichen === "string" ? p.zielzeichen : "",
+    matrix: Array.isArray(p.matrix) ? p.matrix : [],
+    lerninfo: p.lerninfo || "",
     quellen: [],
   });
 }
@@ -6420,10 +6454,10 @@ function finalizeQuiz(result, ctx) {
   quiz.schwierigkeitsgrad = ctx.difficulty;
   if (ctx.vertiefungFelder) quiz.vertiefungFelder = ctx.vertiefungFelder;
   if (ctx.gespraechsstufe) quiz.gespraechsstufe = ctx.gespraechsstufe;
-  // Figural-/Matrizenaufgabe (Plan 3.x) clientseitig an Standardtests anhaengen (nicht im
-  // Vertiefungsbogen). Muss VOR der answers/revealed-Initialisierung stehen, damit deren Laengen
-  // die zusaetzliche Frage einschliessen.
-  appendFiguralQuestion(quiz);
+  // Standardisierte Eignungs-/Uebungsmodul-Aufgaben (Figural, Zahlenreihe, Konzentration)
+  // clientseitig ON-TOP an Assessment-Tests anhaengen (nicht im Vertiefungsbogen). Muss VOR der
+  // answers/revealed-Initialisierung stehen, damit deren Laengen die Zusatzfragen einschliessen.
+  appendEignungsmodule(quiz);
   quiz.genCost = ctx.genCost ?? null;
   quiz.genTokens = ctx.genTokens ?? null;
   // Generierungs-Provenienz festhalten (Anbieter/Tier/Modell, mit dem dieses
@@ -7051,15 +7085,28 @@ function closeDemoEnd() {
 
 /* ---------- Timer (Prüfungsmodus) ---------- */
 
+// Aufschlag je on-top angehaengter Eignungs-/Uebungsmodul-Aufgabe (Minuten). Bewusst konservativ:
+// diese Aufgaben sind kurz und deterministisch (eine Zahl/Anzahl bzw. eine Figur waehlen).
+const ONTOP_MINUTEN_PRO_AUFGABE = 1.5;
+const ONTOP_EIGNUNGS_TYPEN = new Set(["figural", "zahlenreihe", "konzentration"]);
+
 function computeTimeLimitMin(q) {
   // Faustregel als Absicherung: 1,5 min je Multiple-Choice, 4 min je offene
   // Frage, 2 min je Reihenfolge-Aufgabe.
   const fallback = Math.ceil(
     q.fragen.reduce((sum, f) => sum + (f.typ === "offen" ? 4 : f.typ === "reihenfolge" ? 2 : 1.5), 0)
   );
+  // Die generischen Eignungs-/Uebungsmodul-Aufgaben (Figural, Zahlenreihe, Konzentration) haengt der
+  // Client ON-TOP an - der Modell-Vorschlag (empfohlene_zeit_minuten) kennt nur die bestellten
+  // stellenbezogenen Fragen und budgetiert diese Zusatzaufgaben NICHT. Deshalb je solcher Aufgabe
+  // einen kleinen Aufschlag auf den Vorschlag geben, damit die Uhr im Pruefungsmodus fair bleibt.
+  // (Die Faustregel oben zaehlt sie ohnehin mit; nur der Modell-Vorschlag braucht die Korrektur.)
+  const ontopZuschlag = q.fragen.reduce(
+    (sum, f) => sum + (f && ONTOP_EIGNUNGS_TYPEN.has(f.typ) ? ONTOP_MINUTEN_PRO_AUFGABE : 0), 0
+  );
   const suggested = q.empfohlene_zeit_minuten;
   if (Number.isFinite(suggested) && suggested >= fallback * 0.5 && suggested <= fallback * 3) {
-    return suggested;
+    return Math.ceil(suggested + ontopZuschlag);
   }
   return fallback;
 }
