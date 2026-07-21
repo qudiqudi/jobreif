@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.50.3";
+const APP_VERSION = "1.51.0";
 
 const CHANGELOG = [
+  {
+    version: "1.51.0",
+    date: "21.07.2026",
+    items: [
+      "Die Auswertung passt sich jetzt der gewählten Gesprächsstufe an: Beim „Telefoninterview“ zählt eine klare, knappe Vorstellung – fachliche Tiefe wird hier nicht erwartet; beim „Assessment-Center“ stehen dein Vorgehen und, bei rückblickenden Fragen, deine Reflexion im Vordergrund. Das Feedback wird konkreter und greift deine eigene Antwort auf. Der normale Fragebogen (ohne Stufe) bleibt unverändert.",
+    ],
+  },
   {
     version: "1.50.3",
     date: "20.07.2026",
@@ -8066,6 +8073,9 @@ async function runEvaluation(opts = {}) {
         // Phase B: jobId mitschicken → Auswerten eines bezahlten Tests laeuft serverseitig
         // ueber das Follow-up-Entitlement (kein erneuter Credit-Abzug). Nur wenn vorhanden.
         ...(quiz.jobId ? { jobId: quiz.jobId } : {}),
+        // Gewaehlte Gespraechsstufe mitschicken, damit die Auswertung zur gewaehlten Runde passt
+        // (nur Hosted; ohne Stufe unveraendert). Gleiche optionale Semantik wie bei der Generierung.
+        ...(quiz.gespraechsstufe ? { gespraechsstufe: quiz.gespraechsstufe } : {}),
       };
       const { data: rawResult, cost, tokens } = await callLLM(system, user, EVAL_SCHEMA, (acc) => {
         const seen = (acc.match(/"feedback"\s*:/g) || []).length;
