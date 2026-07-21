@@ -6815,12 +6815,17 @@ async function pollActiveJob() {
         erwartet: Number(p.fragenErwartet),
       };
     }
-    // Nur rendern/weiterpollen, wenn der lokale Zeiger waehrend des Requests noch auf DIESEN
-    // Job zeigt - ein spaet eintreffender Poll fuer einen inzwischen ersetzten/verworfenen Job
+    // Nur rendern, wenn der lokale Zeiger waehrend des Requests noch auf DIESEN Job zeigt -
+    // ein spaet eintreffender Poll fuer einen inzwischen ersetzten/verworfenen Job
     // (State-Wechsel waehrend des Requests) darf weder dessen Karte noch den Monotonie-Merker
-    // eines ANDEREN Jobs verfaelschen (Codex-Review).
+    // eines ANDEREN Jobs verfaelschen (Codex-Review). Das Weiterpollen selbst MUSS aber in
+    // jedem Fall passieren (auch beim fruehen Return) - der Timer, der diesen Lauf gestartet
+    // hat, ist verbraucht, und es gibt keinen anderen Wiederanlauf (kein storage-Listener; nur
+    // resumeActiveJob() beim Seitenstart). Ohne das haengende scheduleJobPoll wuerde ein
+    // veralteter Poll die gesamte Poll-Kette fuer den ANDEREN, tatsaechlich aktiven Job
+    // abreissen (Verifikations-Befund).
     const stillActive = loadActiveJob();
-    if (!stillActive || stillActive.jobId !== job.jobId) return;
+    if (!stillActive || stillActive.jobId !== job.jobId) { scheduleJobPoll(3000); return; }
     renderActiveJobCard("pending", progress);
     scheduleJobPoll(3000);
   }
