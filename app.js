@@ -7118,6 +7118,18 @@ function showDeliveryHint(n) {
   _deliveryHintTimer = setTimeout(() => { el.classList.remove("show"); }, 3000);
 }
 
+// Nutzt dieselbe Anzeige wie showDeliveryHint, aber PERSISTENT (kein Auto-Ausblenden): der Nutzer
+// hat den bisher geladenen Ausschnitt durchgespielt und wartet auf Nachlieferung (nextQuestion/
+// isEarlyStartDeliveryPending). Sobald appendDeliveredFragen neue Fragen anhaengt, ueberschreibt
+// dessen showDeliveryHint(n) diesen Text ganz von selbst mit dem normalen "+N neue Fragen"-Hinweis.
+function showDeliveryWaitHint() {
+  const el = $("quiz-delivery-hint");
+  if (!el) return;
+  el.textContent = "Die restlichen Fragen werden noch geladen – „Weiter“ geht gleich wieder.";
+  el.classList.add("show");
+  clearTimeout(_deliveryHintTimer); // kein Timer hier: bleibt sichtbar, bis showDeliveryHint uebernimmt
+}
+
 // Wartezeit nutzen (P4): waehrend der Test im Hintergrund entsteht, in der Pending-Karte
 // eine kurze LOKALE Uebung anbieten (bestehender Uebungs-Hub: kostenlos, komplett auf dem
 // Geraet, kein API-Call). Der Vorschlag rotiert zufaellig ueber die Module, bleibt aber
@@ -8318,6 +8330,16 @@ function renderLearnArea(q, isRevealed) {
   area.appendChild(box);
 }
 
+// Early-Start (Codex-Review): true, wenn das AKTUELL geladene Quiz zu einem Hintergrund-Job
+// gehoert, der noch weitere (bereits bezahlte) Fragen nachliefert. quiz.jobId UND die passende
+// activeJob-jobId muessen uebereinstimmen - sonst wuerde ein voellig unabhaengiges (z. B. BYOK-
+// oder ein spaeter neu gestartetes) Quiz faelschlich blockiert, nur weil zufaellig irgendein
+// anderer Hintergrund-Job existiert.
+function isEarlyStartDeliveryPending() {
+  const aj = loadActiveJob();
+  return !!(aj && aj.status === "started-partial" && quiz && quiz.jobId && aj.jobId === quiz.jobId);
+}
+
 function nextQuestion() {
   if (current < quiz.fragen.length - 1) {
     current++;
@@ -8326,7 +8348,20 @@ function nextQuestion() {
   } else if (reviewing) {
     // Bereits bewertet: zurueck zur gespeicherten Auswertung, keine neue Bewertung
     showView("view-result");
+  } else if (isEarlyStartDeliveryPending()) {
+    // Der Nutzer hat den bisher geladenen Ausschnitt durchgespielt, der Server liefert aber noch
+    // weitere Fragen nach. NICHT vorzeitig auswerten (Codex-Review): eine Auswertung jetzt wuerde
+    // nur den Teil-Ausschnitt bewerten UND einen eigenen API-Aufruf ausloesen, waehrend quiz.fragen
+    // durch einen parallel laufenden Poll noch waechst - beides waere ein unerwarteter Kosten-/
+    // Datenzustand (CLAUDE.md: Aktionen mit API-Kosten nie unbeabsichtigt). Stattdessen abwarten;
+    // sobald appendDeliveredFragen neue Fragen anhaengt, ist "Weiter" (dieser Klick erneut) sofort
+    // wieder normal moeglich (current < quiz.fragen.length - 1 gilt dann wieder).
+    showDeliveryWaitHint();
   } else {
+    // Kein Early-Start (mehr) im Spiel: evtl. noch sichtbaren Nachlieferungs-Hinweis nicht stehen
+    // lassen, bevor es in die Auswertung geht.
+    const hintEl = $("quiz-delivery-hint");
+    if (hintEl) { hintEl.classList.remove("show"); hintEl.textContent = ""; }
     evaluateQuiz();
   }
 }
