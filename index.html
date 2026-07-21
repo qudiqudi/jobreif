@@ -560,6 +560,12 @@
           <div id="active-job-spinner" class="spinner spinner-sm"></div>
           <p id="active-job-text" class="active-job-text"></p>
         </div>
+        <!-- Fortschritt aus Teilergebnis-Zaehlern (additiv): nur sichtbar, wenn der Poll ein
+             partial-Feld mit gueltigen Zaehlern liefert (renderActiveJobCard). Ein Backend ohne
+             das Feld liefert nichts -> die Karte bleibt beim reinen Spinner-Text (Feature-Detect). -->
+        <div id="active-job-progress" class="active-job-progress hidden" aria-hidden="true">
+          <div class="active-job-progress-bar"><div id="active-job-progress-fill"></div></div>
+        </div>
         <button id="active-job-start" class="primary hidden">Loslegen</button>
         <!-- Wartezeit nutzen: waehrend der Test im Hintergrund entsteht, eine kurze lokale
              Uebung anbieten (kostenlos, komplett auf dem Geraet; die Erstellung laeuft weiter). -->
