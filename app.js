@@ -6201,24 +6201,36 @@ async function generateQuiz(opts = {}) {
   // Rueckfragen vorbei und finalizeQuiz vernichtete den laufenden Versuch kommentarlos
   // (Codex-Review Runde 4, Blocker 1). Ein Guard je Einstieg ist strukturell fehleranfaellig —
   // deshalb genau einer, und zwar VOR jeder Verzweigung.
+  //
+  // WICHTIG (Verifikations-Blocker, Runde 5): die eigentliche ZERSTOERUNG (clearLearnSession +
+  // renderActiveJobCard) darf hier NOCH NICHT passieren, obwohl die Rueckfrage schon hier steht.
+  // Nach der Rueckfrage folgen weiter unten noch fail-closed Abbrueche, die selbst per `return`
+  // aussteigen (Punkt-3-Rueckfrage bei offener Lernsession, Guthaben-/Stufen-Pruefung vor dem
+  // Dispatch). Wuerde hier sofort geloescht, verlöre ein Nutzer mit "Trotzdem neu erstellen" den
+  // bereits bezahlten, laufenden Teilversuch schon dann, wenn einer dieser spaeteren Checks noch
+  // abbricht (z. B. Guthaben reicht fuer die neu gewaehlte Stufe nicht) — und bekaeme dafuer gar
+  // keinen neuen Test, sondern nur eine Fehlermeldung. Die Bestaetigung bleibt hier (einmalig, vor
+  // jeder Verzweigung), die Zerstoerung wird auf `earlyStartReplacePending` verschoben und erst
+  // unmittelbar vor dem tatsaechlichen Dispatch ausgefuehrt (s. dort, nach der Guthaben-Pruefung).
+  let earlyStartReplacePending = false;
   if (earlyStartAttemptRunning()) {
     const choice = await openConfirmReplaceReady("started-partial");
     if (choice === "start") { returnToRunningAttempt(); return; } // zurueck zum laufenden Teil-Test
     if (choice !== "replace") return; // abgebrochen: nichts verwerfen, laufender Versuch bleibt
-    // "replace": laufenden Teil-Test bewusst aufgeben (der Modal-Text sagt das explizit).
-    // clearLearnSession raeumt den zugehoerigen "started-partial"-Zeiger gleich mit ab (s. dort),
-    // damit kein unsichtbarer Zeiger-Rest zurueckbleibt.
-    clearLearnSession();
-    renderActiveJobCard(null);
+    // "replace": Nutzer hat zugestimmt, den laufenden Teil-Test aufzugeben — vollzogen wird das
+    // aber erst kurz vor dem Dispatch, siehe Kommentar oben.
+    earlyStartReplacePending = true;
   }
 
   // Punkt 3: einen offenen, noch nicht ausgewerteten Lerntest nicht stillschweigend
   // ueberschreiben. Nur im Lernmodus relevant; bei Bestaetigung wird die alte Sitzung
   // verworfen und die Generierung mit gesetztem Flag erneut angestossen. Ein Early-Start-
   // Teilversuch ist hier bereits abgehandelt (oben): entweder wurde zurueckgekehrt/abgebrochen
-  // (return) oder seine Sitzung ist verworfen — diese Rueckfrage kann also nicht mehr doppelt
-  // auf denselben Bogen fallen.
-  if (wantMode === "lernen" && !opts._replaceConfirmed && loadLearnSession()) {
+  // (return) oder der Nutzer hat dem Ersetzen bereits zugestimmt (earlyStartReplacePending) — in
+  // beiden Faellen darf diese generische Rueckfrage nicht noch einmal auf denselben Bogen fallen
+  // (sie wuerde sonst dieselbe Lernsession ein zweites Mal, und diesmal sofort, zur Bestaetigung
+  // vorlegen bzw. bei einem "Ja" verfruecht loeschen).
+  if (wantMode === "lernen" && !opts._replaceConfirmed && !earlyStartReplacePending && loadLearnSession()) {
     openConfirmReplaceLearn(() => {
       clearLearnSession();
       renderHome();
@@ -6307,6 +6319,19 @@ async function generateQuiz(opts = {}) {
   // Hosted (Punkt 1): Generierung laeuft serverseitig als Hintergrund-Job. Der Client
   // startet den Job und pollt; der Test bricht NICHT ab, wenn der Tab in den Hintergrund
   // geht, das Handy sperrt oder man die Seite verlaesst und spaeter zurueckkehrt.
+  //
+  // WICHTIG (Verifikations-Blocker, Runde 5): der Vollzug eines bestaetigten Ersetzens
+  // (earlyStartReplacePending) passiert bewusst NICHT hier, sondern wird als Kontext an
+  // startHostedGeneration weitergereicht und dort erst NACH dem letzten dort noch moeglichen
+  // Abbruch vollzogen. startHostedGeneration hat naemlich SELBST noch zustimmungspflichtige
+  // Kostenpunkte, an denen der Nutzer die Generierung ablehnen kann, ohne dass ein neuer Test
+  // entsteht — die Preis-/Kontingent-Rueckfrage vor einer bezahlten Stufe (openOverflowConfirm)
+  // und dieselbe Rueckfrage nach einem Gratis-Overflow (quota-exhausted). Wuerde HIER schon
+  // zerstoert, verloere ein Nutzer den laufenden, bereits bezahlten Teilversuch schon dann, wenn
+  // er dort "Abbrechen" waehlt (identisches Muster zum urspruenglich gemeldeten Blocker, nur eine
+  // Ebene tiefer) — und bekaeme dafuer wieder keinen neuen Test. Fuer den BYOK/lokalen Zweig
+  // unten gibt es dagegen KEINEN weiteren zustimmungspflichtigen Abbruch mehr (kein serverseitiges
+  // Guthaben) — dort bleibt der Vollzug daher unmittelbar vor dem Dispatch (s. dort).
   if (isHosted) {
     return startHostedGeneration({
       jobText, difficulty, mode: wantMode, urlKey, jobUrl, vertiefungFelder,
@@ -6316,11 +6341,20 @@ async function generateQuiz(opts = {}) {
         : undefined,
       profile: profilePayload(), // optionales, validiertes Bewerber-Profil (nur Hosted)
       gespraechsstufe: gespraechsstufePayload(), // optionale Interviewrunde (nur Hosted)
+      earlyStartReplacePending, // s. Kommentar oben: Vollzug liegt in startHostedGeneration
     });
   }
 
-  // (Der Schutz eines laufenden Early-Start-Teilversuchs liegt bewusst NICHT hier, sondern einmalig
-  // ganz oben in dieser Funktion — vor der Verzweigung nach Anbieter/Modus. Siehe dort.)
+  // (Die Bestaetigungs-Rueckfrage fuer einen laufenden Early-Start-Teilversuch liegt bewusst NICHT
+  // hier, sondern einmalig ganz oben in dieser Funktion — vor der Verzweigung nach Anbieter/Modus.
+  // Der BYOK/lokale Pfad hat ab hier keinen weiteren zustimmungspflichtigen Abbruch mehr (anders
+  // als der Hosted-Pfad, s. Kommentar oben startHostedGeneration) — der Dispatch gleich unten IST
+  // also schon der Punkt ohne Wiederkehr. Der Vollzug eines bestaetigten Ersetzens gehoert deshalb
+  // genau hierher, unmittelbar davor.
+  if (earlyStartReplacePending) {
+    clearLearnSession();
+    renderActiveJobCard(null);
+  }
 
   actionRunning = true;
   showLoading("Fragenkatalog wird erstellt...");
@@ -6669,16 +6703,21 @@ async function startHostedGeneration(ctx) {
   const existing = loadActiveJob();
   // Early-Start (Punkt 1): ein "started-partial"-Zeiger ist ein laufender, vom Nutzer bereits
   // begonnener Teil-Test. Die Rueckfrage dazu (mit dem "Zum laufenden Test zurueck"-Ausgang) liegt
-  // an EINER Stelle in generateQuiz, vor jeder Verzweigung — dieser Zweig ist auf dem regulaeren
-  // Weg daher nicht erreichbar. Er bleibt als STUMPFER Backstop stehen: sollte je ein neuer
-  // Einstieg direkt hier landen, wird abgebrochen statt still ueberschrieben. Ein zweiter,
-  // eigenstaendig gepflegter Dialog an dieser Stelle war genau die Quelle der Divergenz, aus der
-  // Blocker 1 (Runde 4) entstand.
-  if (existing && existing.status === "started-partial") {
+  // an EINER Stelle in generateQuiz, vor jeder Verzweigung. Der Zeiger ist zu diesem Zeitpunkt
+  // ABSICHTLICH noch nicht geloescht (Verifikations-Blocker Runde 5: der Vollzug des bestaetigten
+  // Ersetzens ist auf ctx.earlyStartReplacePending verschoben, s. dort und der Kommentar am
+  // Aufrufer in generateQuiz) — der eigentliche Backstop unten muss diesen legitimen, bereits
+  // bestaetigten Fall daher durchlassen statt ihn (wieder) abzulehnen.
+  const bypassStartedPartialGuard = !!(existing && existing.status === "started-partial" && ctx.earlyStartReplacePending);
+  // Ohne Bestaetigung bleibt dieser Zweig ein STUMPFER Backstop: sollte je ein neuer Einstieg
+  // direkt hier landen, wird abgebrochen statt still ueberschrieben. Ein zweiter, eigenstaendig
+  // gepflegter Dialog an dieser Stelle war genau die Quelle der Divergenz, aus der Blocker 1
+  // (Runde 4) entstand.
+  if (existing && existing.status === "started-partial" && !bypassStartedPartialGuard) {
     showError("Du hast gerade einen Test offen, der noch Fragen nachlädt. Kehre erst dorthin zurück oder verwirf ihn, bevor du einen neuen Test erstellst.");
     return;
   }
-  if (existing && existing.status !== "ready") {
+  if (existing && existing.status !== "ready" && !bypassStartedPartialGuard) {
     showError("Es wird gerade schon ein Test erstellt. Bitte warte, bis er fertig ist.");
     return;
   }
@@ -6760,6 +6799,13 @@ async function startHostedGeneration(ctx) {
     }
     const data = await res.json();
     if (!data.jobId) throw new Error("Der Test konnte nicht gestartet werden. Bitte erneut versuchen.");
+    // Ab hier ist der neue Test server-seitig sicher angelegt — jeder Abbruch VOR dieser Zeile
+    // (Preis unbekannt, Kosten-/Overflow-Rueckfrage abgelehnt, 402/401/sonstiger Fehlerstatus)
+    // hat den laufenden Early-Start-Teilversuch bewusst unangetastet gelassen. Erst jetzt (Verifi-
+    // kations-Blocker Runde 5) wird ein bereits bestaetigtes Ersetzen vollzogen: den alten
+    // "started-partial"-Zeiger ueberschreibt saveActiveJob() gleich unten mit dem neuen Job: die
+    // noch offene Lernsession (der "Bogen") raeumt clearLearnSession() hier explizit ab.
+    if (ctx.earlyStartReplacePending) clearLearnSession();
     // Nur den fuer die Fertigstellung noetigen Kontext sichern (keine Prompts/Tokens).
     const persisted = saveActiveJob({
       jobId: data.jobId,
