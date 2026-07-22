@@ -6608,12 +6608,14 @@ function scheduleJobPoll(delayMs) {
 // Early-Start (Codex-Review Runde 3): jobId eines started-partial-Jobs, dessen Nachlieferung an
 // einem 401 (Login abgelaufen) haengen geblieben ist. Ein erneutes Anmelden ist im laufenden Tab
 // NICHT ohne Reload moeglich (die Magic-Link-Verifizierung laeuft ausschliesslich beim Seitenstart,
-// siehe consumeAuthRedirect) - und ein Reload verwirft den started-partial-Zeiger ohnehin (V1-
-// Vereinfachung, resumeActiveJob). Die Poll-Kette bleibt also in diesem Tab dauerhaft tot; ohne
+// siehe consumeAuthRedirect). Die Poll-Kette bleibt also in diesem Tab dauerhaft tot; ohne
 // dieses Signal wuerde isEarlyStartDeliveryPending() unveraendert "true" bleiben und "Weiter" auf
 // der letzten geladenen Frage fuer immer blockieren, obwohl nie wieder etwas nachkommt (Verifikations-
 // Befund). Der Zeiger selbst bleibt UNVERAENDERT ("Zeiger behalten", Spec Punkt 4) - nur dieses
 // In-Memory-Signal schaltet die lokale Warteanzeige ab. jobId-gescoped wie die Progress-Merker.
+// Nach einem Reload (mit erneuertem Login) ist das Signal weg und die Nachlieferung nimmt beim
+// Fortsetzen der Sitzung ganz regulaer wieder auf (resumePartialDelivery) - der Zeiger ueberlebt
+// den Reload seit dem Session-Abgleich in resumeActiveJob.
 let _earlyStartAuthPausedJobId = null;
 
 // Sendet den Generierungs-Request an /api/jobs. payWithCredits=true nur fuer den bestaetigten
@@ -6819,8 +6821,19 @@ function persistPartialKernpunkte(job, partialQuiz) {
 // unabhaengig von der genauen Serverursache: die bereits gespielten Fragen bleiben in jedem Fall
 // nutzbar, und die genaue Fehlerursache ist fuer den Nutzer an dieser Stelle nicht mehr
 // handlungsrelevant (anders als beim Fehlschlagen einer kompletten Neu-Erstellung, s. jobErrorMessage).
-function showPartialDeliveryStopped() {
+function showPartialDeliveryStopped() { endPartialDelivery(true); }
+
+// Beendet die Nachlieferung SICHTBAR. Jeder Terminal-/Pausenpfad (done/error/404/403/401) laeuft
+// hierdurch, damit das Aufraeumen der Oberflaeche nicht an jeder Stelle einzeln nachgetragen
+// werden muss: afterDeliveryChange() zieht Zaehler/Balken/Button nach und loest den persistenten
+// "wird noch geladen"-Hinweis auf. Der Zeiger muss VORHER aufgeloest bzw. pausiert sein - nur dann
+// meldet isEarlyStartDeliveryPending() korrekt "nichts mehr unterwegs".
+// mitHinweis=false ist der stille Fall (403, Kontowechsel): kein Nutzerfehler, kein Banner - aber
+// aufraeumen muss die Oberflaeche sich trotzdem.
+function endPartialDelivery(mitHinweis) {
   const n = quiz && Array.isArray(quiz.fragen) ? quiz.fragen.length : 0;
+  afterDeliveryChange(0);
+  if (!mitHinweis) return;
   showError(`Dein Test bleibt bei ${n} Fragen – weitere Fragen konnten nicht mehr nachgeliefert werden. Du kannst mit den vorhandenen Fragen weitermachen.`);
 }
 
@@ -6908,7 +6921,11 @@ async function pollActiveJob() {
     // "started-partial" bewusst OHNE Fehlerbanner (wie bisher): kein Nutzerfehler, der schon
     // gespielte Teil des Tests bleibt unangetastet und einfach ohne weitere Nachlieferung stehen.
     clearActiveJob();
-    if (job.status !== "started-partial") renderActiveJobCard(null); // fuer started-partial gibt es keine Karte
+    if (job.status === "started-partial") {
+      endPartialDelivery(false); // still: kein Banner, aber Fragebogen/Warte-Hinweis aufraeumen
+    } else {
+      renderActiveJobCard(null); // fuer started-partial gibt es keine Karte
+    }
     return;
   }
   if (r.status === 404) {
@@ -6956,10 +6973,13 @@ async function pollActiveJob() {
       // wuerde quiz.fragen.length entweder auf null crashen (unhandled rejection in der Poll-
       // Kette) oder ein FREMDES Quiz (falscher jobId) veraendert werden. Nur bei exaktem Treffer
       // weiterlaufen - sonst bleibt der lokale Zustand unangetastet (die restlichen, bereits
-      // bezahlten Fragen dieses Jobs sind dann nicht mehr zustellbar; bewusst akzeptiert, analog
-      // zum Reload-Fall unten in resumeActiveJob - kein zweiter Ablagenort fuer ein volles
-      // Server-Quiz ausserhalb des laufenden lokalen Zustands).
+      // bezahlten Fragen dieses Jobs sind dann nicht mehr zustellbar; bewusst akzeptiert - es gibt
+      // ausserhalb des laufenden lokalen Zustands keinen zweiten Ablagenort fuer ein volles
+      // Server-Quiz. Der haeufige Fall "Bogen gerade nicht geladen" tritt hier gar nicht mehr auf:
+      // waehrend keine passende Sitzung offen ist, wird ueberhaupt nicht gepollt, s.
+      // resumeActiveJob/resumePartialDelivery).
       const ownsQuiz = quiz && Array.isArray(quiz.fragen) && quiz.jobId === job.jobId;
+      const fragenVorher = ownsQuiz ? quiz.fragen.length : 0;
       if (ownsQuiz) {
         appendDeliveredFragen(data.quiz.fragen);
         // Codex-Review Blocker 2: appendDeliveredFragen uebernimmt NUR data.quiz.fragen - die
@@ -6997,9 +7017,19 @@ async function pollActiveJob() {
         appendEignungsmodule(quiz);
         while (answers.length < quiz.fragen.length) answers.push("");
         while (revealed.length < quiz.fragen.length) revealed.push(false);
-        saveLearnSessionDebounced(); // gewachsenes Array inkl. Module zeitnah sichern
       }
       clearActiveJob();
+      // Nachlieferung ist hier endgueltig zu Ende: Fragebogen-UI EIN letztes Mal nachziehen und
+      // den persistenten Warte-Hinweis aufloesen (afterDeliveryChange, der einzige Ort dafuer).
+      // Bewusst NACH clearActiveJob(): erst dann meldet isEarlyStartDeliveryPending() "nichts mehr
+      // unterwegs" und der Warte-Hinweis darf verschwinden. Der Zuwachs wird ueber die Gesamtlaenge
+      // gemessen statt ueber den Rueckgabewert von appendDeliveredFragen, weil in diesem Zweig
+      // ausserdem die Eignungsmodule dazukommen - der Nutzer soll "+N neue Fragen" fuer ALLES
+      // sehen, was gerade an seinen Bogen gewachsen ist. Der haeufige Fall im Fehlerbild aus
+      // Codex-Review Runde 3 ist genau N == 0 (letzter Poll bringt dasselbe Praefix wie der
+      // vorige): dann bleibt nur das Nachziehen von Zaehler/Balken/Button und das Abraeumen des
+      // Hinweises - und genau das fehlte vorher.
+      if (ownsQuiz) afterDeliveryChange(quiz.fragen.length - fragenVorher);
       trackFirstTest();
       // Ein bezahlter Opus-Job kann auch NACH einem erfolgreichen Early-Start noch erstattet
       // werden - Guthaben-Cache also immer nachziehen.
@@ -7108,19 +7138,31 @@ function resumeActiveJob() {
   if (!job) return;
   if (job.status === "ready" && job.quiz) { renderActiveJobCard("ready"); return; }
   if (job.status === "started-partial") {
-    // Reload-Fall (Punkt 4, V1-Vereinfachung): das laufende Quiz lebt NICHT im Zeiger, sondern
-    // im modulweiten quiz/answers/revealed-Zustand - der ist nach einem Reload/Tab-Neustart immer
-    // leer. Eine zuverlaessige "gehoert dieser Zeiger noch zur zuletzt gesicherten Lernsession"-
-    // Zuordnung waere ueber quiz.jobId zwar technisch moeglich, aber V1 versucht bewusst KEIN
-    // automatisches Wiederbeleben der Hintergrund-Nachlieferung beim App-Start (Ueberraschungs-
-    // Risiko: der Nutzer landet ungefragt mitten im Test statt auf der Startseite). Der Zeiger
-    // wird verworfen; die bereits konsumierten Fragen/Antworten sind nicht verloren, sondern ganz
-    // normal ueber die bestehende "Test fortsetzen"-Lernsession-Karte erreichbar (renderResumeCard/
-    // resumeLearnSession) - nur die Nachlieferung WEITERER Fragen endet mit dem Reload (bewusst
-    // akzeptierter Trade-off: ein noch nicht ausgelieferter, bereits bezahlter Rest der Fragen ist
-    // nach einem Reload nicht mehr nachholbar; Begruendung/Abwaegung im PR-Text, Follow-up moeglich).
-    clearActiveJob();
-    renderActiveJobCard(null);
+    // Reload-Fall (Punkt 4). Das laufende Quiz lebt NICHT im Zeiger, sondern im modulweiten
+    // quiz/answers/revealed-Zustand - der ist nach einem Reload/Tab-Neustart leer. Empfaenger der
+    // Nachlieferung ist aber die gesicherte Lernsession, die den Bogen inklusive quiz.jobId
+    // enthaelt. Deshalb wird hier genau das geprueft, was die Spec verlangt:
+    //
+    // (a) KEINE passende Lernsession (anderer/kein Job, Sitzung verworfen): der Bogen ist weg,
+    //     es gibt nichts mehr, woran nachgeliefert werden koennte -> Zeiger verwerfen. Ein
+    //     Hinweis waere hier sinnlos (es gibt keinen Test, auf den er sich beziehen koennte).
+    // (b) PASSENDE Lernsession: der (ggf. bezahlte) Rest der Fragen ist weiterhin zustellbar,
+    //     sobald der Nutzer ueber "Test fortsetzen" zurueckkehrt -> Zeiger BEHALTEN. Frueher
+    //     wurde er hier bedingungslos verworfen; das kostete den Nutzer bei einem simplen Reload
+    //     still die restlichen bestellten Fragen (Codex-Review Runde 3).
+    //
+    // Bewusst KEIN Hintergrund-Poll in Fall (b): ohne geladenen Bogen haette eine Antwort keinen
+    // Empfaenger (appendDeliveredFragen bricht ohne quiz sauber ab, BEVOR consumedCount
+    // fortgeschrieben wird), und ein "done" wuerde den Zeiger aufloesen und die Restfragen genau
+    // dadurch verbrennen. Die Nachlieferung startet daher erst beim Fortsetzen der Sitzung
+    // (resumeLearnSession -> scheduleJobPoll(0)). Ausserdem bleibt so das Versprechen erhalten,
+    // dass der Nutzer nach einem Reload auf der Startseite landet und nicht ungefragt mitten im
+    // Test - genau die Zurueckhaltung, die V1 mit dem Verwerfen erkaufen wollte.
+    const s = loadLearnSession();
+    const passendeSession = !!(s && s.quiz && s.quiz.jobId === job.jobId
+      && Array.isArray(s.quiz.fragen) && s.quiz.fragen.length);
+    if (!passendeSession) clearActiveJob();
+    renderActiveJobCard(null); // fuer "started-partial" gibt es in keinem Fall eine Erstellungs-Karte
     return;
   }
   renderActiveJobCard("pending");
@@ -7169,17 +7211,20 @@ function startPartialJob() {
 // (Grundregel dieses PRs). ids folgen dem maxId+1-Muster wie appendModulFrage - zwei unabhaengig
 // ab 1 normalisierte Fragengruppen wuerden sonst kollidierende ids erzeugen und den id-basierten
 // Auswerte-Merge (runEvaluation) korrumpieren.
+// Gibt die Anzahl tatsaechlich angehaengter Fragen zurueck (0, wenn nichts Neues kam) - der
+// done-Zweig in pollActiveJob braucht sie, um seinen abschliessenden afterDeliveryChange-Aufruf
+// mit dem richtigen Zuwachs zu fuehren.
 function appendDeliveredFragen(serverFragen) {
   const job = loadActiveJob();
-  if (!job || job.status !== "started-partial") return; // nur im Nachlieferungs-Zustand relevant
-  if (!Array.isArray(serverFragen) || !quiz || !Array.isArray(quiz.fragen)) return;
+  if (!job || job.status !== "started-partial") return 0; // nur im Nachlieferungs-Zustand relevant
+  if (!Array.isArray(serverFragen) || !quiz || !Array.isArray(quiz.fragen)) return 0;
   // Defensiv gegen einen (theoretisch) abweichenden lokalen Quiz-Zustand: appendDeliveredFragen
   // darf NUR das Quiz erweitern, zu dem der Job-Zeiger tatsaechlich gehoert (quiz.jobId wird in
   // finalizeQuiz aus ctx.jobId gesetzt).
-  if (quiz.jobId !== job.jobId) return;
+  if (quiz.jobId !== job.jobId) return 0;
   const consumed = Number.isInteger(job.consumedCount) ? job.consumedCount : quiz.fragen.length;
   const delta = serverFragen.slice(consumed);
-  if (!delta.length) return;
+  if (!delta.length) return 0;
   let maxId = quiz.fragen.reduce((m, f) => Math.max(m, Number(f && f.id) || 0), 0);
   let added = 0;
   delta.forEach((rohFrage) => {
@@ -7194,48 +7239,74 @@ function appendDeliveredFragen(serverFragen) {
   // uebersprungene kaputte Frage soll bei der naechsten Nachlieferung nicht erneut versucht werden
   // (dieselbe Rohantwort waere ohnehin wieder ungueltig) - das Server-Praefix bleibt die Wahrheit.
   saveActiveJob({ ...job, consumedCount: serverFragen.length });
-  if (added > 0) {
-    showDeliveryHint(added);
-    // Zaehler/Fortschrittsleiste im Fragebogen lesen quiz.fragen.length beim naechsten renderQuestion
-    // ohnehin live - hier zusaetzlich sofort nachziehen, falls die aktuelle Frage gerade angezeigt
-    // wird und NICHT neu gerendert wird (sonst zeigen "Frage X von Y" und der Balken bis zum
-    // naechsten Klick den alten, jetzt zu kleinen Gesamtwert). Drei Zuweisungen, exakt wie in
-    // renderQuestion (Codex-Review Runde 2, Blocker 2: die Button-Beschriftung fehlte hier -
-    // stand auf der zuletzt geladenen Frage weiterhin "Auswerten", obwohl die Nachlieferung sie
-    // gerade nicht mehr zur letzten Frage gemacht hat und "Weiter" haette anzeigen muessen).
-    if (currentView() === "view-quiz") {
-      const total = quiz.fragen.length;
-      $("quiz-progress").textContent = `Frage ${current + 1} von ${total}`;
-      $("progress-fill").style.width = `${(current / total) * 100}%`;
-      $("btn-next").textContent =
-        current === total - 1 ? (reviewing ? "Zur Auswertung" : "Auswerten") : "Weiter";
-    }
-    saveLearnSessionDebounced(); // gewachsenes Array zeitnah sichern (Lernsession-Autosave)
-  }
+  afterDeliveryChange(added);
+  return added;
 }
 
-// Dezenter, nicht-blockierender Hinweis im Fragebogen: "+N neue Fragen" (Punkt 3). Fade-Toast
-// nach demselben Muster wie showSettingsSaved (Einstellungen-Autosave-Bestaetigung).
+// EINZIGER Ort, an dem die Oberflaeche nach einer Aenderung am laufenden Early-Start-Bogen
+// nachgezogen wird - egal ob Fragen dazugekommen sind (Nachlieferung, angehaengte Eignungsmodule)
+// oder die Nachlieferung geendet hat (done/error/404/403/401-Pause).
+//
+// WURZEL DER BEIDEN UI-BUGS (Codex-Review Runde 2 und 3): dieses Nachziehen war urspruenglich als
+// Codeblock IN appendDeliveredFragen einkopiert und dort zusaetzlich an "added > 0" gebunden.
+// Jeder weitere Pfad, der den Bogen veraendert oder beendet, haette den Block kopieren muessen -
+// der done-Zweig (Module anhaengen, Zeiger aufloesen) hat es nicht getan, und der persistente
+// Warte-Hinweis hatte ueberhaupt keinen Besitzer, der ihn je wieder entfernt haette. Statt die
+// fehlende Kopie erneut nachzutragen, gibt es das Nachziehen jetzt genau EINMAL:
+//   - syncQuizChrome() setzt Zaehler/Balken/Button-Beschriftung aus dem LIVE-Zustand,
+//   - syncDeliveryHint() entscheidet aus dem LIVE-Zustand, ob der Hinweis noch stehen darf,
+//   - saveLearnSession() sichert den gewachsenen Bogen SOFORT (nicht debounced): nach einer
+//     Nachlieferung ist die naechste Nutzeraktion oft ein Reload/Tabwechsel, und der Zeiger
+//     (consumedCount) ist da bereits fortgeschrieben - eine 800-ms-Luecke zwischen Zeiger und
+//     Sitzung wuerde die neuen Fragen dauerhaft verlieren (Codex-Review Runde 3, "billige Haerte").
+function afterDeliveryChange(added) {
+  if (added > 0) showDeliveryHint(added);
+  syncQuizChrome();
+  syncDeliveryHint();
+  saveLearnSession();
+}
+
+// Zustand des Nachlieferungs-Hinweises (#quiz-delivery-hint) explizit statt implizit im DOM:
+// null = aus, "added" = transienter "+N neue Fragen"-Toast, "wait" = persistenter Warte-Hinweis.
+// Nur so kann syncDeliveryHint() unterscheiden, ob ein sichtbarer Hinweis noch gilt.
+let _deliveryHintMode = null;
 let _deliveryHintTimer = null;
-function showDeliveryHint(n) {
-  const el = $("quiz-delivery-hint");
-  if (!el) return;
-  el.textContent = `+${n} neue ${n === 1 ? "Frage" : "Fragen"}`;
-  el.classList.add("show");
-  clearTimeout(_deliveryHintTimer);
-  _deliveryHintTimer = setTimeout(() => { el.classList.remove("show"); }, 3000);
-}
 
-// Nutzt dieselbe Anzeige wie showDeliveryHint, aber PERSISTENT (kein Auto-Ausblenden): der Nutzer
-// hat den bisher geladenen Ausschnitt durchgespielt und wartet auf Nachlieferung (nextQuestion/
-// isEarlyStartDeliveryPending). Sobald appendDeliveredFragen neue Fragen anhaengt, ueberschreibt
-// dessen showDeliveryHint(n) diesen Text ganz von selbst mit dem normalen "+N neue Fragen"-Hinweis.
-function showDeliveryWaitHint() {
+function setDeliveryHint(modus, n) {
   const el = $("quiz-delivery-hint");
   if (!el) return;
+  clearTimeout(_deliveryHintTimer);
+  _deliveryHintMode = modus;
+  if (!modus) {
+    el.classList.remove("show");
+    el.textContent = "";
+    return;
+  }
+  if (modus === "added") {
+    el.textContent = `+${n} neue ${n === 1 ? "Frage" : "Fragen"}`;
+    el.classList.add("show");
+    // Transient (Fade-Toast nach demselben Muster wie showSettingsSaved).
+    _deliveryHintTimer = setTimeout(() => { if (_deliveryHintMode === "added") setDeliveryHint(null); }, 3000);
+    return;
+  }
+  // "wait": persistent, ohne Timer - er wird von "added" ueberschrieben oder von
+  // syncDeliveryHint() aufgeloest, sobald keine Nachlieferung mehr laeuft.
   el.textContent = "Die restlichen Fragen werden noch geladen – „Weiter“ geht gleich wieder.";
   el.classList.add("show");
-  clearTimeout(_deliveryHintTimer); // kein Timer hier: bleibt sichtbar, bis showDeliveryHint uebernimmt
+}
+
+// Dezenter, nicht-blockierender Hinweis im Fragebogen: "+N neue Fragen" (Punkt 3).
+function showDeliveryHint(n) { setDeliveryHint("added", n); }
+
+// Persistenter Hinweis: der Nutzer hat den bisher geladenen Ausschnitt durchgespielt und wartet
+// auf Nachlieferung (nextQuestion/isEarlyStartDeliveryPending).
+function showDeliveryWaitHint() { setDeliveryHint("wait"); }
+
+// Loest den persistenten Warte-Hinweis auf, sobald keine Nachlieferung mehr laeuft (Zeiger
+// aufgeloest oder pausiert). Der transiente "+N"-Toast bleibt unangetastet - er raeumt sich
+// selbst ab und ist auch nach dem Ende der Nachlieferung eine korrekte Aussage.
+function syncDeliveryHint() {
+  if (_deliveryHintMode === "wait" && !isEarlyStartDeliveryPending()) setDeliveryHint(null);
 }
 
 // Wartezeit nutzen (P4): waehrend der Test im Hintergrund entsteht, in der Pending-Karte
@@ -7489,6 +7560,24 @@ function resumeLearnSession() {
   lastRenderedIndex = -1; // Resume gilt als Sitzungseintritt: erste Frage soll wieder einfliegen
   renderQuestion();
   showView("view-quiz");
+  resumePartialDelivery();
+}
+
+// Early-Start nach einem Reload: gehoert der wiederhergestellte Bogen zu einem Job, dessen
+// Nachlieferung noch offen ist (Zeiger "started-partial", gleiche jobId), das Pollen wieder
+// aufnehmen. resumeActiveJob laesst den Zeiger dafuer beim App-Start absichtlich stehen, pollt
+// aber nicht - erst hier gibt es wieder einen Empfaenger fuer nachgelieferte Fragen. Ist der Job
+// serverseitig inzwischen fertig, liefert der erste Poll das komplette Ergebnis und alles ab
+// consumedCount wird in einem Rutsch angehaengt; ist er verschwunden (404) oder gescheitert,
+// greifen die ueblichen Terminalpfade (Bogen bleibt nutzbar, Hinweis).
+// Nur im Hosted-Modus: ein Hintergrund-Job gehoert zur gehosteten API (gleiche Bedingung wie in
+// resumeActiveJob).
+function resumePartialDelivery() {
+  if ((settings.provider || "hosted") !== "hosted") return;
+  const job = loadActiveJob();
+  if (!job || job.status !== "started-partial") return;
+  if (!quiz || quiz.jobId !== job.jobId) return;
+  scheduleJobPoll(0);
 }
 
 function discardLearnSession() {
@@ -7770,9 +7859,29 @@ function frageAnzeigeText(q) {
   return frage;
 }
 
+// Alles am Fragebogen-Rahmen, das von der GESAMTZAHL der Fragen abhaengt: Zaehler
+// ("Frage 3 von 12"), Fortschrittsbalken und die Beschriftung des Weiter-Buttons
+// ("Weiter" vs. "Auswerten"/"Zur Auswertung"). Bewusst eine eigene, idempotente Funktion:
+// quiz.fragen kann seit dem Early-Start OHNE Fragewechsel wachsen (Nachlieferung,
+// angehaengte Eignungsmodule), und dann muss genau dieser Rahmen nachgezogen werden, ohne
+// die Frage selbst neu zu rendern. Frueher standen diese drei Zuweisungen nur in
+// renderQuestion() und wurden an jeder wachsenden Stelle kopiert - jede vergessene Kopie
+// war ein Bug (btn-next behauptete "Auswerten", wertete aber nicht aus). Deshalb: EIN Ort,
+// alle Aufrufer rufen ihn, niemand kopiert die Zuweisungen mehr.
+// Kein View-Gate: ausserhalb von view-quiz sind die Zuweisungen unsichtbar und harmlos,
+// und renderQuestion() ueberschreibt sie beim Betreten ohnehin frisch.
+function syncQuizChrome() {
+  if (!quiz || !Array.isArray(quiz.fragen) || !quiz.fragen.length) return;
+  const total = quiz.fragen.length;
+  const idx = Math.min(Math.max(0, current), total - 1);
+  $("quiz-progress").textContent = `Frage ${idx + 1} von ${total}`;
+  $("progress-fill").style.width = `${(idx / total) * 100}%`;
+  $("btn-next").textContent =
+    idx === total - 1 ? (reviewing ? "Zur Auswertung" : "Auswerten") : "Weiter";
+}
+
 function renderQuestion() {
   const q = quiz.fragen[current];
-  const total = quiz.fragen.length;
   const isRevealed = mode === "lernen" && revealed[current];
 
   // Re-Render derselben Frage (Toggle/Klick/Aufloesen) vs. echter Fragewechsel:
@@ -7784,8 +7893,10 @@ function renderQuestion() {
   lastRenderedIndex = current;
 
   $("quiz-title").textContent = quiz.titel;
-  $("quiz-progress").textContent = `Frage ${current + 1} von ${total}`;
-  $("progress-fill").style.width = `${(current / total) * 100}%`;
+  syncQuizChrome(); // Zaehler + Balken + Weiter/Auswerten-Beschriftung (einziger Ort, s. o.)
+  // Nachlieferungs-Hinweis mitziehen: er darf nur stehen, solange wirklich noch nachgeliefert
+  // wird (Selbstheilung, falls ein Zustandswechsel den Hinweis nicht selbst aufgeloest hat).
+  syncDeliveryHint();
   $("question-category").textContent = q.kategorie;
   $("question-text").textContent = frageAnzeigeText(q);
 
@@ -7980,8 +8091,6 @@ function renderQuestion() {
   }
 
   $("btn-prev").disabled = current === 0;
-  $("btn-next").textContent =
-    current === total - 1 ? (reviewing ? "Zur Auswertung" : "Auswerten") : "Weiter";
 }
 
 // Baut ein zeilenweises Vorlese-Label fuer eine Zahlenmatrix. Anders als beim Figural-Raster
@@ -8471,8 +8580,7 @@ function nextQuestion() {
   } else {
     // Kein Early-Start (mehr) im Spiel: evtl. noch sichtbaren Nachlieferungs-Hinweis nicht stehen
     // lassen, bevor es in die Auswertung geht.
-    const hintEl = $("quiz-delivery-hint");
-    if (hintEl) { hintEl.classList.remove("show"); hintEl.textContent = ""; }
+    setDeliveryHint(null);
     evaluateQuiz();
   }
 }
