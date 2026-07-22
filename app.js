@@ -6187,7 +6187,17 @@ async function generateQuiz(opts = {}) {
   // Punkt 3: einen offenen, noch nicht ausgewerteten Lerntest nicht stillschweigend
   // ueberschreiben. Nur im Lernmodus relevant; bei Bestaetigung wird die alte Sitzung
   // verworfen und die Generierung mit gesetztem Flag erneut angestossen.
-  if (mode === "lernen" && !opts._replaceConfirmed && loadLearnSession()) {
+  // Laeuft gerade ein Early-Start-Teilversuch (started-partial), hat der weiter unten in
+  // startHostedGeneration erreichte Guard (openConfirmReplaceReady("started-partial")) eine
+  // SPEZIFISCHERE Rueckfrage mit einem "Zum laufenden Test zurueck"-Ausgang (resumeLearnSession).
+  // Wuerde HIER trotzdem schon die generische Lernsession-Rueckfrage greifen, wuerde deren
+  // Bestaetigung die Lernsession per clearLearnSession() sofort vernichten - der "zurueck"-Ausgang
+  // der zweiten, spezifischeren Rueckfrage liefe dann ins Leere (resumeLearnSession faende keine
+  // Sitzung mehr und wuerde kommentarlos auf der Eingabe-Ansicht stehen bleiben, Codex-Review
+  // Runde 3). Fuer started-partial daher NICHT hier fragen - startHostedGeneration deckt replace/
+  // cancel/zurueck fuer diesen Zustand vollstaendig und mit der besseren Formulierung ab.
+  const earlyStartRunning = mode === "lernen" && (loadActiveJob() || {}).status === "started-partial";
+  if (mode === "lernen" && !opts._replaceConfirmed && !earlyStartRunning && loadLearnSession()) {
     openConfirmReplaceLearn(() => {
       clearLearnSession();
       renderHome();
@@ -6576,6 +6586,17 @@ function scheduleJobPoll(delayMs) {
   _jobPollTimer = setTimeout(pollActiveJob, delayMs);
 }
 
+// Early-Start (Codex-Review Runde 3): jobId eines started-partial-Jobs, dessen Nachlieferung an
+// einem 401 (Login abgelaufen) haengen geblieben ist. Ein erneutes Anmelden ist im laufenden Tab
+// NICHT ohne Reload moeglich (die Magic-Link-Verifizierung laeuft ausschliesslich beim Seitenstart,
+// siehe consumeAuthRedirect) - und ein Reload verwirft den started-partial-Zeiger ohnehin (V1-
+// Vereinfachung, resumeActiveJob). Die Poll-Kette bleibt also in diesem Tab dauerhaft tot; ohne
+// dieses Signal wuerde isEarlyStartDeliveryPending() unveraendert "true" bleiben und "Weiter" auf
+// der letzten geladenen Frage fuer immer blockieren, obwohl nie wieder etwas nachkommt (Verifikations-
+// Befund). Der Zeiger selbst bleibt UNVERAENDERT ("Zeiger behalten", Spec Punkt 4) - nur dieses
+// In-Memory-Signal schaltet die lokale Warteanzeige ab. jobId-gescoped wie die Progress-Merker.
+let _earlyStartAuthPausedJobId = null;
+
 // Sendet den Generierungs-Request an /api/jobs. payWithCredits=true nur fuer den bestaetigten
 // Gratis-Overflow (Gratis-Kontingent aufgebraucht). Der Body wird je Aufruf frisch gebaut und
 // der Turnstile-cData-Hash exakt daran gebunden — auch der Overflow-Retry braucht einen frischen
@@ -6624,8 +6645,11 @@ async function startHostedGeneration(ctx) {
     if (choice === "start") { resumeLearnSession(); return; } // zurueck zum laufenden Teil-Test
     if (choice !== "replace") return; // abgebrochen: nichts verwerfen
     // "replace": laufenden Teil-Test UND seinen Job-Zeiger bewusst aufgeben (Modal-Text sagt das
-    // explizit). Die Lernsession bleibt Verantwortung des generateQuiz-Guards weiter oben
-    // (openConfirmReplaceLearn) - der greift im Lernmodus ohnehin VOR diesem Punkt.
+    // explizit). Die generische Lernsession-Rueckfrage in generateQuiz ist fuer started-partial
+    // bewusst AUSGESETZT (Codex-Review Runde 3, s. dort) - genau deshalb muss die Lernsession hier
+    // selbst aufgeraeumt werden, sonst bliebe eine verworfene Sitzung als Karteileiche im Storage
+    // stehen (und wuerde beim naechsten Test faelschlich die generische Rueckfrage ausloesen).
+    clearLearnSession();
     clearActiveJob();
     renderActiveJobCard(null);
   } else if (existing && existing.status !== "ready") {
@@ -6820,6 +6844,16 @@ async function pollActiveJob() {
     // Session-weites Signal - bewusst VOR der Staleness-Pruefung unten, unabhaengig davon,
     // ob der Zeiger waehrend des Requests gewechselt hat.
     handleHostedUnauthorized();
+    // Codex-Review Runde 3: OHNE dieses Signal bliebe isEarlyStartDeliveryPending() dauerhaft
+    // "true" - kein weiterer Poll wird geplant (s. o.), und im laufenden Tab gibt es ohne Reload
+    // keinen Weg zurueck zu einer gueltigen Anmeldung (_earlyStartAuthPausedJobId-Kommentar oben).
+    // "Weiter" wuerde auf der letzten geladenen Frage fuer immer auf eine Nachlieferung warten,
+    // die nie mehr kommt. Der Zeiger selbst bleibt unangetastet (Spec: "Zeiger behalten") - nur
+    // die lokale Warteanzeige wird freigegeben, damit die vorhandenen Fragen auswertbar bleiben.
+    if (job.status === "started-partial") {
+      _earlyStartAuthPausedJobId = job.jobId;
+      showPartialDeliveryStopped();
+    }
     return;
   }
   // Staleness-Gate (Codex-Review): waehrend des Requests kann der Nutzer den Zeiger veraendert
@@ -6885,17 +6919,31 @@ async function pollActiveJob() {
       // zerstoeren). Letztes Delta anhaengen, DANN die beim Start aufgeschobenen Eignungsmodule
       // ganz ans Ende haengen (appendEignungsmodule ist Duplikat-geschuetzt, falls ein Doppel-
       // Poll hier zweimal ankaeme), Zeiger aufloesen.
-      appendDeliveredFragen(data.quiz.fragen);
-      appendEignungsmodule(quiz);
-      // appendEignungsmodule/appendModulFrage haengen NUR an quiz.fragen an (im normalen
-      // finalizeQuiz-Pfad unschaedlich, weil answers/revealed dort ERST DANACH ihre Laenge aus
-      // quiz.fragen.length beziehen) - hier laufen answers/revealed aber schon laenger mit
-      // (appendDeliveredFragen). Ohne dieses Nachziehen blieben sie um die Modul-Anzahl kuerzer
-      // als quiz.fragen und der Index-Gleichlauf (Grundregel des PRs) waere fuer genau die
-      // Modul-Fragen gebrochen (Codex-Review). Gleiches Auffuell-Muster wie beim Review-Laden.
-      while (answers.length < quiz.fragen.length) answers.push("");
-      while (revealed.length < quiz.fragen.length) revealed.push(false);
-      saveLearnSessionDebounced(); // gewachsenes Array inkl. Module zeitnah sichern
+      //
+      // Guard (Codex-Review Runde 3): appendDeliveredFragen hat selbst schon einen jobId-Abgleich
+      // (quiz.jobId !== job.jobId -> return) und bricht z. B. ab, wenn quiz inzwischen null ist
+      // ("Neuer Test") oder gerade ein VOELLIG ANDERER Versuch aus der Historie geoeffnet wurde.
+      // appendEignungsmodule/die Auffuell-Schleifen unten kennen diesen Schutz nicht: ohne ihn
+      // wuerde quiz.fragen.length entweder auf null crashen (unhandled rejection in der Poll-
+      // Kette) oder ein FREMDES Quiz (falscher jobId) veraendert werden. Nur bei exaktem Treffer
+      // weiterlaufen - sonst bleibt der lokale Zustand unangetastet (die restlichen, bereits
+      // bezahlten Fragen dieses Jobs sind dann nicht mehr zustellbar; bewusst akzeptiert, analog
+      // zum Reload-Fall unten in resumeActiveJob - kein zweiter Ablagenort fuer ein volles
+      // Server-Quiz ausserhalb des laufenden lokalen Zustands).
+      const ownsQuiz = quiz && Array.isArray(quiz.fragen) && quiz.jobId === job.jobId;
+      if (ownsQuiz) {
+        appendDeliveredFragen(data.quiz.fragen);
+        // appendEignungsmodule/appendModulFrage haengen NUR an quiz.fragen an (im normalen
+        // finalizeQuiz-Pfad unschaedlich, weil answers/revealed dort ERST DANACH ihre Laenge aus
+        // quiz.fragen.length beziehen) - hier laufen answers/revealed aber schon laenger mit
+        // (appendDeliveredFragen). Ohne dieses Nachziehen blieben sie um die Modul-Anzahl kuerzer
+        // als quiz.fragen und der Index-Gleichlauf (Grundregel des PRs) waere fuer genau die
+        // Modul-Fragen gebrochen (Codex-Review). Gleiches Auffuell-Muster wie beim Review-Laden.
+        appendEignungsmodule(quiz);
+        while (answers.length < quiz.fragen.length) answers.push("");
+        while (revealed.length < quiz.fragen.length) revealed.push(false);
+        saveLearnSessionDebounced(); // gewachsenes Array inkl. Module zeitnah sichern
+      }
       clearActiveJob();
       trackFirstTest();
       // Ein bezahlter Opus-Job kann auch NACH einem erfolgreichen Early-Start noch erstattet
@@ -7052,6 +7100,7 @@ function startPartialJob() {
   hideJobReadyBanner();
   saveActiveJob({ ...job, status: "started-partial", consumedCount: fragen.length });
   _partialQuizCache = null; // verbraucht - naechster Poll liefert bei Bedarf neue Delta-Fragen
+  _earlyStartAuthPausedJobId = null; // frischer Teilversuch: ein evtl. altes Auth-Pause-Signal loeschen
   renderActiveJobCard(null); // Karte verschwindet, der Nutzer ist jetzt IM Test (wie startReadyJob)
   // deferModules: die Eignungsmodule (Assessment-Center) kommen erst nach der letzten
   // Nachlieferung ans Ende (pollActiveJob), sonst stuenden sie mitten im wachsenden Bogen.
@@ -8334,10 +8383,13 @@ function renderLearnArea(q, isRevealed) {
 // gehoert, der noch weitere (bereits bezahlte) Fragen nachliefert. quiz.jobId UND die passende
 // activeJob-jobId muessen uebereinstimmen - sonst wuerde ein voellig unabhaengiges (z. B. BYOK-
 // oder ein spaeter neu gestartetes) Quiz faelschlich blockiert, nur weil zufaellig irgendein
-// anderer Hintergrund-Job existiert.
+// anderer Hintergrund-Job existiert. Ausnahme (Codex-Review Runde 3): ein 401 auf einem
+// Nachlieferungs-Poll markiert diese jobId in _earlyStartAuthPausedJobId - die Poll-Kette ist dann
+// im laufenden Tab endgueltig tot (s. Kommentar dort), "Weiter" darf also nicht laenger warten.
 function isEarlyStartDeliveryPending() {
   const aj = loadActiveJob();
-  return !!(aj && aj.status === "started-partial" && quiz && quiz.jobId && aj.jobId === quiz.jobId);
+  return !!(aj && aj.status === "started-partial" && quiz && quiz.jobId && aj.jobId === quiz.jobId
+    && _earlyStartAuthPausedJobId !== aj.jobId);
 }
 
 function nextQuestion() {
