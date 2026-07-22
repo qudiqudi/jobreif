@@ -6964,17 +6964,17 @@ async function pollActiveJob() {
         appendDeliveredFragen(data.quiz.fragen);
         // Codex-Review Blocker 2: appendDeliveredFragen uebernimmt NUR data.quiz.fragen - die
         // uebrigen von normalizeQuizData ausgewerteten Top-Level-Felder (kernpunkte, druckpunkte,
-        // titel, arbeitgeber, arbeitsort, empfohlene_zeit_minuten) entstehen typischerweise im
-        // schwersten Chunk (FOCUS_AUFGABEN, kpIndex=0) und fehlen im fruehen Teil-Ergebnis, mit
-        // dem Early-Start gestartet wurde. Ohne diese Uebernahme bliebe quiz.druckpunkte fuer
-        // immer undefined (kein Cache-Fallback wie bei kernpunkten, s. persistPartialKernpunkte
-        // unten) und ein erst spaet vollstaendiger titel/arbeitgeber/arbeitsort wuerde nie in die
-        // Historie geschrieben (saveAttempt liest ausschliesslich aus dem live quiz-Objekt).
+        // titel, arbeitgeber, arbeitsort, empfohlene_zeit_minuten) koennen im fruehen Teil-Ergebnis,
+        // mit dem Early-Start gestartet wurde, noch fehlen und erst mit dem fertigen Server-Ergebnis
+        // nachkommen. Ohne diese Uebernahme bliebe quiz.druckpunkte fuer immer undefined (kein
+        // Cache-Fallback wie bei kernpunkten, s. persistPartialKernpunkte unten) und ein erst spaet
+        // vollstaendiger titel/arbeitgeber/arbeitsort wuerde nie in die Historie geschrieben
+        // (saveAttempt liest ausschliesslich aus dem live quiz-Objekt).
         // Direkt die vorhandenen Normalisierer wiederverwenden statt normalizeQuizData: das spart
         // eine unnoetige Zweit-Normalisierung von data.quiz.fragen (appendDeliveredFragen hat sie
-        // bereits kollisionsfrei per maxId+1 angehaengt) und vermeidet, dass ein fehlender Titel
-        // im letzten Chunk den bereits gesetzten Titel aus dem fruehen Teil-Ergebnis mit dem
-        // generischen Fallback ueberschreibt.
+        // bereits kollisionsfrei per maxId+1 angehaengt) und vermeidet, dass ein im fertigen
+        // Ergebnis fehlender Titel den bereits gesetzten Titel aus dem fruehen Teil-Ergebnis mit
+        // dem generischen Fallback ueberschreibt.
         if (typeof data.quiz.titel === "string" && data.quiz.titel.trim()) quiz.titel = data.quiz.titel.trim();
         if (typeof data.quiz.arbeitgeber === "string" && data.quiz.arbeitgeber.trim()) quiz.arbeitgeber = data.quiz.arbeitgeber.trim();
         if (typeof data.quiz.arbeitsort === "string" && data.quiz.arbeitsort.trim()) quiz.arbeitsort = data.quiz.arbeitsort.trim();
@@ -7199,12 +7199,16 @@ function appendDeliveredFragen(serverFragen) {
     // Zaehler/Fortschrittsleiste im Fragebogen lesen quiz.fragen.length beim naechsten renderQuestion
     // ohnehin live - hier zusaetzlich sofort nachziehen, falls die aktuelle Frage gerade angezeigt
     // wird und NICHT neu gerendert wird (sonst zeigen "Frage X von Y" und der Balken bis zum
-    // naechsten Klick den alten, jetzt zu kleinen Gesamtwert). Exakt dieselben zwei Zuweisungen
-    // wie in renderQuestion.
+    // naechsten Klick den alten, jetzt zu kleinen Gesamtwert). Drei Zuweisungen, exakt wie in
+    // renderQuestion (Codex-Review Runde 2, Blocker 2: die Button-Beschriftung fehlte hier -
+    // stand auf der zuletzt geladenen Frage weiterhin "Auswerten", obwohl die Nachlieferung sie
+    // gerade nicht mehr zur letzten Frage gemacht hat und "Weiter" haette anzeigen muessen).
     if (currentView() === "view-quiz") {
       const total = quiz.fragen.length;
       $("quiz-progress").textContent = `Frage ${current + 1} von ${total}`;
       $("progress-fill").style.width = `${(current / total) * 100}%`;
+      $("btn-next").textContent =
+        current === total - 1 ? (reviewing ? "Zur Auswertung" : "Auswerten") : "Weiter";
     }
     saveLearnSessionDebounced(); // gewachsenes Array zeitnah sichern (Lernsession-Autosave)
   }
