@@ -6210,27 +6210,33 @@ async function generateQuiz(opts = {}) {
   // bereits bezahlten, laufenden Teilversuch schon dann, wenn einer dieser spaeteren Checks noch
   // abbricht (z. B. Guthaben reicht fuer die neu gewaehlte Stufe nicht) — und bekaeme dafuer gar
   // keinen neuen Test, sondern nur eine Fehlermeldung. Die Bestaetigung bleibt hier (einmalig, vor
-  // jeder Verzweigung), die Zerstoerung wird auf `earlyStartReplacePending` verschoben und erst
+  // jeder Verzweigung), die Zerstoerung wird auf `earlyStartReplaceBogen` verschoben und erst
   // unmittelbar vor dem tatsaechlichen Dispatch ausgefuehrt (s. dort, nach der Guthaben-Pruefung).
-  let earlyStartReplacePending = false;
+  //
+  // Gemerkt wird dabei nicht nur DASS, sondern WELCHER Versuch aufgegeben werden darf: bis zum
+  // Vollzug liegen mehrere await-Punkte, und der geraeteweit einzige Job-Zeiger kann sich in der
+  // Zwischenzeit aendern (zweiter Tab). Ein blosses "ja, ersetzen" wuerde dann auf einen ganz
+  // anderen, nie bestaetigten Teilversuch angewendet.
+  let earlyStartReplaceBogen = null;
   if (earlyStartAttemptRunning()) {
+    const laufend = loadActiveJob(); // Identitaet des Versuchs, ueber den hier gefragt wird
     const choice = await openConfirmReplaceReady("started-partial");
     if (choice === "start") { returnToRunningAttempt(); return; } // zurueck zum laufenden Teil-Test
     if (choice !== "replace") return; // abgebrochen: nichts verwerfen, laufender Versuch bleibt
-    // "replace": Nutzer hat zugestimmt, den laufenden Teil-Test aufzugeben — vollzogen wird das
+    // "replace": Nutzer hat zugestimmt, GENAU diesen Teil-Test aufzugeben — vollzogen wird das
     // aber erst kurz vor dem Dispatch, siehe Kommentar oben.
-    earlyStartReplacePending = true;
+    if (laufend && laufend.jobId) earlyStartReplaceBogen = { jobId: laufend.jobId };
   }
 
   // Punkt 3: einen offenen, noch nicht ausgewerteten Lerntest nicht stillschweigend
   // ueberschreiben. Nur im Lernmodus relevant; bei Bestaetigung wird die alte Sitzung
   // verworfen und die Generierung mit gesetztem Flag erneut angestossen. Ein Early-Start-
   // Teilversuch ist hier bereits abgehandelt (oben): entweder wurde zurueckgekehrt/abgebrochen
-  // (return) oder der Nutzer hat dem Ersetzen bereits zugestimmt (earlyStartReplacePending) — in
+  // (return) oder der Nutzer hat dem Ersetzen bereits zugestimmt (earlyStartReplaceBogen) — in
   // beiden Faellen darf diese generische Rueckfrage nicht noch einmal auf denselben Bogen fallen
   // (sie wuerde sonst dieselbe Lernsession ein zweites Mal, und diesmal sofort, zur Bestaetigung
   // vorlegen bzw. bei einem "Ja" verfruecht loeschen).
-  if (wantMode === "lernen" && !opts._replaceConfirmed && !earlyStartReplacePending && loadLearnSession()) {
+  if (wantMode === "lernen" && !opts._replaceConfirmed && !earlyStartReplaceBogen && loadLearnSession()) {
     openConfirmReplaceLearn(() => {
       clearLearnSession();
       renderHome();
@@ -6321,7 +6327,7 @@ async function generateQuiz(opts = {}) {
   // geht, das Handy sperrt oder man die Seite verlaesst und spaeter zurueckkehrt.
   //
   // WICHTIG (Verifikations-Blocker, Runde 5): der Vollzug eines bestaetigten Ersetzens
-  // (earlyStartReplacePending) passiert bewusst NICHT hier, sondern wird als Kontext an
+  // (earlyStartReplaceBogen) passiert bewusst NICHT hier, sondern wird als Kontext an
   // startHostedGeneration weitergereicht und dort erst NACH dem letzten dort noch moeglichen
   // Abbruch vollzogen. startHostedGeneration hat naemlich SELBST noch zustimmungspflichtige
   // Kostenpunkte, an denen der Nutzer die Generierung ablehnen kann, ohne dass ein neuer Test
@@ -6341,7 +6347,7 @@ async function generateQuiz(opts = {}) {
         : undefined,
       profile: profilePayload(), // optionales, validiertes Bewerber-Profil (nur Hosted)
       gespraechsstufe: gespraechsstufePayload(), // optionale Interviewrunde (nur Hosted)
-      earlyStartReplacePending, // s. Kommentar oben: Vollzug liegt in startHostedGeneration
+      earlyStartReplaceBogen, // s. Kommentar oben: Vollzug liegt in startHostedGeneration
     });
   }
 
@@ -6511,8 +6517,8 @@ async function generateQuiz(opts = {}) {
     // wird ein zuvor bestaetigtes Ersetzen vollzogen — gleiche Reihenfolge wie im Hosted-Zweig
     // (dort nach data.jobId). clearLearnSession raeumt den zugehoerigen "started-partial"-Zeiger
     // samt Nachlieferungs-Poll mit ab (s. dort), bevor finalizeQuiz den neuen Bogen sichert.
-    if (earlyStartReplacePending) {
-      clearLearnSession();
+    if (earlyStartReplaceBogen) {
+      clearLearnSession(earlyStartReplaceBogen);
       renderActiveJobCard(null);
     }
     // Quiz-Session aus dem Ergebnis aufbauen (gemeinsam mit dem Hosted-Async-Pfad).
@@ -6625,7 +6631,11 @@ function finalizeQuiz(result, ctx) {
   // Neuer Lerntest: als fortsetzbar markieren und sofort sichern; ein evtl. zuvor
   // offener Lerntest wird durch den neuen ersetzt. Pruefungsmodus ist nicht fortsetzbar.
   if (mode === "lernen") { learnSessionActive = true; saveLearnSession(); }
-  else { clearLearnSession(); }
+  // Pruefungsmodus ist nicht fortsetzbar: die gesicherte Sitzung faellt weg. Ein Early-Start-
+  // Zeiger wird hier ausdruecklich NICHT freigegeben (Argument null): der neue Bogen steht schon,
+  // der Schutz eines noch laufenden Teilversuchs ist im Generierungs-Einstieg abgehandelt — und
+  // die gesicherte Sitzung kann zu einem ganz anderen Versuch (zweiter Tab) gehoeren.
+  else { clearLearnSession(null); }
   renderQuestion();
   showView("view-quiz");
 }
@@ -6715,10 +6725,14 @@ async function startHostedGeneration(ctx) {
   // begonnener Teil-Test. Die Rueckfrage dazu (mit dem "Zum laufenden Test zurueck"-Ausgang) liegt
   // an EINER Stelle in generateQuiz, vor jeder Verzweigung. Der Zeiger ist zu diesem Zeitpunkt
   // ABSICHTLICH noch nicht geloescht (Verifikations-Blocker Runde 5: der Vollzug des bestaetigten
-  // Ersetzens ist auf ctx.earlyStartReplacePending verschoben, s. dort und der Kommentar am
+  // Ersetzens ist auf ctx.earlyStartReplaceBogen verschoben, s. dort und der Kommentar am
   // Aufrufer in generateQuiz) — der eigentliche Backstop unten muss diesen legitimen, bereits
   // bestaetigten Fall daher durchlassen statt ihn (wieder) abzulehnen.
-  const bypassStartedPartialGuard = !!(existing && existing.status === "started-partial" && ctx.earlyStartReplacePending);
+  // Der Bypass gilt nur fuer GENAU den Versuch, ueber den auch gefragt wurde (jobId-Vergleich) —
+  // ein inzwischen anderer "started-partial"-Zeiger (zweiter Tab) faellt zurueck auf den Backstop
+  // und wird abgelehnt statt still verdraengt.
+  const bypassStartedPartialGuard = !!(existing && existing.status === "started-partial"
+    && ctx.earlyStartReplaceBogen && existing.jobId === ctx.earlyStartReplaceBogen.jobId);
   // Ohne Bestaetigung bleibt dieser Zweig ein STUMPFER Backstop: sollte je ein neuer Einstieg
   // direkt hier landen, wird abgebrochen statt still ueberschrieben. Ein zweiter, eigenstaendig
   // gepflegter Dialog an dieser Stelle war genau die Quelle der Divergenz, aus der Blocker 1
@@ -6815,7 +6829,7 @@ async function startHostedGeneration(ctx) {
     // kations-Blocker Runde 5) wird ein bereits bestaetigtes Ersetzen vollzogen: den alten
     // "started-partial"-Zeiger ueberschreibt saveActiveJob() gleich unten mit dem neuen Job: die
     // noch offene Lernsession (der "Bogen") raeumt clearLearnSession() hier explizit ab.
-    if (ctx.earlyStartReplacePending) clearLearnSession();
+    if (ctx.earlyStartReplaceBogen) clearLearnSession(ctx.earlyStartReplaceBogen);
     // Nur den fuer die Fertigstellung noetigen Kontext sichern (keine Prompts/Tokens).
     const persisted = saveActiveJob({
       jobId: data.jobId,
@@ -7652,8 +7666,18 @@ function saveLearnSession() {
     return false;
   }
 }
-function clearLearnSession() {
+// bogen (optional): der Fragebogen, den der Aufrufer hier aufgibt — entweder ein Quiz-Objekt oder
+// ein schlanker Anker { jobId }. Er entscheidet, ob der Early-Start-Job-Zeiger mit freigegeben wird
+// (s. u.). Wird das Argument WEGGELASSEN, gilt die gesicherte Sitzung selbst als der aufgegebene
+// Bogen — das ist der Fall "Verwerfen auf der Fortsetzen-Karte", die genau sie repraesentiert.
+// `null` heisst ausdruecklich "hier wird kein Early-Start-Bogen aufgegeben" (dann nie freigeben).
+// Die Identitaet raten statt sie zu uebergeben geht schief: das global geladene `quiz` kann ein
+// ganz anderer Bogen sein (Versuch aus der Historie, Beispieltest), und die gesicherte Sitzung
+// kann aus einem zweiten Tab stammen.
+function clearLearnSession(bogen) {
   learnSessionActive = false;
+  // VOR dem Loeschen lesen, danach ist die Sitzung weg.
+  const aufgegeben = arguments.length ? bogen : (loadLearnSession() || {}).quiz || null;
   try { localStorage.removeItem(LEARN_SESSION_KEY); } catch {}
   // Early-Start: Bogen und Job-Zeiger gehoeren zusammen und werden deshalb nur noch GEMEINSAM
   // verworfen — an dieser einen Stelle, an der der Bogen verschwindet, statt in jedem einzelnen
@@ -7663,8 +7687,17 @@ function clearLearnSession() {
   // Empfaenger) und laesst spaeter einen Ersetzen-Dialog mit funktionsloser Schaltflaeche
   // erscheinen. "pending"/"ready"-Zeiger bleiben unangetastet: die haengen nicht am Bogen,
   // sondern an einer laufenden bzw. fertigen Erstellung mit eigener Karte.
+  //
+  // Der Zeiger wird dabei NUR abgeraeumt, wenn er auch WIRKLICH zu dem Bogen gehoert, den der
+  // Aufrufer aufgibt (gleiche jobId) — ein Status-Vergleich allein reicht nicht: localStorage ist
+  // zwischen Tabs geteilt, der Zeiger ist geraeteweit und es gibt nur einen. Ohne den
+  // Identitaetsvergleich wuerde z. B. das Auswerten eines ganz anderen, alten Lerntests in einem
+  // zweiten Tab den laufenden, BEZAHLTEN Teilversuch des ersten Tabs mitsamt seiner Nachlieferung
+  // abraeumen — ein Verlust bezahlter Fragen, dem der Nutzer nie zugestimmt hat. Gehoert der
+  // Zeiger zu einem anderen Bogen, bleibt er stehen; ist er dann tatsaechlich verwaist, raeumt
+  // ihn earlyStartAttemptRunning()/resumeActiveJob still ab (s. dort).
   const job = loadActiveJob();
-  if (job && job.status === "started-partial") {
+  if (job && job.status === "started-partial" && aufgegeben && aufgegeben.jobId === job.jobId) {
     clearActiveJob();
     clearTimeout(_jobPollTimer); // ohne Bogen gibt es nichts mehr nachzuliefern
     _earlyStartAuthPausedJobId = null;
@@ -7686,7 +7719,7 @@ function resumeLearnSession() {
   // erreichbar — der Dialog wird nur noch angeboten, wenn es einen echten Bogen gibt
   // (earlyStartAttemptRunning) —, er bleibt aber als ehrlicher Ausgang bestehen.
   if (!s || !s.quiz || !Array.isArray(s.quiz.fragen) || !s.quiz.fragen.length) {
-    clearLearnSession(); // raeumt einen evtl. verwaisten "started-partial"-Zeiger gleich mit ab
+    clearLearnSession(); // raeumt den Zeiger mit ab, falls er zu genau diesem Bogen gehoert
     renderHome();
     showView("view-home");
     return;
@@ -8997,7 +9030,7 @@ async function runEvaluation(opts = {}) {
     const saved = await saveAttempt(result, durationMs, evalCost, evalTokens);
     // Den fortsetzbaren Lerntest erst verwerfen, wenn der Versuch WIRKLICH gespeichert
     // wurde — sonst koennten bei vollem/blockiertem Speicher beide verloren gehen.
-    if (saved) clearLearnSession();
+    if (saved) clearLearnSession(quiz); // ausgewertet: NUR der Zeiger genau dieses Bogens ist erledigt
     else showError("Dein Ergebnis konnte nicht dauerhaft gespeichert werden (Browser-Speicher voll?). Der offene Lerntest bleibt erhalten, du kannst es später erneut auswerten.");
     renderResult(result, durationMs);
     // Spielfortschritt dieser Stelle; frisch freigeschaltete Abzeichen und ein
