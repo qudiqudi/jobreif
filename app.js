@@ -6187,15 +6187,15 @@ async function generateQuiz(opts = {}) {
   // Punkt 3: einen offenen, noch nicht ausgewerteten Lerntest nicht stillschweigend
   // ueberschreiben. Nur im Lernmodus relevant; bei Bestaetigung wird die alte Sitzung
   // verworfen und die Generierung mit gesetztem Flag erneut angestossen.
-  // Laeuft gerade ein Early-Start-Teilversuch (started-partial), hat der weiter unten in
-  // startHostedGeneration erreichte Guard (openConfirmReplaceReady("started-partial")) eine
-  // SPEZIFISCHERE Rueckfrage mit einem "Zum laufenden Test zurueck"-Ausgang (resumeLearnSession).
-  // Wuerde HIER trotzdem schon die generische Lernsession-Rueckfrage greifen, wuerde deren
-  // Bestaetigung die Lernsession per clearLearnSession() sofort vernichten - der "zurueck"-Ausgang
-  // der zweiten, spezifischeren Rueckfrage liefe dann ins Leere (resumeLearnSession faende keine
-  // Sitzung mehr und wuerde kommentarlos auf der Eingabe-Ansicht stehen bleiben, Codex-Review
-  // Runde 3). Fuer started-partial daher NICHT hier fragen - startHostedGeneration deckt replace/
-  // cancel/zurueck fuer diesen Zustand vollstaendig und mit der besseren Formulierung ab.
+  // Laeuft gerade ein Early-Start-Teilversuch (started-partial), gibt es dafuer eine SPEZIFISCHERE
+  // Rueckfrage (openConfirmReplaceReady("started-partial")) mit einem "Zum laufenden Test zurueck"-
+  // Ausgang (resumeLearnSession) - im Hosted-Pfad in startHostedGeneration, im BYOK/lokalen Pfad
+  // weiter unten (Codex-Review Blocker 3: beide Pfade brauchen ihn, isHosted erreicht startHosted-
+  // Generation, alles andere nicht). Wuerde HIER trotzdem schon die generische Lernsession-
+  // Rueckfrage greifen, wuerde deren Bestaetigung die Lernsession per clearLearnSession() sofort
+  // vernichten - der "zurueck"-Ausgang der spezifischeren Rueckfrage liefe dann ins Leere
+  // (resumeLearnSession faende keine Sitzung mehr und wuerde kommentarlos auf der Eingabe-Ansicht
+  // stehen bleiben, Codex-Review Runde 3). Fuer started-partial daher NICHT hier fragen.
   const earlyStartRunning = mode === "lernen" && (loadActiveJob() || {}).status === "started-partial";
   if (mode === "lernen" && !opts._replaceConfirmed && !earlyStartRunning && loadLearnSession()) {
     openConfirmReplaceLearn(() => {
@@ -6288,6 +6288,25 @@ async function generateQuiz(opts = {}) {
       profile: profilePayload(), // optionales, validiertes Bewerber-Profil (nur Hosted)
       gespraechsstufe: gespraechsstufePayload(), // optionale Interviewrunde (nur Hosted)
     });
+  }
+
+  // Codex-Review Blocker 3: der spezifischere started-partial-Guard (openConfirmReplaceReady) lag
+  // bisher ausschliesslich in startHostedGeneration, das dieser BYOK/lokale Zweig nie erreicht (isHosted
+  // ist hier bereits false, der Hosted-Fall ist oben schon per return abgehandelt). Die generische
+  // Lernsession-Rueckfrage ist fuer started-partial oben bewusst ausgesetzt (earlyStartRunning,
+  // s. Kommentar dort) - ohne diesen Guard gaebe es fuer BYOK/lokal ueberhaupt KEINE Rueckfrage mehr,
+  // und finalizeQuiz wuerde einen laufenden, bereits bezahlten Early-Start-Teilversuch beim Abschluss
+  // (saveLearnSession) kommentarlos ueberschreiben. Denselben Dialog wie im Hosted-Pfad nutzen.
+  if (earlyStartRunning) {
+    const choice = await openConfirmReplaceReady("started-partial");
+    if (choice === "start") { resumeLearnSession(); return; } // zurueck zum laufenden Teil-Test
+    if (choice !== "replace") return; // abgebrochen: nichts verwerfen, laufender Versuch bleibt unangetastet
+    // "replace": Modal-Text sagt es explizit - laufenden Teil-Test UND seinen Job-Zeiger aufgeben.
+    // Ohne dieses Aufraeumen bliebe eine verworfene Sitzung als Karteileiche im Storage stehen und
+    // wuerde beim naechsten Test faelschlich die generische Rueckfrage ausloesen (wie im Hosted-Pfad).
+    clearLearnSession();
+    clearActiveJob();
+    renderActiveJobCard(null);
   }
 
   actionRunning = true;
@@ -6837,23 +6856,33 @@ async function pollActiveJob() {
     return;
   }
   if (r.status === 401) {
-    // Sitzung waehrend der Erstellung abgelaufen: Job NICHT verwerfen (laeuft serverseitig
-    // weiter), zur Anmeldung fuehren, Poll pausieren. Nach erneutem Login laedt die Seite
-    // neu und resumeActiveJob nimmt das Pollen wieder auf. Gilt unveraendert fuer "started-
-    // partial": der lokale Quiz-Zustand bleibt unangetastet, nur die Nachlieferung pausiert.
-    // Session-weites Signal - bewusst VOR der Staleness-Pruefung unten, unabhaengig davon,
-    // ob der Zeiger waehrend des Requests gewechselt hat.
-    handleHostedUnauthorized();
-    // Codex-Review Runde 3: OHNE dieses Signal bliebe isEarlyStartDeliveryPending() dauerhaft
-    // "true" - kein weiterer Poll wird geplant (s. o.), und im laufenden Tab gibt es ohne Reload
-    // keinen Weg zurueck zu einer gueltigen Anmeldung (_earlyStartAuthPausedJobId-Kommentar oben).
-    // "Weiter" wuerde auf der letzten geladenen Frage fuer immer auf eine Nachlieferung warten,
-    // die nie mehr kommt. Der Zeiger selbst bleibt unangetastet (Spec: "Zeiger behalten") - nur
-    // die lokale Warteanzeige wird freigegeben, damit die vorhandenen Fragen auswertbar bleiben.
+    // Codex-Review Blocker 4: handleHostedUnauthorized() fuehrt IMMER per showView("view-login")
+    // zur Anmeldung - fuer "started-partial" reisst das den Nutzer mitten aus einem laufenden,
+    // schon beantworteten Fragebogen (view-quiz), ohne Vorwarnung, und eine gerade getippte, noch
+    // nicht per saveLearnSessionDebounced (800 ms) gesicherte Antwort ginge dabei verloren. Spec
+    // Punkt 4 verlangt fuer diesen Fall ausdruecklich nur "Zeiger behalten, Nachlieferung pausiert
+    // bis Re-Login" - keinen erzwungenen View-Wechsel. Daher fuer "started-partial" NICHT
+    // handleHostedUnauthorized() (das navigiert unbedingt), sondern nur den Token verwerfen -
+    // dieselbe Wirkung minus Navigation, analog zum bestehenden 401-Handling in refreshBalance
+    // (Zeile ~4560: clearAuthToken() ohne View-Wechsel). Der Fragebogen bleibt sichtbar und
+    // bedienbar; eine spaetere Hosted-Aktion (z. B. "Neuer Test") fuehrt ganz regulaer wieder zum
+    // Login-Screen, sobald der fehlende Token dort erneut ansteht.
     if (job.status === "started-partial") {
+      clearAuthToken();
+      // Codex-Review Runde 3: OHNE dieses Signal bliebe isEarlyStartDeliveryPending() dauerhaft
+      // "true" - kein weiterer Poll wird geplant (kein Token mehr fuer einen erneuten Versuch),
+      // und im laufenden Tab gibt es ohne Reload keinen Weg zurueck zu einer gueltigen Anmeldung.
+      // "Weiter" wuerde auf der letzten geladenen Frage fuer immer auf eine Nachlieferung warten,
+      // die nie mehr kommt. Der Zeiger selbst bleibt unangetastet (Spec: "Zeiger behalten") - nur
+      // die lokale Warteanzeige wird freigegeben, damit die vorhandenen Fragen auswertbar bleiben.
       _earlyStartAuthPausedJobId = job.jobId;
       showPartialDeliveryStopped();
+      return;
     }
+    // Sitzung waehrend der Erstellung abgelaufen (regulaerer "pending"-Fall): Job NICHT verwerfen
+    // (laeuft serverseitig weiter), zur Anmeldung fuehren, Poll pausieren. Nach erneutem Login
+    // laedt die Seite neu und resumeActiveJob nimmt das Pollen wieder auf.
+    handleHostedUnauthorized();
     return;
   }
   // Staleness-Gate (Codex-Review): waehrend des Requests kann der Nutzer den Zeiger veraendert
@@ -6933,6 +6962,32 @@ async function pollActiveJob() {
       const ownsQuiz = quiz && Array.isArray(quiz.fragen) && quiz.jobId === job.jobId;
       if (ownsQuiz) {
         appendDeliveredFragen(data.quiz.fragen);
+        // Codex-Review Blocker 2: appendDeliveredFragen uebernimmt NUR data.quiz.fragen - die
+        // uebrigen von normalizeQuizData ausgewerteten Top-Level-Felder (kernpunkte, druckpunkte,
+        // titel, arbeitgeber, arbeitsort, empfohlene_zeit_minuten) entstehen typischerweise im
+        // schwersten Chunk (FOCUS_AUFGABEN, kpIndex=0) und fehlen im fruehen Teil-Ergebnis, mit
+        // dem Early-Start gestartet wurde. Ohne diese Uebernahme bliebe quiz.druckpunkte fuer
+        // immer undefined (kein Cache-Fallback wie bei kernpunkten, s. persistPartialKernpunkte
+        // unten) und ein erst spaet vollstaendiger titel/arbeitgeber/arbeitsort wuerde nie in die
+        // Historie geschrieben (saveAttempt liest ausschliesslich aus dem live quiz-Objekt).
+        // Direkt die vorhandenen Normalisierer wiederverwenden statt normalizeQuizData: das spart
+        // eine unnoetige Zweit-Normalisierung von data.quiz.fragen (appendDeliveredFragen hat sie
+        // bereits kollisionsfrei per maxId+1 angehaengt) und vermeidet, dass ein fehlender Titel
+        // im letzten Chunk den bereits gesetzten Titel aus dem fruehen Teil-Ergebnis mit dem
+        // generischen Fallback ueberschreibt.
+        if (typeof data.quiz.titel === "string" && data.quiz.titel.trim()) quiz.titel = data.quiz.titel.trim();
+        if (typeof data.quiz.arbeitgeber === "string" && data.quiz.arbeitgeber.trim()) quiz.arbeitgeber = data.quiz.arbeitgeber.trim();
+        if (typeof data.quiz.arbeitsort === "string" && data.quiz.arbeitsort.trim()) quiz.arbeitsort = data.quiz.arbeitsort.trim();
+        const zeitNachlieferung = Math.round(Number(data.quiz.empfohlene_zeit_minuten));
+        if (Number.isFinite(zeitNachlieferung) && zeitNachlieferung > 0) quiz.empfohlene_zeit_minuten = zeitNachlieferung;
+        const kpNachlieferung = normalizeKernpunkte(data.quiz.kernpunkte, (job.ctx || {}).jobText || "");
+        if (kpNachlieferung) quiz.kernpunkte = kpNachlieferung;
+        const dpNachlieferung = normalizeDruckpunkte(data.quiz.druckpunkte);
+        if (dpNachlieferung) quiz.druckpunkte = dpNachlieferung;
+        // Komfort-Cache (Punkt 0) ebenfalls mit dem finalen Ergebnis nachziehen - derselbe Aufruf
+        // wie im regulaeren "ready"-Pfad (Zeile weiter unten), damit die Uebersicht auch fuer
+        // einen noch nicht abgeschlossenen Early-Start-Versuch aktuelle Kernpunkte zeigt.
+        persistPartialKernpunkte(job, data.quiz);
         // appendEignungsmodule/appendModulFrage haengen NUR an quiz.fragen an (im normalen
         // finalizeQuiz-Pfad unschaedlich, weil answers/revealed dort ERST DANACH ihre Laenge aus
         // quiz.fragen.length beziehen) - hier laufen answers/revealed aber schon laenger mit
@@ -11247,8 +11302,17 @@ function renderHome() {
   jobs.slice(0, HOME_MAX).forEach((job) => list.appendChild(buildHomeCard(job)));
   // Laeuft/wartet ein Hintergrund-Job, dessen Karte nach der Navigation wieder
   // herstellen (sie blendet den widerspruechlichen "Noch keine Stelle"-Hinweis aus).
+  // "started-partial" ausdruecklich ausgenommen (Codex-Review Blocker 1): fuer diesen Zustand
+  // gibt es KEINE Erstellungs-Karte - der Nutzer ist schon mitten im Test (startPartialJob hat
+  // die Karte per renderActiveJobCard(null) bereits ausgeblendet, BEVOR dieser renderHome()-
+  // Aufruf ueberhaupt lief, da renderActiveJobCard(null) intern selbst renderHome() aufruft).
+  // Wuerde hier trotzdem "pending" gerendert, kaeme die Spinner-Karte fuer einen Test zurueck,
+  // den der Nutzer laengst begonnen hat - und da alle drei Terminal-Zweige in pollActiveJob
+  // (done/error/403) fuer started-partial nur clearActiveJob() ohne renderActiveJobCard(null)
+  // rufen, wuerde danach kein weiterer renderHome()-Aufruf sie je wieder entfernen (aj ist dann
+  // null, der Vergleich unten trifft also gar nicht mehr zu).
   const aj = loadActiveJob();
-  if (aj) renderActiveJobCard(aj.status === "ready" ? "ready" : "pending");
+  if (aj && aj.status !== "started-partial") renderActiveJobCard(aj.status === "ready" ? "ready" : "pending");
   // Offenen Lerntest anbieten (blendet bei Bedarf den Leer-Hinweis aus).
   renderResumeCard();
   renderSrHomeCard(); // Spaced Repetition: "Faellige Uebungen"-Karte, wenn welche faellig sind
