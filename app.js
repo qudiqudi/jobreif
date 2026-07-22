@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.54.0";
+const APP_VERSION = "1.55.0";
 
 const CHANGELOG = [
+  {
+    version: "1.55.0",
+    date: "22.07.2026",
+    items: [
+      "Lernmodus: Sobald die ersten 5 Fragen deines Tests fertig sind, kannst du direkt loslegen, statt auf den kompletten Test zu warten – der Rest wird nachgeliefert, während du schon übst. Der Prüfungsmodus wartet weiterhin auf den fertigen Test (das Zeitlimit braucht die volle Fragenzahl von Anfang an).",
+    ],
+  },
   {
     version: "1.54.0",
     date: "22.07.2026",
@@ -2341,164 +2348,182 @@ function sanitizeImportedDruckpunkte(impJob) {
   };
 }
 
+const validFrageTyp = (t) => (t === "multiple_choice" || t === "offen" || t === "reihenfolge" || t === "zahlenreihe" || t === "sprachlogik" || t === "konzentration" || t === "figural" ? t : "offen");
+const validFrageDiff = (d) => (d === "leicht" || d === "mittel" || d === "schwer" ? d : "");
+
+// Normalisiert EINE rohe Modell-/Server-Frage auf die interne Fragenform (gleiche Logik wie
+// vormals inline in normalizeQuizData). Liefert null bei einer unbrauchbaren Frage (kein
+// Fragetext) - der Aufrufer entscheidet, ob er das Element ueberspringt oder abbricht. Die id
+// wird bewusst vom Aufrufer vorgegeben statt hier aus dem Array-Index abgeleitet: normalizeQuizData
+// nummeriert ein komplettes Quiz 1..n durch, appendDeliveredFragen (Early-Start-Nachlieferung)
+// vergibt dagegen fortlaufend ab dem bisherigen Maximum (maxId+1-Muster wie appendModulFrage) -
+// zwei unabhaengig ab 1 normalisierte Fragengruppen wuerden sonst kollidierende ids erzeugen und den
+// id-basierten Auswerte-Merge (runEvaluation) korrumpieren.
+function normalizeFrage(q, id) {
+  if (!q || typeof q !== "object") return null;
+  const frage = typeof q.frage === "string" ? q.frage.trim() : "";
+  if (!frage) return null; // ohne Fragetext nicht darstellbar
+  let typ = validFrageTyp(q.typ);
+  let optionen = Array.isArray(q.optionen) ? q.optionen.filter((o) => typeof o === "string") : [];
+  // Multiple-Choice ohne brauchbare Optionen ist nicht bedienbar -> offene Frage
+  if (mcLike(typ) && optionen.length < 2) { typ = "offen"; optionen = []; }
+  // korrekte_indizes defensiv normalisieren: nur gueltige Optionsindizes,
+  // ohne Duplikate. Additiv - alte Daten ohne das Feld bleiben [].
+  let korrekte_antwort = typeof q.korrekte_antwort === "string" ? q.korrekte_antwort : "";
+  let korrekte_indizes = [];
+  let erklaerungen = Array.isArray(q.erklaerungen) ? q.erklaerungen.filter((e) => typeof e === "string") : [];
+  if (mcLike(typ)) {
+    korrekte_indizes = Array.isArray(q.korrekte_indizes)
+      ? q.korrekte_indizes
+          .map((n) => Number(n))
+          .filter((n) => Number.isInteger(n) && n >= 0 && n < optionen.length)
+      : [];
+    korrekte_indizes = [...new Set(korrekte_indizes)];
+    // Konsistenz mit korrekte_antwort (defensiv, niemals werfen):
+    // - kein Index, aber korrekte_antwort matcht eine Option => Index heilen.
+    if (!korrekte_indizes.length && korrekte_antwort.trim()) {
+      const m = optionen.findIndex((o) => o.trim() === korrekte_antwort.trim());
+      if (m >= 0) korrekte_indizes = [m];
+    }
+    // - Sind gueltige Indizes vorhanden, sind SIE die einzige Wahrheit:
+    //   korrekte_antwort IMMER an den ersten richtigen Index angleichen. Sonst
+    //   koennte das Modell korrekte_indizes:[2] und korrekte_antwort=Option 1
+    //   liefern - dann markiert mcCorrectIndices() Option 2 als richtig,
+    //   waehrend Single-Choice-Render, Dedup und Eval-Payload Option 1 nutzen.
+    //   Ein solcher Widerspruch wuerde den Nutzer gegen eine andere Option
+    //   bewerten als angezeigt. Das Angleichen schliesst das aus.
+    if (korrekte_indizes.length && optionen[korrekte_indizes[0]]) {
+      korrekte_antwort = optionen[korrekte_indizes[0]];
+    }
+
+    // Antwortoptionen unsichtbar mischen (clientseitig, einmalig beim Laden):
+    // manche Modelle legen die richtige Option auffaellig oft auf denselben
+    // Platz (meist die erste). Optionen und die parallel laufenden erklaerungen
+    // gemeinsam permutieren und korrekte_indizes auf die neuen Positionen
+    // umrechnen, damit die Zuordnung exakt erhalten bleibt. Laeuft in
+    // normalizeQuizData (einmal pro Quiz, alle Provider); das Ergebnis wird
+    // gespeichert, sodass sich die Reihenfolge bei Re-Render/Review nicht aendert.
+    if (optionen.length >= 2) {
+      const perm = optionen.map((_, idx) => idx);
+      for (let p = perm.length - 1; p > 0; p--) {
+        const r = Math.floor(Math.random() * (p + 1));
+        [perm[p], perm[r]] = [perm[r], perm[p]];
+      }
+      // perm[neu] = alterIndex; inv[alterIndex] = neu.
+      const inv = [];
+      perm.forEach((alt, neu) => { inv[alt] = neu; });
+      optionen = perm.map((alt) => optionen[alt]);
+      if (erklaerungen.length) erklaerungen = perm.map((alt) => erklaerungen[alt] || "");
+      korrekte_indizes = korrekte_indizes
+        .map((alt) => inv[alt])
+        .filter((n) => Number.isInteger(n))
+        .sort((a, b) => a - b);
+      if (korrekte_indizes.length && optionen[korrekte_indizes[0]]) {
+        korrekte_antwort = optionen[korrekte_indizes[0]];
+      }
+    }
+  }
+
+  // Reihenfolge-Aufgabe: nur gueltig, wenn elemente + korrekte_reihenfolge
+  // eine echte Permutation bilden. Sonst auf offene Frage zurueckfallen
+  // (immer bedienbar). Felder werden unten IMMER mitgeschrieben (leer bei
+  // Nicht-Reihenfolge), damit das interne Quiz-Objekt formstabil ist.
+  let elemente = [];
+  let korrekte_reihenfolge = [];
+  if (typ === "reihenfolge") {
+    elemente = Array.isArray(q.elemente) ? q.elemente.filter((e) => typeof e === "string" && e.trim()) : [];
+    const roh = Array.isArray(q.korrekte_reihenfolge) ? q.korrekte_reihenfolge.map(Number) : [];
+    const istPermutation =
+      elemente.length >= 2 &&
+      roh.length === elemente.length &&
+      roh.every((x) => Number.isInteger(x) && x >= 0 && x < elemente.length) &&
+      new Set(roh).size === elemente.length;
+    if (istPermutation) {
+      korrekte_reihenfolge = roh;
+    } else {
+      typ = "offen";
+      elemente = [];
+      korrekte_reihenfolge = [];
+    }
+  }
+  // Zahlenreihe (Plan 3.7): nur als eigener Typ behalten, wenn die korrekte_antwort wirklich
+  // eine Zahl ist (lokal/deterministisch bewertbar). Sonst defensiv auf "offen" zuruecksetzen
+  // (Textarea-Render + LLM-Bewertung) - kein Absturz bei einer krummen Modellantwort.
+  if (typ === "zahlenreihe" && !Number.isFinite(parseZahl(korrekte_antwort))) {
+    typ = "offen";
+  }
+
+  // Konzentration (Plan 3.x): die zu durchsuchende Reihe (material) und das zu zaehlende
+  // Zeichen (zielzeichen). Der Client zaehlt die Vorkommen SELBST deterministisch nach
+  // (immun gegen Modell-Verzaehler) - korrekte_antwort des Modells wird dafuer ignoriert.
+  // Nur als eigener Typ behalten, wenn beide Felder brauchbar sind; sonst defensiv "offen".
+  let material = typeof q.material === "string" ? q.material.trim() : "";
+  let zielzeichen = typeof q.zielzeichen === "string" ? q.zielzeichen.trim() : "";
+  // Nur als konzentration behalten, wenn material da ist UND zielzeichen GENAU EIN Zeichen
+  // (Codepoint) ist - ein Mehrzeichen-Ziel waere gegen die space-getrennte material-Reihe
+  // unzaehlbar. Sonst defensiv auf "offen".
+  if (typ === "konzentration" && (!material || Array.from(zielzeichen).length !== 1)) {
+    typ = "offen";
+    material = "";
+    zielzeichen = "";
+  }
+
+  // Figural (Plan 3.x): die Figural-Aufgabe wird im Normalfall clientseitig in finalizeQuiz
+  // INJIZIERT (appendEignungsmodule), nicht vom Server geliefert. Dieser Zweig ist defensiv:
+  // taucht aus irgendeinem Grund ein typ='figural' in den Eingangsdaten auf (z. B. Import oder
+  // eine kuenftige Serverquelle), erzeugt der Client das konkrete, garantiert eindeutige Raetsel
+  // SELBST (LLMs liefern valide Matrizen unzuverlaessig) - statt eine leere Aufgabe zu rendern.
+  const figPz = typ === "figural" ? generateFiguralPuzzle(3) : null; // Tests bleiben 3x3
+
+  const quellen = Array.isArray(q.quellen)
+    ? q.quellen
+        .filter((s) => s && typeof s === "object")
+        .map((s) => ({
+          titel: typeof s.titel === "string" ? s.titel : "",
+          url: typeof s.url === "string" ? s.url : "",
+        }))
+        .filter((s) => s.titel || s.url)
+    : [];
+  return {
+    // Eigene, garantiert eindeutige id (Position) statt der modellgelieferten:
+    // Modelle vergeben ids nicht zwingend eindeutig (und bei Batch-Generierung
+    // wiederholen sie sich ueber Batches hinweg als 1..n). Da Auswertung und
+    // Anzeige Ergebnisse per id den Fragen zuordnen (runEvaluation-Merge,
+    // renderResult), wuerde eine doppelte id ein fremdes Ergebnis auf die
+    // falsche Frage schreiben - inkl. Historie/Prozent/Abzeichen. Eindeutige
+    // ids schliessen das aus (der lokale Batch-Pfad renummeriert ohnehin;
+    // appendDeliveredFragen haelt die id ueber den maxId+1-Aufrufer eindeutig).
+    id,
+    typ,
+    kategorie: typeof q.kategorie === "string" ? q.kategorie : "",
+    schwierigkeit: validFrageDiff(q.schwierigkeit),
+    frage: figPz ? figPz.frage : frage,
+    optionen: figPz ? figPz.optionen : optionen,
+    korrekte_antwort: figPz ? figPz.korrekte_antwort : korrekte_antwort,
+    korrekte_indizes: figPz ? figPz.korrekte_indizes : korrekte_indizes,
+    erklaerungen,
+    elemente,
+    korrekte_reihenfolge,
+    material,
+    zielzeichen,
+    // Figural: das clientgenerierte 3x3-Raster (letzte Zelle ist die Luecke). Sonst [].
+    matrix: figPz ? figPz.matrix : (Array.isArray(q.matrix) ? q.matrix : []),
+    lerninfo: figPz ? figPz.lerninfo : (typeof q.lerninfo === "string" ? q.lerninfo : ""),
+    quellen,
+  };
+}
+
+// Normalisiert ein komplettes Server-/Modell-Ergebnis zu einem internen Quiz-Objekt. Jede Frage
+// laeuft einzeln durch normalizeFrage (id = Position 1..n); unbrauchbare Fragen (kein Fragetext)
+// werden stillschweigend uebersprungen.
 function normalizeQuizData(result, jobText = "") {
   if (!result || typeof result !== "object" || !Array.isArray(result.fragen)) {
     throw new Error("Die Modellantwort hatte nicht die erwartete Form (keine Fragenliste).");
   }
-  const validTyp = (t) => (t === "multiple_choice" || t === "offen" || t === "reihenfolge" || t === "zahlenreihe" || t === "sprachlogik" || t === "konzentration" || t === "figural" ? t : "offen");
-  const validDiff = (d) => (d === "leicht" || d === "mittel" || d === "schwer" ? d : "");
   const fragen = [];
   result.fragen.forEach((q, i) => {
-    if (!q || typeof q !== "object") return;
-    const frage = typeof q.frage === "string" ? q.frage.trim() : "";
-    if (!frage) return; // ohne Fragetext nicht darstellbar
-    let typ = validTyp(q.typ);
-    let optionen = Array.isArray(q.optionen) ? q.optionen.filter((o) => typeof o === "string") : [];
-    // Multiple-Choice ohne brauchbare Optionen ist nicht bedienbar -> offene Frage
-    if (mcLike(typ) && optionen.length < 2) { typ = "offen"; optionen = []; }
-    // korrekte_indizes defensiv normalisieren: nur gueltige Optionsindizes,
-    // ohne Duplikate. Additiv - alte Daten ohne das Feld bleiben [].
-    let korrekte_antwort = typeof q.korrekte_antwort === "string" ? q.korrekte_antwort : "";
-    let korrekte_indizes = [];
-    let erklaerungen = Array.isArray(q.erklaerungen) ? q.erklaerungen.filter((e) => typeof e === "string") : [];
-    if (mcLike(typ)) {
-      korrekte_indizes = Array.isArray(q.korrekte_indizes)
-        ? q.korrekte_indizes
-            .map((n) => Number(n))
-            .filter((n) => Number.isInteger(n) && n >= 0 && n < optionen.length)
-        : [];
-      korrekte_indizes = [...new Set(korrekte_indizes)];
-      // Konsistenz mit korrekte_antwort (defensiv, niemals werfen):
-      // - kein Index, aber korrekte_antwort matcht eine Option => Index heilen.
-      if (!korrekte_indizes.length && korrekte_antwort.trim()) {
-        const m = optionen.findIndex((o) => o.trim() === korrekte_antwort.trim());
-        if (m >= 0) korrekte_indizes = [m];
-      }
-      // - Sind gueltige Indizes vorhanden, sind SIE die einzige Wahrheit:
-      //   korrekte_antwort IMMER an den ersten richtigen Index angleichen. Sonst
-      //   koennte das Modell korrekte_indizes:[2] und korrekte_antwort=Option 1
-      //   liefern - dann markiert mcCorrectIndices() Option 2 als richtig,
-      //   waehrend Single-Choice-Render, Dedup und Eval-Payload Option 1 nutzen.
-      //   Ein solcher Widerspruch wuerde den Nutzer gegen eine andere Option
-      //   bewerten als angezeigt. Das Angleichen schliesst das aus.
-      if (korrekte_indizes.length && optionen[korrekte_indizes[0]]) {
-        korrekte_antwort = optionen[korrekte_indizes[0]];
-      }
-
-      // Antwortoptionen unsichtbar mischen (clientseitig, einmalig beim Laden):
-      // manche Modelle legen die richtige Option auffaellig oft auf denselben
-      // Platz (meist die erste). Optionen und die parallel laufenden erklaerungen
-      // gemeinsam permutieren und korrekte_indizes auf die neuen Positionen
-      // umrechnen, damit die Zuordnung exakt erhalten bleibt. Laeuft in
-      // normalizeQuizData (einmal pro Quiz, alle Provider); das Ergebnis wird
-      // gespeichert, sodass sich die Reihenfolge bei Re-Render/Review nicht aendert.
-      if (optionen.length >= 2) {
-        const perm = optionen.map((_, idx) => idx);
-        for (let p = perm.length - 1; p > 0; p--) {
-          const r = Math.floor(Math.random() * (p + 1));
-          [perm[p], perm[r]] = [perm[r], perm[p]];
-        }
-        // perm[neu] = alterIndex; inv[alterIndex] = neu.
-        const inv = [];
-        perm.forEach((alt, neu) => { inv[alt] = neu; });
-        optionen = perm.map((alt) => optionen[alt]);
-        if (erklaerungen.length) erklaerungen = perm.map((alt) => erklaerungen[alt] || "");
-        korrekte_indizes = korrekte_indizes
-          .map((alt) => inv[alt])
-          .filter((n) => Number.isInteger(n))
-          .sort((a, b) => a - b);
-        if (korrekte_indizes.length && optionen[korrekte_indizes[0]]) {
-          korrekte_antwort = optionen[korrekte_indizes[0]];
-        }
-      }
-    }
-
-    // Reihenfolge-Aufgabe: nur gueltig, wenn elemente + korrekte_reihenfolge
-    // eine echte Permutation bilden. Sonst auf offene Frage zurueckfallen
-    // (immer bedienbar). Felder werden unten IMMER mitgeschrieben (leer bei
-    // Nicht-Reihenfolge), damit das interne Quiz-Objekt formstabil ist.
-    let elemente = [];
-    let korrekte_reihenfolge = [];
-    if (typ === "reihenfolge") {
-      elemente = Array.isArray(q.elemente) ? q.elemente.filter((e) => typeof e === "string" && e.trim()) : [];
-      const roh = Array.isArray(q.korrekte_reihenfolge) ? q.korrekte_reihenfolge.map(Number) : [];
-      const istPermutation =
-        elemente.length >= 2 &&
-        roh.length === elemente.length &&
-        roh.every((x) => Number.isInteger(x) && x >= 0 && x < elemente.length) &&
-        new Set(roh).size === elemente.length;
-      if (istPermutation) {
-        korrekte_reihenfolge = roh;
-      } else {
-        typ = "offen";
-        elemente = [];
-        korrekte_reihenfolge = [];
-      }
-    }
-    // Zahlenreihe (Plan 3.7): nur als eigener Typ behalten, wenn die korrekte_antwort wirklich
-    // eine Zahl ist (lokal/deterministisch bewertbar). Sonst defensiv auf "offen" zuruecksetzen
-    // (Textarea-Render + LLM-Bewertung) - kein Absturz bei einer krummen Modellantwort.
-    if (typ === "zahlenreihe" && !Number.isFinite(parseZahl(korrekte_antwort))) {
-      typ = "offen";
-    }
-
-    // Konzentration (Plan 3.x): die zu durchsuchende Reihe (material) und das zu zaehlende
-    // Zeichen (zielzeichen). Der Client zaehlt die Vorkommen SELBST deterministisch nach
-    // (immun gegen Modell-Verzaehler) - korrekte_antwort des Modells wird dafuer ignoriert.
-    // Nur als eigener Typ behalten, wenn beide Felder brauchbar sind; sonst defensiv "offen".
-    let material = typeof q.material === "string" ? q.material.trim() : "";
-    let zielzeichen = typeof q.zielzeichen === "string" ? q.zielzeichen.trim() : "";
-    // Nur als konzentration behalten, wenn material da ist UND zielzeichen GENAU EIN Zeichen
-    // (Codepoint) ist - ein Mehrzeichen-Ziel waere gegen die space-getrennte material-Reihe
-    // unzaehlbar. Sonst defensiv auf "offen".
-    if (typ === "konzentration" && (!material || Array.from(zielzeichen).length !== 1)) {
-      typ = "offen";
-      material = "";
-      zielzeichen = "";
-    }
-
-    // Figural (Plan 3.x): die Figural-Aufgabe wird im Normalfall clientseitig in finalizeQuiz
-    // INJIZIERT (appendEignungsmodule), nicht vom Server geliefert. Dieser Zweig ist defensiv:
-    // taucht aus irgendeinem Grund ein typ='figural' in den Eingangsdaten auf (z. B. Import oder
-    // eine kuenftige Serverquelle), erzeugt der Client das konkrete, garantiert eindeutige Raetsel
-    // SELBST (LLMs liefern valide Matrizen unzuverlaessig) - statt eine leere Aufgabe zu rendern.
-    const figPz = typ === "figural" ? generateFiguralPuzzle(3) : null; // Tests bleiben 3x3
-
-    const quellen = Array.isArray(q.quellen)
-      ? q.quellen
-          .filter((s) => s && typeof s === "object")
-          .map((s) => ({
-            titel: typeof s.titel === "string" ? s.titel : "",
-            url: typeof s.url === "string" ? s.url : "",
-          }))
-          .filter((s) => s.titel || s.url)
-      : [];
-    fragen.push({
-      // Eigene, garantiert eindeutige id (Position) statt der modellgelieferten:
-      // Modelle vergeben ids nicht zwingend eindeutig (und bei Batch-Generierung
-      // wiederholen sie sich ueber Batches hinweg als 1..n). Da Auswertung und
-      // Anzeige Ergebnisse per id den Fragen zuordnen (runEvaluation-Merge,
-      // renderResult), wuerde eine doppelte id ein fremdes Ergebnis auf die
-      // falsche Frage schreiben - inkl. Historie/Prozent/Abzeichen. Eindeutige
-      // 1..n-ids schliessen das aus. (Der lokale Batch-Pfad renummeriert ohnehin.)
-      id: i + 1,
-      typ,
-      kategorie: typeof q.kategorie === "string" ? q.kategorie : "",
-      schwierigkeit: validDiff(q.schwierigkeit),
-      frage: figPz ? figPz.frage : frage,
-      optionen: figPz ? figPz.optionen : optionen,
-      korrekte_antwort: figPz ? figPz.korrekte_antwort : korrekte_antwort,
-      korrekte_indizes: figPz ? figPz.korrekte_indizes : korrekte_indizes,
-      erklaerungen,
-      elemente,
-      korrekte_reihenfolge,
-      material,
-      zielzeichen,
-      // Figural: das clientgenerierte 3x3-Raster (letzte Zelle ist die Luecke). Sonst [].
-      matrix: figPz ? figPz.matrix : (Array.isArray(q.matrix) ? q.matrix : []),
-      lerninfo: figPz ? figPz.lerninfo : (typeof q.lerninfo === "string" ? q.lerninfo : ""),
-      quellen,
-    });
+    const f = normalizeFrage(q, i + 1);
+    if (f) fragen.push(f);
   });
   if (!fragen.length) {
     throw new Error("Die Modellantwort enthielt keine verwertbaren Fragen.");
@@ -6147,7 +6172,14 @@ async function generateQuiz(opts = {}) {
   // Auf das Tier-Maximum klemmen (Sicherheitsnetz, falls der Stepper nach einem
   // Stufenwechsel noch einen hoeheren Wert traegt): guenstig nie ueber NUM_MAX_GUENSTIG.
   const numQuestions = clampNum(Number($("num-questions").value) || 10);
-  mode = document.querySelector('input[name="mode"]:checked').value;
+  // Der gewuenschte Modus wird NUR lokal gefuehrt und als Kontext weitergereicht; das globale
+  // `mode` beschreibt weiterhin den gerade LAUFENDEN Fragebogen und wird erst von finalizeQuiz
+  // umgestellt (also wenn der neue Bogen wirklich beginnt). Frueher setzte schon der blosse Klick
+  // auf "Test erstellen" das globale `mode` - bei "Prüfung" hoerte damit ein noch laufender
+  // Lerntest sofort auf, sich zu sichern (saveLearnSession verweigert bei mode !== "lernen"),
+  // waehrend eine Nachlieferung im Hintergrund ihren consumedCount weiterschrieb: nach einem
+  // Reload fehlten genau diese Fragen dauerhaft.
+  const wantMode = document.querySelector('input[name="mode"]:checked').value;
   let difficulty = document.querySelector('input[name="difficulty"]:checked').value;
   // Vertiefungsbogen: ohne Themenfeld kein Aufruf (Schutz auch hier im Einstieg,
   // nicht nur im UI). Schwierigkeit wird bewusst auf "schwer" erzwungen.
@@ -6159,10 +6191,52 @@ async function generateQuiz(opts = {}) {
     difficulty = "schwer";
   }
 
+  // Laeuft gerade ein Early-Start-Teilversuch? Dann hier — an der EINEN Stelle, die jeder
+  // Generierungs-Einstieg passiert (hosted wie BYOK/lokal, Lern- wie Pruefungsmodus) — dagegen
+  // absichern. Die Bedingung haengt AUSSCHLIESSLICH am Zustand des laufenden Versuchs, nie am
+  // gerade gewaehlten Modus oder Anbieter: was hier geschuetzt wird, ist der bereits bezahlte,
+  // schon begonnene Bogen — ob der NEUE Test ein Lern- oder Pruefungstest werden soll, aendert
+  // daran nichts. Frueher stand dieser Guard verteilt in den einzelnen Zweigen und war an
+  // `mode === "lernen"` gekoppelt; ein Wechsel auf Pruefungsmodus + BYOK lief damit an allen
+  // Rueckfragen vorbei und finalizeQuiz vernichtete den laufenden Versuch kommentarlos
+  // (Codex-Review Runde 4, Blocker 1). Ein Guard je Einstieg ist strukturell fehleranfaellig —
+  // deshalb genau einer, und zwar VOR jeder Verzweigung.
+  //
+  // WICHTIG (Verifikations-Blocker, Runde 5): die eigentliche ZERSTOERUNG (clearLearnSession +
+  // renderActiveJobCard) darf hier NOCH NICHT passieren, obwohl die Rueckfrage schon hier steht.
+  // Nach der Rueckfrage folgen weiter unten noch fail-closed Abbrueche, die selbst per `return`
+  // aussteigen (Punkt-3-Rueckfrage bei offener Lernsession, Guthaben-/Stufen-Pruefung vor dem
+  // Dispatch). Wuerde hier sofort geloescht, verlöre ein Nutzer mit "Trotzdem neu erstellen" den
+  // bereits bezahlten, laufenden Teilversuch schon dann, wenn einer dieser spaeteren Checks noch
+  // abbricht (z. B. Guthaben reicht fuer die neu gewaehlte Stufe nicht) — und bekaeme dafuer gar
+  // keinen neuen Test, sondern nur eine Fehlermeldung. Die Bestaetigung bleibt hier (einmalig, vor
+  // jeder Verzweigung), die Zerstoerung wird auf `earlyStartReplaceBogen` verschoben und erst
+  // unmittelbar vor dem tatsaechlichen Dispatch ausgefuehrt (s. dort, nach der Guthaben-Pruefung).
+  //
+  // Gemerkt wird dabei nicht nur DASS, sondern WELCHER Versuch aufgegeben werden darf: bis zum
+  // Vollzug liegen mehrere await-Punkte, und der geraeteweit einzige Job-Zeiger kann sich in der
+  // Zwischenzeit aendern (zweiter Tab). Ein blosses "ja, ersetzen" wuerde dann auf einen ganz
+  // anderen, nie bestaetigten Teilversuch angewendet.
+  let earlyStartReplaceBogen = null;
+  if (earlyStartAttemptRunning()) {
+    const laufend = loadActiveJob(); // Identitaet des Versuchs, ueber den hier gefragt wird
+    const choice = await openConfirmReplaceReady("started-partial");
+    if (choice === "start") { returnToRunningAttempt(); return; } // zurueck zum laufenden Teil-Test
+    if (choice !== "replace") return; // abgebrochen: nichts verwerfen, laufender Versuch bleibt
+    // "replace": Nutzer hat zugestimmt, GENAU diesen Teil-Test aufzugeben — vollzogen wird das
+    // aber erst kurz vor dem Dispatch, siehe Kommentar oben.
+    if (laufend && laufend.jobId) earlyStartReplaceBogen = { jobId: laufend.jobId };
+  }
+
   // Punkt 3: einen offenen, noch nicht ausgewerteten Lerntest nicht stillschweigend
   // ueberschreiben. Nur im Lernmodus relevant; bei Bestaetigung wird die alte Sitzung
-  // verworfen und die Generierung mit gesetztem Flag erneut angestossen.
-  if (mode === "lernen" && !opts._replaceConfirmed && loadLearnSession()) {
+  // verworfen und die Generierung mit gesetztem Flag erneut angestossen. Ein Early-Start-
+  // Teilversuch ist hier bereits abgehandelt (oben): entweder wurde zurueckgekehrt/abgebrochen
+  // (return) oder der Nutzer hat dem Ersetzen bereits zugestimmt (earlyStartReplaceBogen) — in
+  // beiden Faellen darf diese generische Rueckfrage nicht noch einmal auf denselben Bogen fallen
+  // (sie wuerde sonst dieselbe Lernsession ein zweites Mal, und diesmal sofort, zur Bestaetigung
+  // vorlegen bzw. bei einem "Ja" verfruecht loeschen).
+  if (wantMode === "lernen" && !opts._replaceConfirmed && !earlyStartReplaceBogen && loadLearnSession()) {
     openConfirmReplaceLearn(() => {
       clearLearnSession();
       renderHome();
@@ -6170,6 +6244,14 @@ async function generateQuiz(opts = {}) {
     });
     return;
   }
+
+  // Der neue Modus wird ab hier ausschliesslich als lokale Konstante `wantMode` weitergereicht
+  // (in den Job-/Quiz-Kontext). Das globale `mode` bleibt bis zuletzt der Modus des GERADE
+  // laufenden Fragebogens und wird erst von finalizeQuiz umgestellt, also genau dann, wenn der
+  // neue Bogen wirklich beginnt. Das haelt zwei Dinge gleichzeitig heil: einen noch offenen
+  // Lerntest (saveLearnSession verweigert bei mode !== "lernen") und den Dispatch selbst, der
+  // sonst - waehrend eines der langen await-Punkte unten - einen zwischenzeitlich von aussen
+  // geaenderten globalen Modus mitschicken koennte.
 
   // "schwer" sind die Fragen, die im echten Auswahlverfahren am
   // wahrscheinlichsten drankommen; die Stufe steuert deren Anteil
@@ -6243,17 +6325,42 @@ async function generateQuiz(opts = {}) {
   // Hosted (Punkt 1): Generierung laeuft serverseitig als Hintergrund-Job. Der Client
   // startet den Job und pollt; der Test bricht NICHT ab, wenn der Tab in den Hintergrund
   // geht, das Handy sperrt oder man die Seite verlaesst und spaeter zurueckkehrt.
+  //
+  // WICHTIG (Verifikations-Blocker, Runde 5): der Vollzug eines bestaetigten Ersetzens
+  // (earlyStartReplaceBogen) passiert bewusst NICHT hier, sondern wird als Kontext an
+  // startHostedGeneration weitergereicht und dort erst NACH dem letzten dort noch moeglichen
+  // Abbruch vollzogen. startHostedGeneration hat naemlich SELBST noch zustimmungspflichtige
+  // Kostenpunkte, an denen der Nutzer die Generierung ablehnen kann, ohne dass ein neuer Test
+  // entsteht — die Preis-/Kontingent-Rueckfrage vor einer bezahlten Stufe (openOverflowConfirm)
+  // und dieselbe Rueckfrage nach einem Gratis-Overflow (quota-exhausted). Wuerde HIER schon
+  // zerstoert, verloere ein Nutzer den laufenden, bereits bezahlten Teilversuch schon dann, wenn
+  // er dort "Abbrechen" waehlt (identisches Muster zum urspruenglich gemeldeten Blocker, nur eine
+  // Ebene tiefer) — und bekaeme dafuer wieder keinen neuen Test. Fuer den BYOK/lokalen Zweig
+  // unten gibt es dagegen KEINEN weiteren zustimmungspflichtigen Abbruch mehr (kein serverseitiges
+  // Guthaben) — dort bleibt der Vollzug daher unmittelbar vor dem Dispatch (s. dort).
   if (isHosted) {
     return startHostedGeneration({
-      jobText, difficulty, mode, urlKey, jobUrl, vertiefungFelder,
+      jobText, difficulty, mode: wantMode, urlKey, jobUrl, vertiefungFelder,
       numQuestions: Number(numQuestions),
       vertiefung: vertiefung
         ? { felder: vertiefung.felder.map((f) => ({ label: f.label })), niveau: vertiefung.niveau || undefined }
         : undefined,
       profile: profilePayload(), // optionales, validiertes Bewerber-Profil (nur Hosted)
       gespraechsstufe: gespraechsstufePayload(), // optionale Interviewrunde (nur Hosted)
+      earlyStartReplaceBogen, // s. Kommentar oben: Vollzug liegt in startHostedGeneration
     });
   }
+
+  // (Die Bestaetigungs-Rueckfrage fuer einen laufenden Early-Start-Teilversuch liegt bewusst NICHT
+  // hier, sondern einmalig ganz oben in dieser Funktion — vor der Verzweigung nach Anbieter/Modus.
+  // Ihr Vollzug liegt im BYOK/lokalen Zweig ebenfalls nicht hier, sondern erst nach der fertigen
+  // Generierung, unmittelbar vor finalizeQuiz — der Dispatch unten ist NICHT der Punkt ohne
+  // Wiederkehr: er kann noch ganz regulaer scheitern (BYOK-Schluessel abgelehnt, Netzfehler,
+  // lokales Modell nicht erreichbar) und der Nutzer kann eine lokale Generierung sogar selbst
+  // per "Abbrechen" stoppen — generateLocalBatches wirft dann, wenn noch keine Frage fertig ist.
+  // In all diesen Faellen faellt der Ablauf in den catch-Zweig, es entsteht KEIN neuer Test, und
+  // ein hier schon vollzogenes Ersetzen haette den bereits bezahlten, laufenden Teilversuch fuer
+  // nichts vernichtet — dieselbe Fehlerklasse wie im Hosted-Zweig, s. Kommentar oben.)
 
   actionRunning = true;
   showLoading("Fragenkatalog wird erstellt...");
@@ -6404,9 +6511,19 @@ async function generateQuiz(opts = {}) {
       }, { hosted: { action: "generate-quiz", payload: hostedPayload } });
       result = out.data; genCost = out.cost; genTokens = out.tokens;
     }
+    // Ab hier steht der neue Fragebogen fertig im Speicher — das ist im BYOK/lokalen Zweig der
+    // Punkt ohne Wiederkehr (jeder Abbruch davor ist oben per throw in den catch-Zweig gegangen
+    // und hat den laufenden Early-Start-Teilversuch bewusst unangetastet gelassen). Erst jetzt
+    // wird ein zuvor bestaetigtes Ersetzen vollzogen — gleiche Reihenfolge wie im Hosted-Zweig
+    // (dort nach data.jobId). clearLearnSession raeumt den zugehoerigen "started-partial"-Zeiger
+    // samt Nachlieferungs-Poll mit ab (s. dort), bevor finalizeQuiz den neuen Bogen sichert.
+    if (earlyStartReplaceBogen) {
+      clearLearnSession(earlyStartReplaceBogen);
+      renderActiveJobCard(null);
+    }
     // Quiz-Session aus dem Ergebnis aufbauen (gemeinsam mit dem Hosted-Async-Pfad).
     finalizeQuiz(result, {
-      jobText, difficulty, urlKey, jobUrl, vertiefungFelder, mode,
+      jobText, difficulty, urlKey, jobUrl, vertiefungFelder, mode: wantMode,
       genCost, genTokens, isLocal, localAborted, total,
       provider: settings.provider || "hosted",
       // Dieser Pfad ist immer NICHT-hosted (hosted kehrt vorher ueber startHostedGeneration
@@ -6464,7 +6581,10 @@ function finalizeQuiz(result, ctx) {
   // Standardisierte Eignungs-/Uebungsmodul-Aufgaben (Figural, Zahlenreihe, Konzentration)
   // clientseitig ON-TOP an Assessment-Tests anhaengen (nicht im Vertiefungsbogen). Muss VOR der
   // answers/revealed-Initialisierung stehen, damit deren Laengen die Zusatzfragen einschliessen.
-  appendEignungsmodule(quiz);
+  // Early-Start (ctx.deferModules): der Job liefert noch weitere stellenbezogene Fragen nach -
+  // die Module wuerden mitten im Bogen landen statt ganz am Ende. pollActiveJob haengt sie nach
+  // der LETZTEN Nachlieferung selbst an (appendEignungsmodule ist idempotent/Duplikat-geschuetzt).
+  if (!ctx.deferModules) appendEignungsmodule(quiz);
   quiz.genCost = ctx.genCost ?? null;
   quiz.genTokens = ctx.genTokens ?? null;
   // Generierungs-Provenienz festhalten (Anbieter/Tier/Modell, mit dem dieses
@@ -6511,12 +6631,22 @@ function finalizeQuiz(result, ctx) {
   // Neuer Lerntest: als fortsetzbar markieren und sofort sichern; ein evtl. zuvor
   // offener Lerntest wird durch den neuen ersetzt. Pruefungsmodus ist nicht fortsetzbar.
   if (mode === "lernen") { learnSessionActive = true; saveLearnSession(); }
-  else { clearLearnSession(); }
+  // Pruefungsmodus ist nicht fortsetzbar: die gesicherte Sitzung faellt weg. Ein Early-Start-
+  // Zeiger wird hier ausdruecklich NICHT freigegeben (Argument null): der neue Bogen steht schon,
+  // der Schutz eines noch laufenden Teilversuchs ist im Generierungs-Einstieg abgehandelt — und
+  // die gesicherte Sitzung kann zu einem ganz anderen Versuch (zweiter Tab) gehoeren.
+  else { clearLearnSession(null); }
   renderQuestion();
   showView("view-quiz");
 }
 
 /* ---------- Hosted-Hintergrund-Generierung (Punkt 1) ---------- */
+
+// Early-Start (Lernmodus): ab wie vielen bereits gelieferten Fragen der Nutzer schon loslegen
+// kann, waehrend der Rest im Hintergrund nachgeliefert wird. Bewusst konservativ (5 von ueblich
+// 10-20 bestellten) - genug fuer einen sinnvollen Einstieg, ohne dass eine sehr kleine erste
+// Teillieferung schon einen kompletten Testeindruck vortaeuscht.
+const EARLY_START_MIN = 5;
 
 const ACTIVE_JOB_KEY = "bewerbungstool.activeJob";
 // In-Memory-Spiegel: faellt localStorage aus (voll/blockiert), geht der einzige Zeiger
@@ -6541,6 +6671,19 @@ function scheduleJobPoll(delayMs) {
   clearTimeout(_jobPollTimer);
   _jobPollTimer = setTimeout(pollActiveJob, delayMs);
 }
+
+// Early-Start (Codex-Review Runde 3): jobId eines started-partial-Jobs, dessen Nachlieferung an
+// einem 401 (Login abgelaufen) haengen geblieben ist. Ein erneutes Anmelden ist im laufenden Tab
+// NICHT ohne Reload moeglich (die Magic-Link-Verifizierung laeuft ausschliesslich beim Seitenstart,
+// siehe consumeAuthRedirect). Die Poll-Kette bleibt also in diesem Tab dauerhaft tot; ohne
+// dieses Signal wuerde isEarlyStartDeliveryPending() unveraendert "true" bleiben und "Weiter" auf
+// der letzten geladenen Frage fuer immer blockieren, obwohl nie wieder etwas nachkommt (Verifikations-
+// Befund). Der Zeiger selbst bleibt UNVERAENDERT ("Zeiger behalten", Spec Punkt 4) - nur dieses
+// In-Memory-Signal schaltet die lokale Warteanzeige ab. jobId-gescoped wie die Progress-Merker.
+// Nach einem Reload (mit erneuertem Login) ist das Signal weg und die Nachlieferung nimmt beim
+// Fortsetzen der Sitzung ganz regulaer wieder auf (resumePartialDelivery) - der Zeiger ueberlebt
+// den Reload seit dem Session-Abgleich in resumeActiveJob.
+let _earlyStartAuthPausedJobId = null;
 
 // Sendet den Generierungs-Request an /api/jobs. payWithCredits=true nur fuer den bestaetigten
 // Gratis-Overflow (Gratis-Kontingent aufgebraucht). Der Body wird je Aufruf frisch gebaut und
@@ -6578,7 +6721,27 @@ async function startHostedGeneration(ctx) {
   if (hostedNeedsLogin()) { savePendingJobInput(); promptHostedLogin(); return; } // Backstop: Anmeldung Pflicht
   // Nur EIN Test in Erstellung zugleich (deckt sich mit dem serverseitigen exclusive-Gate).
   const existing = loadActiveJob();
-  if (existing && existing.status !== "ready") {
+  // Early-Start (Punkt 1): ein "started-partial"-Zeiger ist ein laufender, vom Nutzer bereits
+  // begonnener Teil-Test. Die Rueckfrage dazu (mit dem "Zum laufenden Test zurueck"-Ausgang) liegt
+  // an EINER Stelle in generateQuiz, vor jeder Verzweigung. Der Zeiger ist zu diesem Zeitpunkt
+  // ABSICHTLICH noch nicht geloescht (Verifikations-Blocker Runde 5: der Vollzug des bestaetigten
+  // Ersetzens ist auf ctx.earlyStartReplaceBogen verschoben, s. dort und der Kommentar am
+  // Aufrufer in generateQuiz) — der eigentliche Backstop unten muss diesen legitimen, bereits
+  // bestaetigten Fall daher durchlassen statt ihn (wieder) abzulehnen.
+  // Der Bypass gilt nur fuer GENAU den Versuch, ueber den auch gefragt wurde (jobId-Vergleich) —
+  // ein inzwischen anderer "started-partial"-Zeiger (zweiter Tab) faellt zurueck auf den Backstop
+  // und wird abgelehnt statt still verdraengt.
+  const bypassStartedPartialGuard = !!(existing && existing.status === "started-partial"
+    && ctx.earlyStartReplaceBogen && existing.jobId === ctx.earlyStartReplaceBogen.jobId);
+  // Ohne Bestaetigung bleibt dieser Zweig ein STUMPFER Backstop: sollte je ein neuer Einstieg
+  // direkt hier landen, wird abgebrochen statt still ueberschrieben. Ein zweiter, eigenstaendig
+  // gepflegter Dialog an dieser Stelle war genau die Quelle der Divergenz, aus der Blocker 1
+  // (Runde 4) entstand.
+  if (existing && existing.status === "started-partial" && !bypassStartedPartialGuard) {
+    showError("Du hast gerade einen Test offen, der noch Fragen nachlädt. Kehre erst dorthin zurück oder verwirf ihn, bevor du einen neuen Test erstellst.");
+    return;
+  }
+  if (existing && existing.status !== "ready" && !bypassStartedPartialGuard) {
     showError("Es wird gerade schon ein Test erstellt. Bitte warte, bis er fertig ist.");
     return;
   }
@@ -6588,7 +6751,7 @@ async function startHostedGeneration(ctx) {
   // verbucht. Deshalb ausdruecklich rueckfragen und den fertigen Test als Standardweg anbieten,
   // statt ihn kommentarlos zu verwerfen (CLAUDE.md: kein unbeabsichtigter Kostenverlust).
   if (existing && existing.status === "ready") {
-    const choice = await openConfirmReplaceReady();
+    const choice = await openConfirmReplaceReady("ready");
     if (choice === "start") { startReadyJob(); return; } // fertigen Test doch starten
     if (choice !== "replace") return; // abgebrochen: nichts verwerfen
   }
@@ -6660,6 +6823,13 @@ async function startHostedGeneration(ctx) {
     }
     const data = await res.json();
     if (!data.jobId) throw new Error("Der Test konnte nicht gestartet werden. Bitte erneut versuchen.");
+    // Ab hier ist der neue Test server-seitig sicher angelegt — jeder Abbruch VOR dieser Zeile
+    // (Preis unbekannt, Kosten-/Overflow-Rueckfrage abgelehnt, 402/401/sonstiger Fehlerstatus)
+    // hat den laufenden Early-Start-Teilversuch bewusst unangetastet gelassen. Erst jetzt (Verifi-
+    // kations-Blocker Runde 5) wird ein bereits bestaetigtes Ersetzen vollzogen: den alten
+    // "started-partial"-Zeiger ueberschreibt saveActiveJob() gleich unten mit dem neuen Job: die
+    // noch offene Lernsession (der "Bogen") raeumt clearLearnSession() hier explizit ab.
+    if (ctx.earlyStartReplaceBogen) clearLearnSession(ctx.earlyStartReplaceBogen);
     // Nur den fuer die Fertigstellung noetigen Kontext sichern (keine Prompts/Tokens).
     const persisted = saveActiveJob({
       jobId: data.jobId,
@@ -6707,8 +6877,47 @@ async function startHostedGeneration(ctx) {
   }
 }
 
+// Kernpunkte aus einem Server-Teilergebnis (Opt-in ?include=fragen, VOR Fertigstellung) idempotent
+// in den Komfort-Cache schreiben - dieselbe Logik/Garantien wie im "done"-Zweig, nur schon frueher
+// nutzbar (Punkt 0). Fehler defensiv verschluckt: reines Komfort-Update, saveAttempt/persistKern-
+// punkteForActiveJob (finalizeQuiz) schreiben die Kernpunkte beim Abschluss ohnehin erneut.
+function persistPartialKernpunkte(job, partialQuiz) {
+  try {
+    const c = job.ctx || {};
+    const kpNorm = normalizeKernpunkte(partialQuiz && partialQuiz.kernpunkte, c.jobText);
+    if (kpNorm) {
+      persistKernpunkteForActiveJob({ kernpunkte: kpNorm, jobText: c.jobText, jobUrl: c.jobUrl, vertiefungFelder: c.vertiefungFelder });
+    }
+  } catch { /* reines Komfort-Update: Fehler ignorieren */ }
+}
+
+// Nicht-blockierender Hinweis, wenn die Nachlieferung nach einem Early-Start endgueltig abbricht
+// (404/error/kaputtes "done" auf einem Folge-Poll). Bewusst EINE einheitliche Formulierung
+// unabhaengig von der genauen Serverursache: die bereits gespielten Fragen bleiben in jedem Fall
+// nutzbar, und die genaue Fehlerursache ist fuer den Nutzer an dieser Stelle nicht mehr
+// handlungsrelevant (anders als beim Fehlschlagen einer kompletten Neu-Erstellung, s. jobErrorMessage).
+function showPartialDeliveryStopped() { endPartialDelivery(true); }
+
+// Beendet die Nachlieferung SICHTBAR. Jeder Terminal-/Pausenpfad (done/error/404/403/401) laeuft
+// hierdurch, damit das Aufraeumen der Oberflaeche nicht an jeder Stelle einzeln nachgetragen
+// werden muss: afterDeliveryChange() zieht Zaehler/Balken/Button nach und loest den persistenten
+// "wird noch geladen"-Hinweis auf. Der Zeiger muss VORHER aufgeloest bzw. pausiert sein - nur dann
+// meldet isEarlyStartDeliveryPending() korrekt "nichts mehr unterwegs".
+// mitHinweis=false ist der stille Fall (403, Kontowechsel): kein Nutzerfehler, kein Banner - aber
+// aufraeumen muss die Oberflaeche sich trotzdem.
+function endPartialDelivery(mitHinweis) {
+  const n = quiz && Array.isArray(quiz.fragen) ? quiz.fragen.length : 0;
+  afterDeliveryChange(0);
+  if (!mitHinweis) return;
+  showError(`Dein Test bleibt bei ${n} Fragen – weitere Fragen konnten nicht mehr nachgeliefert werden. Du kannst mit den vorhandenen Fragen weitermachen.`);
+}
+
 async function pollActiveJob() {
   const job = loadActiveJob();
+  // "started-partial" laeuft NICHT mit auf "ready" zu (status bleibt "started-partial" bis das
+  // letzte Delta da ist) - fertig heisst hier "wartet auf Loslegen", das gilt fuer den Early-
+  // Start-Nutzer nicht mehr (er ist schon mitten im Test). Der Poll ist view-unabhaengig (globaler
+  // _jobPollTimer) und laeuft daher auch waehrend view-quiz normal weiter (Punkt 3).
   if (!job || job.status === "ready") return; // fertig: wartet auf "Loslegen"
 
   // WICHTIG: der Client raeumt einen Job nie nach lokal verstrichener Zeit weg — das
@@ -6717,31 +6926,98 @@ async function pollActiveJob() {
   // Endpunkt markiert einen zu lange "pending" Job selbst terminal (status "timeout")
   // und gibt die Reserve frei. Der Client wartet auf genau diese Server-Aussage (bzw.
   // 404, wenn der Job nicht mehr existiert) und pollt bei Netzfehlern nur weiter.
+  //
+  // Opt-in ?include=fragen (Punkt 0, einziger Nutzer dieses Backend-Opt-ins): NUR anhaengen, wenn
+  // der Poll tatsaechlich etwas mit dem Fragen-Payload anfangen kann - sonst bleibt der Payload
+  // schlank wie im Basis-PR (Fortschritt). (a) Lernmodus + noch "pending": Early-Start-Kandidat,
+  // sobald genug Fragen da sind. (b) "started-partial": Nachlieferung laeuft, jede Antwort kann
+  // neue Fragen enthalten. Gegen ein Alt-Backend wird der Param ignoriert -> kein partial.quiz ->
+  // der gesamte Early-Start-Pfad bleibt tot (identisch zum Verhalten ohne diesen PR).
+  const jobCtx = job.ctx || {};
+  const wantsFragen = (jobCtx.mode === "lernen" && job.status === "pending") || job.status === "started-partial";
+  const url = hostedBase() + "/api/jobs/" + encodeURIComponent(job.jobId) + (wantsFragen ? "?include=fragen" : "");
   let r;
   try {
-    r = await fetch(hostedBase() + "/api/jobs/" + encodeURIComponent(job.jobId), { headers: authHeaders() });
+    r = await fetch(url, { headers: authHeaders() });
   } catch {
     scheduleJobPoll(5000); // Netzfehler/Offline: spaeter erneut versuchen, Job behalten
     return;
   }
   if (r.status === 401) {
-    // Sitzung waehrend der Erstellung abgelaufen: Job NICHT verwerfen (laeuft serverseitig
-    // weiter), zur Anmeldung fuehren, Poll pausieren. Nach erneutem Login laedt die Seite
-    // neu und resumeActiveJob nimmt das Pollen wieder auf.
+    // Codex-Review Blocker 4: handleHostedUnauthorized() fuehrt IMMER per showView("view-login")
+    // zur Anmeldung - fuer "started-partial" reisst das den Nutzer mitten aus einem laufenden,
+    // schon beantworteten Fragebogen (view-quiz), ohne Vorwarnung, und eine gerade getippte, noch
+    // nicht per saveLearnSessionDebounced (800 ms) gesicherte Antwort ginge dabei verloren. Spec
+    // Punkt 4 verlangt fuer diesen Fall ausdruecklich nur "Zeiger behalten, Nachlieferung pausiert
+    // bis Re-Login" - keinen erzwungenen View-Wechsel. Daher fuer "started-partial" NICHT
+    // handleHostedUnauthorized() (das navigiert unbedingt), sondern nur den Token verwerfen -
+    // dieselbe Wirkung minus Navigation, analog zum bestehenden 401-Handling in refreshBalance
+    // (Zeile ~4560: clearAuthToken() ohne View-Wechsel). Der Fragebogen bleibt sichtbar und
+    // bedienbar; eine spaetere Hosted-Aktion (z. B. "Neuer Test") fuehrt ganz regulaer wieder zum
+    // Login-Screen, sobald der fehlende Token dort erneut ansteht.
+    if (job.status === "started-partial") {
+      clearAuthToken();
+      // Codex-Review Runde 3: OHNE dieses Signal bliebe isEarlyStartDeliveryPending() dauerhaft
+      // "true" - kein weiterer Poll wird geplant (kein Token mehr fuer einen erneuten Versuch),
+      // und im laufenden Tab gibt es ohne Reload keinen Weg zurueck zu einer gueltigen Anmeldung.
+      // "Weiter" wuerde auf der letzten geladenen Frage fuer immer auf eine Nachlieferung warten,
+      // die nie mehr kommt. Der Zeiger selbst bleibt unangetastet (Spec: "Zeiger behalten") - nur
+      // die lokale Warteanzeige wird freigegeben, damit die vorhandenen Fragen auswertbar bleiben.
+      _earlyStartAuthPausedJobId = job.jobId;
+      showPartialDeliveryStopped();
+      return;
+    }
+    // Sitzung waehrend der Erstellung abgelaufen (regulaerer "pending"-Fall): Job NICHT verwerfen
+    // (laeuft serverseitig weiter), zur Anmeldung fuehren, Poll pausieren. Nach erneutem Login
+    // laedt die Seite neu und resumeActiveJob nimmt das Pollen wieder auf.
     handleHostedUnauthorized();
     return;
   }
+  // Staleness-Gate (Codex-Review): waehrend des Requests kann der Nutzer den Zeiger veraendert
+  // haben - Early-Start-Klick (pending -> started-partial), Ersetzen ueber den Doppel-Start-
+  // Dialog (geloescht/durch einen neuen Job ersetzt) oder ein Logout. Nur bei EXAKTEM Treffer
+  // (gleiche jobId UND gleicher Status wie beim Start dieses Polls) darf die Antwort unten
+  // ueberhaupt etwas veraendern - sonst koennte z. B. ein spaet eintreffendes "done" fuer den
+  // ALTEN "pending"-Zustand den frisch gesetzten "started-partial"-Zeiger (inkl. consumedCount)
+  // klanglos mit einem veralteten "ready"-Eintrag ueberschreiben, waehrend der Nutzer bereits
+  // mitten im Test sitzt. Bei Nicht-Treffer wird NUR neu gepollt (der Timer dieses Laufs ist
+  // verbraucht) - der naechste Poll erfasst den jetzt aktuellen Zustand ohnehin frisch, auch ein
+  // "done" bleibt beim naechsten Abfragen unveraendert abrufbar (kein Datenverlust, nur Verzoegerung).
+  {
+    const stillActive = loadActiveJob();
+    if (!stillActive || stillActive.jobId !== job.jobId || stillActive.status !== job.status) {
+      scheduleJobPoll(3000);
+      return;
+    }
+  }
   if (r.status === 403) {
     // Der gemerkte Job gehoert einem anderen Konto (z. B. Kontowechsel auf diesem Geraet):
-    // lokalen Zeiger verwerfen, nicht weiter pollen (Job-Isolation, Codex-Review).
+    // lokalen Zeiger verwerfen, nicht weiter pollen (Job-Isolation, Codex-Review). Bei
+    // "started-partial" bewusst OHNE Fehlerbanner (wie bisher): kein Nutzerfehler, der schon
+    // gespielte Teil des Tests bleibt unangetastet und einfach ohne weitere Nachlieferung stehen.
     clearActiveJob();
-    renderActiveJobCard(null);
+    if (job.status === "started-partial") {
+      endPartialDelivery(false); // still: kein Banner, aber Fragebogen/Warte-Hinweis aufraeumen
+    } else {
+      renderActiveJobCard(null); // fuer started-partial gibt es keine Karte
+    }
     return;
   }
   if (r.status === 404) {
     clearActiveJob();
-    renderActiveJobCard(null);
-    showError("Der erstellte Test ist nicht mehr verfügbar. Bitte starte ihn neu.");
+    if (job.status === "started-partial") {
+      // Bereits gespielte Fragen/Antworten bleiben nutzbar - nur die Nachlieferung endet hier
+      // (deckt auch den Fall ab, dass der Job serverseitig terminal wird und verschwindet,
+      // obwohl lokal schon Teilfragen beantwortet wurden).
+      showPartialDeliveryStopped();
+      // Ein verschwundener Job kann serverseitig erstattet worden sein - Guthaben nachziehen
+      // (gleicher Gedanke wie im error-Zweig unten). Deckt insbesondere den Fall ab, in dem die
+      // Nachlieferung zwischenzeitlich pausiert hat und der Job in der Aufbewahrung ablief.
+      refreshCreditsAfterJob(job.ctx);
+    } else {
+      renderActiveJobCard(null);
+      showError("Der erstellte Test ist nicht mehr verfügbar. Bitte starte ihn neu.");
+    }
     return;
   }
   if (!r.ok) {
@@ -6751,23 +7027,111 @@ async function pollActiveJob() {
   }
   let data;
   try { data = await r.json(); } catch { scheduleJobPoll(5000); return; }
+  // Zweite Staleness-Pruefung NACH dem Body-Read (weiterer await-Punkt, gleiches Muster wie an
+  // anderen Hosted-Call-Stellen): der Zeiger kann sich auch waehrend r.json() noch geaendert haben.
+  {
+    const stillActive = loadActiveJob();
+    if (!stillActive || stillActive.jobId !== job.jobId || stillActive.status !== job.status) {
+      scheduleJobPoll(3000);
+      return;
+    }
+  }
 
   if (data.status === "done" && data.quiz) {
+    if (job.status === "started-partial") {
+      // Early-Start: kein "ready"-Zwischenstopp mehr noetig - das Quiz laeuft schon lokal
+      // (Nutzer beantwortet mitten drin, Grundregel: NIE den laufenden lokalen Quiz-State
+      // zerstoeren). Letztes Delta anhaengen, DANN die beim Start aufgeschobenen Eignungsmodule
+      // ganz ans Ende haengen (appendEignungsmodule ist Duplikat-geschuetzt, falls ein Doppel-
+      // Poll hier zweimal ankaeme), Zeiger aufloesen.
+      //
+      // Guard (Codex-Review Runde 3): appendDeliveredFragen hat selbst schon einen jobId-Abgleich
+      // (quiz.jobId !== job.jobId -> return) und bricht z. B. ab, wenn quiz inzwischen null ist
+      // ("Neuer Test") oder gerade ein VOELLIG ANDERER Versuch aus der Historie geoeffnet wurde.
+      // appendEignungsmodule/die Auffuell-Schleifen unten kennen diesen Schutz nicht: ohne ihn
+      // wuerde quiz.fragen.length entweder auf null crashen (unhandled rejection in der Poll-
+      // Kette) oder ein FREMDES Quiz (falscher jobId) veraendert werden. Nur bei exaktem Treffer
+      // weiterlaufen - sonst bleibt der lokale Zustand unangetastet (die restlichen, bereits
+      // bezahlten Fragen dieses Jobs sind dann nicht mehr zustellbar; bewusst akzeptiert - es gibt
+      // ausserhalb des laufenden lokalen Zustands keinen zweiten Ablagenort fuer ein volles
+      // Server-Quiz. Der haeufige Fall "Bogen gerade nicht geladen" tritt hier gar nicht mehr auf:
+      // waehrend keine passende Sitzung offen ist, wird ueberhaupt nicht gepollt, s.
+      // resumeActiveJob/resumePartialDelivery).
+      const ownsQuiz = quiz && Array.isArray(quiz.fragen) && quiz.jobId === job.jobId;
+      if (!ownsQuiz) {
+        // Der Empfaenger ist gerade nicht geladen (der Nutzer hat z. B. einen Versuch aus der
+        // Historie geoeffnet oder den Beispieltest gestartet - beides ersetzt das geladene Quiz,
+        // ohne den gesicherten Bogen anzutasten). Das Ergebnis hier NICHT verbrauchen und den
+        // Zeiger NICHT aufloesen: das wuerde die restlichen, bereits bezahlten Fragen endgueltig
+        // verbrennen, obwohl der Bogen als Lernsession weiterlebt. Stattdessen pausieren - genau
+        // wie nach einem Reload (resumeActiveJob). Sobald der Nutzer die Sitzung fortsetzt, holt
+        // resumePartialDelivery() das fertige Ergebnis in einem Rutsch nach. Bleibt der Bogen
+        // dauerhaft weg, raeumt earlyStartAttemptRunning()/resumeActiveJob den Zeiger ab.
+        return;
+      }
+      const fragenVorher = quiz.fragen.length;
+      {
+        appendDeliveredFragen(data.quiz.fragen);
+        // Codex-Review Blocker 2: appendDeliveredFragen uebernimmt NUR data.quiz.fragen - die
+        // uebrigen von normalizeQuizData ausgewerteten Top-Level-Felder (kernpunkte, druckpunkte,
+        // titel, arbeitgeber, arbeitsort, empfohlene_zeit_minuten) koennen im fruehen Teil-Ergebnis,
+        // mit dem Early-Start gestartet wurde, noch fehlen und erst mit dem fertigen Server-Ergebnis
+        // nachkommen. Ohne diese Uebernahme bliebe quiz.druckpunkte fuer immer undefined (kein
+        // Cache-Fallback wie bei kernpunkten, s. persistPartialKernpunkte unten) und ein erst spaet
+        // vollstaendiger titel/arbeitgeber/arbeitsort wuerde nie in die Historie geschrieben
+        // (saveAttempt liest ausschliesslich aus dem live quiz-Objekt).
+        // Direkt die vorhandenen Normalisierer wiederverwenden statt normalizeQuizData: das spart
+        // eine unnoetige Zweit-Normalisierung von data.quiz.fragen (appendDeliveredFragen hat sie
+        // bereits kollisionsfrei per maxId+1 angehaengt) und vermeidet, dass ein im fertigen
+        // Ergebnis fehlender Titel den bereits gesetzten Titel aus dem fruehen Teil-Ergebnis mit
+        // dem generischen Fallback ueberschreibt.
+        if (typeof data.quiz.titel === "string" && data.quiz.titel.trim()) quiz.titel = data.quiz.titel.trim();
+        if (typeof data.quiz.arbeitgeber === "string" && data.quiz.arbeitgeber.trim()) quiz.arbeitgeber = data.quiz.arbeitgeber.trim();
+        if (typeof data.quiz.arbeitsort === "string" && data.quiz.arbeitsort.trim()) quiz.arbeitsort = data.quiz.arbeitsort.trim();
+        const zeitNachlieferung = Math.round(Number(data.quiz.empfohlene_zeit_minuten));
+        if (Number.isFinite(zeitNachlieferung) && zeitNachlieferung > 0) quiz.empfohlene_zeit_minuten = zeitNachlieferung;
+        const kpNachlieferung = normalizeKernpunkte(data.quiz.kernpunkte, (job.ctx || {}).jobText || "");
+        if (kpNachlieferung) quiz.kernpunkte = kpNachlieferung;
+        const dpNachlieferung = normalizeDruckpunkte(data.quiz.druckpunkte);
+        if (dpNachlieferung) quiz.druckpunkte = dpNachlieferung;
+        // Komfort-Cache (Punkt 0) ebenfalls mit dem finalen Ergebnis nachziehen - derselbe Aufruf
+        // wie im regulaeren "ready"-Pfad (Zeile weiter unten), damit die Uebersicht auch fuer
+        // einen noch nicht abgeschlossenen Early-Start-Versuch aktuelle Kernpunkte zeigt.
+        persistPartialKernpunkte(job, data.quiz);
+        // appendEignungsmodule/appendModulFrage haengen NUR an quiz.fragen an (im normalen
+        // finalizeQuiz-Pfad unschaedlich, weil answers/revealed dort ERST DANACH ihre Laenge aus
+        // quiz.fragen.length beziehen) - hier laufen answers/revealed aber schon laenger mit
+        // (appendDeliveredFragen). Ohne dieses Nachziehen blieben sie um die Modul-Anzahl kuerzer
+        // als quiz.fragen und der Index-Gleichlauf (Grundregel des PRs) waere fuer genau die
+        // Modul-Fragen gebrochen (Codex-Review). Gleiches Auffuell-Muster wie beim Review-Laden.
+        appendEignungsmodule(quiz);
+        while (answers.length < quiz.fragen.length) answers.push("");
+        while (revealed.length < quiz.fragen.length) revealed.push(false);
+      }
+      clearActiveJob();
+      // Nachlieferung ist hier endgueltig zu Ende: Fragebogen-UI EIN letztes Mal nachziehen und
+      // den persistenten Warte-Hinweis aufloesen (afterDeliveryChange, der einzige Ort dafuer).
+      // Bewusst NACH clearActiveJob(): erst dann meldet isEarlyStartDeliveryPending() "nichts mehr
+      // unterwegs" und der Warte-Hinweis darf verschwinden. Der Zuwachs wird ueber die Gesamtlaenge
+      // gemessen statt ueber den Rueckgabewert von appendDeliveredFragen, weil in diesem Zweig
+      // ausserdem die Eignungsmodule dazukommen - der Nutzer soll "+N neue Fragen" fuer ALLES
+      // sehen, was gerade an seinen Bogen gewachsen ist. Der haeufige Fall im Fehlerbild aus
+      // Codex-Review Runde 3 ist genau N == 0 (letzter Poll bringt dasselbe Praefix wie der
+      // vorige): dann bleibt nur das Nachziehen von Zaehler/Balken/Button und das Abraeumen des
+      // Hinweises - und genau das fehlte vorher.
+      afterDeliveryChange(quiz.fragen.length - fragenVorher);
+      trackFirstTest();
+      // Ein bezahlter Opus-Job kann auch NACH einem erfolgreichen Early-Start noch erstattet
+      // werden - Guthaben-Cache also immer nachziehen.
+      refreshCreditsAfterJob(job.ctx);
+      return;
+    }
     // Ergebnis sichern und ruhen lassen — der Nutzer startet selbst (kein Wegreissen).
     saveActiveJob({ ...job, status: "ready", quiz: data.quiz });
     // Kernpunkte schon JETZT (bei Fertigstellung, vor "Loslegen") an eine bestehende
     // Stelle schreiben, damit die Uebersicht ohne Durchspielen erscheint — der Hosted-
-    // Pfad finalisiert sonst erst beim "Loslegen" (startReadyJob -> finalizeQuiz). Wir
-    // verifizieren das rohe Server-Ergebnis gegen ctx.jobText (normalizeKernpunkte) und
-    // nutzen denselben Helper/dieselben Garantien wie finalizeQuiz — OHNE die Quiz-
-    // Session zu starten oder den aktiven Job zu loeschen.
-    try {
-      const c = job.ctx || {};
-      const kpNorm = normalizeKernpunkte(data.quiz.kernpunkte, c.jobText);
-      if (kpNorm) {
-        persistKernpunkteForActiveJob({ kernpunkte: kpNorm, jobText: c.jobText, jobUrl: c.jobUrl, vertiefungFelder: c.vertiefungFelder });
-      }
-    } catch { /* reines Komfort-Update: Fehler ignorieren, saveAttempt schreibt spaeter */ }
+    // Pfad finalisiert sonst erst beim "Loslegen" (startReadyJob -> finalizeQuiz).
+    persistPartialKernpunkte(job, data.quiz);
     renderActiveJobCard("ready");
     // P4: Ist der Nutzer gerade woanders (z. B. beim Ueben in view-sr), sieht er die fertige
     // Karte auf der Startseite nicht → dezenter, nicht-blockierender Hinweis mit CTA. NICHT
@@ -6782,25 +7146,28 @@ async function pollActiveJob() {
     trackFirstTest();
     // Bezahlter Opus-Job fertig → Guthaben-Cache nachziehen (Anzeige + naechste Opus-Pruefung).
     refreshCreditsAfterJob(job.ctx);
-  } else if (data.status === "done") {
-    // Defensiv: "done" ohne Quiz ist ein Serverfehler — nicht endlos weiter pollen.
+  } else if (data.status === "done" || data.status === "error") {
+    // "done" ohne Quiz ist defensiv derselbe Fall wie ein expliziter Serverfehler (Modell-/
+    // Parse-Fehler o.ae.) - beide sollen nicht endlos weiter pollen.
     clearActiveJob();
-    renderActiveJobCard("error");
-    showError(jobErrorMessage("unknown"));
-    // Wie der error-Zweig: ein bezahlter Opus-Job kann rueckerstattet werden → Guthaben nachziehen.
-    refreshCreditsAfterJob(job.ctx);
-  } else if (data.status === "error") {
-    clearActiveJob();
-    renderActiveJobCard("error");
-    showError(jobErrorMessage(data.code));
-    // Fehlgeschlagener Opus-Job wird serverseitig ggf. rueckerstattet → Guthaben nachziehen.
+    if (job.status === "started-partial") {
+      // Wie der 404-Zweig oben: vorhandene Fragen/Antworten bleiben nutzbar, nur die
+      // Nachlieferung endet. Abrechnung: der Nutzer behaelt die bereits gespielten Teilfragen
+      // UND bekommt den fehlgeschlagenen Job erstattet - bewusste Produktentscheidung
+      // (Begruendung im PR-Text).
+      showPartialDeliveryStopped();
+    } else {
+      renderActiveJobCard("error");
+      showError(jobErrorMessage(data.status === "error" ? data.code : "unknown"));
+    }
+    // Ein bezahlter Opus-Job kann rueckerstattet werden → Guthaben nachziehen (in beiden Faellen).
     refreshCreditsAfterJob(job.ctx);
   } else {
     // Fortschritt (additiv, Feature-Detect): das Backend kann seit "Teilergebnisse waehrend
-    // der Erstellung" zwei Zaehler mitschicken. Nur GENAU diese zwei Zahlen auswerten - kein
-    // Fragen-Payload/Opt-in in diesem PR. Defensiv: alte/kaputte Antworten (Feld fehlt, kein
-    // Number, erwartet <= 0) fallen auf undefined zurueck -> renderActiveJobCard zeigt dann
-    // wie bisher nur den Spinner (kein JS-Fehler, kein Balken).
+    // der Erstellung" zwei Zaehler mitschicken, seit dem Opt-in oben zusaetzlich ein volles
+    // partial.quiz (nur wenn wantsFragen gesendet wurde). Defensiv: alte/kaputte Antworten
+    // (Feld fehlt, kein Number, erwartet <= 0) fallen auf undefined zurueck -> renderActiveJobCard
+    // zeigt dann wie bisher nur den Spinner (kein JS-Fehler, kein Balken).
     let progress;
     const p = data.partial;
     if (p && typeof p === "object"
@@ -6815,18 +7182,28 @@ async function pollActiveJob() {
         erwartet: Number(p.fragenErwartet),
       };
     }
-    // Nur rendern, wenn der lokale Zeiger waehrend des Requests noch auf DIESEN Job zeigt -
-    // ein spaet eintreffender Poll fuer einen inzwischen ersetzten/verworfenen Job
-    // (State-Wechsel waehrend des Requests) darf weder dessen Karte noch den Monotonie-Merker
-    // eines ANDEREN Jobs verfaelschen (Codex-Review). Das Weiterpollen selbst MUSS aber in
-    // jedem Fall passieren (auch beim fruehen Return) - der Timer, der diesen Lauf gestartet
-    // hat, ist verbraucht, und es gibt keinen anderen Wiederanlauf (kein storage-Listener; nur
-    // resumeActiveJob() beim Seitenstart). Ohne das haengende scheduleJobPoll wuerde ein
-    // veralteter Poll die gesamte Poll-Kette fuer den ANDEREN, tatsaechlich aktiven Job
-    // abreissen (Verifikations-Befund).
-    const stillActive = loadActiveJob();
-    if (!stillActive || stillActive.jobId !== job.jobId) { scheduleJobPoll(3000); return; }
-    renderActiveJobCard("pending", progress);
+    // Die Staleness-Pruefung (Zeiger noch auf DIESEN Job/Status?) ist bereits weiter oben (zweimal,
+    // nach Fetch UND nach Body-Read) erledigt - hier also unbesorgt weiterverarbeiten. Das
+    // Weiterpollen unten MUSS trotzdem in jedem Fall passieren (auch bei einem fruehen Return
+    // dort oben) - der Timer, der diesen Lauf gestartet hat, ist verbraucht, und es gibt keinen
+    // anderen Wiederanlauf (kein storage-Listener; nur resumeActiveJob() beim Seitenstart). Ohne
+    // das haengende scheduleJobPoll wuerde ein veralteter Poll die gesamte Poll-Kette fuer den
+    // ANDEREN, tatsaechlich aktiven Job abreissen (Verifikations-Befund, urspruenglich im
+    // progress-anzeige-PR gefunden).
+    //
+    // Opt-in-Payload (partial.quiz) auswerten: kernpunkte idempotent vorziehen (Punkt 0), bei
+    // "started-partial" die neuen Fragen SOFORT anhaengen (Punkt 3), sonst (pending) als Cache
+    // fuer den Early-Start-Button auf der Pending-Karte vorhalten (renderActiveJobCard prueft
+    // die Mindestanzahl EARLY_START_MIN selbst).
+    if (p && typeof p === "object" && p.quiz && typeof p.quiz === "object" && Array.isArray(p.quiz.fragen)) {
+      persistPartialKernpunkte(job, p.quiz);
+      if (job.status === "started-partial") {
+        appendDeliveredFragen(p.quiz.fragen);
+      } else {
+        _partialQuizCache = { jobId: job.jobId, quiz: p.quiz };
+      }
+    }
+    if (job.status !== "started-partial") renderActiveJobCard("pending", progress); // keine Karte waehrend started-partial
     scheduleJobPoll(3000);
   }
 }
@@ -6850,6 +7227,34 @@ function resumeActiveJob() {
   const job = loadActiveJob();
   if (!job) return;
   if (job.status === "ready" && job.quiz) { renderActiveJobCard("ready"); return; }
+  if (job.status === "started-partial") {
+    // Reload-Fall (Punkt 4). Das laufende Quiz lebt NICHT im Zeiger, sondern im modulweiten
+    // quiz/answers/revealed-Zustand - der ist nach einem Reload/Tab-Neustart leer. Empfaenger der
+    // Nachlieferung ist aber die gesicherte Lernsession, die den Bogen inklusive quiz.jobId
+    // enthaelt. Deshalb wird hier genau das geprueft, was die Spec verlangt:
+    //
+    // (a) KEINE passende Lernsession (anderer/kein Job, Sitzung verworfen): der Bogen ist weg,
+    //     es gibt nichts mehr, woran nachgeliefert werden koennte -> Zeiger verwerfen. Ein
+    //     Hinweis waere hier sinnlos (es gibt keinen Test, auf den er sich beziehen koennte).
+    // (b) PASSENDE Lernsession: der (ggf. bezahlte) Rest der Fragen ist weiterhin zustellbar,
+    //     sobald der Nutzer ueber "Test fortsetzen" zurueckkehrt -> Zeiger BEHALTEN. Frueher
+    //     wurde er hier bedingungslos verworfen; das kostete den Nutzer bei einem simplen Reload
+    //     still die restlichen bestellten Fragen (Codex-Review Runde 3).
+    //
+    // Bewusst KEIN Hintergrund-Poll in Fall (b): ohne geladenen Bogen haette eine Antwort keinen
+    // Empfaenger (appendDeliveredFragen bricht ohne quiz sauber ab, BEVOR consumedCount
+    // fortgeschrieben wird), und ein "done" wuerde den Zeiger aufloesen und die Restfragen genau
+    // dadurch verbrennen. Die Nachlieferung startet daher erst beim Fortsetzen der Sitzung
+    // (resumeLearnSession -> scheduleJobPoll(0)). Ausserdem bleibt so das Versprechen erhalten,
+    // dass der Nutzer nach einem Reload auf der Startseite landet und nicht ungefragt mitten im
+    // Test - genau die Zurueckhaltung, die V1 mit dem Verwerfen erkaufen wollte.
+    const s = loadLearnSession();
+    const passendeSession = !!(s && s.quiz && s.quiz.jobId === job.jobId
+      && Array.isArray(s.quiz.fragen) && s.quiz.fragen.length);
+    if (!passendeSession) clearActiveJob();
+    renderActiveJobCard(null); // fuer "started-partial" gibt es in keinem Fall eine Erstellungs-Karte
+    return;
+  }
   renderActiveJobCard("pending");
   scheduleJobPoll(0);
 }
@@ -6861,6 +7266,188 @@ function startReadyJob() {
   clearActiveJob();
   renderActiveJobCard(null);
   finalizeQuiz(job.quiz, { ...job.ctx, jobId: job.jobId, genCost: null, genTokens: null, isLocal: false });
+}
+
+/* ---------- Early-Start: mit den ersten Fragen loslegen (Punkt 2) ---------- */
+
+// Ein laufender Early-Start-Teilversuch besteht IMMER aus zwei Haelften: dem Job-Zeiger
+// ("started-partial", Grundlage der Nachlieferung) und dem begonnenen Bogen (Lernsession bzw. das
+// im aktuellen Tab geladene Quiz). Nur beide zusammen ergeben etwas Schuetzenswertes:
+//
+//   - Zeiger OHNE Bogen ist eine unsichtbare Karteileiche: renderHome zeigt fuer "started-partial"
+//     bewusst keine Karte, es gibt keinen Empfaenger fuer nachgelieferte Fragen, und ein
+//     Ersetzen-Dialog dafuer haette eine funktionslose "Zum laufenden Test zurueck"-Schaltflaeche
+//     (resumeLearnSession faende nichts). Solche Reste werden hier deshalb SOFORT abgeraeumt,
+//     statt spaeter Dialoge zu erzeugen, die ins Leere fuehren (Codex-Review Runde 4, Blocker 2).
+//   - Bogen OHNE Zeiger ist dagegen voellig unkritisch: ein ganz normaler, fortsetzbarer Lerntest
+//     ohne Nachlieferung (so sieht es z. B. nach dem Abmelden aus).
+//
+// Bewusst NICHT Teil der Bedingung: der gerade im Formular gewaehlte Modus und der Anbieter. Was
+// geschuetzt wird, ist der bestehende Versuch — nicht das, was der Nutzer als Naechstes vorhat.
+function earlyStartAttemptRunning() {
+  const job = loadActiveJob();
+  if (!job || job.status !== "started-partial") return false;
+  // (a) Der Versuch laeuft in genau diesem Tab: der Bogen liegt im Speicher. Das gilt auch dann,
+  //     wenn die Lernsession nicht geschrieben werden konnte (voller localStorage) - der Versuch
+  //     ist trotzdem real und darf nicht kommentarlos verworfen werden.
+  if (quiz && quiz.jobId === job.jobId) return true;
+  // (b) Sonst zaehlt die gesicherte Lernsession als Bogen (Reload/anderer Tab).
+  const s = loadLearnSession();
+  if (s && s.quiz && s.quiz.jobId === job.jobId && Array.isArray(s.quiz.fragen) && s.quiz.fragen.length) return true;
+  clearActiveJob(); // Zeiger ohne Bogen: Karteileiche, still abraeumen
+  return false;
+}
+
+// Gegenstueck zu earlyStartAttemptRunning(): zurueck in den laufenden Teilversuch. Liegt der Bogen
+// noch im Speicher dieses Tabs, wird GENAU DER wieder gezeigt - nicht der (moeglicherweise
+// aeltere oder gar nicht vorhandene) Stand aus dem Storage. Wichtig fuer den Fall "Lernsession
+// konnte nicht geschrieben werden" (voller localStorage): resumeLearnSession faende dort nichts
+// und wuerde den Versuch als Karteileiche abraeumen - also genau das zerstoeren, was der Nutzer
+// mit "Zum laufenden Test zurueck" retten wollte.
+function returnToRunningAttempt() {
+  const job = loadActiveJob();
+  if (job && quiz && quiz.jobId === job.jobId && Array.isArray(quiz.fragen) && quiz.fragen.length) {
+    // Ein Early-Start-Versuch ist immer ein fortsetzbarer Lerntest - denselben Zustand
+    // herstellen, den resumeLearnSession() garantiert (nur ohne den Umweg ueber den Storage).
+    mode = "lernen";
+    reviewing = false;
+    learnSessionActive = true;
+    lastRenderedIndex = -1; // Wiedereintritt: aktuelle Frage wieder einfliegen lassen
+    renderQuestion();
+    showView("view-quiz");
+    resumePartialDelivery(); // Nachlieferung ggf. wieder anstossen
+    return;
+  }
+  resumeLearnSession();
+}
+
+// Startet den Lerntest mit dem bisher gelieferten Teil-Ergebnis; die restlichen Fragen liefert
+// pollActiveJob im Hintergrund nach (appendDeliveredFragen). Anders als startReadyJob() wird der
+// Job-Zeiger NICHT geloescht, sondern auf "started-partial" umgeschaltet - er bleibt die
+// Grundlage fuer die weitere Nachlieferung (consumedCount = Praefix-Basis). Nur im Lernmodus
+// erreichbar (der Button erscheint laut renderActiveJobCard ohnehin nur dann); Pruefungsmodus
+// bleibt komplett aussen vor (Timer-Deadline braucht die volle, fest stehende Startfragenzahl).
+function startPartialJob() {
+  const job = loadActiveJob();
+  const cache = _partialQuizCache;
+  if (!job || job.status !== "pending" || !cache || cache.jobId !== job.jobId) return; // Button sollte hier ohnehin unsichtbar sein
+  const c = job.ctx || {};
+  if (c.mode !== "lernen") return; // Backstop: Pruefungsmodus ausgeschlossen
+  const fragen = Array.isArray(cache.quiz.fragen) ? cache.quiz.fragen : [];
+  if (fragen.length < EARLY_START_MIN) return; // Backstop: Mindestanzahl (Button-Gate in renderActiveJobCard)
+  hideJobReadyBanner();
+  saveActiveJob({ ...job, status: "started-partial", consumedCount: fragen.length });
+  _partialQuizCache = null; // verbraucht - naechster Poll liefert bei Bedarf neue Delta-Fragen
+  _earlyStartAuthPausedJobId = null; // frischer Teilversuch: ein evtl. altes Auth-Pause-Signal loeschen
+  renderActiveJobCard(null); // Karte verschwindet, der Nutzer ist jetzt IM Test (wie startReadyJob)
+  // deferModules: die Eignungsmodule (Assessment-Center) kommen erst nach der letzten
+  // Nachlieferung ans Ende (pollActiveJob), sonst stuenden sie mitten im wachsenden Bogen.
+  finalizeQuiz(cache.quiz, { ...c, jobId: job.jobId, genCost: null, genTokens: null, isLocal: false, deferModules: true });
+}
+
+// Haengt beim Early-Start nachgelieferte Fragen an das bereits laufende Quiz an. serverFragen ist
+// IMMER das volle, bislang gelieferte Server-Praefix (kein Diff) - das bereits konsumierte Praefix
+// wird per consumedCount abgeschnitten. NIE das gesamte Array neu matchen/neu normalisieren: die
+// laufenden answers/revealed sind index-gebunden, ein Ersetzen wuerde gegebene Antworten verlieren
+// (Grundregel dieses PRs). ids folgen dem maxId+1-Muster wie appendModulFrage - zwei unabhaengig
+// ab 1 normalisierte Fragengruppen wuerden sonst kollidierende ids erzeugen und den id-basierten
+// Auswerte-Merge (runEvaluation) korrumpieren.
+// Gibt die Anzahl tatsaechlich angehaengter Fragen zurueck (0, wenn nichts Neues kam) - der
+// done-Zweig in pollActiveJob braucht sie, um seinen abschliessenden afterDeliveryChange-Aufruf
+// mit dem richtigen Zuwachs zu fuehren.
+function appendDeliveredFragen(serverFragen) {
+  const job = loadActiveJob();
+  if (!job || job.status !== "started-partial") return 0; // nur im Nachlieferungs-Zustand relevant
+  if (!Array.isArray(serverFragen) || !quiz || !Array.isArray(quiz.fragen)) return 0;
+  // Defensiv gegen einen (theoretisch) abweichenden lokalen Quiz-Zustand: appendDeliveredFragen
+  // darf NUR das Quiz erweitern, zu dem der Job-Zeiger tatsaechlich gehoert (quiz.jobId wird in
+  // finalizeQuiz aus ctx.jobId gesetzt).
+  if (quiz.jobId !== job.jobId) return 0;
+  const consumed = Number.isInteger(job.consumedCount) ? job.consumedCount : quiz.fragen.length;
+  const delta = serverFragen.slice(consumed);
+  if (!delta.length) return 0;
+  let maxId = quiz.fragen.reduce((m, f) => Math.max(m, Number(f && f.id) || 0), 0);
+  let added = 0;
+  delta.forEach((rohFrage) => {
+    const f = normalizeFrage(rohFrage, ++maxId);
+    if (!f) return; // defensiv: eine kaputte Server-Frage wird uebersprungen, nicht der ganze Batch verworfen
+    quiz.fragen.push(f);
+    answers.push("");
+    revealed.push(false);
+    added++;
+  });
+  // consumedCount immer auf die volle Server-Praefixlaenge fortschreiben (nicht nur +added): eine
+  // uebersprungene kaputte Frage soll bei der naechsten Nachlieferung nicht erneut versucht werden
+  // (dieselbe Rohantwort waere ohnehin wieder ungueltig) - das Server-Praefix bleibt die Wahrheit.
+  saveActiveJob({ ...job, consumedCount: serverFragen.length });
+  afterDeliveryChange(added);
+  return added;
+}
+
+// EINZIGER Ort, an dem die Oberflaeche nach einer Aenderung am laufenden Early-Start-Bogen
+// nachgezogen wird - egal ob Fragen dazugekommen sind (Nachlieferung, angehaengte Eignungsmodule)
+// oder die Nachlieferung geendet hat (done/error/404/403/401-Pause).
+//
+// WURZEL DER BEIDEN UI-BUGS (Codex-Review Runde 2 und 3): dieses Nachziehen war urspruenglich als
+// Codeblock IN appendDeliveredFragen einkopiert und dort zusaetzlich an "added > 0" gebunden.
+// Jeder weitere Pfad, der den Bogen veraendert oder beendet, haette den Block kopieren muessen -
+// der done-Zweig (Module anhaengen, Zeiger aufloesen) hat es nicht getan, und der persistente
+// Warte-Hinweis hatte ueberhaupt keinen Besitzer, der ihn je wieder entfernt haette. Statt die
+// fehlende Kopie erneut nachzutragen, gibt es das Nachziehen jetzt genau EINMAL:
+//   - syncQuizChrome() setzt Zaehler/Balken/Button-Beschriftung aus dem LIVE-Zustand,
+//   - syncDeliveryHint() entscheidet aus dem LIVE-Zustand, ob der Hinweis noch stehen darf,
+//   - saveLearnSession() sichert den gewachsenen Bogen SOFORT (nicht debounced): nach einer
+//     Nachlieferung ist die naechste Nutzeraktion oft ein Reload/Tabwechsel, und der Zeiger
+//     (consumedCount) ist da bereits fortgeschrieben - eine 800-ms-Luecke zwischen Zeiger und
+//     Sitzung wuerde die neuen Fragen dauerhaft verlieren (Codex-Review Runde 3, "billige Haerte").
+function afterDeliveryChange(added) {
+  if (added > 0) showDeliveryHint(added);
+  syncQuizChrome();
+  syncDeliveryHint();
+  saveLearnSession();
+}
+
+// Zustand des Nachlieferungs-Hinweises (#quiz-delivery-hint) explizit statt implizit im DOM:
+// null = aus, "added" = transienter "+N neue Fragen"-Toast, "wait" = persistenter Warte-Hinweis.
+// Nur so kann syncDeliveryHint() unterscheiden, ob ein sichtbarer Hinweis noch gilt.
+let _deliveryHintMode = null;
+let _deliveryHintTimer = null;
+
+function setDeliveryHint(modus, n) {
+  const el = $("quiz-delivery-hint");
+  if (!el) return;
+  clearTimeout(_deliveryHintTimer);
+  _deliveryHintMode = modus;
+  if (!modus) {
+    el.classList.remove("show");
+    el.textContent = "";
+    return;
+  }
+  if (modus === "added") {
+    el.textContent = `+${n} neue ${n === 1 ? "Frage" : "Fragen"}`;
+    el.classList.add("show");
+    // Transient (Fade-Toast nach demselben Muster wie showSettingsSaved).
+    _deliveryHintTimer = setTimeout(() => { if (_deliveryHintMode === "added") setDeliveryHint(null); }, 3000);
+    return;
+  }
+  // "wait": persistent, ohne Timer - er wird von "added" ueberschrieben oder von
+  // syncDeliveryHint() aufgeloest, sobald keine Nachlieferung mehr laeuft.
+  el.textContent = "Die restlichen Fragen werden noch geladen – „Weiter“ geht gleich wieder.";
+  el.classList.add("show");
+}
+
+// Dezenter, nicht-blockierender Hinweis im Fragebogen: "+N neue Fragen" (Punkt 3).
+function showDeliveryHint(n) { setDeliveryHint("added", n); }
+
+// Persistenter Hinweis: der Nutzer hat den bisher geladenen Ausschnitt durchgespielt und wartet
+// auf Nachlieferung (nextQuestion/isEarlyStartDeliveryPending).
+function showDeliveryWaitHint() { setDeliveryHint("wait"); }
+
+// Loest den persistenten Warte-Hinweis auf, sobald keine Nachlieferung mehr laeuft (Zeiger
+// aufgeloest oder pausiert). Der transiente "+N"-Toast bleibt unangetastet - er raeumt sich
+// selbst ab und ist auch nach dem Ende der Nachlieferung eine korrekte Aussage.
+function syncDeliveryHint() {
+  if (_deliveryHintMode === "wait" && !isEarlyStartDeliveryPending()) setDeliveryHint(null);
 }
 
 // Wartezeit nutzen (P4): waehrend der Test im Hintergrund entsteht, in der Pending-Karte
@@ -6919,6 +7506,14 @@ let _progressMaxFertig = 0;
 let _progressLastJobId = null;
 let _progressLast = null;
 
+// Early-Start: das rohe Server-Teilergebnis (Opt-in ?include=fragen) fuer die aktuelle jobId, so
+// wie es der letzte Poll geliefert hat - Grundlage fuer den "Loslegen"-Button auf der Pending-
+// Karte (Punkt 2) und fuer startPartialJob(). Bewusst NICHT in saveActiveJob/localStorage: der
+// Payload ist gross (ganze Fragen inkl. Erklaerungen/Quellen) und nur fuer den Moment des Klicks
+// relevant - ein Tab-Wechsel/Reload verliert ihn, der naechste Poll liefert ihn bei Bedarf neu
+// (bzw. der Nutzer wartet auf "fertig" wie gehabt). jobId-gescoped wie die Progress-Merker oben.
+let _partialQuizCache = null;
+
 // Status-Karte fuer den Hintergrund-Job auf der Startliste. state: "pending"|"ready"|"error"|null.
 // progress (optional, nur bei state "pending"): { fertig, erwartet } aus den Teilergebnis-
 // Zaehlern des Backends (s. pollActiveJob) - ohne das Feld faellt auf den letzten bekannten
@@ -6933,6 +7528,7 @@ function renderActiveJobCard(state, progress) {
     // Wert (Tests, oder derselbe Job nach Fehler+Neustart) darf nicht am alten Stand kleben.
     _progressMaxJobId = null; _progressMaxFertig = 0;
     _progressLastJobId = null; _progressLast = null;
+    _partialQuizCache = null;
     renderHome(); // Empty-Hinweis/Liste wieder korrekt herstellen
     return;
   }
@@ -6942,6 +7538,7 @@ function renderActiveJobCard(state, progress) {
   const textEl = $("active-job-text");
   const spin = $("active-job-spinner");
   const startBtn = $("active-job-start");
+  const startPartialBtn = $("active-job-start-partial");
   const progressBox = $("active-job-progress");
   const progressFill = $("active-job-progress-fill");
   const ready = state === "ready";
@@ -7008,6 +7605,18 @@ function renderActiveJobCard(state, progress) {
   }
   if (spin) spin.classList.toggle("hidden", state !== "pending");
   if (startBtn) startBtn.classList.toggle("hidden", !ready);
+  // Early-Start-Button (Punkt 2): nur im Lernmodus, nur "pending" (nicht "ready" - dann gibt es
+  // ohnehin schon "Loslegen" fuer den kompletten Test) und nur, sobald der letzte Poll ein
+  // Opt-in-Teilergebnis mit mindestens EARLY_START_MIN Fragen fuer GENAU diesen Job gecacht hat.
+  // Pruefungsmodus zeigt den Button nie (Backstop, s. a. startPartialJob/pollActiveJob-Opt-in).
+  if (startPartialBtn) {
+    const cache = _partialQuizCache;
+    const fragenCount = cache && cache.jobId === curJobId && Array.isArray(cache.quiz && cache.quiz.fragen)
+      ? cache.quiz.fragen.length : 0;
+    const canEarlyStart = state === "pending" && aj && aj.ctx && aj.ctx.mode === "lernen" && fragenCount >= EARLY_START_MIN;
+    startPartialBtn.classList.toggle("hidden", !canEarlyStart);
+    if (canEarlyStart) startPartialBtn.textContent = `Jetzt mit ${fragenCount} Fragen loslegen`;
+  }
   if (progressBox) {
     const showBar = state === "pending" && !!progress;
     progressBox.classList.toggle("hidden", !showBar);
@@ -7057,9 +7666,42 @@ function saveLearnSession() {
     return false;
   }
 }
-function clearLearnSession() {
+// bogen (optional): der Fragebogen, den der Aufrufer hier aufgibt — entweder ein Quiz-Objekt oder
+// ein schlanker Anker { jobId }. Er entscheidet, ob der Early-Start-Job-Zeiger mit freigegeben wird
+// (s. u.). Wird das Argument WEGGELASSEN, gilt die gesicherte Sitzung selbst als der aufgegebene
+// Bogen — das ist der Fall "Verwerfen auf der Fortsetzen-Karte", die genau sie repraesentiert.
+// `null` heisst ausdruecklich "hier wird kein Early-Start-Bogen aufgegeben" (dann nie freigeben).
+// Die Identitaet raten statt sie zu uebergeben geht schief: das global geladene `quiz` kann ein
+// ganz anderer Bogen sein (Versuch aus der Historie, Beispieltest), und die gesicherte Sitzung
+// kann aus einem zweiten Tab stammen.
+function clearLearnSession(bogen) {
   learnSessionActive = false;
+  // VOR dem Loeschen lesen, danach ist die Sitzung weg.
+  const aufgegeben = arguments.length ? bogen : (loadLearnSession() || {}).quiz || null;
   try { localStorage.removeItem(LEARN_SESSION_KEY); } catch {}
+  // Early-Start: Bogen und Job-Zeiger gehoeren zusammen und werden deshalb nur noch GEMEINSAM
+  // verworfen — an dieser einen Stelle, an der der Bogen verschwindet, statt in jedem einzelnen
+  // Aufrufer (Verwerfen auf der Fortsetzen-Karte, Ersetzen-Dialoge, Pruefungsmodus-Start,
+  // Auswertung). Genau diese Verteilung war die Ursache von Blocker 2 in Runde 4: ein
+  // "started-partial"-Zeiger ohne Lernsession ist unsichtbar (keine Karte, kein Poll, kein
+  // Empfaenger) und laesst spaeter einen Ersetzen-Dialog mit funktionsloser Schaltflaeche
+  // erscheinen. "pending"/"ready"-Zeiger bleiben unangetastet: die haengen nicht am Bogen,
+  // sondern an einer laufenden bzw. fertigen Erstellung mit eigener Karte.
+  //
+  // Der Zeiger wird dabei NUR abgeraeumt, wenn er auch WIRKLICH zu dem Bogen gehoert, den der
+  // Aufrufer aufgibt (gleiche jobId) — ein Status-Vergleich allein reicht nicht: localStorage ist
+  // zwischen Tabs geteilt, der Zeiger ist geraeteweit und es gibt nur einen. Ohne den
+  // Identitaetsvergleich wuerde z. B. das Auswerten eines ganz anderen, alten Lerntests in einem
+  // zweiten Tab den laufenden, BEZAHLTEN Teilversuch des ersten Tabs mitsamt seiner Nachlieferung
+  // abraeumen — ein Verlust bezahlter Fragen, dem der Nutzer nie zugestimmt hat. Gehoert der
+  // Zeiger zu einem anderen Bogen, bleibt er stehen; ist er dann tatsaechlich verwaist, raeumt
+  // ihn earlyStartAttemptRunning()/resumeActiveJob still ab (s. dort).
+  const job = loadActiveJob();
+  if (job && job.status === "started-partial" && aufgegeben && aufgegeben.jobId === job.jobId) {
+    clearActiveJob();
+    clearTimeout(_jobPollTimer); // ohne Bogen gibt es nichts mehr nachzuliefern
+    _earlyStartAuthPausedJobId = null;
+  }
 }
 // Beim Tippen nicht bei jedem Anschlag das ganze Quiz serialisieren — kurz buendeln.
 let _learnSaveTimer = null;
@@ -7071,7 +7713,17 @@ function saveLearnSessionDebounced() {
 // Gesicherten Lerntest wiederherstellen und in die Frageansicht springen.
 function resumeLearnSession() {
   const s = loadLearnSession();
-  if (!s || !s.quiz || !Array.isArray(s.quiz.fragen) || !s.quiz.fragen.length) { clearLearnSession(); renderHome(); return; }
+  // Nichts (mehr) da: aufraeumen UND sichtbar auf der Startseite landen. Ohne den View-Wechsel
+  // bliebe der Nutzer bei einem Aufruf aus dem Ersetzen-Dialog heraus kommentarlos auf der
+  // Eingabe-Ansicht stehen (Codex-Review Runde 4). Regulaer ist dieser Zweig nicht mehr
+  // erreichbar — der Dialog wird nur noch angeboten, wenn es einen echten Bogen gibt
+  // (earlyStartAttemptRunning) —, er bleibt aber als ehrlicher Ausgang bestehen.
+  if (!s || !s.quiz || !Array.isArray(s.quiz.fragen) || !s.quiz.fragen.length) {
+    clearLearnSession(); // raeumt den Zeiger mit ab, falls er zu genau diesem Bogen gehoert
+    renderHome();
+    showView("view-home");
+    return;
+  }
   quiz = s.quiz;
   // Defensiv gegen unvollstaendige/aeltere Staende: Laengen an die Fragen angleichen.
   const n = quiz.fragen.length;
@@ -7092,9 +7744,29 @@ function resumeLearnSession() {
   lastRenderedIndex = -1; // Resume gilt als Sitzungseintritt: erste Frage soll wieder einfliegen
   renderQuestion();
   showView("view-quiz");
+  resumePartialDelivery();
+}
+
+// Early-Start nach einem Reload: gehoert der wiederhergestellte Bogen zu einem Job, dessen
+// Nachlieferung noch offen ist (Zeiger "started-partial", gleiche jobId), das Pollen wieder
+// aufnehmen. resumeActiveJob laesst den Zeiger dafuer beim App-Start absichtlich stehen, pollt
+// aber nicht - erst hier gibt es wieder einen Empfaenger fuer nachgelieferte Fragen. Ist der Job
+// serverseitig inzwischen fertig, liefert der erste Poll das komplette Ergebnis und alles ab
+// consumedCount wird in einem Rutsch angehaengt; ist er verschwunden (404) oder gescheitert,
+// greifen die ueblichen Terminalpfade (Bogen bleibt nutzbar, Hinweis).
+// Nur im Hosted-Modus: ein Hintergrund-Job gehoert zur gehosteten API (gleiche Bedingung wie in
+// resumeActiveJob).
+function resumePartialDelivery() {
+  if ((settings.provider || "hosted") !== "hosted") return;
+  const job = loadActiveJob();
+  if (!job || job.status !== "started-partial") return;
+  if (!quiz || quiz.jobId !== job.jobId) return;
+  scheduleJobPoll(0);
 }
 
 function discardLearnSession() {
+  // clearLearnSession verwirft bei einem Early-Start-Bogen auch dessen Job-Zeiger (s. dort) —
+  // "Verwerfen" beendet den Versuch damit vollstaendig und laesst keinen unsichtbaren Rest zurueck.
   clearLearnSession();
   renderHome(); // Karte ausblenden und Leer-Hinweis/Liste korrekt wiederherstellen
 }
@@ -7373,9 +8045,29 @@ function frageAnzeigeText(q) {
   return frage;
 }
 
+// Alles am Fragebogen-Rahmen, das von der GESAMTZAHL der Fragen abhaengt: Zaehler
+// ("Frage 3 von 12"), Fortschrittsbalken und die Beschriftung des Weiter-Buttons
+// ("Weiter" vs. "Auswerten"/"Zur Auswertung"). Bewusst eine eigene, idempotente Funktion:
+// quiz.fragen kann seit dem Early-Start OHNE Fragewechsel wachsen (Nachlieferung,
+// angehaengte Eignungsmodule), und dann muss genau dieser Rahmen nachgezogen werden, ohne
+// die Frage selbst neu zu rendern. Frueher standen diese drei Zuweisungen nur in
+// renderQuestion() und wurden an jeder wachsenden Stelle kopiert - jede vergessene Kopie
+// war ein Bug (btn-next behauptete "Auswerten", wertete aber nicht aus). Deshalb: EIN Ort,
+// alle Aufrufer rufen ihn, niemand kopiert die Zuweisungen mehr.
+// Kein View-Gate: ausserhalb von view-quiz sind die Zuweisungen unsichtbar und harmlos,
+// und renderQuestion() ueberschreibt sie beim Betreten ohnehin frisch.
+function syncQuizChrome() {
+  if (!quiz || !Array.isArray(quiz.fragen) || !quiz.fragen.length) return;
+  const total = quiz.fragen.length;
+  const idx = Math.min(Math.max(0, current), total - 1);
+  $("quiz-progress").textContent = `Frage ${idx + 1} von ${total}`;
+  $("progress-fill").style.width = `${(idx / total) * 100}%`;
+  $("btn-next").textContent =
+    idx === total - 1 ? (reviewing ? "Zur Auswertung" : "Auswerten") : "Weiter";
+}
+
 function renderQuestion() {
   const q = quiz.fragen[current];
-  const total = quiz.fragen.length;
   const isRevealed = mode === "lernen" && revealed[current];
 
   // Re-Render derselben Frage (Toggle/Klick/Aufloesen) vs. echter Fragewechsel:
@@ -7387,8 +8079,10 @@ function renderQuestion() {
   lastRenderedIndex = current;
 
   $("quiz-title").textContent = quiz.titel;
-  $("quiz-progress").textContent = `Frage ${current + 1} von ${total}`;
-  $("progress-fill").style.width = `${(current / total) * 100}%`;
+  syncQuizChrome(); // Zaehler + Balken + Weiter/Auswerten-Beschriftung (einziger Ort, s. o.)
+  // Nachlieferungs-Hinweis mitziehen: er darf nur stehen, solange wirklich noch nachgeliefert
+  // wird (Selbstheilung, falls ein Zustandswechsel den Hinweis nicht selbst aufgeloest hat).
+  syncDeliveryHint();
   $("question-category").textContent = q.kategorie;
   $("question-text").textContent = frageAnzeigeText(q);
 
@@ -7583,8 +8277,6 @@ function renderQuestion() {
   }
 
   $("btn-prev").disabled = current === 0;
-  $("btn-next").textContent =
-    current === total - 1 ? (reviewing ? "Zur Auswertung" : "Auswerten") : "Weiter";
 }
 
 // Baut ein zeilenweises Vorlese-Label fuer eine Zahlenmatrix. Anders als beim Figural-Raster
@@ -8041,6 +8733,19 @@ function renderLearnArea(q, isRevealed) {
   area.appendChild(box);
 }
 
+// Early-Start (Codex-Review): true, wenn das AKTUELL geladene Quiz zu einem Hintergrund-Job
+// gehoert, der noch weitere (bereits bezahlte) Fragen nachliefert. quiz.jobId UND die passende
+// activeJob-jobId muessen uebereinstimmen - sonst wuerde ein voellig unabhaengiges (z. B. BYOK-
+// oder ein spaeter neu gestartetes) Quiz faelschlich blockiert, nur weil zufaellig irgendein
+// anderer Hintergrund-Job existiert. Ausnahme (Codex-Review Runde 3): ein 401 auf einem
+// Nachlieferungs-Poll markiert diese jobId in _earlyStartAuthPausedJobId - die Poll-Kette ist dann
+// im laufenden Tab endgueltig tot (s. Kommentar dort), "Weiter" darf also nicht laenger warten.
+function isEarlyStartDeliveryPending() {
+  const aj = loadActiveJob();
+  return !!(aj && aj.status === "started-partial" && quiz && quiz.jobId && aj.jobId === quiz.jobId
+    && _earlyStartAuthPausedJobId !== aj.jobId);
+}
+
 function nextQuestion() {
   if (current < quiz.fragen.length - 1) {
     current++;
@@ -8049,7 +8754,19 @@ function nextQuestion() {
   } else if (reviewing) {
     // Bereits bewertet: zurueck zur gespeicherten Auswertung, keine neue Bewertung
     showView("view-result");
+  } else if (isEarlyStartDeliveryPending()) {
+    // Der Nutzer hat den bisher geladenen Ausschnitt durchgespielt, der Server liefert aber noch
+    // weitere Fragen nach. NICHT vorzeitig auswerten (Codex-Review): eine Auswertung jetzt wuerde
+    // nur den Teil-Ausschnitt bewerten UND einen eigenen API-Aufruf ausloesen, waehrend quiz.fragen
+    // durch einen parallel laufenden Poll noch waechst - beides waere ein unerwarteter Kosten-/
+    // Datenzustand (CLAUDE.md: Aktionen mit API-Kosten nie unbeabsichtigt). Stattdessen abwarten;
+    // sobald appendDeliveredFragen neue Fragen anhaengt, ist "Weiter" (dieser Klick erneut) sofort
+    // wieder normal moeglich (current < quiz.fragen.length - 1 gilt dann wieder).
+    showDeliveryWaitHint();
   } else {
+    // Kein Early-Start (mehr) im Spiel: evtl. noch sichtbaren Nachlieferungs-Hinweis nicht stehen
+    // lassen, bevor es in die Auswertung geht.
+    setDeliveryHint(null);
     evaluateQuiz();
   }
 }
@@ -8313,7 +9030,7 @@ async function runEvaluation(opts = {}) {
     const saved = await saveAttempt(result, durationMs, evalCost, evalTokens);
     // Den fortsetzbaren Lerntest erst verwerfen, wenn der Versuch WIRKLICH gespeichert
     // wurde — sonst koennten bei vollem/blockiertem Speicher beide verloren gehen.
-    if (saved) clearLearnSession();
+    if (saved) clearLearnSession(quiz); // ausgewertet: NUR der Zeiger genau dieses Bogens ist erledigt
     else showError("Dein Ergebnis konnte nicht dauerhaft gespeichert werden (Browser-Speicher voll?). Der offene Lerntest bleibt erhalten, du kannst es später erneut auswerten.");
     renderResult(result, durationMs);
     // Spielfortschritt dieser Stelle; frisch freigeschaltete Abzeichen und ein
@@ -10883,8 +11600,17 @@ function renderHome() {
   jobs.slice(0, HOME_MAX).forEach((job) => list.appendChild(buildHomeCard(job)));
   // Laeuft/wartet ein Hintergrund-Job, dessen Karte nach der Navigation wieder
   // herstellen (sie blendet den widerspruechlichen "Noch keine Stelle"-Hinweis aus).
+  // "started-partial" ausdruecklich ausgenommen (Codex-Review Blocker 1): fuer diesen Zustand
+  // gibt es KEINE Erstellungs-Karte - der Nutzer ist schon mitten im Test (startPartialJob hat
+  // die Karte per renderActiveJobCard(null) bereits ausgeblendet, BEVOR dieser renderHome()-
+  // Aufruf ueberhaupt lief, da renderActiveJobCard(null) intern selbst renderHome() aufruft).
+  // Wuerde hier trotzdem "pending" gerendert, kaeme die Spinner-Karte fuer einen Test zurueck,
+  // den der Nutzer laengst begonnen hat - und da alle drei Terminal-Zweige in pollActiveJob
+  // (done/error/403) fuer started-partial nur clearActiveJob() ohne renderActiveJobCard(null)
+  // rufen, wuerde danach kein weiterer renderHome()-Aufruf sie je wieder entfernen (aj ist dann
+  // null, der Vergleich unten trifft also gar nicht mehr zu).
   const aj = loadActiveJob();
-  if (aj) renderActiveJobCard(aj.status === "ready" ? "ready" : "pending");
+  if (aj && aj.status !== "started-partial") renderActiveJobCard(aj.status === "ready" ? "ready" : "pending");
   // Offenen Lerntest anbieten (blendet bei Bedarf den Leer-Hinweis aus).
   renderResumeCard();
   renderSrHomeCard(); // Spaced Repetition: "Faellige Uebungen"-Karte, wenn welche faellig sind
@@ -13156,6 +13882,7 @@ $("btn-new-job").addEventListener("click", () => {
   showView("view-input");
 });
 $("active-job-start").addEventListener("click", startReadyJob);
+$("active-job-start-partial").addEventListener("click", startPartialJob);
 // P4: Wartezeit nutzen — vorgeschlagenes Modul direkt starten (rein lokal, kein API-Call;
 // die Hintergrund-Erstellung laeuft unabhaengig weiter). Defensiv: ohne gemerktes Modul
 // in den Picker.
@@ -13268,9 +13995,20 @@ $("btn-confirm-replace-learn-cancel").addEventListener("click", closeConfirmRepl
 // verbrauchte Gratis-Kontingent bzw. Guthaben aber verbucht. Promise-basiert mit drei
 // Ausgaengen: "start" (den fertigen Test doch starten), "replace" (neu erstellen, ersetzt),
 // "cancel" (nichts tun). Der Klick loest genau einmal auf.
+//
+// state (Early-Start-PR): "ready" (Default, Text/Beschriftung wie bisher) oder "started-partial" -
+// ein bereits per Early-Start begonnener Lerntest, dem noch weitere Fragen nachgeliefert werden.
+// Derselbe Dialog/dieselbe Zusagen-Semantik deckt beide Zustaende ab (nie stilles Ueberschreiben
+// eines laufenden Teil-Versuchs); nur Titel/Text/Start-Beschriftung wechseln.
 let confirmReplaceReadyResolve = null;
 let confirmReplaceReadyReturnFocus = null;
-function openConfirmReplaceReady() {
+function openConfirmReplaceReady(state) {
+  const partial = state === "started-partial";
+  $("confirm-replace-ready-title").textContent = partial ? "Test läuft noch" : "Fertiger Test noch nicht gestartet";
+  $("confirm-replace-ready-text").innerHTML = partial
+    ? `Du hast einen bereits begonnenen Test, dem noch weitere Fragen nachgeliefert werden. Wenn du jetzt einen neuen Test erstellst, wird der laufende Versuch <strong>verworfen</strong> – das dafür verbrauchte Kontingent bzw. Guthaben wird nicht zurückerstattet.`
+    : `Du hast bereits einen fertigen Test, den du noch nicht gestartet hast. Wenn du jetzt einen neuen erstellst, wird der fertige Test <strong>verworfen</strong> – das dafür verbrauchte Kontingent bzw. Guthaben wird nicht zurückerstattet.`;
+  $("btn-confirm-replace-ready-start").textContent = partial ? "Zum laufenden Test zurück" : "Fertigen Test starten";
   return new Promise((resolve) => {
     confirmReplaceReadyResolve = resolve;
     confirmReplaceReadyReturnFocus = document.activeElement;

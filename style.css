@@ -719,6 +719,18 @@ button.btn-topup.pack:hover { border-color: var(--primary); color: var(--accent-
 }
 .settings-saved-toast.show { opacity: 1; }
 
+/* ---- Early-Start: Nachlieferungs-Hinweis im Fragebogen ---- */
+.quiz-delivery-hint {
+  margin: 0.2rem 0 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--green);
+  min-height: 1.1rem;
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+.quiz-delivery-hint.show { opacity: 1; }
+
 /* ---- Einwilligungs-Sheet (Automatische Zahlung) ---- */
 .consent-sheet-wrap {
   position: fixed;
@@ -745,7 +757,7 @@ button.btn-topup.pack:hover { border-color: var(--primary); color: var(--accent-
 .consent-sheet .row .primary { flex: 1; }
 
 @media (prefers-reduced-motion: reduce) {
-  .switch-track, .switch-track::after, .setting-adv-chev, .settings-saved-toast { transition: none; }
+  .switch-track, .switch-track::after, .setting-adv-chev, .settings-saved-toast, .quiz-delivery-hint { transition: none; }
 }
 
 @media (max-width: 600px) {
