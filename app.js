@@ -6347,14 +6347,14 @@ async function generateQuiz(opts = {}) {
 
   // (Die Bestaetigungs-Rueckfrage fuer einen laufenden Early-Start-Teilversuch liegt bewusst NICHT
   // hier, sondern einmalig ganz oben in dieser Funktion — vor der Verzweigung nach Anbieter/Modus.
-  // Der BYOK/lokale Pfad hat ab hier keinen weiteren zustimmungspflichtigen Abbruch mehr (anders
-  // als der Hosted-Pfad, s. Kommentar oben startHostedGeneration) — der Dispatch gleich unten IST
-  // also schon der Punkt ohne Wiederkehr. Der Vollzug eines bestaetigten Ersetzens gehoert deshalb
-  // genau hierher, unmittelbar davor.
-  if (earlyStartReplacePending) {
-    clearLearnSession();
-    renderActiveJobCard(null);
-  }
+  // Ihr Vollzug liegt im BYOK/lokalen Zweig ebenfalls nicht hier, sondern erst nach der fertigen
+  // Generierung, unmittelbar vor finalizeQuiz — der Dispatch unten ist NICHT der Punkt ohne
+  // Wiederkehr: er kann noch ganz regulaer scheitern (BYOK-Schluessel abgelehnt, Netzfehler,
+  // lokales Modell nicht erreichbar) und der Nutzer kann eine lokale Generierung sogar selbst
+  // per "Abbrechen" stoppen — generateLocalBatches wirft dann, wenn noch keine Frage fertig ist.
+  // In all diesen Faellen faellt der Ablauf in den catch-Zweig, es entsteht KEIN neuer Test, und
+  // ein hier schon vollzogenes Ersetzen haette den bereits bezahlten, laufenden Teilversuch fuer
+  // nichts vernichtet — dieselbe Fehlerklasse wie im Hosted-Zweig, s. Kommentar oben.)
 
   actionRunning = true;
   showLoading("Fragenkatalog wird erstellt...");
@@ -6504,6 +6504,16 @@ async function generateQuiz(opts = {}) {
         progress(seen);
       }, { hosted: { action: "generate-quiz", payload: hostedPayload } });
       result = out.data; genCost = out.cost; genTokens = out.tokens;
+    }
+    // Ab hier steht der neue Fragebogen fertig im Speicher — das ist im BYOK/lokalen Zweig der
+    // Punkt ohne Wiederkehr (jeder Abbruch davor ist oben per throw in den catch-Zweig gegangen
+    // und hat den laufenden Early-Start-Teilversuch bewusst unangetastet gelassen). Erst jetzt
+    // wird ein zuvor bestaetigtes Ersetzen vollzogen — gleiche Reihenfolge wie im Hosted-Zweig
+    // (dort nach data.jobId). clearLearnSession raeumt den zugehoerigen "started-partial"-Zeiger
+    // samt Nachlieferungs-Poll mit ab (s. dort), bevor finalizeQuiz den neuen Bogen sichert.
+    if (earlyStartReplacePending) {
+      clearLearnSession();
+      renderActiveJobCard(null);
     }
     // Quiz-Session aus dem Ergebnis aufbauen (gemeinsam mit dem Hosted-Async-Pfad).
     finalizeQuiz(result, {
