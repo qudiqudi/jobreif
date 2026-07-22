@@ -6172,7 +6172,14 @@ async function generateQuiz(opts = {}) {
   // Auf das Tier-Maximum klemmen (Sicherheitsnetz, falls der Stepper nach einem
   // Stufenwechsel noch einen hoeheren Wert traegt): guenstig nie ueber NUM_MAX_GUENSTIG.
   const numQuestions = clampNum(Number($("num-questions").value) || 10);
-  mode = document.querySelector('input[name="mode"]:checked').value;
+  // Der gewuenschte Modus wird NUR lokal gefuehrt und als Kontext weitergereicht; das globale
+  // `mode` beschreibt weiterhin den gerade LAUFENDEN Fragebogen und wird erst von finalizeQuiz
+  // umgestellt (also wenn der neue Bogen wirklich beginnt). Frueher setzte schon der blosse Klick
+  // auf "Test erstellen" das globale `mode` - bei "Prüfung" hoerte damit ein noch laufender
+  // Lerntest sofort auf, sich zu sichern (saveLearnSession verweigert bei mode !== "lernen"),
+  // waehrend eine Nachlieferung im Hintergrund ihren consumedCount weiterschrieb: nach einem
+  // Reload fehlten genau diese Fragen dauerhaft.
+  const wantMode = document.querySelector('input[name="mode"]:checked').value;
   let difficulty = document.querySelector('input[name="difficulty"]:checked').value;
   // Vertiefungsbogen: ohne Themenfeld kein Aufruf (Schutz auch hier im Einstieg,
   // nicht nur im UI). Schwierigkeit wird bewusst auf "schwer" erzwungen.
@@ -6184,20 +6191,34 @@ async function generateQuiz(opts = {}) {
     difficulty = "schwer";
   }
 
+  // Laeuft gerade ein Early-Start-Teilversuch? Dann hier — an der EINEN Stelle, die jeder
+  // Generierungs-Einstieg passiert (hosted wie BYOK/lokal, Lern- wie Pruefungsmodus) — dagegen
+  // absichern. Die Bedingung haengt AUSSCHLIESSLICH am Zustand des laufenden Versuchs, nie am
+  // gerade gewaehlten Modus oder Anbieter: was hier geschuetzt wird, ist der bereits bezahlte,
+  // schon begonnene Bogen — ob der NEUE Test ein Lern- oder Pruefungstest werden soll, aendert
+  // daran nichts. Frueher stand dieser Guard verteilt in den einzelnen Zweigen und war an
+  // `mode === "lernen"` gekoppelt; ein Wechsel auf Pruefungsmodus + BYOK lief damit an allen
+  // Rueckfragen vorbei und finalizeQuiz vernichtete den laufenden Versuch kommentarlos
+  // (Codex-Review Runde 4, Blocker 1). Ein Guard je Einstieg ist strukturell fehleranfaellig —
+  // deshalb genau einer, und zwar VOR jeder Verzweigung.
+  if (earlyStartAttemptRunning()) {
+    const choice = await openConfirmReplaceReady("started-partial");
+    if (choice === "start") { returnToRunningAttempt(); return; } // zurueck zum laufenden Teil-Test
+    if (choice !== "replace") return; // abgebrochen: nichts verwerfen, laufender Versuch bleibt
+    // "replace": laufenden Teil-Test bewusst aufgeben (der Modal-Text sagt das explizit).
+    // clearLearnSession raeumt den zugehoerigen "started-partial"-Zeiger gleich mit ab (s. dort),
+    // damit kein unsichtbarer Zeiger-Rest zurueckbleibt.
+    clearLearnSession();
+    renderActiveJobCard(null);
+  }
+
   // Punkt 3: einen offenen, noch nicht ausgewerteten Lerntest nicht stillschweigend
   // ueberschreiben. Nur im Lernmodus relevant; bei Bestaetigung wird die alte Sitzung
-  // verworfen und die Generierung mit gesetztem Flag erneut angestossen.
-  // Laeuft gerade ein Early-Start-Teilversuch (started-partial), gibt es dafuer eine SPEZIFISCHERE
-  // Rueckfrage (openConfirmReplaceReady("started-partial")) mit einem "Zum laufenden Test zurueck"-
-  // Ausgang (resumeLearnSession) - im Hosted-Pfad in startHostedGeneration, im BYOK/lokalen Pfad
-  // weiter unten (Codex-Review Blocker 3: beide Pfade brauchen ihn, isHosted erreicht startHosted-
-  // Generation, alles andere nicht). Wuerde HIER trotzdem schon die generische Lernsession-
-  // Rueckfrage greifen, wuerde deren Bestaetigung die Lernsession per clearLearnSession() sofort
-  // vernichten - der "zurueck"-Ausgang der spezifischeren Rueckfrage liefe dann ins Leere
-  // (resumeLearnSession faende keine Sitzung mehr und wuerde kommentarlos auf der Eingabe-Ansicht
-  // stehen bleiben, Codex-Review Runde 3). Fuer started-partial daher NICHT hier fragen.
-  const earlyStartRunning = mode === "lernen" && (loadActiveJob() || {}).status === "started-partial";
-  if (mode === "lernen" && !opts._replaceConfirmed && !earlyStartRunning && loadLearnSession()) {
+  // verworfen und die Generierung mit gesetztem Flag erneut angestossen. Ein Early-Start-
+  // Teilversuch ist hier bereits abgehandelt (oben): entweder wurde zurueckgekehrt/abgebrochen
+  // (return) oder seine Sitzung ist verworfen — diese Rueckfrage kann also nicht mehr doppelt
+  // auf denselben Bogen fallen.
+  if (wantMode === "lernen" && !opts._replaceConfirmed && loadLearnSession()) {
     openConfirmReplaceLearn(() => {
       clearLearnSession();
       renderHome();
@@ -6205,6 +6226,14 @@ async function generateQuiz(opts = {}) {
     });
     return;
   }
+
+  // Der neue Modus wird ab hier ausschliesslich als lokale Konstante `wantMode` weitergereicht
+  // (in den Job-/Quiz-Kontext). Das globale `mode` bleibt bis zuletzt der Modus des GERADE
+  // laufenden Fragebogens und wird erst von finalizeQuiz umgestellt, also genau dann, wenn der
+  // neue Bogen wirklich beginnt. Das haelt zwei Dinge gleichzeitig heil: einen noch offenen
+  // Lerntest (saveLearnSession verweigert bei mode !== "lernen") und den Dispatch selbst, der
+  // sonst - waehrend eines der langen await-Punkte unten - einen zwischenzeitlich von aussen
+  // geaenderten globalen Modus mitschicken koennte.
 
   // "schwer" sind die Fragen, die im echten Auswahlverfahren am
   // wahrscheinlichsten drankommen; die Stufe steuert deren Anteil
@@ -6280,7 +6309,7 @@ async function generateQuiz(opts = {}) {
   // geht, das Handy sperrt oder man die Seite verlaesst und spaeter zurueckkehrt.
   if (isHosted) {
     return startHostedGeneration({
-      jobText, difficulty, mode, urlKey, jobUrl, vertiefungFelder,
+      jobText, difficulty, mode: wantMode, urlKey, jobUrl, vertiefungFelder,
       numQuestions: Number(numQuestions),
       vertiefung: vertiefung
         ? { felder: vertiefung.felder.map((f) => ({ label: f.label })), niveau: vertiefung.niveau || undefined }
@@ -6290,24 +6319,8 @@ async function generateQuiz(opts = {}) {
     });
   }
 
-  // Codex-Review Blocker 3: der spezifischere started-partial-Guard (openConfirmReplaceReady) lag
-  // bisher ausschliesslich in startHostedGeneration, das dieser BYOK/lokale Zweig nie erreicht (isHosted
-  // ist hier bereits false, der Hosted-Fall ist oben schon per return abgehandelt). Die generische
-  // Lernsession-Rueckfrage ist fuer started-partial oben bewusst ausgesetzt (earlyStartRunning,
-  // s. Kommentar dort) - ohne diesen Guard gaebe es fuer BYOK/lokal ueberhaupt KEINE Rueckfrage mehr,
-  // und finalizeQuiz wuerde einen laufenden, bereits bezahlten Early-Start-Teilversuch beim Abschluss
-  // (saveLearnSession) kommentarlos ueberschreiben. Denselben Dialog wie im Hosted-Pfad nutzen.
-  if (earlyStartRunning) {
-    const choice = await openConfirmReplaceReady("started-partial");
-    if (choice === "start") { resumeLearnSession(); return; } // zurueck zum laufenden Teil-Test
-    if (choice !== "replace") return; // abgebrochen: nichts verwerfen, laufender Versuch bleibt unangetastet
-    // "replace": Modal-Text sagt es explizit - laufenden Teil-Test UND seinen Job-Zeiger aufgeben.
-    // Ohne dieses Aufraeumen bliebe eine verworfene Sitzung als Karteileiche im Storage stehen und
-    // wuerde beim naechsten Test faelschlich die generische Rueckfrage ausloesen (wie im Hosted-Pfad).
-    clearLearnSession();
-    clearActiveJob();
-    renderActiveJobCard(null);
-  }
+  // (Der Schutz eines laufenden Early-Start-Teilversuchs liegt bewusst NICHT hier, sondern einmalig
+  // ganz oben in dieser Funktion — vor der Verzweigung nach Anbieter/Modus. Siehe dort.)
 
   actionRunning = true;
   showLoading("Fragenkatalog wird erstellt...");
@@ -6460,7 +6473,7 @@ async function generateQuiz(opts = {}) {
     }
     // Quiz-Session aus dem Ergebnis aufbauen (gemeinsam mit dem Hosted-Async-Pfad).
     finalizeQuiz(result, {
-      jobText, difficulty, urlKey, jobUrl, vertiefungFelder, mode,
+      jobText, difficulty, urlKey, jobUrl, vertiefungFelder, mode: wantMode,
       genCost, genTokens, isLocal, localAborted, total,
       provider: settings.provider || "hosted",
       // Dieser Pfad ist immer NICHT-hosted (hosted kehrt vorher ueber startHostedGeneration
@@ -6655,25 +6668,17 @@ async function startHostedGeneration(ctx) {
   // Nur EIN Test in Erstellung zugleich (deckt sich mit dem serverseitigen exclusive-Gate).
   const existing = loadActiveJob();
   // Early-Start (Punkt 1): ein "started-partial"-Zeiger ist ein laufender, vom Nutzer bereits
-  // begonnener Teil-Test (Nachlieferung laeuft im Hintergrund weiter) - kein "wird noch erstellt"
-  // im alten Sinn. Trotzdem gilt dieselbe Grundregel wie beim fertigen ("ready") Test: nie still
-  // ueberschreiben, sondern denselben Rueckfrage-Dialog nutzen (openConfirmReplaceReady deckt
-  // beide Zustaende ab, s. dort). "start" fuehrt zurueck in den laufenden Versuch statt (wie bei
-  // "ready") einen gespeicherten job.quiz zu laden - der lebt bei started-partial in der
-  // Lernsession, nicht im Zeiger (resumeLearnSession liest sie zuverlaessig neu ein).
+  // begonnener Teil-Test. Die Rueckfrage dazu (mit dem "Zum laufenden Test zurueck"-Ausgang) liegt
+  // an EINER Stelle in generateQuiz, vor jeder Verzweigung — dieser Zweig ist auf dem regulaeren
+  // Weg daher nicht erreichbar. Er bleibt als STUMPFER Backstop stehen: sollte je ein neuer
+  // Einstieg direkt hier landen, wird abgebrochen statt still ueberschrieben. Ein zweiter,
+  // eigenstaendig gepflegter Dialog an dieser Stelle war genau die Quelle der Divergenz, aus der
+  // Blocker 1 (Runde 4) entstand.
   if (existing && existing.status === "started-partial") {
-    const choice = await openConfirmReplaceReady("started-partial");
-    if (choice === "start") { resumeLearnSession(); return; } // zurueck zum laufenden Teil-Test
-    if (choice !== "replace") return; // abgebrochen: nichts verwerfen
-    // "replace": laufenden Teil-Test UND seinen Job-Zeiger bewusst aufgeben (Modal-Text sagt das
-    // explizit). Die generische Lernsession-Rueckfrage in generateQuiz ist fuer started-partial
-    // bewusst AUSGESETZT (Codex-Review Runde 3, s. dort) - genau deshalb muss die Lernsession hier
-    // selbst aufgeraeumt werden, sonst bliebe eine verworfene Sitzung als Karteileiche im Storage
-    // stehen (und wuerde beim naechsten Test faelschlich die generische Rueckfrage ausloesen).
-    clearLearnSession();
-    clearActiveJob();
-    renderActiveJobCard(null);
-  } else if (existing && existing.status !== "ready") {
+    showError("Du hast gerade einen Test offen, der noch Fragen nachlädt. Kehre erst dorthin zurück oder verwirf ihn, bevor du einen neuen Test erstellst.");
+    return;
+  }
+  if (existing && existing.status !== "ready") {
     showError("Es wird gerade schon ein Test erstellt. Bitte warte, bis er fertig ist.");
     return;
   }
@@ -6935,6 +6940,10 @@ async function pollActiveJob() {
       // (deckt auch den Fall ab, dass der Job serverseitig terminal wird und verschwindet,
       // obwohl lokal schon Teilfragen beantwortet wurden).
       showPartialDeliveryStopped();
+      // Ein verschwundener Job kann serverseitig erstattet worden sein - Guthaben nachziehen
+      // (gleicher Gedanke wie im error-Zweig unten). Deckt insbesondere den Fall ab, in dem die
+      // Nachlieferung zwischenzeitlich pausiert hat und der Job in der Aufbewahrung ablief.
+      refreshCreditsAfterJob(job.ctx);
     } else {
       renderActiveJobCard(null);
       showError("Der erstellte Test ist nicht mehr verfügbar. Bitte starte ihn neu.");
@@ -6979,8 +6988,19 @@ async function pollActiveJob() {
       // waehrend keine passende Sitzung offen ist, wird ueberhaupt nicht gepollt, s.
       // resumeActiveJob/resumePartialDelivery).
       const ownsQuiz = quiz && Array.isArray(quiz.fragen) && quiz.jobId === job.jobId;
-      const fragenVorher = ownsQuiz ? quiz.fragen.length : 0;
-      if (ownsQuiz) {
+      if (!ownsQuiz) {
+        // Der Empfaenger ist gerade nicht geladen (der Nutzer hat z. B. einen Versuch aus der
+        // Historie geoeffnet oder den Beispieltest gestartet - beides ersetzt das geladene Quiz,
+        // ohne den gesicherten Bogen anzutasten). Das Ergebnis hier NICHT verbrauchen und den
+        // Zeiger NICHT aufloesen: das wuerde die restlichen, bereits bezahlten Fragen endgueltig
+        // verbrennen, obwohl der Bogen als Lernsession weiterlebt. Stattdessen pausieren - genau
+        // wie nach einem Reload (resumeActiveJob). Sobald der Nutzer die Sitzung fortsetzt, holt
+        // resumePartialDelivery() das fertige Ergebnis in einem Rutsch nach. Bleibt der Bogen
+        // dauerhaft weg, raeumt earlyStartAttemptRunning()/resumeActiveJob den Zeiger ab.
+        return;
+      }
+      const fragenVorher = quiz.fragen.length;
+      {
         appendDeliveredFragen(data.quiz.fragen);
         // Codex-Review Blocker 2: appendDeliveredFragen uebernimmt NUR data.quiz.fragen - die
         // uebrigen von normalizeQuizData ausgewerteten Top-Level-Felder (kernpunkte, druckpunkte,
@@ -7029,7 +7049,7 @@ async function pollActiveJob() {
       // Codex-Review Runde 3 ist genau N == 0 (letzter Poll bringt dasselbe Praefix wie der
       // vorige): dann bleibt nur das Nachziehen von Zaehler/Balken/Button und das Abraeumen des
       // Hinweises - und genau das fehlte vorher.
-      if (ownsQuiz) afterDeliveryChange(quiz.fragen.length - fragenVorher);
+      afterDeliveryChange(quiz.fragen.length - fragenVorher);
       trackFirstTest();
       // Ein bezahlter Opus-Job kann auch NACH einem erfolgreichen Early-Start noch erstattet
       // werden - Guthaben-Cache also immer nachziehen.
@@ -7179,6 +7199,57 @@ function startReadyJob() {
 }
 
 /* ---------- Early-Start: mit den ersten Fragen loslegen (Punkt 2) ---------- */
+
+// Ein laufender Early-Start-Teilversuch besteht IMMER aus zwei Haelften: dem Job-Zeiger
+// ("started-partial", Grundlage der Nachlieferung) und dem begonnenen Bogen (Lernsession bzw. das
+// im aktuellen Tab geladene Quiz). Nur beide zusammen ergeben etwas Schuetzenswertes:
+//
+//   - Zeiger OHNE Bogen ist eine unsichtbare Karteileiche: renderHome zeigt fuer "started-partial"
+//     bewusst keine Karte, es gibt keinen Empfaenger fuer nachgelieferte Fragen, und ein
+//     Ersetzen-Dialog dafuer haette eine funktionslose "Zum laufenden Test zurueck"-Schaltflaeche
+//     (resumeLearnSession faende nichts). Solche Reste werden hier deshalb SOFORT abgeraeumt,
+//     statt spaeter Dialoge zu erzeugen, die ins Leere fuehren (Codex-Review Runde 4, Blocker 2).
+//   - Bogen OHNE Zeiger ist dagegen voellig unkritisch: ein ganz normaler, fortsetzbarer Lerntest
+//     ohne Nachlieferung (so sieht es z. B. nach dem Abmelden aus).
+//
+// Bewusst NICHT Teil der Bedingung: der gerade im Formular gewaehlte Modus und der Anbieter. Was
+// geschuetzt wird, ist der bestehende Versuch — nicht das, was der Nutzer als Naechstes vorhat.
+function earlyStartAttemptRunning() {
+  const job = loadActiveJob();
+  if (!job || job.status !== "started-partial") return false;
+  // (a) Der Versuch laeuft in genau diesem Tab: der Bogen liegt im Speicher. Das gilt auch dann,
+  //     wenn die Lernsession nicht geschrieben werden konnte (voller localStorage) - der Versuch
+  //     ist trotzdem real und darf nicht kommentarlos verworfen werden.
+  if (quiz && quiz.jobId === job.jobId) return true;
+  // (b) Sonst zaehlt die gesicherte Lernsession als Bogen (Reload/anderer Tab).
+  const s = loadLearnSession();
+  if (s && s.quiz && s.quiz.jobId === job.jobId && Array.isArray(s.quiz.fragen) && s.quiz.fragen.length) return true;
+  clearActiveJob(); // Zeiger ohne Bogen: Karteileiche, still abraeumen
+  return false;
+}
+
+// Gegenstueck zu earlyStartAttemptRunning(): zurueck in den laufenden Teilversuch. Liegt der Bogen
+// noch im Speicher dieses Tabs, wird GENAU DER wieder gezeigt - nicht der (moeglicherweise
+// aeltere oder gar nicht vorhandene) Stand aus dem Storage. Wichtig fuer den Fall "Lernsession
+// konnte nicht geschrieben werden" (voller localStorage): resumeLearnSession faende dort nichts
+// und wuerde den Versuch als Karteileiche abraeumen - also genau das zerstoeren, was der Nutzer
+// mit "Zum laufenden Test zurueck" retten wollte.
+function returnToRunningAttempt() {
+  const job = loadActiveJob();
+  if (job && quiz && quiz.jobId === job.jobId && Array.isArray(quiz.fragen) && quiz.fragen.length) {
+    // Ein Early-Start-Versuch ist immer ein fortsetzbarer Lerntest - denselben Zustand
+    // herstellen, den resumeLearnSession() garantiert (nur ohne den Umweg ueber den Storage).
+    mode = "lernen";
+    reviewing = false;
+    learnSessionActive = true;
+    lastRenderedIndex = -1; // Wiedereintritt: aktuelle Frage wieder einfliegen lassen
+    renderQuestion();
+    showView("view-quiz");
+    resumePartialDelivery(); // Nachlieferung ggf. wieder anstossen
+    return;
+  }
+  resumeLearnSession();
+}
 
 // Startet den Lerntest mit dem bisher gelieferten Teil-Ergebnis; die restlichen Fragen liefert
 // pollActiveJob im Hintergrund nach (appendDeliveredFragen). Anders als startReadyJob() wird der
@@ -7528,6 +7599,20 @@ function saveLearnSession() {
 function clearLearnSession() {
   learnSessionActive = false;
   try { localStorage.removeItem(LEARN_SESSION_KEY); } catch {}
+  // Early-Start: Bogen und Job-Zeiger gehoeren zusammen und werden deshalb nur noch GEMEINSAM
+  // verworfen — an dieser einen Stelle, an der der Bogen verschwindet, statt in jedem einzelnen
+  // Aufrufer (Verwerfen auf der Fortsetzen-Karte, Ersetzen-Dialoge, Pruefungsmodus-Start,
+  // Auswertung). Genau diese Verteilung war die Ursache von Blocker 2 in Runde 4: ein
+  // "started-partial"-Zeiger ohne Lernsession ist unsichtbar (keine Karte, kein Poll, kein
+  // Empfaenger) und laesst spaeter einen Ersetzen-Dialog mit funktionsloser Schaltflaeche
+  // erscheinen. "pending"/"ready"-Zeiger bleiben unangetastet: die haengen nicht am Bogen,
+  // sondern an einer laufenden bzw. fertigen Erstellung mit eigener Karte.
+  const job = loadActiveJob();
+  if (job && job.status === "started-partial") {
+    clearActiveJob();
+    clearTimeout(_jobPollTimer); // ohne Bogen gibt es nichts mehr nachzuliefern
+    _earlyStartAuthPausedJobId = null;
+  }
 }
 // Beim Tippen nicht bei jedem Anschlag das ganze Quiz serialisieren — kurz buendeln.
 let _learnSaveTimer = null;
@@ -7539,7 +7624,17 @@ function saveLearnSessionDebounced() {
 // Gesicherten Lerntest wiederherstellen und in die Frageansicht springen.
 function resumeLearnSession() {
   const s = loadLearnSession();
-  if (!s || !s.quiz || !Array.isArray(s.quiz.fragen) || !s.quiz.fragen.length) { clearLearnSession(); renderHome(); return; }
+  // Nichts (mehr) da: aufraeumen UND sichtbar auf der Startseite landen. Ohne den View-Wechsel
+  // bliebe der Nutzer bei einem Aufruf aus dem Ersetzen-Dialog heraus kommentarlos auf der
+  // Eingabe-Ansicht stehen (Codex-Review Runde 4). Regulaer ist dieser Zweig nicht mehr
+  // erreichbar — der Dialog wird nur noch angeboten, wenn es einen echten Bogen gibt
+  // (earlyStartAttemptRunning) —, er bleibt aber als ehrlicher Ausgang bestehen.
+  if (!s || !s.quiz || !Array.isArray(s.quiz.fragen) || !s.quiz.fragen.length) {
+    clearLearnSession(); // raeumt einen evtl. verwaisten "started-partial"-Zeiger gleich mit ab
+    renderHome();
+    showView("view-home");
+    return;
+  }
   quiz = s.quiz;
   // Defensiv gegen unvollstaendige/aeltere Staende: Laengen an die Fragen angleichen.
   const n = quiz.fragen.length;
@@ -7581,6 +7676,8 @@ function resumePartialDelivery() {
 }
 
 function discardLearnSession() {
+  // clearLearnSession verwirft bei einem Early-Start-Bogen auch dessen Job-Zeiger (s. dort) —
+  // "Verwerfen" beendet den Versuch damit vollstaendig und laesst keinen unsichtbaren Rest zurueck.
   clearLearnSession();
   renderHome(); // Karte ausblenden und Leer-Hinweis/Liste korrekt wiederherstellen
 }
