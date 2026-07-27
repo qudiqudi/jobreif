@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.53.0";
+const APP_VERSION = "1.53.1";
 
 const CHANGELOG = [
+  {
+    version: "1.53.1",
+    date: "23.07.2026",
+    items: [
+      "Technisch: Die anonyme Nutzungsstatistik (kein Cookie, keine persönlichen Daten) erfasst jetzt zusätzlich, wie oft ein im Hintergrund fertig erstellter Test tatsächlich gestartet wird – für dich ändert sich an der Bedienung nichts.",
+    ],
+  },
   {
     version: "1.53.0",
     date: "21.07.2026",
@@ -6821,6 +6828,13 @@ function startReadyJob() {
   hideJobReadyBanner(); // P4: Hinweis ist mit dem Start (von Karte ODER Banner) erledigt
   const job = loadActiveJob();
   if (!job || !job.quiz) return;
+  // Funnel "job-started" (anonyme Nutzungsstatistik, gleicher Kanal wie trackEvent):
+  // zaehlt, wenn ein im Hintergrund fertig erstellter Test hier tatsaechlich gestartet
+  // wird ("Loslegen") — so laesst sich die Luecke "fertig gesehen, aber nie begonnen"
+  // messen. Erst NACH dem Guard, also nur bei echtem Start; startReadyJob haengt
+  // ausschliesslich an Klick-Handlern (nicht an Re-Render), der Guard verhindert
+  // zusaetzlich ein zweites Feuern, falls der Job schon geleert ist.
+  trackEvent("job-started");
   clearActiveJob();
   renderActiveJobCard(null);
   finalizeQuiz(job.quiz, { ...job.ctx, jobId: job.jobId, genCost: null, genTokens: null, isLocal: false });
