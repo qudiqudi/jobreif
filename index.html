@@ -567,6 +567,11 @@
           <div class="active-job-progress-bar"><div id="active-job-progress-fill"></div></div>
         </div>
         <button id="active-job-start" class="primary hidden">Loslegen</button>
+        <!-- Early-Start (nur Lernmodus): sobald der Server genug Fragen fuer den Poll-Opt-in
+             geliefert hat, kann hier schon losgelegt werden - der Rest wird nachgeliefert
+             (renderActiveJobCard/startPartialJob). Beschriftung wird dynamisch mit der
+             aktuellen Fragenzahl gesetzt. -->
+        <button id="active-job-start-partial" class="ghost hidden" type="button">Jetzt loslegen</button>
         <!-- Wartezeit nutzen: waehrend der Test im Hintergrund entsteht, eine kurze lokale
              Uebung anbieten (kostenlos, komplett auf dem Geraet; die Erstellung laeuft weiter). -->
         <div id="active-job-practice" class="active-job-practice hidden">
@@ -788,6 +793,9 @@
         </span>
       </div>
       <div class="progress-bar"><div id="progress-fill"></div></div>
+      <!-- Early-Start: dezenter, nicht-blockierender Hinweis bei Nachlieferung neuer Fragen
+           (appendDeliveredFragen/showDeliveryHint). Faded Toast, kein Fokus-Diebstahl. -->
+      <p id="quiz-delivery-hint" class="quiz-delivery-hint" role="status" aria-live="polite"></p>
 
       <div id="quiz-notice" class="quiz-notice hidden" role="status"></div>
 
@@ -953,10 +961,13 @@
          eines neuen still verdrängt (sein Ergebnis wäre danach nirgends mehr erreichbar, das
          dafür verbrauchte Kontingent bzw. Guthaben bliebe aber verbucht). Deshalb vor dem
          Ersetzen ausdrücklich fragen und den fertigen Test als Standardweg anbieten. -->
+    <!-- Text/Beschriftungen werden bei "started-partial" (Early-Start-Test laeuft, Rest wird
+         nachgeliefert) von openConfirmReplaceReady() umgeschrieben - derselbe Dialog deckt beide
+         Faelle ab (Doppel-Start-Guard, Early-Start-PR). -->
     <div id="confirm-replace-ready-modal" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-replace-ready-title">
       <div class="modal card">
         <h2 id="confirm-replace-ready-title">Fertiger Test noch nicht gestartet</h2>
-        <p>Du hast bereits einen fertigen Test, den du noch nicht gestartet hast. Wenn du jetzt einen neuen erstellst, wird der fertige Test <strong>verworfen</strong> – das dafür verbrauchte Kontingent bzw. Guthaben wird nicht zurückerstattet.</p>
+        <p id="confirm-replace-ready-text">Du hast bereits einen fertigen Test, den du noch nicht gestartet hast. Wenn du jetzt einen neuen erstellst, wird der fertige Test <strong>verworfen</strong> – das dafür verbrauchte Kontingent bzw. Guthaben wird nicht zurückerstattet.</p>
         <div class="row wrap">
           <button id="btn-confirm-replace-ready-start" class="primary">Fertigen Test starten</button>
           <button id="btn-confirm-replace-ready-new" class="ghost">Trotzdem neu erstellen</button>
