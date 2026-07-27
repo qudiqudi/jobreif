@@ -35,6 +35,9 @@ jobs:
       - name: Geräte-Sync Merge-Kern (Konflikt-Matrix + Lattice-Eigenschaften) prüfen
         run: node test/sync-merge.test.js
 
+      - name: Funnel-Event "job-started" (genau einmal, nicht bei blosser Anzeige) prüfen
+        run: node test/funnel-job-started.test.js
+
       - name: Fremd-JS-Wächter (Regelwerk) prüfen
         run: node test/check-no-foreign-js.test.js
 
