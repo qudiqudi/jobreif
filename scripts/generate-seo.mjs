@@ -186,7 +186,7 @@ function renderSample(s, types) {
       </li>`;
 }
 
-function renderPage(p, cat) {
+function renderPage(p, cat, idx) {
   const { baseUrl, testTypes } = cat;
   const url = `${baseUrl}/einstellungstest/${p.slug}/`;
   const samples = Array.isArray(p.samples) ? p.samples : [];
@@ -211,8 +211,12 @@ function renderPage(p, cat) {
       </section>`
     : "";
 
-  // Verwandte Berufe (interne Vernetzung) — bis MAX_RELATED andere Katalogseiten.
-  const related = cat.pages.filter((q) => q.slug !== p.slug).slice(0, MAX_RELATED);
+  // Verwandte Berufe (interne Vernetzung) — umlaufendes Fenster ab dem eigenen
+  // Katalog-Index, damit jede Seite gleich viele eingehende Links bekommt
+  // (deterministisch; kein Zufall, sonst schluege der CI-Drift-Check an).
+  const n = cat.pages.length;
+  const count = Math.min(MAX_RELATED, n - 1);
+  const related = Array.from({ length: count }, (_, k) => cat.pages[(idx + 1 + k) % n]);
   const relatedHtml = related.length
     ? `<section class="block">
         <h2>Einstellungstest für andere Berufe</h2>
@@ -461,10 +465,10 @@ async function main() {
   const removed = await pruneStale(slugs);
 
   await writeFile(path.join(outDir, "index.html"), renderHub(cat), "utf8");
-  for (const p of cat.pages) {
+  for (const [i, p] of cat.pages.entries()) {
     const dir = path.join(outDir, p.slug);
     await mkdir(dir, { recursive: true });
-    await writeFile(path.join(dir, "index.html"), renderPage(p, cat), "utf8");
+    await writeFile(path.join(dir, "index.html"), renderPage(p, cat, i), "utf8");
   }
   await writeFile(path.join(root, "sitemap.xml"), renderSitemap(cat), "utf8");
 
