@@ -12238,6 +12238,12 @@ function startVertiefungForJob(job, testMode, num, felder) {
   if (mEl) mEl.checked = true;
   const dEl = document.querySelector('input[name="difficulty"][value="schwer"]');
   if (dEl) dEl.checked = true;
+  // Wie in startTestForJob: die Gespraechsstufe DIESER Stelle ins geteilte <select>
+  // uebernehmen (normalizeTestConfig liefert "" = Allgemein, wenn nichts gemerkt ist).
+  // Immer setzen, sonst leckt ein Wert aus der Eingabemaske oder von einer anderen
+  // Stelle in diesen - kostenpflichtigen - Vertiefungsbogen und spaeter in dessen Auswertung.
+  const stufeEl = $("gespraechsstufe");
+  if (stufeEl) stufeEl.value = normalizeTestConfig(job.lastTestConfig).stufe;
   const numInput = $("num-questions");
   if (Number.isFinite(num)) {
     if (numInput.setValue) numInput.setValue(num);
@@ -13891,6 +13897,11 @@ $("btn-new-job").addEventListener("click", () => {
   draftSaveTimer = 0;
   $("job-url").value = "";
   $("job-text").value = "";
+  // Auch die Gespraechsstufe zurueck auf "Allgemein": das <select> ist geteilt, ein
+  // von einer anderen Stelle uebernommener Wert waere im Frischstart sonst still
+  // vorausgewaehlt. Vor showView(), damit der Kontext-Hinweis neu berechnet wird.
+  const stufeEl = $("gespraechsstufe");
+  if (stufeEl) stufeEl.value = "";
   lastFetch = { url: "", text: "" };
   try { localStorage.removeItem(DRAFT_KEY); } catch { /* Entwurf ist nur Komfort */ }
   showView("view-input");
