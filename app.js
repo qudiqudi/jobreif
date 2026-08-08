@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.55.0";
+const APP_VERSION = "1.55.1";
 
 const CHANGELOG = [
+  {
+    version: "1.55.1",
+    date: "08.08.2026",
+    items: [
+      "Vertiefung: Startest du zu einer Stelle eine Vertiefung, wird jetzt die für diese Stelle gemerkte Gesprächsstufe verwendet. Vorher konnte die Stufe einer anderen Stelle einfließen, die du vorher geöffnet hattest – das betraf sowohl die erzeugten Fragen als auch die anschließende Auswertung. Auch „Neue Stelle“ startet jetzt wieder mit der Stufe „Allgemein“.",
+    ],
+  },
   {
     version: "1.55.0",
     date: "22.07.2026",
