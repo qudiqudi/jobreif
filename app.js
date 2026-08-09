@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.55.1";
+const APP_VERSION = "1.55.2";
 
 const CHANGELOG = [
+  {
+    version: "1.55.2",
+    date: "09.08.2026",
+    items: [
+      "Sicherheit (nur „Eigener Anbieter“ mit lokalem Modell): Hattest du früher einen Cloud-Schlüssel (OpenAI, DeepSeek, Anthropic) hinterlegt und bist danach auf ein lokales Modell umgestiegen, wurde dieser Schlüssel beim Erstellen und Auswerten von Tests an deinen lokalen Modellserver mitgeschickt – obwohl das Schlüsselfeld dort ausgeblendet ist und lokale Server keinen Schlüssel brauchen. Das passiert nicht mehr. Dein gespeicherter Schlüssel bleibt erhalten, damit der Wechsel zurück zu einem Cloud-Anbieter weiter funktioniert.",
+    ],
+  },
   {
     version: "1.55.1",
     date: "08.08.2026",
@@ -5148,9 +5155,14 @@ async function callLLM(systemPrompt, userPrompt, schema, onProgress, opts = {}) 
   }
 
   const headers = { "Content-Type": "application/json" };
-  // Lokale Server brauchen keinen Key; ist trotzdem einer gesetzt (manche
-  // LM-Studio-Konfigurationen), wird er mitgeschickt.
-  if (settings.apiKey) headers.Authorization = `Bearer ${settings.apiKey}`;
+  // Cloud-Anbieter (OpenAI/DeepSeek) brauchen den BYOK-Key als Bearer. Beim LOKALEN Anbieter
+  // NICHT mitschicken: das Key-Feld ist fuer "local" ausgeblendet, ein dort noch gesetzter
+  // settings.apiKey ist also praktisch immer ein uebrig gebliebenes Cloud-Secret eines frueher
+  // gewaehlten Anbieters (der Key bleibt bewusst gespeichert, damit der BYOK-Fallback nach einem
+  // Wechsel zurueck weiter funktioniert). Frueher ging er als Bearer an localBaseUrl() — also an
+  // Ollama/LM Studio oder was sonst unter der eingetragenen Adresse lauscht, fuer den Nutzer
+  // unsichtbar. Lokale Server brauchen ohnehin keinen Key.
+  if (settings.apiKey && !isLocal) headers.Authorization = `Bearer ${settings.apiKey}`;
 
   const localConnError = "Keine Verbindung zum lokalen Modellserver. Läuft Ollama bzw. LM Studio, und ist die Adresse in den Einstellungen korrekt? Bei Aufruf über https muss der Server zudem Cross-Origin-Anfragen dieser Seite erlauben (z. B. OLLAMA_ORIGINS).";
   const doPost = () => fetch(endpoint, { method: "POST", headers, body: JSON.stringify(body), signal: opts.signal });
@@ -13433,9 +13445,9 @@ async function importData(text) {
     // apiKey: "" aus einem Backup ohne Schluessel) darf bei GLEICHEM Anbieter
     // einen vorhandenen, funktionierenden Wert nicht ueberschreiben. Wechselt
     // der Import dagegen den Anbieter, gehoeren Schluessel/Modell/Adresse zum
-    // alten Anbieter und duerfen NICHT mitgeschleppt werden - sonst ginge z. B.
-    // ein vorhandener Cloud-Key an einen frisch importierten lokalen Server
-    // (callLLM haengt den Key als Authorization-Header an, auch lokal).
+    // alten Anbieter und duerfen NICHT mitgeschleppt werden - ein Cloud-Key
+    // gehoert nicht in die Konfiguration eines frisch importierten lokalen
+    // Servers, selbst wenn callLLM ihn dorthin inzwischen nicht mehr sendet.
     const cur = loadSettings();
     const inc = data.settings;
     const merged = { ...cur };
