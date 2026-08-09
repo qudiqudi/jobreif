@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.55.0";
+const APP_VERSION = "1.55.1";
 
 const CHANGELOG = [
+  {
+    version: "1.55.1",
+    date: "08.08.2026",
+    items: [
+      "Vertiefung: Startest du zu einer Stelle eine Vertiefung, wird jetzt die für diese Stelle gemerkte Gesprächsstufe verwendet. Vorher konnte die Stufe einer anderen Stelle einfließen, die du vorher geöffnet hattest – das betraf sowohl die erzeugten Fragen als auch die anschließende Auswertung. Auch „Neue Stelle“ startet jetzt wieder mit der Stufe „Allgemein“.",
+    ],
+  },
   {
     version: "1.55.0",
     date: "22.07.2026",
@@ -12238,6 +12245,12 @@ function startVertiefungForJob(job, testMode, num, felder) {
   if (mEl) mEl.checked = true;
   const dEl = document.querySelector('input[name="difficulty"][value="schwer"]');
   if (dEl) dEl.checked = true;
+  // Wie in startTestForJob: die Gespraechsstufe DIESER Stelle ins geteilte <select>
+  // uebernehmen (normalizeTestConfig liefert "" = Allgemein, wenn nichts gemerkt ist).
+  // Immer setzen, sonst leckt ein Wert aus der Eingabemaske oder von einer anderen
+  // Stelle in diesen - kostenpflichtigen - Vertiefungsbogen und spaeter in dessen Auswertung.
+  const stufeEl = $("gespraechsstufe");
+  if (stufeEl) stufeEl.value = normalizeTestConfig(job.lastTestConfig).stufe;
   const numInput = $("num-questions");
   if (Number.isFinite(num)) {
     if (numInput.setValue) numInput.setValue(num);
@@ -13891,6 +13904,11 @@ $("btn-new-job").addEventListener("click", () => {
   draftSaveTimer = 0;
   $("job-url").value = "";
   $("job-text").value = "";
+  // Auch die Gespraechsstufe zurueck auf "Allgemein": das <select> ist geteilt, ein
+  // von einer anderen Stelle uebernommener Wert waere im Frischstart sonst still
+  // vorausgewaehlt. Vor showView(), damit der Kontext-Hinweis neu berechnet wird.
+  const stufeEl = $("gespraechsstufe");
+  if (stufeEl) stufeEl.value = "";
   lastFetch = { url: "", text: "" };
   try { localStorage.removeItem(DRAFT_KEY); } catch { /* Entwurf ist nur Komfort */ }
   showView("view-input");
