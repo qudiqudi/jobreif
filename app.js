@@ -1291,10 +1291,17 @@ function profilePayload() {
 // Vergleich). Das Backend-Enum behaelt beide (Abwaertskompat), der Client bietet/sendet sie
 // nicht mehr - alte gecachte Clients, die sie noch senden, funktionieren weiter.
 const GESPRAECHSSTUFEN = ["telefon", "assessment"];
+// Normalisiert einen beliebigen Wert auf das Enum: bekannter Wert oder undefined
+// (= Feld weglassen, "Allgemein"). Einzige Stelle, an der das entschieden wird.
+function normStufe(v) {
+  return GESPRAECHSSTUFEN.includes(v) ? v : undefined;
+}
+// Liest die Stufe aus dem geteilten Auswahlfeld. NUR im Moment des Ausloesens aufrufen
+// (generateQuiz haelt sie dort einmal fest) - das Feld ist geteilt und kann sich waehrend
+// eines laufenden Starts aendern.
 function gespraechsstufePayload() {
   const el = document.getElementById("gespraechsstufe");
-  const v = el && typeof el.value === "string" ? el.value : "";
-  return GESPRAECHSSTUFEN.includes(v) ? v : undefined;
+  return normStufe(el && typeof el.value === "string" ? el.value : "");
 }
 
 let profile = loadProfile();
@@ -6160,6 +6167,19 @@ async function saveThemenfelder(job, derived, level) {
 
 async function generateQuiz(opts = {}) {
   if (actionRunning) return;
+  // Gespraechsstufe EINMAL hier festhalten, nicht erst beim Absenden aus dem DOM lesen.
+  // Zwischen diesem Punkt und dem Payload liegen await-Punkte (Ersetzen-Rueckfrage,
+  // Guthaben-Aktualisierung), und `actionRunning` ist in diesem Fenster noch nicht gesetzt:
+  // eine andere Start- oder Navigations-Aktion kann das GETEILTE <select id="gespraechsstufe">
+  // in genau dieser Zeit ueberschreiben - der kostenpflichtige Lauf bekaeme dann die Stufe
+  // einer anderen Stelle, und ueber quiz.gespraechsstufe auch dessen Auswertung und die
+  // gemerkte Konfig der Stelle. Aufrufer, die die Stufe schon kennen (startTestForJob,
+  // startVertiefungForJob), geben sie als String mit ("" = Allgemein); dann wird das DOM gar
+  // nicht erst befragt. Ohne Vorgabe (Klick auf "Test erstellen") ist genau dieser Moment
+  // der Ausloese-Zeitpunkt.
+  const gespraechsstufe = typeof opts.gespraechsstufe === "string"
+    ? normStufe(opts.gespraechsstufe)
+    : gespraechsstufePayload();
   const vertiefung = opts && opts.vertiefung ? opts.vertiefung : null;
   const jobText = $("job-text").value.trim();
   if (jobText.length < 50) {
@@ -6254,7 +6274,9 @@ async function generateQuiz(opts = {}) {
     openConfirmReplaceLearn(() => {
       clearLearnSession();
       renderHome();
-      generateQuiz({ ...opts, _replaceConfirmed: true });
+      // Die beim ERSTEN Ausloesen festgehaltene Stufe mitgeben: der Wiedereinstieg laeuft
+      // aus einem Dialog-Callback, das geteilte Select kann inzwischen ein anderer Wert sein.
+      generateQuiz({ ...opts, gespraechsstufe: gespraechsstufe || "", _replaceConfirmed: true });
     });
     return;
   }
@@ -6360,7 +6382,7 @@ async function generateQuiz(opts = {}) {
         ? { felder: vertiefung.felder.map((f) => ({ label: f.label })), niveau: vertiefung.niveau || undefined }
         : undefined,
       profile: profilePayload(), // optionales, validiertes Bewerber-Profil (nur Hosted)
-      gespraechsstufe: gespraechsstufePayload(), // optionale Interviewrunde (nur Hosted)
+      gespraechsstufe, // optionale Interviewrunde (nur Hosted), beim Ausloesen festgehalten
       earlyStartReplaceBogen, // s. Kommentar oben: Vollzug liegt in startHostedGeneration
     });
   }
@@ -12250,7 +12272,8 @@ function startVertiefungForJob(job, testMode, num, felder) {
   // Immer setzen, sonst leckt ein Wert aus der Eingabemaske oder von einer anderen
   // Stelle in diesen - kostenpflichtigen - Vertiefungsbogen und spaeter in dessen Auswertung.
   const stufeEl = $("gespraechsstufe");
-  if (stufeEl) stufeEl.value = normalizeTestConfig(job.lastTestConfig).stufe;
+  const stufe = normalizeTestConfig(job.lastTestConfig).stufe;
+  if (stufeEl) stufeEl.value = stufe;
   const numInput = $("num-questions");
   if (Number.isFinite(num)) {
     if (numInput.setValue) numInput.setValue(num);
@@ -12261,7 +12284,9 @@ function startVertiefungForJob(job, testMode, num, felder) {
   // ueber dem aktuellen Niveau ansetzt (echte Vertiefung statt nur "schwer").
   const prog = computeJobProgress(job);
   const niveau = { level: prog.level, bestPct: prog.bestPct };
-  generateQuiz({ vertiefung: { felder, niveau } });
+  // Stufe zusaetzlich EXPLIZIT mitgeben: das Select oben ist nur die sichtbare Anzeige, der
+  // Lauf haengt nicht mehr daran (s. generateQuiz).
+  generateQuiz({ vertiefung: { felder, niveau }, gespraechsstufe: stufe });
 }
 
 let activeJob = null;
@@ -12327,11 +12352,13 @@ function startTestForJob(job, testMode, cfg) {
   if (mEl) mEl.checked = true;
   const dEl = document.querySelector(`input[name="difficulty"][value="${cfg.difficulty}"]`);
   if (dEl) dEl.checked = true;
-  // Gespraechsstufe der Stelle ins geteilte <select> uebernehmen - generateQuiz liest
-  // gespraechsstufePayload() daraus. Immer setzen (auch ""), damit kein veralteter
-  // Wert aus der Eingabemaske oder einer anderen Stelle in diesen Lauf leckt.
+  // Gespraechsstufe der Stelle ins geteilte <select> uebernehmen, damit die Maske zeigt, womit
+  // dieser Test laeuft. Immer setzen (auch ""), damit kein veralteter Wert aus der Eingabemaske
+  // oder einer anderen Stelle sichtbar stehen bleibt. Massgeblich fuer den Lauf ist aber die
+  // Vorgabe an generateQuiz unten, nicht dieses Feld.
+  const stufe = normStufe(cfg.stufe) || "";
   const stufeEl = $("gespraechsstufe");
-  if (stufeEl) stufeEl.value = GESPRAECHSSTUFEN.includes(cfg.stufe) ? cfg.stufe : "";
+  if (stufeEl) stufeEl.value = stufe;
   const numInput = $("num-questions");
   // Stepper setzt den Wert geklemmt (4-20, guenstig 4-15) und zieht Anzeige/Buttons mit; aeltere
   // Eintraege mit abweichendem cfg.num werden so defensiv in den Bereich gebracht.
@@ -12340,7 +12367,9 @@ function startTestForJob(job, testMode, cfg) {
     else numInput.value = String(cfg.num);
   }
   saveDraft();
-  generateQuiz();
+  // Stufe EXPLIZIT mitgeben statt sie generateQuiz aus dem geteilten Select lesen zu lassen:
+  // dazwischen liegen await-Punkte, in denen eine andere Aktion das Feld umsetzen kann.
+  generateQuiz({ gespraechsstufe: stufe });
 }
 
 // Gespeicherten Versuch wieder oeffnen: Auswertung anzeigen, Fragebogen
