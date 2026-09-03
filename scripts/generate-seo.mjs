@@ -136,6 +136,15 @@ function validate(cat) {
     for (const f of ["beruf", "title", "description", "intro"]) {
       if (typeof p[f] !== "string" || !p[f].trim()) at(`${f} fehlt/leer`);
     }
+    // seoTitle: optionales, additives Feld (Plan 2026, SEO-Welle Punkt 3). Ersetzt
+    // NUR <title>/og:title durch eine klickstaerkere Variante (z. B. mit "kostenlos"/
+    // "Loesungen"); die <h1> bleibt IMMER "title" (siehe renderPage()). Max. 65
+    // Zeichen, weil Suchmaschinen laengere Titel im Suchergebnis abschneiden - ein
+    // abgeschnittener Titel waere fuer die Klickrate kontraproduktiv.
+    if (p.seoTitle != null) {
+      if (typeof p.seoTitle !== "string" || !p.seoTitle.trim()) at("seoTitle: nicht-leerer String erwartet");
+      else if (p.seoTitle.length > 65) at(`seoTitle: max. 65 Zeichen erwartet (war ${p.seoTitle.length})`);
+    }
     if (!Array.isArray(p.testTypes) || p.testTypes.length === 0) at("testTypes: nicht-leeres Array");
     else p.testTypes.forEach((t) => { if (!knownType(t)) at(`testTypes-Eintrag "${t}" nicht in catalog.testTypes`); });
     if (p.samples != null) {
@@ -318,6 +327,9 @@ function renderPage(p, cat, idx) {
   const url = `${baseUrl}/einstellungstest/${p.slug}/`;
   const samples = Array.isArray(p.samples) ? p.samples : [];
   const faq = Array.isArray(p.faq) ? p.faq : [];
+  // seoTitle (optional): nur <title>/og:title, siehe validate(). Die <h1> unten
+  // nutzt weiterhin ausschliesslich p.title - NIE seoTitle.
+  const pageTitle = typeof p.seoTitle === "string" && p.seoTitle.trim() ? p.seoTitle : p.title;
 
   const typeList = p.testTypes.map((t) => {
     const def = testTypes[t];
@@ -421,7 +433,7 @@ function renderPage(p, cat, idx) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   ${CSP}
-  <title>${esc(p.title)}</title>
+  <title>${esc(pageTitle)}</title>
   <meta name="description" content="${esc(p.description)}">
   <link rel="canonical" href="${url}">
   <meta name="robots" content="index, follow">
@@ -432,7 +444,7 @@ function renderPage(p, cat, idx) {
   <meta property="og:site_name" content="jobreif.de">
   <meta property="og:locale" content="de_DE">
   <meta property="og:url" content="${url}">
-  <meta property="og:title" content="${esc(p.title)}">
+  <meta property="og:title" content="${esc(pageTitle)}">
   <meta property="og:description" content="${esc(p.description)}">
   <meta property="og:image" content="${baseUrl}/assets/social-preview.png">
   ${ldHtml}

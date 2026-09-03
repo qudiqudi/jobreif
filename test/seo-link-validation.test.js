@@ -115,6 +115,29 @@ async function run() {
     assert(errs.length > 0, "uebungen.href auf unbekannten, aber formal gueltigen Pfad wird abgelehnt");
   }
 
+  // g) seoTitle (SEO-Welle Punkt 3, generate-seo.mjs validate()): optionales
+  //    Feld fuer <title>/og:title, max. 65 Zeichen, nicht leer. 65 Zeichen exakt
+  //    sind noch gueltig, 66 nicht mehr - und ein leerer String wird trotz
+  //    korrekter Laenge (0 <= 65) abgelehnt, weil er inhaltlich nichts liefert.
+  {
+    const cat = baseCatalog();
+    cat.pages[0].seoTitle = "x".repeat(66);
+    const errs = validate(cat);
+    assert(errs.length > 0, "seoTitle mit 66 Zeichen wird abgelehnt");
+  }
+  {
+    const cat = baseCatalog();
+    cat.pages[0].seoTitle = "x".repeat(65);
+    const errs = validate(cat);
+    assert(errs.length === 0, "seoTitle mit 65 Zeichen wird akzeptiert");
+  }
+  {
+    const cat = baseCatalog();
+    cat.pages[0].seoTitle = "";
+    const errs = validate(cat);
+    assert(errs.length > 0, "leerer seoTitle wird abgelehnt");
+  }
+
   console.log(failures === 0 ? "\nALLE TESTS OK" : `\n${failures} FEHLER`);
   if (failures > 0) process.exit(1);
 }
