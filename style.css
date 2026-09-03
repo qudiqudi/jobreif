@@ -2440,6 +2440,40 @@ button.danger:disabled:hover { background: transparent; border-color: color-mix(
 }
 .site-footer a:hover { color: var(--primary-dark); }
 
+/* Footer-Linkblock (SEO-Welle Punkt 4, aus seo/catalog.json generiert, siehe
+   scripts/generate-seo.mjs). Zwei <details>, damit die Links fuer Crawler
+   statisch im DOM stehen, aber die Startseite optisch nicht dominieren -
+   eingeklappt ist nur die Zusammenfassungszeile sichtbar. */
+.footer-links {
+  max-width: 640px;
+  margin: 0.7rem auto 0;
+  font-size: 0.72rem;
+}
+.footer-links details { margin: 0.3rem 0; }
+.footer-links summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 0.1rem 0;
+}
+.footer-links summary:hover { color: var(--primary-dark); }
+.footer-links ul {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.2rem 0.5rem;
+}
+.footer-links li { white-space: nowrap; }
+.footer-links a {
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.footer-links a:hover { color: var(--primary-dark); }
+
 /* Hinweisleiste im Fragebogen (z. B. lokales Modell lieferte weniger Fragen) */
 .quiz-notice {
   background: var(--orange-soft);

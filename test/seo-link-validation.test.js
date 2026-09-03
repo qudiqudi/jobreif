@@ -22,6 +22,9 @@ function assert(cond, msg) {
   failures++;
   console.error("  FAIL:", msg);
 }
+function eq(a, b, msg) {
+  assert(a === b, `${msg} (erwartet ${JSON.stringify(b)}, war ${JSON.stringify(a)})`);
+}
 
 // Minimaler, sonst gueltiger Katalog mit zwei Berufsseiten - genug, um sowohl
 // staticPages- als auch pages-Ziele (Querverweis auf die jeweils andere Seite)
@@ -153,6 +156,117 @@ async function run() {
     cat.pages[0].seoTitle = `${"x".repeat(65)}𝄞`; // 65 ASCII + 1 astrales Zeichen = 66 Codepoints
     const errs = validate(cat);
     assert(errs.length > 0, "seoTitle mit 65 ASCII-Zeichen + 1 astralem Zeichen (66 Codepoints) wird abgelehnt");
+  }
+
+  // --- SEO-Welle Punkt 4 (interne Verlinkung): Footer-Linkblock (index.html) --
+  // und Berufe-Block auf den Lernseiten. Regressionsschutz fuer
+  // renderFooterLinks()/renderLernenBerufe()/berufeForLernenPage() aus
+  // generate-seo.mjs.
+  const { renderFooterLinks, renderLernenBerufe, berufeForLernenPage } = mod;
+  assert(typeof renderFooterLinks === "function", "renderFooterLinks() ist exportiert");
+  assert(typeof renderLernenBerufe === "function", "renderLernenBerufe() ist exportiert");
+  assert(typeof berufeForLernenPage === "function", "berufeForLernenPage() ist exportiert");
+
+  // i) renderFooterLinks(): jede Berufsseite als href, jede Lernseite mit label
+  //    als href - keine Seite darf im generierten Footer-Block fehlen.
+  {
+    const cat = baseCatalog();
+    cat.pages.push({
+      slug: "beruf-c", beruf: "Beruf C", title: "Titel C", description: "Beschreibung C",
+      intro: "Intro C", testTypes: ["fachwissen"], lastmod: "2026-01-01",
+    });
+    cat.staticPages[0].label = "Modul X";
+    cat.staticPages.push({ loc: "/lernen/y.html", lastmod: "2026-01-01", label: "Modul Y" });
+    cat.staticPages.push({ loc: "/lernen/ohne-label.html", lastmod: "2026-01-01" });
+    const html = renderFooterLinks(cat);
+    for (const p of cat.pages) {
+      assert(html.includes(`href="/einstellungstest/${p.slug}/"`), `Footer-Block: href fuer Beruf "${p.slug}" vorhanden`);
+    }
+    assert(html.includes('href="/lernen/x.html"') && html.includes(">Modul X<"), "Footer-Block: Lernseite x.html mit label verlinkt");
+    assert(html.includes('href="/lernen/y.html"') && html.includes(">Modul Y<"), "Footer-Block: Lernseite y.html mit label verlinkt");
+    assert(!html.includes("ohne-label.html"), "Footer-Block: Lernseite ohne label wird NICHT verlinkt");
+  }
+
+  // j) staticPages[].berufe: unbekannter Slug wird abgelehnt, bekannte werden
+  //    akzeptiert (Validierung laeuft erst NACH der pages-Verarbeitung, siehe
+  //    validate()).
+  {
+    const cat = baseCatalog();
+    cat.staticPages[0].berufe = ["beruf-a", "nicht-vorhanden"];
+    const errs = validate(cat);
+    assert(errs.length > 0, "staticPages.berufe mit unbekanntem Slug wird abgelehnt");
+  }
+  {
+    const cat = baseCatalog();
+    cat.staticPages[0].berufe = ["beruf-a", "beruf-b"];
+    const errs = validate(cat);
+    assert(errs.length === 0, "staticPages.berufe mit ausschliesslich bekannten Slugs wird akzeptiert");
+  }
+  {
+    const cat = baseCatalog();
+    cat.staticPages[0].berufe = [];
+    const errs = validate(cat);
+    assert(errs.length > 0, "staticPages.berufe als leeres Array wird abgelehnt");
+  }
+  {
+    const cat = baseCatalog();
+    cat.staticPages[0].label = "";
+    const errs = validate(cat);
+    assert(errs.length > 0, "staticPages.label als leerer String wird abgelehnt");
+  }
+
+  // k) Linktexte sind HTML-escaped - sowohl im Footer-Block als auch im
+  //    Berufe-Block der Lernseiten. "beruf"/"label" landen unescaped im
+  //    Katalog, esc() muss beim Rendern greifen (kein rohes "<"/"&" im Output).
+  {
+    const cat = baseCatalog();
+    cat.pages[0].beruf = "Kaufmann <X> & Co";
+    cat.staticPages[0].label = "A & <b>B</b>";
+    const footerHtml = renderFooterLinks(cat);
+    assert(footerHtml.includes("Kaufmann &lt;X&gt; &amp; Co"), "Footer-Block: Beruf-Linktext ist HTML-escaped");
+    assert(footerHtml.includes("A &amp; &lt;b&gt;B&lt;/b&gt;"), "Footer-Block: Lernseiten-Linktext (label) ist HTML-escaped");
+    assert(!footerHtml.includes("<X>") && !footerHtml.includes("<b>B</b>"), "Footer-Block: kein rohes HTML aus beruf/label im Output");
+  }
+  {
+    const cat = baseCatalog();
+    cat.pages[0].beruf = "Kaufmann <X> & Co";
+    cat.staticPages[0].berufe = ["beruf-a"];
+    const berufeHtml = renderLernenBerufe(cat.staticPages[0], cat);
+    assert(berufeHtml.includes("Kaufmann &lt;X&gt; &amp; Co"), "Lernseiten-Berufe-Block: Beruf-Linktext ist HTML-escaped");
+    assert(!berufeHtml.includes("<X>"), "Lernseiten-Berufe-Block: kein rohes HTML aus beruf im Output");
+  }
+
+  // l) berufeForLernenPage(): (a) explizites berufe hat Vorrang vor (b) der
+  //    LERNEN-Herleitung, und (b) dedupliziert + deckelt auf maximal 8, in
+  //    Katalogreihenfolge.
+  {
+    const cat = baseCatalog();
+    cat.staticPages[0].berufe = ["beruf-b"]; // (a): nur beruf-b, obwohl beide testTypes=fachwissen tragen
+    const berufe = berufeForLernenPage(cat.staticPages[0], cat);
+    assert(berufe.length === 1 && berufe[0].slug === "beruf-b", "berufeForLernenPage: explizites berufe hat Vorrang");
+  }
+  {
+    // (b): LERNEN-Herleitung ueber testTypes - loc muss exakt einem LERNEN-Wert
+    // entsprechen (hier /lernen/zahlenreihen.html), sonst greift (b) gar nicht.
+    const cat = {
+      version: 1,
+      baseUrl: "https://example.test",
+      updatedAt: "2026-01-01",
+      staticPages: [{ loc: "/lernen/zahlenreihen.html", lastmod: "2026-01-01", label: "Zahlenreihen" }],
+      testTypes: { zahlenreihe: { label: "Zahlenreihen", description: "Testet Zahlenreihen." } },
+      pages: Array.from({ length: 10 }, (_, i) => ({
+        slug: `beruf-${i}`, beruf: `Beruf ${i}`, title: `T${i}`, description: `D${i}`,
+        intro: `I${i}`, testTypes: ["zahlenreihe"], lastmod: "2026-01-01",
+      })),
+    };
+    assert(validate(cat).length === 0, "l) synthetischer LERNEN-Katalog (10 Berufe, alle zahlenreihe) ist gueltig");
+    const berufe = berufeForLernenPage(cat.staticPages[0], cat);
+    eq(berufe.length, 8, "berufeForLernenPage: hergeleitete Liste (10 Treffer) wird auf 8 gedeckelt");
+    eq(berufe[0].slug, "beruf-0", "berufeForLernenPage: hergeleitete Liste bleibt in Katalogreihenfolge");
+    eq(berufe[7].slug, "beruf-7", "berufeForLernenPage: gedeckelte Liste endet beim 8. Katalogeintrag");
+    const html = renderLernenBerufe(cat.staticPages[0], cat);
+    const cardCount = (html.match(/class="card"/g) || []).length;
+    eq(cardCount, 8, "renderLernenBerufe: rendert genau 8 Karten (gedeckelt)");
   }
 
   console.log(failures === 0 ? "\nALLE TESTS OK" : `\n${failures} FEHLER`);

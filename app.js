@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.56.0";
+const APP_VERSION = "1.56.1";
 
 const CHANGELOG = [
+  {
+    version: "1.56.1",
+    date: "03.09.2026",
+    items: [
+      "Footer: alle Berufe und Aufgabentypen direkt verlinkt; Lernseiten zeigen passende Berufe.",
+    ],
+  },
   {
     version: "1.56.0",
     date: "03.09.2026",
