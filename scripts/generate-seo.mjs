@@ -28,6 +28,13 @@ const outDir = path.join(root, "einstellungstest");
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+// Interner Link (uebungen.href, sections[].links[].href): GENAU ein fuehrender
+// Slash, danach nur unbedenkliche Pfadzeichen - kein zweiter Slash direkt danach
+// (das waere ein protokollrelativer Verweis wie "//evil.example/x", den Browser
+// als absolute URL zu einem fremden Host auffassen), kein Backslash, kein "?"
+// oder "#" (Query/Fragment koennten sonst einen an sich bekannten Pfad zu einem
+// unerwarteten Ziel umbiegen). startsWith("/") allein liesse all das durch.
+const INTERNAL_HREF_RE = /^\/(?!\/)[A-Za-z0-9._~!$&'()*+,;=:@%/-]*$/;
 
 // Mapping testType -> vertiefende Lernseite (/lernen/). Verlinkt die Berufsseiten
 // mit den vorhandenen Modul-Erklaerseiten (interne Vernetzung + Discovery der
@@ -95,8 +102,9 @@ function validate(cat) {
   }
   const knownType = (t) => !!types && Object.prototype.hasOwnProperty.call(types, t);
 
-  // Bekannte staticPages-locs (fuer die uebungen-Validierung unten): ein Uebungsmodul-Link
-  // darf nur auf eine Seite zeigen, die tatsaechlich in der Sitemap landet.
+  // Bekannte staticPages-locs (fuer die uebungen-/links-Validierung unten): ein
+  // interner Link darf nur auf eine Seite zeigen, die tatsaechlich in der
+  // Sitemap landet.
   const staticLocs = new Set(
     Array.isArray(cat.staticPages) ? cat.staticPages.map((s) => s && s.loc).filter(Boolean) : []
   );
@@ -105,6 +113,20 @@ function validate(cat) {
     fail("pages: nicht-leeres Array erwartet");
     return errs;
   }
+
+  // Kanonische Menge ALLER gueltigen internen Ziele: die handgepflegten
+  // staticPages PLUS die vom Generator selbst erzeugten Seiten (Hub +
+  // /einstellungstest/<slug>/ je gueltigem Slug). Ohne die generierten Seiten
+  // hier waere jeder Querverweis auf eine andere Berufsseite faelschlich
+  // abgelehnt worden.
+  const internalLocs = new Set(staticLocs);
+  internalLocs.add("/einstellungstest/");
+  cat.pages.forEach((p) => {
+    if (p && typeof p.slug === "string" && SLUG_RE.test(p.slug)) {
+      internalLocs.add(`/einstellungstest/${p.slug}/`);
+    }
+  });
+
   const seen = new Set();
   cat.pages.forEach((p, i) => {
     const at = (m) => fail(`pages[${i}]${p && p.slug ? ` (${p.slug})` : ""}: ${m}`);
@@ -137,14 +159,18 @@ function validate(cat) {
       });
     }
     // uebungen: optionales, additives Feld - verlinkt passende Gratis-Uebungsmodule (/lernen/)
-    // unter "Diese Testarten uebst du hier". href MUSS eine bestehende staticPages-loc sein,
-    // sonst entstuende ein interner Link auf eine Seite, die die Sitemap gar nicht kennt.
+    // unter "Diese Testarten uebst du hier". href MUSS ein bekanntes internes Ziel sein
+    // (staticPages ODER eine generierte Berufsseite, siehe internalLocs oben) UND dem
+    // INTERNAL_HREF_RE-Muster entsprechen (kein "//host", kein Backslash, kein "?"/"#") -
+    // sonst entstuende ein interner Link auf eine Seite, die die Sitemap gar nicht kennt,
+    // oder schlimmer: ein Link, den der Browser als externe/absolute URL auffasst.
     if (p.uebungen != null) {
       if (!Array.isArray(p.uebungen)) at("uebungen: Array erwartet");
       else p.uebungen.forEach((u, j) => {
         if (!u || typeof u !== "object") return at(`uebungen[${j}]: kein Objekt`);
-        if (typeof u.href !== "string" || !u.href.startsWith("/")) at(`uebungen[${j}].href: muss mit "/" beginnen`);
-        else if (!staticLocs.has(u.href)) at(`uebungen[${j}].href "${u.href}" nicht in staticPages`);
+        if (typeof u.href !== "string" || !INTERNAL_HREF_RE.test(u.href)) {
+          at(`uebungen[${j}].href: muss ein interner Pfad ohne "//", Backslash, Query oder Fragment sein`);
+        } else if (!internalLocs.has(u.href)) at(`uebungen[${j}].href "${u.href}" nicht in staticPages/pages`);
         if (typeof u.label !== "string" || !u.label.trim()) at(`uebungen[${j}].label fehlt/leer`);
       });
     }
@@ -152,8 +178,7 @@ function validate(cat) {
     // SEO-Welle Punkt 2). Rendert zwischen "Beispielaufgaben" und "So bereitest du dich vor".
     // items/examples/links sind je Abschnitt optional; examples nutzt dasselbe Frage-/Antwort-
     // Markup wie die Beispielaufgaben (Details/"Loesung anzeigen"), links denselben Stil wie
-    // das uebungen-Feld. links.href gilt derselben staticPages-Pflicht wie uebungen.href, sonst
-    // entstuende ein interner Link ins Leere.
+    // das uebungen-Feld. links.href gilt derselben internalLocs-Pflicht wie uebungen.href.
     if (p.sections != null) {
       if (!Array.isArray(p.sections)) at("sections: Array erwartet");
       else p.sections.forEach((sec, j) => {
@@ -180,8 +205,9 @@ function validate(cat) {
           if (!Array.isArray(sec.links)) at(`sections[${j}].links: Array erwartet`);
           else sec.links.forEach((l, k) => {
             if (!l || typeof l !== "object") return at(`sections[${j}].links[${k}]: kein Objekt`);
-            if (typeof l.href !== "string" || !l.href.startsWith("/")) at(`sections[${j}].links[${k}].href: muss mit "/" beginnen`);
-            else if (!staticLocs.has(l.href)) at(`sections[${j}].links[${k}].href "${l.href}" nicht in staticPages`);
+            if (typeof l.href !== "string" || !INTERNAL_HREF_RE.test(l.href)) {
+              at(`sections[${j}].links[${k}].href: muss ein interner Pfad ohne "//", Backslash, Query oder Fragment sein`);
+            } else if (!internalLocs.has(l.href)) at(`sections[${j}].links[${k}].href "${l.href}" nicht in staticPages/pages`);
             if (typeof l.label !== "string" || !l.label.trim()) at(`sections[${j}].links[${k}].label fehlt/leer`);
           });
         }
@@ -603,4 +629,10 @@ async function main() {
   if (removed.length) console.log(`Entfernt (nicht mehr im Katalog): ${removed.join(", ")}`);
 }
 
-main();
+// Nur ausfuehren, wenn direkt als CLI-Skript gestartet (node scripts/generate-seo.mjs) -
+// nicht beim Import (z. B. aus einem Test, der nur validate() isoliert prüfen will).
+if (path.resolve(process.argv[1] || "") === fileURLToPath(import.meta.url)) {
+  main();
+}
+
+export { validate };
