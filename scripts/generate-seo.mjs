@@ -54,7 +54,7 @@ const MAX_LERNEN_BERUFE = 8;
 
 // Amtspruefungs-Berufe: standardisierter Behoerdentest statt einzelner Stellenanzeige.
 // Die App zeigt fuer sie im Gast-Einstieg einen anderen Kontext-Hinweis (art=pruefung).
-const EXAM_SLUGS = new Set(["polizei", "zoll"]);
+const EXAM_SLUGS = new Set(["polizei", "zoll", "bundeswehr", "feuerwehr", "justizfachangestellte"]);
 
 // Marker, zwischen denen der Generator generierte Linkbloecke in handgepflegten
 // Seiten (index.html, lernen/*.html) einsetzt. Alles AUSSERHALB der Marker bleibt

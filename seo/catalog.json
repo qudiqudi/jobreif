@@ -37,7 +37,9 @@
         "fachkraft-lagerlogistik",
         "mechatroniker",
         "zerspanungsmechaniker",
-        "anlagenmechaniker-shk"
+        "anlagenmechaniker-shk",
+        "fachlagerist",
+        "konstruktionsmechaniker"
       ]
     },
     {
@@ -64,7 +66,8 @@
         "elektroniker-betriebstechnik",
         "anlagenmechaniker-shk",
         "zerspanungsmechaniker",
-        "verwaltungsfachangestellte"
+        "verwaltungsfachangestellte",
+        "elektroniker-energie-gebaeudetechnik"
       ]
     },
     {
@@ -77,7 +80,9 @@
         "notfallsanitaeter",
         "pflegefachmann",
         "medizinische-fachangestellte",
-        "fachkraft-lagerlogistik"
+        "fachkraft-lagerlogistik",
+        "feuerwehr",
+        "bundeswehr"
       ]
     },
     {
@@ -89,9 +94,10 @@
         "verwaltungsfachangestellte",
         "steuerfachangestellte",
         "medizinische-fachangestellte",
-        "erzieher",
         "polizei",
-        "zoll"
+        "zoll",
+        "justizfachangestellte",
+        "zahnmedizinische-fachangestellte"
       ]
     },
     {
@@ -2261,6 +2267,1033 @@
         {
           "q": "Kostet das Üben etwas?",
           "a": "Assoziationen, Konzentration und Zahlenreihen kannst du kostenlos und ohne Anmeldung üben. Für den vollständigen, stellenbezogenen Test mit Fachfragen aus einer echten Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
+        }
+      ],
+      "lastmod": "2026-09-03"
+    },
+    {
+      "slug": "elektroniker-energie-gebaeudetechnik",
+      "beruf": "Elektroniker / Elektronikerin für Energie- und Gebäudetechnik",
+      "title": "Einstellungstest Elektroniker für Energie- und Gebäudetechnik üben",
+      "seoTitle": "Einstellungstest Elektroniker EGT: kostenlos üben, mit Lösungen",
+      "description": "Kostenlos üben: Einstellungstest Elektroniker EGT mit Fachfragen zu Schaltungen, Sicherungstechnik und Zahlenreihen – mit KI-Feedback.",
+      "intro": "Bereite dich gezielt auf den Einstellungstest als Elektroniker oder Elektronikerin für Energie- und Gebäudetechnik vor. jobreif erstellt aus einer echten Stellenanzeige einen passgenauen Test mit Fachfragen zu Schaltungen, Sicherungstechnik und Gebäudeautomation – ergänzt um die typischen Eignungstest-Module Zahlenreihen, Sprachlogik und figurale Matrizen.",
+      "testTypes": [
+        "fachwissen",
+        "zahlenreihe",
+        "sprachlogik",
+        "figural"
+      ],
+      "uebungen": [
+        {
+          "href": "/lernen/buchstabenreihen.html",
+          "label": "Buchstabenreihen üben"
+        }
+      ],
+      "samples": [
+        {
+          "type": "fachwissen",
+          "question": "Bei welchem Nennfehlerstrom löst ein FI-Schutzschalter (RCD) zum Schutz von Personen in der Regel aus?",
+          "options": [
+            "30 mA",
+            "300 mA",
+            "3 A",
+            "30 A"
+          ],
+          "answer": "30 mA – Fehlerstrom-Schutzeinrichtungen für den Personenschutz sind auf einen Nennfehlerstrom von 30 mA ausgelegt, weil höhere Fehlerströme für den menschlichen Körper gefährlich werden können.",
+          "note": "Beispiel – die echte Frage entsteht aus deiner eingefügten Stellenanzeige."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welcher Leitungsschutzschalter-Typ eignet sich besonders für Stromkreise mit hohen Einschaltströmen, etwa bei Motoren?",
+          "options": [
+            "Typ C",
+            "Typ B",
+            "Typ A",
+            "Typ Z"
+          ],
+          "answer": "Typ C – er löst erst bei einem 5- bis 10-fachen Nennstrom magnetisch aus und toleriert dadurch kurzzeitige Einschaltstromspitzen; Typ B mit 3- bis 5-fachem Nennstrom ist für normale Wohn- und Bürostromkreise ausgelegt."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Mit welcher Schaltungsart lässt sich eine Lampe von zwei unterschiedlichen Stellen im Raum aus ein- und ausschalten?",
+          "options": [
+            "Wechselschaltung",
+            "Ausschaltung",
+            "Serienschaltung",
+            "Kreuzschaltung"
+          ],
+          "answer": "Wechselschaltung – zwei Wechselschalter ermöglichen das Schalten von genau zwei Stellen aus. Für eine dritte oder weitere Schaltstelle käme zusätzlich eine Kreuzschaltung dazwischen."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Eine Lampe hat einen Widerstand von 460 Ω und liegt an 230 V. Welcher Strom fließt näherungsweise nach dem Ohmschen Gesetz (I = U / R)?",
+          "options": [
+            "0,5 A",
+            "2 A",
+            "4,6 A",
+            "106 A"
+          ],
+          "answer": "0,5 A – denn 230 V geteilt durch 460 Ω ergibt 0,5 A."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 5, 9, 16, 26, 39, ?",
+          "options": [
+            "52",
+            "54",
+            "55",
+            "58"
+          ],
+          "answer": "55 – die Differenzen wachsen um jeweils 3 (+4, +7, +10, +13, +16): 5 → 9 → 16 → 26 → 39 → 55."
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Multimeter verhält sich zu Spannung wie Stoppuhr zu …?",
+          "options": [
+            "Zeit",
+            "Geschwindigkeit",
+            "Distanz",
+            "Temperatur"
+          ],
+          "answer": "Zeit – ein Multimeter misst elektrische Spannung, eine Stoppuhr misst analog dazu die verstrichene Zeit."
+        }
+      ],
+      "tipps": [
+        "Wiederhole gängige Schaltungsarten (Aus-, Wechsel-, Kreuzschaltung) und die fünf Sicherheitsregeln der Elektrotechnik – Grundlagen der Elektroinstallation gehören zu den häufigsten Fachfragen.",
+        "Übe das Ohmsche Gesetz und einfache Einheitenumrechnungen (mA/A, kW/W) im Kopf, denn Rechenaufgaben zur Elektrotechnik kommen fast immer vor.",
+        "Trainiere Zahlenreihen und Sprachlogik unter Zeitdruck – beide Aufgabentypen zählen bei vielen Handwerksbetrieben zum festen Bestandteil des Auswahlverfahrens."
+      ],
+      "faq": [
+        {
+          "q": "Was wird im Einstellungstest für Elektroniker für Energie- und Gebäudetechnik geprüft?",
+          "a": "Betriebe fragen meist elektrotechnische Grundlagen ab (Schaltungsarten, Sicherungstechnik, Ohmsches Gesetz) zusammen mit allgemeinen Eignungsmodulen wie Zahlenreihen und Sprachlogik. jobreif deckt aus einer echten Stellenanzeige die stellenspezifischen Fachfragen ab und ergänzt diese Standardmodule."
+        },
+        {
+          "q": "Kann ich den Einstellungstest Elektroniker EGT kostenlos üben?",
+          "a": "Ja. Zahlenreihen, Konzentration und Buchstabenreihen übst du sofort und ohne Anmeldung im Übungsbereich. Für einen vollständigen, auf deine Stellenanzeige zugeschnittenen Test mit KI-Feedback reicht eine kostenlose Anmeldung."
+        },
+        {
+          "q": "Wie läuft das Auswahlverfahren üblicherweise ab?",
+          "a": "Viele Ausbildungsbetriebe kombinieren einen schriftlichen oder digitalen Einstellungstest mit einem anschließenden Vorstellungsgespräch, teils ergänzt um einen praktischen Werkstatttag. Der genaue Ablauf hängt vom jeweiligen Betrieb ab."
+        },
+        {
+          "q": "Brauche ich Vorkenntnisse in Elektrotechnik für den Test?",
+          "a": "Grundschulmathematik und technisches Interesse reichen für den Einstieg; tiefere Elektrotechnik-Kenntnisse werden meist erst in der Ausbildung selbst vermittelt. Die Fachfragen prüfen eher grundlegendes Verständnis als Vorwissen aus der Berufsschule."
+        }
+      ],
+      "lastmod": "2026-09-03"
+    },
+    {
+      "slug": "fachinformatiker-anwendungsentwicklung",
+      "beruf": "Fachinformatiker / Fachinformatikerin für Anwendungsentwicklung",
+      "title": "Einstellungstest Fachinformatiker Anwendungsentwicklung üben",
+      "seoTitle": "Einstellungstest Fachinformatiker AE: kostenlos üben",
+      "description": "Kostenlos üben: Einstellungstest Fachinformatiker Anwendungsentwicklung mit Programmierlogik, Sprachlogik und Zahlenreihen – mit KI-Feedback.",
+      "intro": "Bereite dich gezielt auf den Einstellungstest als Fachinformatiker oder Fachinformatikerin für Anwendungsentwicklung vor. jobreif erstellt aus einer echten Stellenanzeige einen passgenauen Test mit Fachfragen zu Programmierlogik, Datenbanken und Softwareentwicklung – ergänzt um die typischen Eignungstest-Module Sprachlogik, Zahlenreihen und Konzentration.",
+      "testTypes": [
+        "fachwissen",
+        "sprachlogik",
+        "zahlenreihe",
+        "konzentration"
+      ],
+      "uebungen": [
+        {
+          "href": "/lernen/buchstabenreihen.html",
+          "label": "Buchstabenreihen üben"
+        }
+      ],
+      "samples": [
+        {
+          "type": "fachwissen",
+          "question": "Welcher SQL-Befehl liest Datensätze aus einer Tabelle aus, ohne sie zu verändern?",
+          "options": [
+            "SELECT",
+            "UPDATE",
+            "DELETE",
+            "INSERT"
+          ],
+          "answer": "SELECT – er dient dem lesenden Zugriff auf Datensätze. UPDATE ändert vorhandene Datensätze, DELETE löscht sie und INSERT fügt neue hinzu.",
+          "note": "Beispiel – im echten Test stammt die Frage aus der von dir eingefügten Stellenanzeige."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Wie viele Werte kann eine Variable vom Datentyp boolean annehmen?",
+          "options": [
+            "Zwei (wahr oder falsch)",
+            "Drei (wahr, falsch oder unbekannt)",
+            "Beliebig viele Ganzzahlen",
+            "Nur den Wert null"
+          ],
+          "answer": "Zwei (wahr oder falsch) – der boolesche Datentyp kennt ausschließlich die beiden Zustände true und false."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Was ist der zentrale Zweck eines Versionskontrollsystems wie Git in der Softwareentwicklung?",
+          "options": [
+            "Änderungen am Quellcode nachvollziehbar zu speichern und die Zusammenarbeit mehrerer Entwickler zu ermöglichen",
+            "Den Quellcode automatisch in Maschinencode zu übersetzen",
+            "Fehler im Programm zur Laufzeit automatisch zu beheben",
+            "Die grafische Oberfläche einer Anwendung zu gestalten"
+          ],
+          "answer": "Änderungen am Quellcode nachvollziehbar zu speichern und die Zusammenarbeit mehrerer Entwickler zu ermöglichen – Git verwaltet Codeversionen und erlaubt paralleles Arbeiten über Branches sowie das spätere Zusammenführen der Änderungen."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Wie oft durchläuft diese Schleife ihren Rumpf: for (i = 0; i < 5; i++) { … }",
+          "options": [
+            "5-mal",
+            "4-mal",
+            "6-mal",
+            "Unendlich oft"
+          ],
+          "answer": "5-mal – die Schleife startet bei i=0 und läuft, solange i kleiner als 5 ist, also für die Werte 0, 1, 2, 3 und 4."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 3, 8, 15, 24, 35, ?",
+          "options": [
+            "46",
+            "48",
+            "50",
+            "44"
+          ],
+          "answer": "48 – die Differenzen steigen jeweils um 2 (+5, +7, +9, +11, +13): 3 → 8 → 15 → 24 → 35 → 48."
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Compiler verhält sich zu Quellcode wie Übersetzer zu …?",
+          "options": [
+            "Ausgangstext",
+            "Wörterbuch",
+            "Zielsprache",
+            "Grammatik"
+          ],
+          "answer": "Ausgangstext – ein Compiler übersetzt Quellcode in eine andere Sprache, ein Übersetzer überträgt entsprechend einen Ausgangstext in eine andere Sprache."
+        }
+      ],
+      "tipps": [
+        "Frische Grundlagen der Programmierlogik auf: Schleifen, Bedingungen, Datentypen und einfache SQL-Abfragen zählen zu den häufigsten Fachfragen.",
+        "Übe Sprachlogik und Zahlenreihen unter Zeitdruck – analytisches, strukturiertes Denken wird in Auswahlverfahren für Softwareentwicklung gezielt getestet.",
+        "Wiederhole Grundbegriffe der Versionskontrolle und agiler Arbeitsweisen, etwa Git oder Scrum – viele Ausbildungsbetriebe fragen zumindest die Grundidee dieser Werkzeuge ab."
+      ],
+      "faq": [
+        {
+          "q": "Was wird im Einstellungstest für Fachinformatiker Anwendungsentwicklung geprüft?",
+          "a": "Meist eine Mischung aus Programmierlogik (Schleifen, Bedingungen, Datenbanken), analytischem Denken (Sprachlogik, Zahlenreihen) und teils allgemeinem IT-Grundwissen. jobreif bildet diese Module ab und ergänzt Fachfragen aus der jeweiligen Stellenanzeige."
+        },
+        {
+          "q": "Kann ich den Einstellungstest Fachinformatiker Anwendungsentwicklung kostenlos üben?",
+          "a": "Ja, die allgemeinen Module Zahlenreihen, Konzentration und Buchstabenreihen übst du kostenlos und ohne Anmeldung. Für den kompletten, stellenbezogenen Test mit Programmierfragen aus einer echten Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
+        },
+        {
+          "q": "Muss ich schon programmieren können, um den Test zu bestehen?",
+          "a": "Grundkenntnisse helfen, sind aber meist keine Voraussetzung – viele Ausbildungsbetriebe testen eher logisches und strukturiertes Denken als konkrete Programmiersprachen, die ohnehin erst in der Ausbildung vertieft werden."
+        },
+        {
+          "q": "Wie läuft das Auswahlverfahren typischerweise ab?",
+          "a": "Auf einen schriftlichen oder digitalen Einstellungstest folgt bei Eignung meist ein Vorstellungsgespräch, bei manchen Arbeitgebern zusätzlich eine kleine Programmier- oder Logikaufgabe am Rechner. Der genaue Ablauf unterscheidet sich von Betrieb zu Betrieb."
+        }
+      ],
+      "lastmod": "2026-09-03"
+    },
+    {
+      "slug": "konstruktionsmechaniker",
+      "beruf": "Konstruktionsmechaniker / Konstruktionsmechanikerin",
+      "title": "Einstellungstest Konstruktionsmechaniker / Konstruktionsmechanikerin üben",
+      "seoTitle": "Einstellungstest Konstruktionsmechaniker/in: kostenlos üben",
+      "description": "Kostenlos üben: Einstellungstest Konstruktionsmechaniker mit Fachfragen zu Schweißen, Werkstoffen und Zahlenreihen – mit KI-Feedback.",
+      "intro": "Bereite dich gezielt auf den Einstellungstest als Konstruktionsmechaniker oder Konstruktionsmechanikerin vor. jobreif erstellt aus einer echten Stellenanzeige einen passgenauen Test mit Fachfragen zu Schweißverfahren, Werkstoffen und technischem Zeichnen – ergänzt um die typischen Eignungstest-Module Zahlenreihen und Sprachlogik.",
+      "testTypes": [
+        "fachwissen",
+        "zahlenreihe",
+        "sprachlogik",
+        "konzentration"
+      ],
+      "uebungen": [
+        {
+          "href": "/lernen/kopfrechnen.html",
+          "label": "Kopfrechnen üben"
+        }
+      ],
+      "samples": [
+        {
+          "type": "fachwissen",
+          "question": "Welches Schweißverfahren eignet sich besonders für dünne Bleche und hochwertige Nähte, etwa bei Edelstahl oder Aluminium?",
+          "options": [
+            "WIG-Schweißen (Wolfram-Inertgas)",
+            "MAG-Schweißen",
+            "Autogenschweißen",
+            "Punktschweißen"
+          ],
+          "answer": "WIG-Schweißen (Wolfram-Inertgas) – es arbeitet präzise mit geringem Wärmeeintrag und eignet sich deshalb besonders für dünne Bleche sowie hochlegierte Werkstoffe wie Edelstahl und Aluminium.",
+          "note": "Beispielaufgabe – im echten Test aus deiner eingefügten Stellenanzeige erzeugt."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welche Kennzahl in der Werkstoffbezeichnung S235JR gibt näherungsweise die Mindeststreckgrenze des Baustahls in N/mm² an?",
+          "options": [
+            "235",
+            "355",
+            "195",
+            "460"
+          ],
+          "answer": "235 – die Zahl im Kurznamen unlegierter Baustähle nach EN 10025 gibt die Mindeststreckgrenze in N/mm² an, bei S235 also rund 235 N/mm² für dünnere Querschnitte."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Wie nennt man eine Schweißnaht, die zwei im rechten oder spitzen Winkel zueinanderstehende Bauteile verbindet, etwa an einer T-Verbindung?",
+          "options": [
+            "Kehlnaht",
+            "Stumpfnaht",
+            "Wurzelnaht",
+            "Decknaht"
+          ],
+          "answer": "Kehlnaht – sie verbindet Bauteile, die winklig aufeinandertreffen (z. B. T- oder Überlappstoß). Eine Stumpfnaht verbindet dagegen Bauteile, die in einer Ebene aneinanderstoßen."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welches Präzisionsmesswerkzeug nutzt eine Messspindel mit fester Gewindesteigung, um Blech- oder Werkstückdicken auf 0,01 mm genau zu messen?",
+          "options": [
+            "Bügelmessschraube (Mikrometer)",
+            "Messschieber mit Nonius",
+            "Anreißnadel",
+            "Wasserwaage"
+          ],
+          "answer": "Bügelmessschraube (Mikrometer) – über die Drehung der Messspindel mit bekannter Gewindesteigung lässt sich die Maßänderung auf 0,01 mm genau ablesen; ein Messschieber erreicht meist nur 0,05 bis 0,1 mm Genauigkeit."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 4, 7, 13, 25, 49, ?",
+          "options": [
+            "73",
+            "85",
+            "97",
+            "101"
+          ],
+          "answer": "97 – die Differenzen verdoppeln sich jeweils (+3, +6, +12, +24, +48): 4 → 7 → 13 → 25 → 49 → 97."
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Schweißen verhält sich zu Stahlbauteilen wie Kleben häufig zu …?",
+          "options": [
+            "Kunststoffbauteilen",
+            "Betonbauteilen",
+            "Glasfaserkabeln",
+            "Holzbalken"
+          ],
+          "answer": "Kunststoffbauteilen – Schweißen ist das klassische Fügeverfahren für Stahl, während Kleben in Handwerk und Industrie häufig bei Kunststoffbauteilen zum Einsatz kommt, wo Schweißhitze das Material beschädigen könnte."
+        }
+      ],
+      "tipps": [
+        "Wiederhole die gängigen Schweißverfahren (WIG, MAG) und den Unterschied zwischen Kehl- und Stumpfnaht – das sind Kernfragen im Fachteil.",
+        "Übe technisches Rechnen zu Längen, Flächen und Winkeln beim Blech- und Stahlbau sowie den Umgang mit Maßtoleranzen in technischen Zeichnungen.",
+        "Trainiere Zahlenreihen und Konzentrationsaufgaben unter Zeitdruck – im Testcenter zählt neben rechnerischer Sicherheit vor allem die Sorgfalt, die auch am Werkstück gefragt ist."
+      ],
+      "faq": [
+        {
+          "q": "Was wird im Einstellungstest für Konstruktionsmechaniker geprüft?",
+          "a": "Meist eine Mischung aus Fachwissen (Schweißverfahren, Werkstoffkunde, technisches Zeichnen), technischem Rechnen sowie Zahlenreihen und Konzentrationsaufgaben. jobreif bildet beides ab: stellenspezifische Fachfragen aus der echten Anzeige plus die üblichen Eignungsmodule."
+        },
+        {
+          "q": "Kann ich den Einstellungstest Konstruktionsmechaniker kostenlos üben?",
+          "a": "Ja, Zahlenreihen, Konzentration und Kopfrechnen übst du direkt und ohne Anmeldung im Übungsbereich. Für den kompletten, auf deine Stellenanzeige zugeschnittenen Test mit KI-Feedback genügt eine kostenlose Anmeldung."
+        },
+        {
+          "q": "Wie unterscheidet sich Konstruktionsmechaniker von Industriemechaniker?",
+          "a": "Konstruktionsmechaniker arbeiten schwerpunktmäßig mit Blechen, Profilen und Schweißverbindungen im Metall- und Stahlbau, während Industriemechaniker eher Maschinen und Anlagen montieren, warten und instand halten. Beide Berufe teilen technische Grundlagen, setzen aber unterschiedliche fachliche Schwerpunkte."
+        },
+        {
+          "q": "Wie läuft das Auswahlverfahren für Konstruktionsmechaniker üblicherweise ab?",
+          "a": "Auf einen schriftlichen oder digitalen Einstellungstest folgt bei Eignung meist ein Vorstellungsgespräch, teils ergänzt um einen praktischen Werkstatttag oder ein kurzes Praktikum. Details dazu klärst du am besten direkt beim jeweiligen Ausbildungsbetrieb."
+        }
+      ],
+      "lastmod": "2026-09-03"
+    },
+    {
+      "slug": "fachlagerist",
+      "beruf": "Fachlagerist / Fachlageristin",
+      "title": "Einstellungstest Fachlagerist / Fachlageristin üben",
+      "seoTitle": "Einstellungstest Fachlagerist/in: kostenlos üben, mit Lösungen",
+      "description": "Kostenlos üben: Einstellungstest Fachlagerist mit Fachfragen zum Lagerablauf, Kopfrechnen und Konzentration – mit KI-Feedback.",
+      "intro": "Bereite dich gezielt auf den Einstellungstest als Fachlagerist oder Fachlageristin vor. jobreif erstellt aus einer echten Stellenanzeige einen passgenauen Test mit Fachfragen zu Wareneingang, Kommissionieren und Lagerkennzeichnung – ergänzt um die typischen Eignungstest-Module Kopfrechnen, Zahlenreihen und Konzentration.",
+      "testTypes": [
+        "fachwissen",
+        "zahlenreihe",
+        "konzentration",
+        "sprachlogik"
+      ],
+      "uebungen": [
+        {
+          "href": "/lernen/kopfrechnen.html",
+          "label": "Kopfrechnen üben"
+        }
+      ],
+      "samples": [
+        {
+          "type": "fachwissen",
+          "question": "Welche Standardmaße hat die Grundfläche einer Europalette?",
+          "options": [
+            "800 mm × 1200 mm",
+            "1000 mm × 1200 mm",
+            "800 mm × 1000 mm",
+            "1200 mm × 1200 mm"
+          ],
+          "answer": "800 mm × 1200 mm – das ist die genormte Grundfläche der Europalette (EPAL) nach UIC-Norm 435-2.",
+          "note": "Beispiel – jobreif leitet die echte Frage aus deiner Stellenanzeige ab."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Ein Lager hat eine Kapazität von 400 Palettenstellplätzen, davon sind 340 belegt. Wie hoch ist die Auslastung in Prozent?",
+          "options": [
+            "85 %",
+            "80 %",
+            "75 %",
+            "90 %"
+          ],
+          "answer": "85 % – denn 340 von 400 Stellplätzen entsprechen 340 geteilt durch 400 gleich 0,85, also 85 %."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welches Versandsymbol auf einem Karton bedeutet 'zerbrechlich, mit Sorgfalt behandeln'?",
+          "options": [
+            "Ein Symbol mit einem zerbrochenen Glas",
+            "Zwei Pfeile, die nach oben zeigen",
+            "Ein Regenschirm-Symbol",
+            "Ein Symbol mit gekreuzten Bestecken"
+          ],
+          "answer": "Ein Symbol mit einem zerbrochenen Glas – dieses genormte Handhabungssymbol warnt vor zerbrechlichem Inhalt. Die Pfeile nach oben zeigen die richtige Transportlage an, der Regenschirm warnt vor Nässe."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Wozu dient die Kommissionierliste (Pickliste) im Lageralltag?",
+          "options": [
+            "Sie listet auf, welche Artikel in welcher Menge von welchem Lagerplatz für einen Auftrag zusammenzustellen sind",
+            "Sie dokumentiert ausschließlich den Wareneingang eines Lieferanten",
+            "Sie ersetzt die Rechnung an den Kunden",
+            "Sie legt die Arbeitszeiten der Lagermitarbeiter fest"
+          ],
+          "answer": "Sie listet auf, welche Artikel in welcher Menge von welchem Lagerplatz für einen Auftrag zusammenzustellen sind – so weiß jeder Kommissionierer genau, was er wo entnehmen muss."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 8, 11, 17, 26, 38, ?",
+          "options": [
+            "47",
+            "50",
+            "53",
+            "56"
+          ],
+          "answer": "53 – die Differenzen wachsen um jeweils 3 (+3, +6, +9, +12, +15): 8 → 11 → 17 → 26 → 38 → 53."
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Stapler verhält sich zu Palette wie Kran zu …?",
+          "options": [
+            "Last",
+            "Kabine",
+            "Haken",
+            "Motor"
+          ],
+          "answer": "Last – ein Stapler transportiert eine Palette, ein Kran hebt und bewegt entsprechend eine Last."
+        }
+      ],
+      "tipps": [
+        "Präge dir die zentralen Arbeitsschritte im Lager ein: Wareneingang, Einlagerung, Kommissionieren und Verladen – das sind die Kernthemen im Fachteil.",
+        "Übe Kopfrechnen mit Prozent- und Mengenaufgaben, wie sie beim Zählen von Beständen und beim Berechnen der Lagerauslastung vorkommen.",
+        "Trainiere Konzentrationsaufgaben unter Zeitdruck – genaues Zählen und sorgfältiges Kennzeichnen von Ware gehören zum Kern des Berufs."
+      ],
+      "faq": [
+        {
+          "q": "Was wird im Einstellungstest für Fachlagerist und Fachlageristin geprüft?",
+          "a": "Betriebe prüfen meist praktisches Grundwissen zum Lagerablauf (Wareneingang, Einlagerung, Kommissionieren) zusammen mit einfachem Kopfrechnen und Konzentrationsaufgaben. Aus einer echten Stellenanzeige leitet jobreif dazu passende Fachfragen ab und stellt zusätzlich die üblichen Eignungsmodule bereit."
+        },
+        {
+          "q": "Kann ich den Einstellungstest Fachlagerist kostenlos üben?",
+          "a": "Ja. Zahlenreihen, Konzentration und Kopfrechnen übst du direkt und ohne Anmeldung im Übungsbereich. Für den vollständigen, stellenbezogenen Test mit Fachfragen aus einer Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
+        },
+        {
+          "q": "Worin unterscheidet sich Fachlagerist von Fachkraft für Lagerlogistik?",
+          "a": "Fachlagerist ist mit zwei Jahren die kürzere Ausbildung und deckt die grundlegenden Lagerprozesse ab. Fachkraft für Lagerlogistik dauert drei Jahre und vertieft zusätzlich Planung, Steuerung und kaufmännische Aspekte der Logistikkette."
+        },
+        {
+          "q": "Wie läuft das Auswahlverfahren üblicherweise ab?",
+          "a": "Viele Betriebe laden nach der Bewerbung zu einem kurzen schriftlichen Test und einem anschließenden Gespräch ein, teils ergänzt um eine praktische Schnupperphase im Lager. Der genaue Ablauf hängt vom jeweiligen Arbeitgeber ab."
+        }
+      ],
+      "lastmod": "2026-09-03"
+    },
+    {
+      "slug": "bundeswehr",
+      "beruf": "Bundeswehr",
+      "title": "Einstellungstest Bundeswehr üben",
+      "seoTitle": "Einstellungstest Bundeswehr: Eignungstest kostenlos üben",
+      "description": "Kostenlos üben: Eignungstest Bundeswehr mit Sprachlogik, Zahlenreihen und technischem Verständnis – unabhängig vom Sporttest, mit KI-Feedback.",
+      "intro": "Bereite dich gezielt auf den computergestützten Eignungstest im Karrierecenter der Bundeswehr vor. jobreif erstellt aus einer echten Stellenausschreibung einen passgenauen Test und ergänzt ihn um typische Aufgabenformate aus Sprache, Rechnen, technischem Verständnis und Konzentration. Sporttest, ärztliche Untersuchung und Gespräch gehören separat dazu.",
+      "testTypes": [
+        "fachwissen",
+        "sprachlogik",
+        "zahlenreihe",
+        "konzentration",
+        "figural"
+      ],
+      "uebungen": [
+        {
+          "href": "/lernen/merkfaehigkeit.html",
+          "label": "Merkfähigkeit üben"
+        },
+        {
+          "href": "/lernen/kopfrechnen.html",
+          "label": "Kopfrechnen üben"
+        }
+      ],
+      "samples": [
+        {
+          "type": "fachwissen",
+          "question": "Wozu darf der Bund laut Grundgesetz (Art. 87a) in erster Linie Streitkräfte aufstellen?",
+          "options": [
+            "Zur Verteidigung",
+            "Ausschließlich für Auslandseinsätze im Rahmen der NATO",
+            "Zur uneingeschränkten Aufrechterhaltung der inneren öffentlichen Ordnung",
+            "Ausschließlich zu Katastrophenschutzzwecken"
+          ],
+          "answer": "Zur Verteidigung – nach Art. 87a Abs. 1 GG stellt der Bund Streitkräfte zur Verteidigung auf. Der Einsatz im Inneren ist im Grundgesetz eng begrenzt, und darüber hinausgehende Aufgaben wie Auslandseinsätze brauchen eigene rechtliche Grundlagen.",
+          "note": "Beispiel – die echte Frage entsteht aus der eingefügten Stellenausschreibung."
+        },
+        {
+          "type": "fachwissen",
+          "question": "In welche drei Dienstgradgruppen gliedern sich Soldatinnen und Soldaten der Bundeswehr grundsätzlich?",
+          "options": [
+            "Mannschaften, Unteroffiziere und Offiziere",
+            "Mannschaften, Feldwebel und Generäle",
+            "Rekruten, Gefreite und Hauptleute",
+            "Wehrpflichtige, Zeitsoldaten und Berufssoldaten"
+          ],
+          "answer": "Mannschaften, Unteroffiziere und Offiziere – das ist die grundlegende Einteilung der Dienstgrade. Die vierte Antwort beschreibt dagegen den Status (Wehrform), nicht die Dienstgradgruppe."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welche drei klassischen Teilstreitkräfte bilden traditionell das Rückgrat der Bundeswehr?",
+          "options": [
+            "Heer, Luftwaffe und Marine",
+            "Heer, Polizei und Zoll",
+            "Marine, Grenzschutz und Reserve",
+            "Luftwaffe, Sanität und Logistik"
+          ],
+          "answer": "Heer, Luftwaffe und Marine – das sind die drei klassischen Teilstreitkräfte; daneben gibt es weitere Organisationsbereiche wie den Sanitätsdienst."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Ein Hebel ist im Gleichgewicht, wenn Kraft mal Kraftarm auf beiden Seiten gleich groß ist. Auf einer Seite wirken 20 N im Abstand von 3 m vom Drehpunkt. Welche Kraft ist im Abstand von 2 m auf der anderen Seite für das Gleichgewicht nötig?",
+          "options": [
+            "30 N",
+            "20 N",
+            "40 N",
+            "60 N"
+          ],
+          "answer": "30 N – denn 20 N × 3 m = 60 Nm müssen auf der anderen Seite ebenfalls erreicht werden: 60 Nm ÷ 2 m = 30 N."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 9, 12, 18, 27, 39, ?",
+          "options": [
+            "48",
+            "51",
+            "54",
+            "57"
+          ],
+          "answer": "54 – die Differenzen wachsen um jeweils 3 (+3, +6, +9, +12, +15): 9 → 12 → 18 → 27 → 39 → 54."
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Befehl verhält sich zu Ausführung wie Frage zu …?",
+          "options": [
+            "Antwort",
+            "Diskussion",
+            "Vermutung",
+            "Widerspruch"
+          ],
+          "answer": "Antwort – auf einen Befehl folgt die Ausführung, auf eine Frage folgt entsprechend eine Antwort."
+        }
+      ],
+      "tipps": [
+        "Wiederhole Grundwissen zu Staatsaufbau und Grundgesetz sowie aktuelles politisches und gesellschaftliches Zeitgeschehen – das sind klassische Themen im computergestützten Eignungstest.",
+        "Übe Kopfrechnen und einfache technische Verständnisfragen (Hebel, Kräfte, Maßeinheiten) unter Zeitdruck, denn Rechnen und technisches Denken zählen zu den Kernmodulen.",
+        "Informiere dich frühzeitig beim Karrierecenter über deine Wunschlaufbahn, denn Anforderungen von Sport- und Gesundheitstest unterscheiden sich je nach Laufbahn."
+      ],
+      "faq": [
+        {
+          "q": "Was wird im Auswahlverfahren der Bundeswehr geprüft?",
+          "a": "Das Verfahren im Karrierecenter besteht öffentlich bekannt aus mehreren Bausteinen: ein computergestützter Eignungstest (u. a. Sprache, Rechnen, technisches Verständnis, Konzentration), eine ärztliche Untersuchung sowie je nach Laufbahn ein Sporttest und ein Gespräch. jobreif bereitet dich auf den kognitiven Teil vor und ergänzt Fachfragen aus einer echten Stellenausschreibung."
+        },
+        {
+          "q": "Kann ich den Einstellungstest Bundeswehr kostenlos üben?",
+          "a": "Ja, die allgemeinen Module Zahlenreihen, Konzentration und Merkfähigkeit übst du sofort und ohne Anmeldung. Für einen kompletten Test mit Fachfragen aus einer Stellenausschreibung und KI-Feedback reicht eine kostenlose Anmeldung."
+        },
+        {
+          "q": "Ersetzt jobreif den Sporttest oder die ärztliche Untersuchung?",
+          "a": "Nein. jobreif bereitet dich auf die kognitiven Testteile vor. Sporttest, ärztliche Eignungsuntersuchung und das persönliche Gespräch sind eigene Verfahrensschritte beim Karrierecenter, die hier nicht abgebildet werden."
+        },
+        {
+          "q": "Ist der Ablauf für jede Laufbahn gleich?",
+          "a": "Nein. Die Grundbausteine Eignungstest, ärztliche Untersuchung und Gespräch sind ähnlich, Umfang und Anforderungen von Sporttest und weiteren Auswahlschritten unterscheiden sich aber je nach angestrebter Laufbahn und Verwendung."
+        }
+      ],
+      "lastmod": "2026-09-03"
+    },
+    {
+      "slug": "feuerwehr",
+      "beruf": "Feuerwehr / Berufsfeuerwehr",
+      "title": "Einstellungstest Feuerwehr üben",
+      "seoTitle": "Einstellungstest Feuerwehr: Eignungstest kostenlos üben",
+      "description": "Kostenlos üben: Eignungstest Feuerwehr mit Allgemeinwissen, Sprachlogik und Zahlenreihen – unabhängig vom Sporttest, mit KI-Feedback.",
+      "intro": "Bereite dich gezielt auf den schriftlichen Einstellungstest der Feuerwehr vor. jobreif erstellt aus einer echten Stellenausschreibung einen passgenauen Test und ergänzt ihn um typische Aufgabenformate aus Allgemeinwissen, Sprache, Rechnen und Konzentration. Sporttest, ärztliche Untersuchung und Auswahlgespräch gehören je nach Stadt oder Gemeinde separat dazu.",
+      "testTypes": [
+        "fachwissen",
+        "sprachlogik",
+        "zahlenreihe",
+        "konzentration"
+      ],
+      "uebungen": [
+        {
+          "href": "/lernen/merkfaehigkeit.html",
+          "label": "Merkfähigkeit üben"
+        }
+      ],
+      "samples": [
+        {
+          "type": "fachwissen",
+          "question": "Welcher Brandklasse werden brennende Speiseöle und -fette, etwa in einer Fritteuse, nach DIN EN 2 zugeordnet?",
+          "options": [
+            "Brandklasse F",
+            "Brandklasse B",
+            "Brandklasse C",
+            "Brandklasse A"
+          ],
+          "answer": "Brandklasse F – sie wurde eigens für brennende Speiseöle und -fette in Küchen eingeführt, weil sich diese Fettbrände anders verhalten als gewöhnliche Flüssigkeitsbrände der Klasse B.",
+          "note": "Beispiel – im echten Test erzeugt aus deiner eingefügten Stellenausschreibung."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Warum darf ein Fettbrand (Brandklasse F) nicht mit Wasser gelöscht werden?",
+          "options": [
+            "Weil das Wasser im heißen Fett schlagartig verdampft und das brennende Fett explosionsartig herausschleudert",
+            "Weil Wasser bei Fettbränden die Flammen dauerhaft anfacht, ohne zu verdampfen",
+            "Weil Fett generell wasserabweisend ist und Wasser einfach abperlt",
+            "Weil sich beim Kontakt mit Wasser giftige Gase bilden, die Flammen selbst aber unbeeinflusst bleiben"
+          ],
+          "answer": "Weil das Wasser im heißen Fett schlagartig verdampft und das brennende Fett explosionsartig herausschleudert (Fettexplosion) – deshalb werden Fettbrände mit speziellen Löschmitteln oder einer Löschdecke erstickt, niemals mit Wasser."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Wie viele Einsatzkräfte umfasst eine taktische Feuerwehr-Staffel (Staffelbesetzung) einschließlich Führungskraft üblicherweise?",
+          "options": [
+            "Sechs (ein Staffelführer und fünf Mannschaftsmitglieder)",
+            "Vier",
+            "Neun",
+            "Zwölf"
+          ],
+          "answer": "Sechs (ein Staffelführer und fünf Mannschaftsmitglieder) – das entspricht der klassischen Staffelbesetzung 1/5 in der Feuerwehr-Grundausbildung."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Warum steigt Rauch bei einem Brand zunächst nach oben, bevor er sich im Raum ausbreitet?",
+          "options": [
+            "Weil heiße Luft und Rauchgase eine geringere Dichte haben als die kühlere Umgebungsluft und deshalb aufsteigen",
+            "Weil Rauchgase grundsätzlich schwerer als Luft sind und sich am Boden sammeln",
+            "Weil der Luftdruck im oberen Raumbereich immer niedriger ist als am Boden",
+            "Weil Rauch elektrisch geladen ist und von der Decke angezogen wird"
+          ],
+          "answer": "Weil heiße Luft und Rauchgase eine geringere Dichte haben als die kühlere Umgebungsluft und deshalb aufsteigen – dieser thermische Auftrieb erklärt, warum sich zuerst eine Rauchschicht unter der Decke bildet."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 7, 9, 13, 19, 27, ?",
+          "options": [
+            "33",
+            "35",
+            "37",
+            "39"
+          ],
+          "answer": "37 – die Differenzen wachsen um jeweils 2 (+2, +4, +6, +8, +10): 7 → 9 → 13 → 19 → 27 → 37."
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Schlauch verhält sich zu Wasser wie Kabel zu …?",
+          "options": [
+            "Strom",
+            "Licht",
+            "Wärme",
+            "Ton"
+          ],
+          "answer": "Strom – ein Schlauch leitet Wasser zum Löschen, ein Kabel leitet entsprechend elektrischen Strom."
+        }
+      ],
+      "tipps": [
+        "Wiederhole die Brandklassen A bis F und die passenden Löschmittel – das ist eines der am häufigsten abgefragten Fachthemen im Auswahlverfahren.",
+        "Trainiere Merkfähigkeit und Konzentration unter Zeitdruck: Im Einsatz zählen schnelles Erfassen von Situationen und genaues Arbeiten nach Vorgabe.",
+        "Halte deine körperliche Fitness im Blick und informiere dich frühzeitig über die Anforderungen des Sporttests deiner Stadt oder Gemeinde – die Vorgaben unterscheiden sich von Ort zu Ort."
+      ],
+      "faq": [
+        {
+          "q": "Was wird im Einstellungstest für die Feuerwehr geprüft?",
+          "a": "Städte und Gemeinden prüfen meist einen schriftlichen Test mit Allgemeinwissen, Rechnen, Sprachverständnis und technischem Grundwissen, dazu einen Sporttest, eine ärztliche Untersuchung und ein Gespräch. jobreif bereitet dich auf den schriftlichen, kognitiven Teil vor und ergänzt Fachfragen aus einer echten Stellenausschreibung."
+        },
+        {
+          "q": "Kann ich den Einstellungstest Feuerwehr kostenlos üben?",
+          "a": "Ja. Zahlenreihen, Konzentration und Merkfähigkeit übst du direkt und ohne Anmeldung. Für einen kompletten Test mit Fachfragen aus einer echten Ausschreibung und KI-Feedback reicht eine kostenlose Anmeldung."
+        },
+        {
+          "q": "Wie läuft das Auswahlverfahren bei der Feuerwehr ab?",
+          "a": "Nach dem schriftlichen Test folgen bei Eignung meist Sporttest, ärztliche Untersuchung und ein persönliches Gespräch. Reihenfolge und Gewichtung der einzelnen Schritte legt jede Stadt oder Gemeinde eigenständig fest."
+        },
+        {
+          "q": "Ersetzt das Üben den Sporttest?",
+          "a": "Nein. jobreif bereitet dich auf den schriftlichen, kognitiven Testteil vor. Sporttest und ärztliche Eignungsuntersuchung sind eigene Bausteine, die du zusätzlich und eigenständig vorbereitest."
+        }
+      ],
+      "lastmod": "2026-09-03"
+    },
+    {
+      "slug": "justizfachangestellte",
+      "beruf": "Justizfachangestellte / Justizfachangestellter",
+      "title": "Einstellungstest Justizfachangestellte / Justizfachangestellter üben",
+      "seoTitle": "Einstellungstest Justizfachangestellte: kostenlos üben",
+      "description": "Kostenlos üben: Einstellungstest Justizfachangestellte mit Rechtschreibung, Mathe und Logik – aus echter Ausschreibung, mit KI-Feedback.",
+      "intro": "Bereite dich gezielt auf den Einstellungstest bei Gerichten und Staatsanwaltschaften als Justizfachangestellte oder Justizfachangestellter vor. jobreif erstellt aus einer echten Stellenausschreibung einen passgenauen Test und ergänzt ihn um typische Aufgabenformate aus Rechtschreibung, Mathematik, Logik und Allgemeinwissen, wie sie je nach Bundesland eingesetzt werden.",
+      "testTypes": [
+        "fachwissen",
+        "sprachlogik",
+        "zahlenreihe",
+        "konzentration",
+        "figural"
+      ],
+      "uebungen": [
+        {
+          "href": "/lernen/rechtschreibung.html",
+          "label": "Rechtschreibung üben"
+        },
+        {
+          "href": "/lernen/kopfrechnen.html",
+          "label": "Kopfrechnen üben"
+        }
+      ],
+      "samples": [
+        {
+          "type": "fachwissen",
+          "question": "Welches Gericht bildet in der ordentlichen Gerichtsbarkeit die unterste Instanz, bei der z. B. die meisten Zivilklagen mit geringerem Streitwert zuerst verhandelt werden?",
+          "options": [
+            "Das Amtsgericht",
+            "Das Landgericht",
+            "Das Oberlandesgericht",
+            "Der Bundesgerichtshof"
+          ],
+          "answer": "Das Amtsgericht – es ist die Eingangsinstanz der ordentlichen Gerichtsbarkeit für Zivilsachen mit geringerem Streitwert sowie für viele Straf- und Familiensachen; Landgericht, Oberlandesgericht und Bundesgerichtshof sind übergeordnete Instanzen.",
+          "note": "Beispiel – die echte Frage stammt aus der eingefügten Stellenausschreibung."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Wie wird im Zivilprozess die Partei bezeichnet, die eine Klage erhebt?",
+          "options": [
+            "Kläger bzw. Klägerin",
+            "Beklagter bzw. Beklagte",
+            "Antragsgegner bzw. Antragsgegnerin",
+            "Zeuge bzw. Zeugin"
+          ],
+          "answer": "Kläger bzw. Klägerin – die Gegenseite, gegen die sich die Klage richtet, heißt Beklagter bzw. Beklagte."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Was versteht man im rechtlichen Sinn unter einer 'Frist'?",
+          "options": [
+            "Einen klar abgegrenzten Zeitraum, innerhalb dessen eine Handlung vorgenommen werden muss, z. B. die Einlegung eines Rechtsmittels",
+            "Eine unverbindliche Empfehlung ohne festen Zeitrahmen",
+            "Einen anderen Begriff für den Termin einer Gerichtsverhandlung",
+            "Eine Gebühr, die bei verspäteten Anträgen zusätzlich anfällt"
+          ],
+          "answer": "Einen klar abgegrenzten Zeitraum, innerhalb dessen eine Handlung vorgenommen werden muss – wird eine Frist versäumt, kann das erhebliche rechtliche Nachteile haben, etwa den Verlust eines Rechtsmittels."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welche Aufgabe gehört typischerweise zum Arbeitsalltag einer Justizfachangestellten?",
+          "options": [
+            "Akten führen, Fristen kontrollieren und Schriftstücke für Gerichtsverfahren vorbereiten",
+            "Patientenakten in einer Arztpraxis verwalten",
+            "Bilanzen und Steuererklärungen für Unternehmen erstellen",
+            "Baupläne prüfen und behördlich genehmigen"
+          ],
+          "answer": "Akten führen, Fristen kontrollieren und Schriftstücke für Gerichtsverfahren vorbereiten – das sind zentrale, in der Ausbildungsordnung verankerte Aufgaben des Berufs bei Gerichten und Staatsanwaltschaften."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 2, 6, 18, 54, 162, ?",
+          "options": [
+            "216",
+            "324",
+            "486",
+            "648"
+          ],
+          "answer": "486 – jedes Glied wird mit 3 multipliziert: 2 → 6 → 18 → 54 → 162 → 486."
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Kläger verhält sich zu Klage wie Antragsteller zu …?",
+          "options": [
+            "Antrag",
+            "Urteil",
+            "Beschluss",
+            "Akte"
+          ],
+          "answer": "Antrag – wer eine Klage erhebt, heißt Kläger; wer entsprechend einen Antrag stellt, heißt Antragsteller."
+        }
+      ],
+      "tipps": [
+        "Übe Rechtschreibung und Zeichensetzung gezielt, zum Beispiel mit Diktaten – viele Auswahlverfahren für den Justizdienst prüfen genau diese Grundfertigkeit besonders genau.",
+        "Wiederhole Kopfrechnen sowie einfache Prozent- und Dreisatzaufgaben, da Fristen- und Gebührenberechnungen im Berufsalltag häufig vorkommen.",
+        "Frische Grundbegriffe rund um Gerichte und Verfahren auf, etwa Amtsgericht, Kläger oder Frist – ein sicheres Grundverständnis hilft im Test wie später im Job."
+      ],
+      "faq": [
+        {
+          "q": "Was wird im Einstellungstest für Justizfachangestellte geprüft?",
+          "a": "Gerichte und Staatsanwaltschaften prüfen je nach Bundesland unterschiedlich gewichtet Rechtschreibung, Mathematik, logisches Denken und Allgemeinwissen. jobreif deckt aus einer echten Stellenausschreibung passende Fachfragen ab und ergänzt die üblichen Eignungstest-Module."
+        },
+        {
+          "q": "Kann ich den Einstellungstest Justizfachangestellte kostenlos üben?",
+          "a": "Ja, Zahlenreihen, Konzentration und Rechtschreibung übst du sofort und ohne Anmeldung. Für einen vollständigen, stellenbezogenen Test mit Fachfragen und KI-Feedback reicht eine kostenlose Anmeldung."
+        },
+        {
+          "q": "Ist der Test in jedem Bundesland gleich?",
+          "a": "Nein. Träger, Ablauf und Gewichtung der einzelnen Testteile legt jedes Bundesland beziehungsweise jedes Gericht oder jede Staatsanwaltschaft selbst fest – ein Blick in die konkrete Ausschreibung schafft Klarheit."
+        },
+        {
+          "q": "Wie läuft das Auswahlverfahren typischerweise ab?",
+          "a": "Auf den schriftlichen Einstellungstest folgt bei Eignung meist ein Vorstellungsgespräch, teils ergänzt um ein kurzes Praktikum oder einen Schnuppertag am Gericht. Details regelt die jeweilige Ausschreibung."
+        }
+      ],
+      "lastmod": "2026-09-03"
+    },
+    {
+      "slug": "rettungssanitaeter",
+      "beruf": "Rettungssanitäter / Rettungssanitäterin",
+      "title": "Einstellungstest Rettungssanitäter / Rettungssanitäterin üben",
+      "seoTitle": "Einstellungstest Rettungssanitäter/in: kostenlos üben",
+      "description": "Kostenlos üben: Einstellungstest Rettungssanitäter mit Fachwissen zur Erstversorgung, Sprachlogik und Zahlenreihen – mit KI-Feedback.",
+      "intro": "Bereite dich auf das Auswahlverfahren als Rettungssanitäter oder Rettungssanitäterin bei Hilfsorganisationen und Rettungsdiensten vor. jobreif erstellt aus einer echten Stellenausschreibung einen passgenauen Test mit Fachfragen zur Erstversorgung – ergänzt um die typischen Eignungstest-Module Sprachlogik, Zahlenreihen und Konzentration.",
+      "testTypes": [
+        "fachwissen",
+        "sprachlogik",
+        "zahlenreihe",
+        "konzentration"
+      ],
+      "uebungen": [
+        {
+          "href": "/lernen/merkfaehigkeit.html",
+          "label": "Merkfähigkeit üben"
+        }
+      ],
+      "samples": [
+        {
+          "type": "fachwissen",
+          "question": "In welchem Bereich liegt der als Richtwert geltende systolische Blutdruck eines gesunden Erwachsenen in Ruhe ungefähr?",
+          "options": [
+            "etwa 120 mmHg",
+            "etwa 60 mmHg",
+            "etwa 200 mmHg",
+            "etwa 40 mmHg"
+          ],
+          "answer": "etwa 120 mmHg – als grober Richtwert gilt ein systolischer Blutdruck von etwa 120 mmHg (klassischer Referenzwert 120/80 mmHg); deutlich höhere oder niedrigere Werte können auf ein gesundheitliches Problem hindeuten.",
+          "note": "Beispiel – im echten Test aus deiner eingefügten Ausschreibung erzeugt."
+        },
+        {
+          "type": "fachwissen",
+          "question": "In welchem Bereich liegt die normale Ruhe-Pulsfrequenz eines gesunden Erwachsenen üblicherweise?",
+          "options": [
+            "Etwa 60 bis 100 Schläge pro Minute",
+            "Etwa 100 bis 140 Schläge pro Minute",
+            "Etwa 30 bis 50 Schläge pro Minute",
+            "Etwa 140 bis 180 Schläge pro Minute"
+          ],
+          "answer": "Etwa 60 bis 100 Schläge pro Minute – das gilt als üblicher Referenzbereich für einen ruhenden, gesunden Erwachsenen; bei trainierten Personen kann der Ruhepuls auch darunter liegen."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Wodurch ist eine Verbrennung zweiten Grades typischerweise gekennzeichnet?",
+          "options": [
+            "Durch Rötung, starke Schmerzen und Blasenbildung",
+            "Durch reine Hautrötung ohne Blasen und mit nur leichtem Schmerz",
+            "Durch weiß-bräunlich verfärbte, oft schmerzfreie Haut",
+            "Durch vollständig verkohlte Haut ohne jede Schmerzempfindung"
+          ],
+          "answer": "Durch Rötung, starke Schmerzen und Blasenbildung – die Verbrennung reicht dabei bis in die Lederhaut. Grad 1 zeigt nur Rötung ohne Blasen, Grad 3 zerstört Hautschichten oft so weitgehend, dass die Schmerzempfindung durch geschädigte Nerven fehlt."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Wofür wird der Rautek-Rettungsgriff im Rettungsdienst eingesetzt?",
+          "options": [
+            "Um eine bewusstlose oder nicht gehfähige Person im Notfall schnell aus einer akuten Gefahrenzone zu retten",
+            "Um die Herzdruckmassage bei der Reanimation effizienter durchzuführen",
+            "Um einen gebrochenen Arm vorübergehend zu schienen",
+            "Um den Blutdruck ohne Gerät näherungsweise zu schätzen"
+          ],
+          "answer": "Um eine bewusstlose oder nicht gehfähige Person im Notfall schnell aus einer akuten Gefahrenzone zu retten – der Griff ermöglicht den raschen Rettungstransport auch durch eine einzelne Person."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 6, 9, 14, 21, 30, ?",
+          "options": [
+            "37",
+            "39",
+            "41",
+            "43"
+          ],
+          "answer": "41 – die Differenzen wachsen um jeweils 2 (+3, +5, +7, +9, +11): 6 → 9 → 14 → 21 → 30 → 41."
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Trage verhält sich zu Transport wie Beatmungsbeutel zu …?",
+          "options": [
+            "Beatmung",
+            "Reanimation",
+            "Diagnose",
+            "Transport"
+          ],
+          "answer": "Beatmung – eine Trage dient dem Transport eines Patienten, ein Beatmungsbeutel entsprechend der Beatmung."
+        }
+      ],
+      "tipps": [
+        "Wiederhole Vitalwerte-Richtwerte (Puls, Blutdruck, Atemfrequenz) sowie die Erstversorgung bei Verbrennungen und Blutungen – das sind zentrale Themen im Auswahlverfahren.",
+        "Trainiere Sprachlogik und Zahlenreihen unter Zeitdruck, denn viele Träger prüfen neben medizinischem Basiswissen auch allgemeine kognitive Grundfertigkeiten.",
+        "Halte deine körperliche Fitness im Blick: Viele Hilfsorganisationen und Rettungsdienste erwarten für den Rettungsdienstalltag einen Fitnessnachweis oder eine körperliche Eignungsprüfung."
+      ],
+      "faq": [
+        {
+          "q": "Was wird im Auswahlverfahren für Rettungssanitäter geprüft?",
+          "a": "Hilfsorganisationen und Rettungsdienste prüfen meist in einem Gespräch die persönliche Eignung, viele Träger ergänzen das um einen kurzen Wissenstest zu medizinischem Basiswissen und einen Fitnessnachweis. jobreif bildet aus einer echten Stellenausschreibung passende Fachfragen ab und ergänzt die üblichen Eignungsmodule."
+        },
+        {
+          "q": "Kann ich den Einstellungstest Rettungssanitäter kostenlos üben?",
+          "a": "Ja, Zahlenreihen, Konzentration und Merkfähigkeit übst du direkt und ohne Anmeldung. Für einen vollständigen, stellenbezogenen Test mit Fachfragen aus einer Ausschreibung und KI-Feedback reicht eine kostenlose Anmeldung."
+        },
+        {
+          "q": "Ist Rettungssanitäter ein dualer Ausbildungsberuf?",
+          "a": "Nein. Anders als Notfallsanitäter ist Rettungssanitäter kein dreijähriger dualer Ausbildungsberuf, sondern eine Qualifikation, die du über einen Lehrgang mit Praxisanteilen bei einer anerkannten Rettungsdienstschule erwirbst; der genaue Umfang unterscheidet sich je nach Bundesland und Träger."
+        },
+        {
+          "q": "Wie läuft die Auswahl bei Hilfsorganisationen und Rettungsdiensten typischerweise ab?",
+          "a": "Üblich ist ein persönliches Gespräch, bei vielen Trägern ergänzt um einen kurzen Wissenstest und einen Nachweis der körperlichen Fitness. Der genaue Ablauf unterscheidet sich von Organisation zu Organisation."
+        }
+      ],
+      "lastmod": "2026-09-03"
+    },
+    {
+      "slug": "zahnmedizinische-fachangestellte",
+      "beruf": "Zahnmedizinische Fachangestellte (ZFA)",
+      "title": "Einstellungstest Zahnmedizinische Fachangestellte (ZFA) üben",
+      "seoTitle": "Einstellungstest ZFA: kostenlos üben, mit Lösungen",
+      "description": "Kostenlos üben: Einstellungstest ZFA mit Fachwissen zu Zahnschema und Hygiene, Rechtschreibung und Zahlenreihen – mit KI-Feedback.",
+      "intro": "Bereite dich gezielt auf den Einstellungstest als Zahnmedizinische Fachangestellte vor. jobreif erstellt aus einer echten Stellenanzeige einen passgenauen Test mit Fachfragen zu Zahnschema, Hygiene und Praxisabläufen – ergänzt um die typischen Eignungstest-Module Rechtschreibung, Zahlenreihen und Konzentration.",
+      "testTypes": [
+        "fachwissen",
+        "sprachlogik",
+        "zahlenreihe",
+        "konzentration"
+      ],
+      "uebungen": [
+        {
+          "href": "/lernen/rechtschreibung.html",
+          "label": "Rechtschreibung üben"
+        }
+      ],
+      "samples": [
+        {
+          "type": "fachwissen",
+          "question": "Wie viele bleibende (permanente) Zähne hat ein Erwachsener normalerweise, wenn alle Zähne einschließlich der Weisheitszähne vorhanden sind?",
+          "options": [
+            "32",
+            "28",
+            "20",
+            "36"
+          ],
+          "answer": "32 – das vollständige bleibende Gebiss umfasst 32 Zähne einschließlich der vier Weisheitszähne; ohne Weisheitszähne sind es 28.",
+          "note": "Beispiel – jobreif erzeugt die echte Frage aus deiner eingefügten Stellenanzeige."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Aus welchen drei Instrumenten besteht das zahnärztliche 'Grundbesteck' für die Erstuntersuchung typischerweise?",
+          "options": [
+            "Spiegel, Sonde und Pinzette",
+            "Bohrer, Zange und Skalpell",
+            "Spritze, Klemme und Schere",
+            "Sauger, Watterolle und Spatel"
+          ],
+          "answer": "Spiegel, Sonde und Pinzette – mit diesen drei Instrumenten verschafft sich die Zahnärztin oder der Zahnarzt bei der Untersuchung einen ersten Überblick über den Zustand von Zähnen und Zahnfleisch."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Wie viele Milchzähne hat ein Kind normalerweise, bevor der Zahnwechsel beginnt?",
+          "options": [
+            "20",
+            "32",
+            "16",
+            "24"
+          ],
+          "answer": "20 – das vollständige Milchgebiss besteht aus 20 Zähnen, bevor es ab etwa dem sechsten Lebensjahr schrittweise durch die 32 bleibenden Zähne ersetzt wird."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welches Gerät wird in der Zahnarztpraxis zur Sterilisation von Instrumenten mit feuchter Hitze unter Druck eingesetzt?",
+          "options": [
+            "Der Autoklav (Dampfsterilisator)",
+            "Das Ultraschallbad",
+            "Der Heißluftsterilisator",
+            "Das Desinfektionsmittelbad"
+          ],
+          "answer": "Der Autoklav (Dampfsterilisator) – er sterilisiert mit gesättigtem Wasserdampf unter Druck. Das Ultraschallbad dient der Vorreinigung, der Heißluftsterilisator arbeitet mit trockener statt feuchter Hitze."
+        },
+        {
+          "type": "zahlenreihe",
+          "question": "Setze die Reihe fort: 5, 10, 13, 26, 29, ?",
+          "options": [
+            "55",
+            "58",
+            "60",
+            "62"
+          ],
+          "answer": "58 – die Reihe wechselt zwischen Verdoppeln und Plus 3: 5 → ×2 → 10 → +3 → 13 → ×2 → 26 → +3 → 29 → ×2 → 58."
+        },
+        {
+          "type": "sprachlogik",
+          "question": "Zahnbürste verhält sich zu Zahnbelag wie Radiergummi zu …?",
+          "options": [
+            "Bleistiftstrich",
+            "Tinte",
+            "Farbe",
+            "Kreide"
+          ],
+          "answer": "Bleistiftstrich – eine Zahnbürste entfernt Zahnbelag, ein Radiergummi entfernt entsprechend einen Bleistiftstrich, nicht aber Tinte oder Farbe."
+        }
+      ],
+      "tipps": [
+        "Wiederhole Grundwissen zu Zahnaufbau und Zahnschema (Milch- und bleibende Zähne) sowie zu Hygiene- und Sterilisationsverfahren in der Praxis – typische Fachthemen im Auswahlverfahren.",
+        "Übe Rechtschreibung und sorgfältiges Lesen, denn Patientendokumentation und Schriftverkehr mit Krankenkassen gehören zum Praxisalltag.",
+        "Trainiere Konzentration und Merkfähigkeit unter Zeitdruck – im Behandlungszimmer zählen genaues Anreichen von Instrumenten und ein gutes Gedächtnis für Praxisabläufe."
+      ],
+      "faq": [
+        {
+          "q": "Was wird im Einstellungstest für Zahnmedizinische Fachangestellte geprüft?",
+          "a": "Zahnarztpraxen prüfen häufig Grundwissen rund um Zahnaufbau und Hygiene, dazu Rechtschreibung, Konzentration und teils einfaches Rechnen. jobreif bildet aus einer echten Stellenanzeige passende Fachfragen ab und ergänzt die üblichen Eignungsmodule."
+        },
+        {
+          "q": "Kann ich den Einstellungstest ZFA kostenlos üben?",
+          "a": "Ja, die Module Zahlenreihen, Konzentration und Rechtschreibung stehen dir sofort und ohne Anmeldung offen. Für einen vollständigen, stellenbezogenen Test mit Fachfragen aus einer echten Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
+        },
+        {
+          "q": "Brauche ich medizinisches Vorwissen für den Test?",
+          "a": "Nein, meist reichen Interesse an Medizin und ein gutes Gedächtnis für den Einstieg – tieferes zahnmedizinisches Fachwissen wird erst während der Ausbildung in der Berufsschule vermittelt."
+        },
+        {
+          "q": "Wie läuft das Auswahlverfahren in der Praxis typischerweise ab?",
+          "a": "Auf die Bewerbung folgt meist ein persönliches Gespräch, teils ergänzt um ein kurzes Praktikum oder einen Probearbeitstag in der Praxis; ein schriftlicher Test ist bei kleineren Praxen seltener als bei größeren Zahnkliniken."
         }
       ],
       "lastmod": "2026-09-03"
