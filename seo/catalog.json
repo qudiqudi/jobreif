@@ -1,7 +1,7 @@
 {
   "version": 1,
   "baseUrl": "https://jobreif.de",
-  "updatedAt": "2026-08-02",
+  "updatedAt": "2026-09-03",
   "staticPages": [
     {
       "loc": "/lernen/",
@@ -9,43 +9,59 @@
     },
     {
       "loc": "/lernen/zahlenreihen.html",
-      "lastmod": "2026-06-27"
+      "lastmod": "2026-09-03",
+      "label": "Zahlenreihen"
     },
     {
       "loc": "/lernen/sprachlogik.html",
-      "lastmod": "2026-06-27"
+      "lastmod": "2026-09-03",
+      "label": "Sprachliche Logik"
     },
     {
       "loc": "/lernen/konzentration.html",
-      "lastmod": "2026-06-27"
+      "lastmod": "2026-09-03",
+      "label": "Konzentration"
     },
     {
       "loc": "/lernen/figuren-matrizen.html",
-      "lastmod": "2026-06-27"
+      "lastmod": "2026-09-03",
+      "label": "Figuren & Matrizen"
     },
     {
       "loc": "/lernen/kopfrechnen.html",
-      "lastmod": "2026-07-12"
+      "lastmod": "2026-09-03",
+      "label": "Kopfrechnen",
+      "berufe": ["industriekaufmann", "kaufmann-im-einzelhandel", "fachkraft-lagerlogistik", "mechatroniker", "zerspanungsmechaniker", "anlagenmechaniker-shk"]
     },
     {
       "loc": "/lernen/kaufmaennisches-rechnen.html",
-      "lastmod": "2026-09-03"
+      "lastmod": "2026-09-03",
+      "label": "Kaufmännisches Rechnen",
+      "berufe": ["bankkaufmann", "industriekaufmann", "kaufmann-bueromanagement", "kaufmann-im-einzelhandel", "steuerfachangestellte", "verwaltungsfachangestellte"]
     },
     {
       "loc": "/lernen/buchstabenreihen.html",
-      "lastmod": "2026-07-12"
+      "lastmod": "2026-09-03",
+      "label": "Buchstabenreihen",
+      "berufe": ["fachinformatiker-systemintegration", "industriemechaniker", "kfz-mechatroniker", "elektroniker-betriebstechnik", "anlagenmechaniker-shk", "zerspanungsmechaniker", "verwaltungsfachangestellte"]
     },
     {
       "loc": "/lernen/merkfaehigkeit.html",
-      "lastmod": "2026-07-12"
+      "lastmod": "2026-09-03",
+      "label": "Merkfähigkeit",
+      "berufe": ["polizei", "zoll", "notfallsanitaeter", "pflegefachmann", "medizinische-fachangestellte", "fachkraft-lagerlogistik"]
     },
     {
       "loc": "/lernen/rechtschreibung.html",
-      "lastmod": "2026-07-12"
+      "lastmod": "2026-09-03",
+      "label": "Rechtschreibung",
+      "berufe": ["kaufmann-bueromanagement", "verwaltungsfachangestellte", "steuerfachangestellte", "medizinische-fachangestellte", "erzieher", "polizei", "zoll"]
     },
     {
       "loc": "/lernen/assoziationen.html",
-      "lastmod": "2026-07-19"
+      "lastmod": "2026-09-03",
+      "label": "Assoziationen",
+      "berufe": ["erzieher", "medizinische-fachangestellte", "pflegefachmann", "notfallsanitaeter", "bankkaufmann", "kaufmann-bueromanagement", "polizei"]
     }
   ],
   "testTypes": {

@@ -54,9 +54,9 @@ jobs:
       - name: SEO-Output ist aktuell (kein Drift zum Katalog)
         run: |
           node scripts/generate-seo.mjs
-          if ! git diff --quiet -- einstellungstest sitemap.xml; then
+          if ! git diff --quiet -- einstellungstest sitemap.xml index.html lernen; then
             echo "Generiertes SEO-Output weicht vom committeten Stand ab."
             echo "Bitte 'node scripts/generate-seo.mjs' lokal laufen lassen und committen."
-            git --no-pager diff --stat -- einstellungstest sitemap.xml
+            git --no-pager diff --stat -- einstellungstest sitemap.xml index.html lernen
             exit 1
           fi

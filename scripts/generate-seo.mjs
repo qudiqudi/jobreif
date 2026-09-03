@@ -46,10 +46,24 @@ const LERNEN = {
   figural: "/lernen/figuren-matrizen.html",
 };
 const MAX_RELATED = 6;
+// SEO-Welle Punkt 4 (interne Verlinkung): maximale Anzahl automatisch aus LERNEN
+// hergeleiteter Berufe auf einer Lernseite (siehe berufeForLernenPage() unten).
+// Gilt NUR fuer die hergeleitete Variante - ein handgepflegtes staticPages[].berufe
+// ist eine Redaktionsentscheidung und wird nicht gekappt.
+const MAX_LERNEN_BERUFE = 8;
 
 // Amtspruefungs-Berufe: standardisierter Behoerdentest statt einzelner Stellenanzeige.
 // Die App zeigt fuer sie im Gast-Einstieg einen anderen Kontext-Hinweis (art=pruefung).
 const EXAM_SLUGS = new Set(["polizei", "zoll"]);
+
+// Marker, zwischen denen der Generator generierte Linkbloecke in handgepflegten
+// Seiten (index.html, lernen/*.html) einsetzt. Alles AUSSERHALB der Marker bleibt
+// unangetastet; fehlen die Marker, bricht der Lauf mit klarer Fehlermeldung ab
+// (siehe replaceBetweenMarkers()), statt still nichts zu tun.
+const MARK_LINKS_START = "<!-- seo-links:start -->";
+const MARK_LINKS_END = "<!-- seo-links:end -->";
+const MARK_BERUFE_START = "<!-- seo-berufe:start -->";
+const MARK_BERUFE_END = "<!-- seo-berufe:end -->";
 
 // --- HTML/XML-Escaping (selbst, ohne Abhaengigkeit) -------------------------
 function esc(s) {
@@ -82,11 +96,30 @@ function validate(cat) {
 
   // staticPages: handgepflegte Seiten (z. B. /lernen/), die NICHT vom Generator
   // erzeugt werden, aber in der Sitemap stehen muessen (sonst fallen sie raus).
+  // label/berufe (SEO-Welle Punkt 4, interne Verlinkung): optional, additiv.
+  // label ist der Kurzname fuer Linktexte (Footer-Block auf index.html); berufe
+  // sind die passenden Berufsseiten-Slugs fuer den Block auf der Lernseite
+  // selbst. berufe[].Slug-Existenz kann erst geprueft werden, wenn cat.pages
+  // bekannt ist - das passiert weiter unten, NACH der pages-Validierung.
   if (cat.staticPages != null) {
     if (!Array.isArray(cat.staticPages)) fail("staticPages: Array erwartet");
     else cat.staticPages.forEach((s, i) => {
       if (!s || typeof s.loc !== "string" || !s.loc.startsWith("/")) fail(`staticPages[${i}].loc: muss mit "/" beginnen`);
       if (typeof s.lastmod !== "string" || !DATE_RE.test(s.lastmod)) fail(`staticPages[${i}].lastmod: YYYY-MM-DD erwartet`);
+      if (s && s.label != null && (typeof s.label !== "string" || !s.label.trim())) {
+        fail(`staticPages[${i}].label: nicht-leerer String erwartet`);
+      }
+      if (s && s.berufe != null) {
+        if (!Array.isArray(s.berufe) || s.berufe.length === 0) {
+          fail(`staticPages[${i}].berufe: nicht-leeres Array erwartet`);
+        } else {
+          s.berufe.forEach((slug, j) => {
+            if (typeof slug !== "string" || !SLUG_RE.test(slug)) {
+              fail(`staticPages[${i}].berufe[${j}]: Slug-foermiger String erwartet`);
+            }
+          });
+        }
+      }
     });
   }
 
@@ -230,6 +263,21 @@ function validate(cat) {
     }
     if (typeof p.lastmod !== "string" || !DATE_RE.test(p.lastmod)) at("lastmod: YYYY-MM-DD erwartet");
   });
+
+  // staticPages[].berufe: jeder Slug muss ein tatsaechlich vorhandener Beruf sein
+  // (erst jetzt pruefbar, "seen" enthaelt alle gueltigen, doppelfreien Slugs aus
+  // der pages-Validierung oben).
+  if (Array.isArray(cat.staticPages)) {
+    cat.staticPages.forEach((s, i) => {
+      if (!s || !Array.isArray(s.berufe)) return;
+      s.berufe.forEach((slug, j) => {
+        if (typeof slug === "string" && SLUG_RE.test(slug) && !seen.has(slug)) {
+          fail(`staticPages[${i}].berufe[${j}] "${slug}" ist kein bekannter Beruf-Slug aus pages`);
+        }
+      });
+    });
+  }
+
   return errs;
 }
 
@@ -597,6 +645,148 @@ function renderSitemap(cat) {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
 }
 
+// --- Beruf-Kurzname (SEO-Welle Punkt 4, kompakte Linktexte) -----------------
+// "beruf" traegt oft eine Geschlechter-Doppelform ("Bankkaufmann / Bankkauffrau"),
+// manchmal mit einem gemeinsamen Zusatz danach ("Kaufmann / Kauffrau im
+// Einzelhandel", "Fachinformatiker / Fachinformatikerin fuer Systemintegration").
+// Fuer kompakte Linktexte (Footer-Block, Berufe-Karten auf den Lernseiten) faellt
+// nur die zweite (feminine) Form weg - ein gemeinsamer Zusatz danach bleibt
+// erhalten. Ohne das wuerden z. B. "Kaufmann / Kauffrau im Einzelhandel" UND
+// "Kaufmann / Kauffrau fuer Bueromanagement" beide zu blossem "Kaufmann" -
+// zwei verschiedene Ziele mit identischem, nicht unterscheidbarem Linktext.
+// Kein "/" enthalten: der ganze Name bleibt stehen (z. B. "Zoll").
+function berufKurz(beruf) {
+  const m = beruf.match(/^(\S+) \/ \S+(.*)$/);
+  return m ? `${m[1]}${m[2]}` : beruf;
+}
+
+// Findet GENAU EIN Vorkommen von "marker" in "text" - wirft, wenn es fehlt
+// ODER mehrfach vorkommt. Ein zweiter (versehentlich doppelter) Marker waere
+// sonst eine stille Falle: replaceBetweenMarkers wuerde beim naechsten Lauf
+// alles zwischen dem ERSTEN und dem naechstbesten Marker-Fund loeschen -
+// moeglicherweise handgepflegtes HTML, das eigentlich AUSSERHALB des
+// beabsichtigten Blocks stand - und der Drift-Check saehe das Ergebnis
+// danach faelschlich als korrekt an (Codex-Review zu f790d80).
+function findExactlyOne(text, marker, sourceLabel, role) {
+  const first = text.indexOf(marker);
+  if (first === -1) {
+    throw new Error(
+      `${sourceLabel}: ${role}-Marker "${marker}" nicht gefunden - bitte einmalig von Hand setzen.`
+    );
+  }
+  const second = text.indexOf(marker, first + 1);
+  if (second !== -1) {
+    throw new Error(
+      `${sourceLabel}: ${role}-Marker "${marker}" kommt mehrfach vor (Fund bei ${first} und ${second}) - erwartet genau ein Vorkommen.`
+    );
+  }
+  return first;
+}
+
+// --- Marker-Ersetzung in handgepflegten Seiten (index.html, lernen/*.html) --
+// Ersetzt NUR den Inhalt zwischen start/end-Marker, alles andere bleibt
+// byte-identisch - "before"/"after" sind rohe Teilstrings des Originals, es
+// findet KEINE Zeilenenden-Normalisierung statt (eine CRLF-Datei bliebe
+// ausserhalb des Marker-Blocks CRLF). Fehlen die Marker, kommen sie mehrfach
+// vor, oder steht der End- vor dem Start-Marker, bricht der Lauf mit einer
+// klaren Fehlermeldung ab statt still nichts zu tun, den falschen Bereich zu
+// loeschen oder den Marker selbst zu duplizieren.
+function replaceBetweenMarkers(html, startMarker, endMarker, inner, sourceLabel) {
+  const startIdx = findExactlyOne(html, startMarker, sourceLabel, "Start");
+  const endIdx = findExactlyOne(html, endMarker, sourceLabel, "End");
+  if (!(startIdx < endIdx)) {
+    throw new Error(
+      `${sourceLabel}: End-Marker "${endMarker}" steht nicht nach dem Start-Marker "${startMarker}" (vertauschte Reihenfolge).`
+    );
+  }
+  const before = html.slice(0, startIdx + startMarker.length);
+  const after = html.slice(endIdx);
+  const body = inner ? `\n    ${inner}\n    ` : "\n    ";
+  return `${before}${body}${after}`;
+}
+
+// --- Footer-Linkblock auf der Startseite (SEO-Welle Punkt 4) ----------------
+// Generiert den Inhalt zwischen den seo-links-Markern in index.html: ein Block
+// mit allen Berufsseiten und ein Block mit allen Lernseiten, die ein "label"
+// tragen. Statisches HTML (kein Client-JS) - bleibt fuer Crawler auch lesbar,
+// wenn die <details> beim Rendern geschlossen sind.
+function renderFooterLinks(cat) {
+  const berufItems = cat.pages
+    .map((p) => `<li><a href="/einstellungstest/${esc(p.slug)}/">${esc(berufKurz(p.beruf))}</a></li>`)
+    .join("\n          ");
+  const staticPages = Array.isArray(cat.staticPages) ? cat.staticPages : [];
+  const lernItems = staticPages
+    .filter((s) => s && typeof s.label === "string" && s.label.trim())
+    .map((s) => `<li><a href="${esc(s.loc)}">${esc(s.label)}</a></li>`)
+    .join("\n          ");
+  return `<div class="footer-links">
+      <details>
+        <summary>Einstellungstest nach Beruf</summary>
+        <ul>
+          ${berufItems}
+        </ul>
+      </details>
+      <details>
+        <summary>Aufgabentypen üben</summary>
+        <ul>
+          ${lernItems}
+        </ul>
+      </details>
+    </div>`;
+}
+
+// --- Passende Berufe fuer eine Lernseite (SEO-Welle Punkt 4) ----------------
+// (a) explizites staticPages[].berufe hat Vorrang (Redaktionsentscheidung, siehe
+//     seo/catalog.json), sonst
+// (b) Umkehrung von LERNEN: alle Berufsseiten, deren testTypes auf diese
+//     Lernseite zeigen, PLUS alle Seiten, deren uebungen auf diese Lernseite
+//     verlinken - deterministisch in Katalogreihenfolge, auf MAX_LERNEN_BERUFE
+//     gedeckelt.
+function berufeForLernenPage(staticPage, cat) {
+  if (Array.isArray(staticPage.berufe) && staticPage.berufe.length) {
+    return staticPage.berufe
+      .map((slug) => cat.pages.find((p) => p.slug === slug))
+      .filter(Boolean);
+  }
+  const testTypeKey = Object.keys(LERNEN).find((k) => LERNEN[k] === staticPage.loc);
+  const out = [];
+  for (const p of cat.pages) {
+    const viaTestType = !!testTypeKey && Array.isArray(p.testTypes) && p.testTypes.includes(testTypeKey);
+    const viaUebungen = Array.isArray(p.uebungen) && p.uebungen.some((u) => u.href === staticPage.loc);
+    if (viaTestType || viaUebungen) {
+      out.push(p);
+      if (out.length >= MAX_LERNEN_BERUFE) break;
+    }
+  }
+  return out;
+}
+
+// Berufe-Block auf einer Lernseite: Inhalt zwischen den seo-berufe-Markern,
+// platziert vor "Weitere Aufgabentypen". Nutzt dieselbe .cards/.card-Optik wie
+// der bestehende Block (lernen/lernen.css), also kein neues CSS noetig. Leer,
+// falls keine passenden Berufe gefunden werden - dann bleibt zwischen den
+// Markern nichts stehen, statt eine <h2> ohne Karten zu zeigen.
+function renderLernenBerufe(staticPage, cat) {
+  const berufe = berufeForLernenPage(staticPage, cat);
+  if (!berufe.length) return "";
+  const label = typeof staticPage.label === "string" && staticPage.label.trim() ? staticPage.label : "Diesem Modul";
+  // Bewusst als Nominativ-Fragment statt "Mit <label> ..." (Dativ): einige Labels
+  // sind Adjektiv+Nomen-Phrasen ("Kaufmännisches Rechnen", "Sprachliche Logik"),
+  // deren Dativform ("kaufmännischem Rechnen") vom Nominativ abweicht - eine
+  // zweite, deklinierte Fassung je Label waere Mehraufwand fuer eine Nebensache.
+  // Das Fragment passt zudem zum bestehenden knappen Kartenstil dieser Seiten
+  // (z. B. "Regel erkennen, nächste Zahl finden.").
+  const cards = berufe
+    .map((p) =>
+      `<a class="card" href="/einstellungstest/${esc(p.slug)}/"><strong>Einstellungstest ${esc(berufKurz(p.beruf))}</strong><span>${esc(label)} und Fachfragen aus der Stellenanzeige.</span></a>`
+    )
+    .join("\n      ");
+  return `<h2>Einstellungstest nach Beruf üben</h2>
+    <div class="cards">
+      ${cards}
+    </div>`;
+}
+
 // --- Aufraeumen: verwaiste Slug-Verzeichnisse entfernen ---------------------
 async function pruneStale(validSlugs) {
   let entries;
@@ -629,6 +819,38 @@ async function main() {
     process.exit(1);
   }
 
+  // Erst ALLE handgepflegten Zieldateien (index.html, lernen/*.html) lesen
+  // und die Marker-Ersetzung berechnen - das kann werfen (fehlender/doppelter
+  // Marker, vertauschte Reihenfolge), aber NOCH WIRD NICHTS GESCHRIEBEN. Erst
+  // wenn das fuer JEDE Datei geklappt hat, geht es weiter unten an die
+  // eigentlichen Schreiboperationen (inkl. pruneStale und die generierten
+  // Berufsseiten). Ein Fehler in einer Datei darf keine andere Datei schon
+  // veraendert haben (Codex-Review zu f790d80).
+  const staticPages = Array.isArray(cat.staticPages) ? cat.staticPages : [];
+  const indexPath = path.join(root, "index.html");
+  let nextIndexHtml;
+  const lernenWrites = [];
+  try {
+    const indexHtml = await readFile(indexPath, "utf8");
+    nextIndexHtml = replaceBetweenMarkers(
+      indexHtml, MARK_LINKS_START, MARK_LINKS_END, renderFooterLinks(cat), "index.html"
+    );
+
+    for (const s of staticPages) {
+      if (!s || s.loc === "/lernen/") continue;
+      const filePath = path.join(root, s.loc.replace(/^\//, ""));
+      const html = await readFile(filePath, "utf8");
+      const next = replaceBetweenMarkers(
+        html, MARK_BERUFE_START, MARK_BERUFE_END, renderLernenBerufe(s, cat), s.loc
+      );
+      lernenWrites.push({ filePath, content: next });
+    }
+  } catch (e) {
+    console.error(e.message);
+    process.exit(1);
+  }
+
+  // Ab hier sind alle Marker-Pruefungen durch - jetzt erst schreiben.
   await mkdir(outDir, { recursive: true });
   const slugs = new Set(cat.pages.map((p) => p.slug));
   const removed = await pruneStale(slugs);
@@ -641,9 +863,15 @@ async function main() {
   }
   await writeFile(path.join(root, "sitemap.xml"), renderSitemap(cat), "utf8");
 
-  const staticCount = Array.isArray(cat.staticPages) ? cat.staticPages.length : 0;
+  await writeFile(indexPath, nextIndexHtml, "utf8");
+  for (const w of lernenWrites) {
+    await writeFile(w.filePath, w.content, "utf8");
+  }
+
+  const staticCount = staticPages.length;
   const sitemapUrls = 1 /* root */ + staticCount + 1 /* hub */ + cat.pages.length;
   console.log(`SEO generiert: Hub + ${cat.pages.length} Beruf-Seite(n), sitemap.xml mit ${sitemapUrls} URLs.`);
+  console.log(`Footer-Linkblock (index.html) und Berufe-Bloecke (${lernenWrites.length} Lernseite(n)) aktualisiert.`);
   if (removed.length) console.log(`Entfernt (nicht mehr im Katalog): ${removed.join(", ")}`);
 }
 
@@ -653,4 +881,6 @@ if (path.resolve(process.argv[1] || "") === fileURLToPath(import.meta.url)) {
   main();
 }
 
-export { validate };
+export {
+  validate, renderFooterLinks, renderLernenBerufe, berufeForLernenPage, berufKurz, replaceBetweenMarkers,
+};

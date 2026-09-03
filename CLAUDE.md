@@ -100,7 +100,8 @@ Ohne `--bind 127.0.0.1` lauscht `http.server` auf allen Interfaces und liefert d
 ins Netz; `timeout` beendet einen vergessenen Server von selbst.
 
 Wird der SEO-Katalog (`seo/catalog.json`) oder der Generator angefasst: `node scripts/generate-seo.mjs`
-lokal laufen lassen und das Ergebnis mitcommitten — die CI prüft auf Drift und wird sonst rot.
+lokal laufen lassen und das Ergebnis mitcommitten — die CI prüft auf Drift (auch in den generierten
+Linkblöcken innerhalb von `index.html` und `lernen/*.html`) und wird sonst rot.
 
 **Deploy verifizieren.** `gh run watch`, oder mit Cache-Buster prüfen, dass der ausgelieferte
 Service-Worker den Commit-Hash trägt statt des Platzhalters:
