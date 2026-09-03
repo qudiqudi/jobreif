@@ -28,6 +28,13 @@ const outDir = path.join(root, "einstellungstest");
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+// Interner Link (uebungen.href, sections[].links[].href): GENAU ein fuehrender
+// Slash, danach nur unbedenkliche Pfadzeichen - kein zweiter Slash direkt danach
+// (das waere ein protokollrelativer Verweis wie "//evil.example/x", den Browser
+// als absolute URL zu einem fremden Host auffassen), kein Backslash, kein "?"
+// oder "#" (Query/Fragment koennten sonst einen an sich bekannten Pfad zu einem
+// unerwarteten Ziel umbiegen). startsWith("/") allein liesse all das durch.
+const INTERNAL_HREF_RE = /^\/(?!\/)[A-Za-z0-9._~!$&'()*+,;=:@%/-]*$/;
 
 // Mapping testType -> vertiefende Lernseite (/lernen/). Verlinkt die Berufsseiten
 // mit den vorhandenen Modul-Erklaerseiten (interne Vernetzung + Discovery der
@@ -95,8 +102,9 @@ function validate(cat) {
   }
   const knownType = (t) => !!types && Object.prototype.hasOwnProperty.call(types, t);
 
-  // Bekannte staticPages-locs (fuer die uebungen-Validierung unten): ein Uebungsmodul-Link
-  // darf nur auf eine Seite zeigen, die tatsaechlich in der Sitemap landet.
+  // Bekannte staticPages-locs (fuer die uebungen-/links-Validierung unten): ein
+  // interner Link darf nur auf eine Seite zeigen, die tatsaechlich in der
+  // Sitemap landet.
   const staticLocs = new Set(
     Array.isArray(cat.staticPages) ? cat.staticPages.map((s) => s && s.loc).filter(Boolean) : []
   );
@@ -105,6 +113,20 @@ function validate(cat) {
     fail("pages: nicht-leeres Array erwartet");
     return errs;
   }
+
+  // Kanonische Menge ALLER gueltigen internen Ziele: die handgepflegten
+  // staticPages PLUS die vom Generator selbst erzeugten Seiten (Hub +
+  // /einstellungstest/<slug>/ je gueltigem Slug). Ohne die generierten Seiten
+  // hier waere jeder Querverweis auf eine andere Berufsseite faelschlich
+  // abgelehnt worden.
+  const internalLocs = new Set(staticLocs);
+  internalLocs.add("/einstellungstest/");
+  cat.pages.forEach((p) => {
+    if (p && typeof p.slug === "string" && SLUG_RE.test(p.slug)) {
+      internalLocs.add(`/einstellungstest/${p.slug}/`);
+    }
+  });
+
   const seen = new Set();
   cat.pages.forEach((p, i) => {
     const at = (m) => fail(`pages[${i}]${p && p.slug ? ` (${p.slug})` : ""}: ${m}`);
@@ -113,6 +135,21 @@ function validate(cat) {
     else if (seen.has(p.slug)) at("slug doppelt"); else seen.add(p.slug);
     for (const f of ["beruf", "title", "description", "intro"]) {
       if (typeof p[f] !== "string" || !p[f].trim()) at(`${f} fehlt/leer`);
+    }
+    // seoTitle: optionales, additives Feld (Plan 2026, SEO-Welle Punkt 3). Ersetzt
+    // NUR <title>/og:title durch eine klickstaerkere Variante (z. B. mit "kostenlos"/
+    // "Loesungen"); die <h1> bleibt IMMER "title" (siehe renderPage()). Max. 65
+    // Zeichen, weil Suchmaschinen laengere Titel im Suchergebnis abschneiden - ein
+    // abgeschnittener Titel waere fuer die Klickrate kontraproduktiv.
+    if (p.seoTitle != null) {
+      if (typeof p.seoTitle !== "string" || !p.seoTitle.trim()) at("seoTitle: nicht-leerer String erwartet");
+      else {
+        // Codepoints zaehlen, nicht UTF-16-Einheiten (String.length): astrale
+        // Zeichen (z. B. Emoji) bestehen aus einem Surrogatpaar und wuerden sonst
+        // doppelt gezaehlt - [...str] iteriert ueber Codepoints.
+        const len = [...p.seoTitle].length;
+        if (len > 65) at(`seoTitle: max. 65 Zeichen erwartet (war ${len})`);
+      }
     }
     if (!Array.isArray(p.testTypes) || p.testTypes.length === 0) at("testTypes: nicht-leeres Array");
     else p.testTypes.forEach((t) => { if (!knownType(t)) at(`testTypes-Eintrag "${t}" nicht in catalog.testTypes`); });
@@ -137,15 +174,58 @@ function validate(cat) {
       });
     }
     // uebungen: optionales, additives Feld - verlinkt passende Gratis-Uebungsmodule (/lernen/)
-    // unter "Diese Testarten uebst du hier". href MUSS eine bestehende staticPages-loc sein,
-    // sonst entstuende ein interner Link auf eine Seite, die die Sitemap gar nicht kennt.
+    // unter "Diese Testarten uebst du hier". href MUSS ein bekanntes internes Ziel sein
+    // (staticPages ODER eine generierte Berufsseite, siehe internalLocs oben) UND dem
+    // INTERNAL_HREF_RE-Muster entsprechen (kein "//host", kein Backslash, kein "?"/"#") -
+    // sonst entstuende ein interner Link auf eine Seite, die die Sitemap gar nicht kennt,
+    // oder schlimmer: ein Link, den der Browser als externe/absolute URL auffasst.
     if (p.uebungen != null) {
       if (!Array.isArray(p.uebungen)) at("uebungen: Array erwartet");
       else p.uebungen.forEach((u, j) => {
         if (!u || typeof u !== "object") return at(`uebungen[${j}]: kein Objekt`);
-        if (typeof u.href !== "string" || !u.href.startsWith("/")) at(`uebungen[${j}].href: muss mit "/" beginnen`);
-        else if (!staticLocs.has(u.href)) at(`uebungen[${j}].href "${u.href}" nicht in staticPages`);
+        if (typeof u.href !== "string" || !INTERNAL_HREF_RE.test(u.href)) {
+          at(`uebungen[${j}].href: muss ein interner Pfad ohne "//", Backslash, Query oder Fragment sein`);
+        } else if (!internalLocs.has(u.href)) at(`uebungen[${j}].href "${u.href}" nicht in staticPages/pages`);
         if (typeof u.label !== "string" || !u.label.trim()) at(`uebungen[${j}].label fehlt/leer`);
+      });
+    }
+    // sections: optionales, additives Feld fuer vertiefende Inhaltsabschnitte (Plan 2026,
+    // SEO-Welle Punkt 2). Rendert zwischen "Beispielaufgaben" und "So bereitest du dich vor".
+    // items/examples/links sind je Abschnitt optional; examples nutzt dasselbe Frage-/Antwort-
+    // Markup wie die Beispielaufgaben (Details/"Loesung anzeigen"), links denselben Stil wie
+    // das uebungen-Feld. links.href gilt derselben internalLocs-Pflicht wie uebungen.href.
+    if (p.sections != null) {
+      if (!Array.isArray(p.sections)) at("sections: Array erwartet");
+      else p.sections.forEach((sec, j) => {
+        if (!sec || typeof sec !== "object") return at(`sections[${j}]: kein Objekt`);
+        if (typeof sec.heading !== "string" || !sec.heading.trim()) at(`sections[${j}].heading fehlt/leer`);
+        if (!Array.isArray(sec.paragraphs) || sec.paragraphs.length === 0
+          || sec.paragraphs.some((t) => typeof t !== "string" || !t.trim())) {
+          at(`sections[${j}].paragraphs: nicht-leeres String-Array erwartet`);
+        }
+        if (sec.items != null) {
+          if (!Array.isArray(sec.items) || sec.items.some((t) => typeof t !== "string" || !t.trim())) {
+            at(`sections[${j}].items: String-Array erwartet`);
+          }
+        }
+        if (sec.examples != null) {
+          if (!Array.isArray(sec.examples)) at(`sections[${j}].examples: Array erwartet`);
+          else sec.examples.forEach((ex, k) => {
+            if (!ex || typeof ex.q !== "string" || !ex.q.trim() || typeof ex.a !== "string" || !ex.a.trim()) {
+              at(`sections[${j}].examples[${k}]: {q, a} als nicht-leere Strings erwartet`);
+            }
+          });
+        }
+        if (sec.links != null) {
+          if (!Array.isArray(sec.links)) at(`sections[${j}].links: Array erwartet`);
+          else sec.links.forEach((l, k) => {
+            if (!l || typeof l !== "object") return at(`sections[${j}].links[${k}]: kein Objekt`);
+            if (typeof l.href !== "string" || !INTERNAL_HREF_RE.test(l.href)) {
+              at(`sections[${j}].links[${k}].href: muss ein interner Pfad ohne "//", Backslash, Query oder Fragment sein`);
+            } else if (!internalLocs.has(l.href)) at(`sections[${j}].links[${k}].href "${l.href}" nicht in staticPages/pages`);
+            if (typeof l.label !== "string" || !l.label.trim()) at(`sections[${j}].links[${k}].label fehlt/leer`);
+          });
+        }
       });
     }
     if (typeof p.lastmod !== "string" || !DATE_RE.test(p.lastmod)) at("lastmod: YYYY-MM-DD erwartet");
@@ -204,11 +284,58 @@ function renderSample(s, types) {
       </li>`;
 }
 
+// Rechenbeispiel innerhalb eines "sections"-Abschnitts (z. B. Mathe-Aufgaben).
+// Nutzt bewusst dieselbe ul.samples/li.sample/details.sample-a-Struktur wie
+// renderSample() oben, damit exakt dasselbe CSS greift und keine neuen Regeln
+// noetig sind - nur ohne den Testarten-Badge, da diese Beispiele nicht an
+// eine der App-Testarten (fachwissen/sprachlogik/...) gebunden sind.
+function renderSectionExample(ex) {
+  return `<li class="sample">
+        <p class="sample-q">${esc(ex.q)}</p>
+        <details class="sample-a"><summary>Lösung anzeigen</summary><p>${esc(ex.a)}</p></details>
+      </li>`;
+}
+
+// Vertiefender Inhaltsabschnitt (optional, additiv, siehe validate()). Rendert
+// als eigenes <section class="block"> zwischen Beispielaufgaben und Tipps.
+// items nutzt dieselbe ul.tipps-Optik wie die Vorbereitungs-Tipps weiter unten,
+// links dieselbe .uebungen-hinweis-Optik wie das uebungen-Feld - beides
+// bewusst wiederverwendet statt neuem CSS.
+function renderSection(sec) {
+  const paras = sec.paragraphs.map((t) => `<p>${esc(t)}</p>`).join("\n        ");
+  const items = Array.isArray(sec.items) ? sec.items : [];
+  const itemsHtml = items.length
+    ? `<ul class="tipps">
+        ${items.map((x) => `<li>${esc(x)}</li>`).join("\n        ")}
+        </ul>`
+    : "";
+  const examples = Array.isArray(sec.examples) ? sec.examples : [];
+  const examplesHtml = examples.length
+    ? `<ul class="samples">
+        ${examples.map(renderSectionExample).join("\n        ")}
+        </ul>`
+    : "";
+  const links = Array.isArray(sec.links) ? sec.links : [];
+  const linksHtml = links.length
+    ? `<p class="uebungen-hinweis">${links.map((l) => `<a href="${esc(l.href)}">${esc(l.label)}</a>`).join(" · ")}</p>`
+    : "";
+  return `<section class="block">
+        <h2>${esc(sec.heading)}</h2>
+        ${paras}
+        ${itemsHtml}
+        ${examplesHtml}
+        ${linksHtml}
+      </section>`;
+}
+
 function renderPage(p, cat, idx) {
   const { baseUrl, testTypes } = cat;
   const url = `${baseUrl}/einstellungstest/${p.slug}/`;
   const samples = Array.isArray(p.samples) ? p.samples : [];
   const faq = Array.isArray(p.faq) ? p.faq : [];
+  // seoTitle (optional): nur <title>/og:title, siehe validate(). Die <h1> unten
+  // nutzt weiterhin ausschliesslich p.title - NIE seoTitle.
+  const pageTitle = typeof p.seoTitle === "string" && p.seoTitle.trim() ? p.seoTitle : p.title;
 
   const typeList = p.testTypes.map((t) => {
     const def = testTypes[t];
@@ -263,6 +390,17 @@ function renderPage(p, cat, idx) {
       </section>`
     : "";
 
+  // Vertiefende Inhaltsabschnitte (optional, additiv) - zwischen Beispielaufgaben
+  // und Vorbereitungs-Tipps, siehe renderSection(). sectionsBlock traegt seine
+  // eigene Einrueckung/Leerzeile; ist sections leer, bleibt sectionsBlock ein
+  // leerer String, damit sich am Output von Seiten ohne "sections" NICHTS
+  // aendert (kein zusaetzlicher Whitespace zwischen Beispielaufgaben und Tipps).
+  const sections = Array.isArray(p.sections) ? p.sections : [];
+  const sectionsHtml = sections.length
+    ? sections.map(renderSection).join("\n\n    ")
+    : "";
+  const sectionsBlock = sectionsHtml ? `\n\n    ${sectionsHtml}` : "";
+
   const faqHtml = faq.length
     ? `<section class="block">
         <h2>Häufige Fragen</h2>
@@ -301,7 +439,7 @@ function renderPage(p, cat, idx) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   ${CSP}
-  <title>${esc(p.title)}</title>
+  <title>${esc(pageTitle)}</title>
   <meta name="description" content="${esc(p.description)}">
   <link rel="canonical" href="${url}">
   <meta name="robots" content="index, follow">
@@ -312,7 +450,7 @@ function renderPage(p, cat, idx) {
   <meta property="og:site_name" content="jobreif.de">
   <meta property="og:locale" content="de_DE">
   <meta property="og:url" content="${url}">
-  <meta property="og:title" content="${esc(p.title)}">
+  <meta property="og:title" content="${esc(pageTitle)}">
   <meta property="og:description" content="${esc(p.description)}">
   <meta property="og:image" content="${baseUrl}/assets/social-preview.png">
   ${ldHtml}
@@ -362,7 +500,7 @@ ${HEADER}
       ${uebungenHtml}
     </section>
 
-    ${samplesHtml}
+    ${samplesHtml}${sectionsBlock}
 
     ${tippsHtml}
 
@@ -509,4 +647,10 @@ async function main() {
   if (removed.length) console.log(`Entfernt (nicht mehr im Katalog): ${removed.join(", ")}`);
 }
 
-main();
+// Nur ausfuehren, wenn direkt als CLI-Skript gestartet (node scripts/generate-seo.mjs) -
+// nicht beim Import (z. B. aus einem Test, der nur validate() isoliert prüfen will).
+if (path.resolve(process.argv[1] || "") === fileURLToPath(import.meta.url)) {
+  main();
+}
+
+export { validate };

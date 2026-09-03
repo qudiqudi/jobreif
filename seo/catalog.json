@@ -75,7 +75,8 @@
       "slug": "fachinformatiker-systemintegration",
       "beruf": "Fachinformatiker / Fachinformatikerin für Systemintegration",
       "title": "Einstellungstest Fachinformatiker Systemintegration üben",
-      "description": "Übe den Einstellungstest für Fachinformatiker Systemintegration: Fachfragen aus echten Stellenanzeigen plus Sprachlogik, Zahlenreihen und figurale Aufgaben – kostenlos und mit KI-Feedback.",
+      "seoTitle": "Einstellungstest Fachinformatiker Systemintegration gratis üben",
+      "description": "Kostenlos üben: Einstellungstest Fachinformatiker Systemintegration mit Fachfragen, Sprachlogik und Zahlenreihen – mit KI-Feedback.",
       "intro": "Bereite dich gezielt auf den Einstellungstest und das Vorstellungsgespräch als Fachinformatiker oder Fachinformatikerin für Systemintegration vor. jobreif erzeugt aus einer echten Stellenanzeige einen passgenauen Test – inklusive der typischen Eignungstest-Module, die viele IT-Arbeitgeber einsetzen.",
       "testTypes": [
         "fachwissen",
@@ -149,13 +150,14 @@
           "a": "Es funktioniert am besten mit einer echten Anzeige (Text oder Link), weil die Fachfragen daraus abgeleitet werden. Du kannst aber auch eine allgemeine Beschreibung einfügen."
         }
       ],
-      "lastmod": "2026-08-02"
+      "lastmod": "2026-09-03"
     },
     {
       "slug": "industriemechaniker",
       "beruf": "Industriemechaniker / Industriemechanikerin",
       "title": "Einstellungstest Industriemechaniker / Industriemechanikerin üben",
-      "description": "Einstellungstest Industriemechaniker kostenlos üben: technisches Verständnis, Zahlenreihen, Konzentration und figurale Logik – plus Fachfragen aus deiner echten Stellenanzeige mit KI-Feedback.",
+      "seoTitle": "Einstellungstest Industriemechaniker/in: kostenlos üben",
+      "description": "Kostenlos üben: Einstellungstest Industriemechaniker mit technischem Verständnis, Zahlenreihen und Konzentration – KI-Feedback aus echter Stellenanzeige.",
       "intro": "Trainiere den Einstellungstest für Industriemechaniker oder Industriemechanikerin mit realistischen Aufgaben. jobreif macht aus einer Stellenanzeige einen passenden Test und ergänzt die klassischen Eignungstest-Module wie Zahlenreihen, Konzentration und figurale Matrizen.",
       "testTypes": [
         "fachwissen",
@@ -229,13 +231,14 @@
           "a": "Ja, jobreif ist eine Web-App und funktioniert direkt im Browser auf Smartphone, Tablet und Desktop – ohne Installation."
         }
       ],
-      "lastmod": "2026-08-02"
+      "lastmod": "2026-09-03"
     },
     {
       "slug": "kaufmann-im-einzelhandel",
       "beruf": "Kaufmann / Kauffrau im Einzelhandel",
       "title": "Einstellungstest Kaufmann / Kauffrau im Einzelhandel üben",
-      "description": "Einstellungstest Kaufmann / Kauffrau im Einzelhandel kostenlos üben: Prozentrechnen, Sprachlogik, Konzentration und Fachfragen aus echten Stellenanzeigen – mit sofortigem KI-Feedback.",
+      "seoTitle": "Einstellungstest Kaufmann/-frau Einzelhandel: kostenlos üben",
+      "description": "Aufnahmetest & Einstellungstest im Einzelhandel üben: Kasse, Rabatt, Warenkunde, Ablauf bei Handelsketten und FAQ – kostenlos mit KI-Feedback.",
       "intro": "Bereite dich als Kaufmann oder Kauffrau im Einzelhandel auf den Einstellungstest vor: kaufmännisches Rechnen, Sprachverständnis und Sorgfalt. jobreif erzeugt aus einer Stellenanzeige einen passgenauen Test und ergänzt die typischen Eignungstest-Aufgaben.",
       "testTypes": [
         "fachwissen",
@@ -288,6 +291,116 @@
             "Schublade"
           ],
           "answer": "Geld – das Regal ist der Aufbewahrungsort für die Ware, die Kasse ist der Aufbewahrungsort für das Geld (Bargeld)."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Ein Artikel wird zum Einstandspreis von 40 € eingekauft. Der Händler kalkuliert einen Handelsaufschlag von 50 % auf den Einstandspreis. Wie hoch ist der Verkaufspreis?",
+          "options": [
+            "60 €",
+            "50 €",
+            "70 €",
+            "45 €"
+          ],
+          "answer": "60 € – 50 % von 40 € sind 20 € Aufschlag, 40 € plus 20 € ergibt einen Verkaufspreis von 60 €."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Ein Geschäft verkauft an einem Tag 120 Stück einer Ware zu je 8 Euro. Wie hoch ist der Tagesumsatz für diese Ware?",
+          "options": [
+            "960 Euro",
+            "860 Euro",
+            "1.020 Euro",
+            "128 Euro"
+          ],
+          "answer": "960 Euro – 120 Stück mal 8 Euro ergibt einen Tagesumsatz von 960 Euro."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Was ist beim Wareneingang im Einzelhandel zu prüfen?",
+          "options": [
+            "Menge, Qualität und Unversehrtheit der gelieferten Ware mit dem Lieferschein abgleichen",
+            "Nur die Rechnung mit dem Kassenbon vergleichen",
+            "Ausschließlich die Mehrwertsteuer auf dem Lieferschein prüfen",
+            "Der Wareneingang wird ungeprüft direkt ins Regal eingeräumt"
+          ],
+          "answer": "Menge, Qualität und Unversehrtheit der gelieferten Ware mit dem Lieferschein abgleichen – nur so fallen Fehlmengen oder beschädigte Ware sofort auf, statt erst bei der Inventur."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Ein Kunde möchte eine fehlerfrei funktionierende Ware, die er im Ladengeschäft gekauft hat, ohne Angabe von Gründen zurückgeben. Worauf beruht eine Rücknahme in diesem Fall?",
+          "options": [
+            "Auf einer freiwilligen Kulanzregelung des Händlers, nicht auf einem gesetzlichen Anspruch",
+            "Auf einem gesetzlichen Widerrufsrecht wie beim Online-Kauf",
+            "Auf der Mehrwertsteuer-Erstattungspflicht",
+            "Auf dem Mindestlohngesetz"
+          ],
+          "answer": "Auf einer freiwilligen Kulanzregelung des Händlers, nicht auf einem gesetzlichen Anspruch – bei einem mangelfreien Kauf im Ladengeschäft besteht grundsätzlich kein gesetzliches Rückgaberecht ohne Grund. Ein gesetzliches Widerrufsrecht gibt es dagegen bei Fernabsatzverträgen (z. B. Online-Kauf) und bei außerhalb von Geschäftsräumen geschlossenen Verträgen, jeweils mit gesetzlichen Ausnahmen."
+        }
+      ],
+      "sections": [
+        {
+          "heading": "Aufnahmetest im Einzelhandel: das wird geprüft",
+          "paragraphs": [
+            "Ein Aufnahmetest im Einzelhandel prüft vor allem alltagsnahe kaufmännische Fähigkeiten: Rechnen an der Kasse, Rabatte berechnen, Warenkunde und der sichere Umgang mit Kundinnen und Kunden.",
+            "Dazu kommen häufig Rechtschreibung und Textverständnis, etwa beim Beschriften von Preisschildern oder beim Formulieren kurzer Kundenmitteilungen. Die folgenden zwei Beispiele zeigen typische Rechenaufgaben aus dem Verkaufsalltag.",
+            "Rechnen an der Kasse und beim Rabatt ist vor allem Übungssache – wer die Grundrechenarten und Prozentrechnung sicher beherrscht, löst diese Aufgaben in Sekunden, auch ohne Taschenrechner.",
+            "Wer bei der Warenkunde unsicher ist, sollte sich vor dem Test die wichtigsten Materialbegriffe und Pflegehinweise der Produktgruppe ansehen, für die er sich bewirbt – von Textilien über Elektronik bis Lebensmittel unterscheiden sich die Fachbegriffe deutlich."
+          ],
+          "items": [
+            "Grundrechenarten und Prozentrechnen an der Kasse",
+            "Warenkunde: Materialien, Herkunft und Pflegehinweise",
+            "Freundliche, klare Kundenkommunikation auch bei Reklamationen",
+            "Rechtschreibung auf Preisschildern und in kurzen Kundentexten",
+            "Grundrechenarten sicher und ohne Taschenrechner anwenden"
+          ],
+          "examples": [
+            {
+              "q": "Ein Kunde bezahlt eine Ware für 17,60 Euro mit einem 20-Euro-Schein. Wie viel Wechselgeld bekommt er zurück?",
+              "a": "2,40 Euro – 20 Euro minus 17,60 Euro ergibt 2,40 Euro Wechselgeld."
+            },
+            {
+              "q": "Ein Artikel kostet regulär 45 Euro und wird mit 30 % Rabatt verkauft. Wie viel kostet er im Angebot?",
+              "a": "31,50 Euro – 30 % von 45 Euro sind 13,50 Euro Nachlass, 45 Euro minus 13,50 Euro ergibt 31,50 Euro."
+            },
+            {
+              "q": "Ein Kunde zahlt eine Ware im Wert von 120 Euro bar. Der Händler gewährt bei Barzahlung 2 % Skonto. Welchen Betrag zahlt der Kunde?",
+              "a": "117,60 Euro – 2 % von 120 Euro sind 2,40 Euro Nachlass, 120 Euro minus 2,40 Euro ergibt 117,60 Euro."
+            }
+          ],
+          "links": [
+            {
+              "href": "/lernen/kaufmaennisches-rechnen.html",
+              "label": "Kaufmännisches Rechnen üben"
+            },
+            {
+              "href": "/lernen/rechtschreibung.html",
+              "label": "Rechtschreibung üben"
+            }
+          ]
+        },
+        {
+          "heading": "Verkäufer / Verkäuferin oder Kaufmann / Kauffrau im Einzelhandel?",
+          "paragraphs": [
+            "Verkäufer und Verkäuferin ist die zweijährige, Kaufmann und Kauffrau im Einzelhandel die dreijährige Ausbildung im Handel – wer die zweijährige Ausbildung abgeschlossen hat, kann die dreijährige oft verkürzt anschließen.",
+            "Für den Einstellungstest macht das kaum einen Unterschied: Beide Ausbildungswege prüfen ähnliche Grundfertigkeiten in Rechnen, Sprache und Kundenorientierung, auch wenn die dreijährige Ausbildung zusätzlich betriebswirtschaftliche Inhalte wie Kalkulation und Warenwirtschaft vertieft.",
+            "In Stellenanzeigen werden Aufnahmetest und Einstellungstest für beide Ausbildungswege oft gleichbedeutend verwendet – schau daher weniger auf den Namen der Ausbildung als auf die genannten Testinhalte.",
+            "Auch Quereinsteiger und Berufsrückkehrerinnen sind im Einzelhandel häufig willkommen – hier zählt oft weniger die formale Vorbildung als Zuverlässigkeit, Freundlichkeit und ein sicherer Umgang mit Zahlen im Alltag.",
+            "Informier dich vor der Bewerbung trotzdem genau über die Ausbildungsdauer und den angestrebten Abschluss, damit die Erwartungen von Anfang an zusammenpassen."
+          ]
+        },
+        {
+          "heading": "Ablauf bei großen Handelsketten",
+          "paragraphs": [
+            "Bei vielen großen Handelsketten läuft die Bewerbung heute mehrstufig ab: Nach der Online-Bewerbung folgt oft ein digitaler Aufnahmetest, danach ein persönliches Gespräch in der Filiale oder im Bewerbercenter.",
+            "Manche Ketten laden zusätzlich zu einem kurzen Schnuppertag oder Probearbeiten in der Filiale ein, um den Arbeitsalltag realistisch kennenzulernen. Wie viele Stufen es gibt und wie lange der Prozess dauert, unterscheidet sich von Unternehmen zu Unternehmen deutlich.",
+            "Bereite dich am besten so vor, wie du dich auch im echten Verkaufsalltag verhalten würdest: freundlich, aufmerksam und sorgfältig im Umgang mit Zahlen – genau das prüfen viele Handelsketten bewusst schon im ersten Testschritt.",
+            "Kleinere, inhabergeführte Geschäfte gehen meist unkomplizierter vor: Ein kurzes Gespräch, manchmal ergänzt um ein oder zwei einfache Rechenaufgaben, ersetzt hier oft den mehrstufigen Online-Test großer Ketten."
+          ],
+          "items": [
+            "Online-Bewerbung mit Lebenslauf und kurzem Anschreiben",
+            "Digitaler Aufnahmetest zu Rechnen, Sprache und Konzentration",
+            "Persönliches Gespräch oder Schnuppertag in der Filiale"
+          ]
         }
       ],
       "tipps": [
@@ -307,6 +420,18 @@
         {
           "q": "Werden meine Daten gespeichert?",
           "a": "Deine Eingaben und Ergebnisse bleiben in deinem Browser. jobreif ist auf Datensparsamkeit ausgelegt."
+        },
+        {
+          "q": "Was ist der Unterschied zwischen Aufnahmetest und Einstellungstest im Einzelhandel?",
+          "a": "Meist keiner – Aufnahmetest ist nur ein anderer Name für denselben Einstellungstest, den Handelsunternehmen zur Vorauswahl einsetzen. Beide Begriffe stehen für dieselbe Mischung aus Rechnen, Sprache, Konzentration und Fachfragen zum Einzelhandel. Frag im Zweifel einfach beim Unternehmen nach, welche Aufgabenarten dich konkret erwarten."
+        },
+        {
+          "q": "Was wird beim Einstellungstest für Verkäufer / Verkäuferin geprüft?",
+          "a": "Im Kern dasselbe wie beim Einstellungstest für Kaufleute im Einzelhandel: kaufmännisches Rechnen wie Rabatt und Wechselgeld, Warenkunde, Kundenkommunikation und die typischen Eignungstest-Module. Die genaue Gewichtung unterscheidet sich je nach Betrieb und angestrebter Position. Auch das Vorstellungsgespräch danach läuft für beide Ausbildungswege meist sehr ähnlich ab."
+        },
+        {
+          "q": "Ist der Aufnahmetest im Einzelhandel kostenlos zu üben?",
+          "a": "Ja. Die Module Assoziationen, Zahlenreihen und Konzentration sind kostenlos und ohne Login nutzbar, ebenso die Grundlagen zum kaufmännischen Rechnen im Lernbereich. Für den vollständigen Test zu einer konkreten Stellenanzeige mit KI-Feedback registrierst du dich einmalig kostenlos. Ein Zeitlimit für die Wiederholung der Übungsmodule gibt es dabei nicht."
         }
       ],
       "uebungen": [
@@ -321,7 +446,8 @@
       "slug": "bankkaufmann",
       "beruf": "Bankkaufmann / Bankkauffrau",
       "title": "Einstellungstest Bankkaufmann / Bankkauffrau üben",
-      "description": "Einstellungstest Bankkaufmann / Bankkauffrau kostenlos üben: Wirtschaftswissen, Zahlenreihen, Sprachlogik und Fachfragen aus echten Stellenanzeigen – mit KI-Feedback.",
+      "seoTitle": "Einstellungstest Bankkaufmann/-frau: kostenlos üben, mit Lösungen",
+      "description": "Einstellungstest Bankkaufmann / Bankkauffrau üben: Ablauf beim Eignungstest, Rechnen mit Finanzbezug, Assessment-Center – kostenlos mit KI-Feedback.",
       "intro": "Übe den Einstellungstest als Bankkaufmann oder Bankkauffrau mit realistischen Aufgaben zu Wirtschaft, Logik und Sprache. jobreif macht aus einer Stellenanzeige einen passenden Test und ergänzt die gängigen Eignungstest-Module.",
       "testTypes": [
         "fachwissen",
@@ -374,6 +500,114 @@
             "Sparbuch"
           ],
           "answer": "Belastung – eine Einzahlung erscheint als Gutschrift auf dem Konto, eine Auszahlung als Belastung (Abbuchung); beides sind die entgegengesetzten Kontobewegungen."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Ein Aktienkurs steigt von 40 Euro auf 46 Euro. Um wie viel Prozent ist der Kurs gestiegen?",
+          "options": [
+            "15 %",
+            "6 %",
+            "13 %",
+            "20 %"
+          ],
+          "answer": "15 % – der Kursgewinn beträgt 6 Euro, bezogen auf den Ausgangskurs von 40 Euro ergibt das 6 / 40 = 15 %."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Eine Bank berechnet für eine Auslandsüberweisung eine Gebühr von 0,5 % des Überweisungsbetrags, mindestens jedoch 10 Euro. Wie hoch ist die Gebühr bei einer Überweisung von 3.000 Euro?",
+          "options": [
+            "15 Euro",
+            "10 Euro",
+            "30 Euro",
+            "150 Euro"
+          ],
+          "answer": "15 Euro – 0,5 % von 3.000 Euro sind 15 Euro, und damit höher als der Mindestbetrag von 10 Euro, sodass die prozentuale Gebühr von 15 Euro fällig wird."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Was ist der Unterschied zwischen einem Girokonto und einem Tagesgeldkonto?",
+          "options": [
+            "Das Girokonto dient dem laufenden Zahlungsverkehr, das Tagesgeldkonto der verzinsten Geldanlage mit täglicher Verfügbarkeit",
+            "Ein Tagesgeldkonto kann nur von Unternehmen eröffnet werden",
+            "Ein Girokonto wird ausschließlich für Kredite genutzt",
+            "Es gibt keinen Unterschied, beide Begriffe meinen dasselbe Konto"
+          ],
+          "answer": "Das Girokonto dient dem laufenden Zahlungsverkehr, das Tagesgeldkonto der verzinsten Geldanlage mit täglicher Verfügbarkeit – diese Zweckbindung ist der zentrale Unterschied zwischen beiden Kontoarten."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Was versteht man unter dem Begriff „Bonität“?",
+          "options": [
+            "Die Kreditwürdigkeit eines Kunden, also seine Fähigkeit und Bereitschaft, Kredite zurückzuzahlen",
+            "Die Höhe der Zinsen, die eine Bank für Spareinlagen zahlt",
+            "Die Gebühr für die Kontoführung",
+            "Die gesetzliche Frist für die Aufbewahrung von Kontoauszügen"
+          ],
+          "answer": "Die Kreditwürdigkeit eines Kunden, also seine Fähigkeit und Bereitschaft, Kredite zurückzuzahlen – Banken prüfen die Bonität u. a. vor der Vergabe von Krediten."
+        }
+      ],
+      "sections": [
+        {
+          "heading": "So läuft der Eignungstest bei Banken ab",
+          "paragraphs": [
+            "Der Eignungstest bei Banken findet meist online statt – entweder bequem von zu Hause oder in einem Test-Center vor Ort, je nachdem, wie das jeweilige Institut das Verfahren organisiert. Für den Online-Teil solltest du ein bis drei Stunden einplanen.",
+            "Inhaltlich deckt der Test in der Regel vier Bereiche ab: Rechnen mit Finanzbezug, Sprachverständnis, logisches Denken sowie Wirtschaftswissen, ergänzt um Fragen zur Persönlichkeit. Nach einem bestandenen Online-Test folgt bei vielen Banken ein Assessment-Center als nächste Stufe.",
+            "Viele Institute – von Sparkassen und Volksbanken bis zu großen Privatbanken – setzen auf ein mehrstufiges, digitales Auswahlverfahren; die genauen Module und Gewichtungen legt aber jede Bank für sich fest.",
+            "Manche Banken laden zusätzlich zu einem kurzen Telefon- oder Videointerview vor dem eigentlichen Assessment-Center ein, um Motivation und Ausdrucksweise vorab kennenzulernen. Ob und in welcher Reihenfolge das passiert, entscheidet jedes Institut für sich."
+          ],
+          "items": [
+            "Rechnen mit Finanzbezug: Zinsen, Prozent, Währungsumrechnung",
+            "Sprachverständnis und logisches Denken",
+            "Wirtschafts- und Allgemeinwissen zu Banken und Finanzthemen",
+            "Persönlichkeitsfragen zu Motivation und Arbeitsstil",
+            "Erste Einblicke in die Aufgaben und Produkte einer Bank"
+          ]
+        },
+        {
+          "heading": "Rechnen mit Finanzbezug",
+          "paragraphs": [
+            "Zinsrechnung, Prozentrechnung und Währungsumrechnung bilden den mathematischen Schwerpunkt fast jedes Eignungstests für Bankkaufleute. Die folgenden drei Beispiele zeigen den typischen Aufbau solcher Aufgaben.",
+            "Wichtig ist dabei weniger Spezialwissen aus der Finanzbranche als sauberes Prozent- und Dreisatzrechnen – dieselben Grundlagen, die auch bei anderen kaufmännischen Einstellungstests gefragt sind, hier eben mit Bezug zu Konten, Zinsen und Kursen."
+          ],
+          "items": [
+            "Zinsrechnung: Kapital, Zinssatz und Zeitraum verknüpfen",
+            "Prozentrechnung: Kursgewinn, Kursverlust, Veränderung",
+            "Währungsrechnung: Umtausch zu einem gegebenen Kurs"
+          ],
+          "examples": [
+            {
+              "q": "Ein Kunde legt 8.000 Euro auf einem Tagesgeldkonto zu 2,5 % Zinsen pro Jahr an. Wie hoch sind die Zinsen nach einem vollen Jahr?",
+              "a": "200 Euro – nach Z = K × p / 100 ergibt sich 8.000 × 2,5 / 100 = 200 Euro."
+            },
+            {
+              "q": "Ein Wertpapierdepot im Wert von 12.000 Euro verliert 15 % seines Werts. Wie hoch ist der Depotwert danach?",
+              "a": "10.200 Euro – 15 % von 12.000 Euro sind 1.800 Euro Verlust, 12.000 Euro minus 1.800 Euro ergibt 10.200 Euro."
+            },
+            {
+              "q": "Ein Kunde möchte 500 US-Dollar in Euro umtauschen. Der Kurs steht bei 1 Euro = 1,25 US-Dollar. Wie viele Euro erhält er ohne Gebühren?",
+              "a": "400 Euro – 500 US-Dollar geteilt durch 1,25 ergibt 400 Euro."
+            }
+          ],
+          "links": [
+            {
+              "href": "/lernen/kaufmaennisches-rechnen.html",
+              "label": "Kaufmännisches Rechnen üben"
+            },
+            {
+              "href": "/lernen/kopfrechnen.html",
+              "label": "Kopfrechnen trainieren"
+            }
+          ]
+        },
+        {
+          "heading": "Assessment-Center nach dem Test",
+          "paragraphs": [
+            "Wer den Online-Eignungstest besteht, wird bei vielen Banken zu einem Assessment-Center eingeladen – meist ein halber bis ganzer Tag mit mehreren Bewerbern und Bewerberinnen gleichzeitig.",
+            "Typische Bausteine sind Gruppenübungen, ein simuliertes Kundengespräch, eine kurze Präsentation sowie ein persönliches Interview mit Personalverantwortlichen. Wie das Assessment-Center im Detail aufgebaut ist, entscheidet jede Bank für sich.",
+            "Gute Vorbereitung auf den Online-Test zahlt sich hier doppelt aus: Wer die Grundlagen in Rechnen und Sprache sicher beherrscht, hat im Assessment-Center mehr Kapazität für Gesprächsführung und Auftreten.",
+            "Nimm das Assessment-Center nicht nur als Prüfung, sondern auch als Gelegenheit, dir selbst ein Bild vom Arbeitsalltag und Team zu machen – die Entscheidung läuft in beide Richtungen.",
+            "Zu den häufigsten Stolperfallen zählen zu allgemeine Antworten ohne Bezug zur Bank und zu wenig Vorbereitung auf das Rollenspiel mit einer Kundensituation – konkrete, nachvollziehbare Beispiele aus eigener Erfahrung wirken überzeugender."
+          ]
         }
       ],
       "tipps": [
@@ -393,6 +627,18 @@
         {
           "q": "Ist das kostenlos?",
           "a": "Die allgemeinen Eignungsmodule übst du kostenlos und ohne Anmeldung; für den kompletten, stellenbezogenen Test mit KI-Feedback genügt eine kostenlose Anmeldung. Optional gibt es höhere Qualitätsstufen."
+        },
+        {
+          "q": "Wie lange dauert der Eignungstest bei Banken?",
+          "a": "Meist zwischen einer und drei Stunden für den Online-Teil, je nach Bank und Anzahl der Module. Wirst du danach zum Assessment-Center eingeladen, kommt in der Regel ein halber bis ganzer Tag vor Ort hinzu. Bringe für einen möglichen Vor-Ort-Termin etwas Zeitpuffer mit, falls sich der Ablauf verschiebt."
+        },
+        {
+          "q": "Gibt es den Einstellungstest Bankkaufmann als PDF zum Download?",
+          "a": "Eine PDF bieten wir bewusst nicht an, weil jede Bank ihren Eignungstest eigenständig gestaltet und eine pauschale PDF am tatsächlichen Test vorbeigehen würde. Stattdessen kannst du bei jobreif direkt online üben – mit den allgemeinen Modulen kostenlos und mit Fachfragen aus einer echten Stellenanzeige. Wiederkehrende Themen wie Zinsrechnung oder Wirtschaftswissen kannst du trotzdem gezielt mit den kostenlosen Modulen trainieren."
+        },
+        {
+          "q": "Was wird beim Einstellungstest bei der Hypovereinsbank oder anderen Banken geprüft?",
+          "a": "Konkrete Testinhalte einzelner Banken veröffentlichen wir nicht – auch bei der Hypovereinsbank gestaltet jedes Institut seinen Eignungstest eigenständig. Wiederkehrende Bausteine über viele Banken hinweg sind aber Rechnen mit Finanzbezug, Sprache, Logik und Persönlichkeitsfragen; fügst du die reale Stellenanzeige ein, leitet jobreif zusätzlich passende Fachfragen daraus ab. Das gilt grundsätzlich für jede Bank, deren Namen du zusammen mit einem Einstellungstest suchst."
         }
       ],
       "uebungen": [
@@ -407,7 +653,8 @@
       "slug": "pflegefachmann",
       "beruf": "Pflegefachmann / Pflegefachfrau",
       "title": "Einstellungstest Pflegefachmann / Pflegefachfrau üben",
-      "description": "Einstellungstest Pflege kostenlos üben: Fachwissen, Konzentration, einfache Rechenaufgaben und Sprachlogik – plus Fragen aus echten Stellenanzeigen mit KI-Feedback.",
+      "seoTitle": "Einstellungstest Pflegefachmann/-frau: kostenlos üben",
+      "description": "Kostenlos üben: Einstellungstest Pflege mit Fachwissen, Konzentration und Rechenaufgaben – KI-Feedback aus echter Stellenanzeige.",
       "intro": "Bereite dich auf den Einstellungstest und das Bewerbungsgespräch in der Pflege vor. jobreif erstellt aus einer Stellenanzeige einen passenden Test und ergänzt typische Eignungstest-Module wie Konzentration und einfache Rechenaufgaben.",
       "testTypes": [
         "fachwissen",
@@ -481,13 +728,14 @@
           "a": "Nein. jobreif läuft direkt im Browser auf Handy und Computer, ganz ohne Installation."
         }
       ],
-      "lastmod": "2026-07-14"
+      "lastmod": "2026-09-03"
     },
     {
       "slug": "mechatroniker",
       "beruf": "Mechatroniker / Mechatronikerin",
       "title": "Einstellungstest Mechatroniker / Mechatronikerin üben",
-      "description": "Einstellungstest Mechatroniker kostenlos üben: technisches Verständnis, Zahlenreihen, Sprachlogik und figurale Aufgaben – plus Fachfragen aus echter Stellenanzeige mit KI-Feedback.",
+      "seoTitle": "Einstellungstest Mechatroniker/in: kostenlos üben, mit Lösungen",
+      "description": "Kostenlos üben: Einstellungstest Mechatroniker mit technischem Verständnis, Zahlenreihen und Sprachlogik – KI-Feedback aus echter Stellenanzeige.",
       "intro": "Bereite dich auf den Einstellungstest als Mechatroniker oder Mechatronikerin vor: Mechanik, Elektrotechnik und Steuerungstechnik treffen hier zusammen. jobreif erstellt aus einer echten Stellenanzeige einen passgenauen Test und ergänzt die typischen Eignungstest-Module.",
       "testTypes": [
         "fachwissen",
@@ -561,13 +809,14 @@
           "a": "Für die allgemeinen Eignungsmodule (Zahlenreihen, Konzentration, Figuren) nicht – die übst du sofort ohne Anmeldung. Für den kompletten, stellenbezogenen Test mit KI-Feedback genügt eine kostenlose Anmeldung."
         }
       ],
-      "lastmod": "2026-08-02"
+      "lastmod": "2026-09-03"
     },
     {
       "slug": "kfz-mechatroniker",
       "beruf": "Kfz-Mechatroniker / Kfz-Mechatronikerin",
       "title": "Einstellungstest Kfz-Mechatroniker / Kfz-Mechatronikerin üben",
-      "description": "Einstellungstest Kfz-Mechatroniker kostenlos üben: Kfz-Technik, Zahlenreihen, Konzentration und figurale Logik – plus Fachfragen aus echter Stellenanzeige mit KI-Feedback.",
+      "seoTitle": "Einstellungstest Kfz-Mechatroniker/in: kostenlos üben",
+      "description": "Kostenlos üben: Einstellungstest Kfz-Mechatroniker mit Kfz-Technik, Zahlenreihen und Konzentration – KI-Feedback aus echter Stellenanzeige.",
       "intro": "Übe den Einstellungstest als Kfz-Mechatroniker oder Kfz-Mechatronikerin mit realistischen Aufgaben rund um Motor, Elektronik und Diagnose. jobreif macht aus einer Stellenanzeige einen passenden Test und ergänzt klassische Eignungstest-Module.",
       "testTypes": [
         "fachwissen",
@@ -641,13 +890,14 @@
           "a": "Ja, jobreif läuft direkt im Browser auf Smartphone, Tablet und Desktop – ohne Installation."
         }
       ],
-      "lastmod": "2026-08-02"
+      "lastmod": "2026-09-03"
     },
     {
       "slug": "industriekaufmann",
       "beruf": "Industriekaufmann / Industriekauffrau",
       "title": "Einstellungstest Industriekaufmann / Industriekauffrau üben",
-      "description": "Einstellungstest Industriekaufmann / Industriekauffrau kostenlos üben: kaufmännisches Rechnen, Sprachlogik, Konzentration und Fachfragen aus echter Stellenanzeige – mit KI-Feedback.",
+      "seoTitle": "Einstellungstest Industriekaufmann/-frau: kostenlos üben",
+      "description": "Einstellungstest Industriekaufmann / Industriekauffrau üben: Mathe-Aufgaben, Ablauf, Deutsch, Englisch und FAQ zum kostenlosen Test – mit KI-Feedback.",
       "intro": "Bereite dich auf den Einstellungstest als Industriekaufmann oder Industriekauffrau vor: kaufmännisches Rechnen, Wirtschaftsverständnis und Sprachgefühl. jobreif erzeugt aus einer Stellenanzeige einen passgenauen Test und ergänzt die üblichen Eignungstest-Aufgaben.",
       "testTypes": [
         "fachwissen",
@@ -700,6 +950,124 @@
             "Marketing"
           ],
           "answer": "Absatz – Einkauf und Beschaffung bezeichnen dieselbe beschaffungsseitige Funktion (Synonyme), genauso wie Vertrieb und Absatz die absatzseitige Funktion bezeichnen."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Ein Lager benötigt für 5 gleiche Maschinen 2.500 kWh Strom pro Monat. Wie viel kWh verbraucht eine einzelne Maschine im Monat bei gleichmäßiger Verteilung?",
+          "options": [
+            "500 kWh",
+            "250 kWh",
+            "625 kWh",
+            "125 kWh"
+          ],
+          "answer": "500 kWh – über den Dreisatz: 2.500 kWh geteilt durch 5 Maschinen ergibt 500 kWh je Maschine."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Der Wareneinsatz eines Industriebetriebs sinkt von 80.000 Euro auf 68.000 Euro. Um wie viel Prozent ist der Wareneinsatz gesunken?",
+          "options": [
+            "15 %",
+            "12 %",
+            "17,6 %",
+            "20 %"
+          ],
+          "answer": "15 % – die Differenz beträgt 12.000 Euro, bezogen auf den Ausgangswert von 80.000 Euro ergibt das 12.000 / 80.000 = 15 %."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Was fällt in den typischen Aufgabenbereich von Industriekaufleuten?",
+          "options": [
+            "Materialbeschaffung, Auftragsabwicklung und Kostenrechnung",
+            "Konstruktion und Programmierung von Fertigungsanlagen",
+            "Beratung von Privatkunden zu Geldanlagen",
+            "Direkter Verkauf von Waren an Endkunden in der Filiale"
+          ],
+          "answer": "Materialbeschaffung, Auftragsabwicklung und Kostenrechnung – Industriekaufleute steuern die kaufmännischen Abläufe rund um Einkauf, Vertrieb und Rechnungswesen, während Konstruktion, Anlagentechnik und Bankberatung zu anderen Berufen gehören."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Was versteht man in der Kostenrechnung unter „Fixkosten“?",
+          "options": [
+            "Kosten, die unabhängig von der Produktionsmenge in gleicher Höhe anfallen, z. B. Miete",
+            "Kosten, die sich proportional zur Produktionsmenge verändern, z. B. Rohstoffe",
+            "Kosten, die nur einmalig beim Kauf einer Maschine entstehen",
+            "Kosten, die ausschließlich im Vertrieb anfallen"
+          ],
+          "answer": "Kosten, die unabhängig von der Produktionsmenge in gleicher Höhe anfallen, z. B. Miete – Fixkosten bleiben kurzfristig konstant, während variable Kosten wie Rohstoffe mit der Produktionsmenge steigen oder sinken."
+        }
+      ],
+      "sections": [
+        {
+          "heading": "Mathe-Aufgaben im Einstellungstest Industriekaufmann / Industriekauffrau",
+          "paragraphs": [
+            "Wer nach industriekaufmann mathe aufgaben sucht, sucht meist genau das: Prozentrechnen, Dreisatz, Zinsrechnung und einfache Kalkulation bilden den mathematischen Kern fast jedes Einstellungstests für Industriekaufleute.",
+            "Die folgenden vier gerechneten Beispiele zeigen den typischen Schwierigkeitsgrad – jeweils mit Lösungsweg zum Nachvollziehen.",
+            "Auch wenn die konkreten Zahlen von Betrieb zu Betrieb variieren, bleibt das Prinzip gleich: Wer Prozent-, Dreisatz- und Zinsrechnung im Kopf oder mit einfachen Formeln beherrscht, kommt im Test schnell und sicher zu den richtigen Ergebnissen."
+          ],
+          "items": [
+            "Prozentrechnung: Rabatt, Aufschlag, Veränderung in Prozent",
+            "Dreisatz: proportionale Verhältnisse umrechnen",
+            "Zinsrechnung: Kapital, Zinssatz und Zeitraum verknüpfen",
+            "Kalkulation: Selbstkosten, Gewinnzuschlag, Verkaufspreis"
+          ],
+          "examples": [
+            {
+              "q": "Ein Praktikant erhält eine Ausbildungsvergütung von 1.200 Euro brutto im ersten Ausbildungsjahr. Im dritten Jahr steigt sie um 25 % auf welchen Betrag?",
+              "a": "1.500 Euro – 25 % von 1.200 Euro sind 300 Euro, 1.200 Euro plus 300 Euro ergibt 1.500 Euro."
+            },
+            {
+              "q": "Eine Maschine produziert in 8 Stunden 640 Bauteile. Wie viele Bauteile produziert sie bei gleicher Leistung in 3 Stunden?",
+              "a": "240 Bauteile – über den Dreisatz: 640 Bauteile / 8 Stunden = 80 Bauteile pro Stunde, mal 3 Stunden ergibt 240 Bauteile."
+            },
+            {
+              "q": "Ein Unternehmen nimmt einen Kredit über 20.000 Euro zu einem Jahreszins von 4 % auf. Wie hoch sind die Zinsen für ein volles Jahr?",
+              "a": "800 Euro – nach der Formel Zinsen = Kapital × Zinssatz / 100 ergibt sich 20.000 × 4 / 100 = 800 Euro."
+            },
+            {
+              "q": "Ein Bauteil hat Selbstkosten von 40 Euro. Der Betrieb kalkuliert einen Gewinnzuschlag von 20 % auf die Selbstkosten. Wie hoch ist der Verkaufspreis (netto)?",
+              "a": "48 Euro – 20 % von 40 Euro sind 8 Euro Gewinnzuschlag, 40 Euro plus 8 Euro ergibt einen Verkaufspreis von 48 Euro netto."
+            }
+          ],
+          "links": [
+            {
+              "href": "/lernen/kaufmaennisches-rechnen.html",
+              "label": "Kaufmännisches Rechnen üben"
+            }
+          ]
+        },
+        {
+          "heading": "Deutsch, Englisch und Allgemeinwissen",
+          "paragraphs": [
+            "Neben Mathe prüfen viele Einstellungstests für Industriekaufleute auch Deutsch, etwa Rechtschreibung, Kommasetzung und Textverständnis, weil Industriekaufleute im Berufsalltag viel schriftlich mit Kunden, Lieferanten und Kollegen kommunizieren.",
+            "Dazu kommen häufig einfache Englischkenntnisse aus dem Wirtschaftsalltag – Begriffe wie invoice, delivery oder customer – sowie Allgemeinwissen zu Wirtschaft, aktuellen Themen und grundlegenden politischen Zusammenhängen.",
+            "Wie stark diese drei Bereiche gewichtet werden, hängt vom einzelnen Betrieb ab, insbesondere davon, wie viel Kundenkontakt die ausgeschriebene Stelle mit sich bringt.",
+            "Ein solides Grundverständnis reicht meist aus – Fließend-Englisch oder literarisches Deutsch erwartet in diesem Teil des Tests niemand von dir."
+          ],
+          "items": [
+            "Rechtschreibung und Kommasetzung in Geschäftstexten",
+            "Einfache Wirtschaftsenglisch-Vokabeln aus Einkauf und Vertrieb",
+            "Allgemeinwissen zu Wirtschaft und aktuellen Themen",
+            "Verständnis einfacher Wirtschaftsgrafiken und -tabellen"
+          ],
+          "links": [
+            {
+              "href": "/lernen/rechtschreibung.html",
+              "label": "Rechtschreibung üben"
+            }
+          ]
+        },
+        {
+          "heading": "So läuft der Test in Industrieunternehmen ab",
+          "paragraphs": [
+            "Bei vielen Industrieunternehmen läuft der erste Schritt online ab: ein Test von zu Hause oder an einem Firmenrechner, meist unterteilt in Module zu Rechnen, Sprache, Logik und Konzentration.",
+            "Je nach Unternehmen und Fachrichtung – etwa Einkauf, Vertrieb, Logistik oder Rechnungswesen – folgen danach ein persönliches Gespräch, ein Assessment-Center oder ein kurzer Fachtest zur gewählten Abteilung. Ein bundesweit einheitliches Verfahren gibt es nicht, jeder Betrieb legt Ablauf und Umfang selbst fest.",
+            "Plane für den Online-Teil in der Regel 45 bis 90 Minuten ein und wähle nach Möglichkeit eine ruhige Umgebung ohne Ablenkung – gerade bei Konzentrationsaufgaben macht sich das deutlich bemerkbar."
+          ],
+          "items": [
+            "Online-Test von zu Hause oder im Betrieb",
+            "Bei Eignung: persönliches Gespräch oder Assessment-Center",
+            "Teilweise ein kurzer Fachtest zur gewünschten Abteilung"
+          ]
         }
       ],
       "tipps": [
@@ -719,6 +1087,18 @@
         {
           "q": "Ist das kostenlos?",
           "a": "Die allgemeinen Eignungsmodule übst du kostenlos und ohne Anmeldung direkt im Browser; für den kompletten, stellenbezogenen Test mit KI-Feedback genügt eine kostenlose Anmeldung."
+        },
+        {
+          "q": "Gibt es den Einstellungstest Industriekaufmann als PDF?",
+          "a": "Nein, hier gibt es keine PDF zum Download – jeder Betrieb stellt seinen eigenen Test zusammen, sodass eine allgemeingültige PDF wenig Aussagekraft hätte. Stattdessen übst du bei jobreif kostenlos online mit Aufgaben aus der echten Stellenanzeige und mit Übungsmodulen ohne Anmeldung. So übst du mit Aufgaben, die inhaltlich zur echten Stellenanzeige passen, statt mit einer generischen Vorlage."
+        },
+        {
+          "q": "Wie sehen typische Mathe-Aufgaben beim Einstellungstest für Industriekaufleute aus?",
+          "a": "Meist Prozentrechnen, Dreisatz, Zinsrechnung und einfache Kalkulation – vier gerechnete Beispiele dazu findest du oben im Abschnitt zu den Mathe-Aufgaben. Genau diese vier Rechenarten solltest du vor dem Test sicher beherrschen, dann bist du für die meisten Varianten gerüstet."
+        },
+        {
+          "q": "Was wird beim Einstellungstest für Industriekauffrau / Industriekaufmann kostenlos geprüft?",
+          "a": "Assoziationen, Zahlenreihen und Konzentration sind sofort und ohne Anmeldung nutzbar. Sobald du eine echte Stellenanzeige einfügst, ergänzt jobreif passende Fachfragen dazu – dafür reicht ein kostenloses Konto. Wiederholungen sind unbegrenzt möglich, sodass du in deinem eigenen Tempo üben kannst."
         }
       ],
       "uebungen": [
@@ -733,7 +1113,8 @@
       "slug": "verwaltungsfachangestellte",
       "beruf": "Verwaltungsfachangestellte",
       "title": "Einstellungstest Verwaltungsfachangestellte üben",
-      "description": "Einstellungstest Verwaltungsfachangestellte kostenlos üben: Allgemeinwissen, Sprachlogik, Zahlenreihen und Konzentration – plus Fachfragen aus echter Stellenanzeige mit KI-Feedback.",
+      "seoTitle": "Einstellungstest Verwaltungsfachangestellte: kostenlos üben",
+      "description": "Kostenlos üben: Einstellungstest Verwaltungsfachangestellte mit Allgemeinwissen, Sprachlogik und Zahlenreihen – KI-Feedback aus echter Stellenanzeige.",
       "intro": "Übe den Einstellungstest für Verwaltungsfachangestellte mit realistischen Aufgaben zu Allgemeinwissen, Sprache und Logik – egal ob du dich als Verwaltungsfachangestellter oder Verwaltungsfachangestellte bewirbst. jobreif macht aus einer Stellenanzeige einen passenden Test und ergänzt die typischen Eignungstest-Module.",
       "testTypes": [
         "fachwissen",
@@ -807,13 +1188,14 @@
           "a": "Für die allgemeinen Eignungsmodule (Zahlenreihen, Konzentration, Figuren) nicht – die übst du sofort ohne Anmeldung. Für den kompletten, stellenbezogenen Test mit KI-Feedback genügt eine kostenlose Anmeldung."
         }
       ],
-      "lastmod": "2026-08-02"
+      "lastmod": "2026-09-03"
     },
     {
       "slug": "medizinische-fachangestellte",
       "beruf": "Medizinische Fachangestellte (MFA)",
       "title": "Einstellungstest Medizinische Fachangestellte (MFA) üben",
-      "description": "Einstellungstest MFA kostenlos üben: einfache Mathematik, Konzentration, Sprachlogik und Fachfragen aus echter Stellenanzeige – mit sofortigem KI-Feedback.",
+      "seoTitle": "Einstellungstest Medizinische Fachangestellte: kostenlos üben",
+      "description": "Kostenlos üben: Einstellungstest MFA mit einfacher Mathematik, Konzentration und Sprachlogik – KI-Feedback aus echter Stellenanzeige.",
       "intro": "Bereite dich auf den Einstellungstest als Medizinische Fachangestellte oder Medizinischer Fachangestellter (MFA) vor: Sorgfalt, Organisation und Grundrechnen stehen im Mittelpunkt. jobreif erstellt aus einer Stellenanzeige einen passenden Test und ergänzt typische Eignungstest-Aufgaben.",
       "testTypes": [
         "fachwissen",
@@ -887,13 +1269,14 @@
           "a": "Nein. jobreif läuft direkt im Browser auf Handy und Computer, ganz ohne Installation."
         }
       ],
-      "lastmod": "2026-08-02"
+      "lastmod": "2026-09-03"
     },
     {
       "slug": "polizei",
       "beruf": "Polizei / Polizeivollzugsdienst",
       "title": "Einstellungstest Polizei / Polizeivollzugsdienst üben",
-      "description": "Einstellungstest Polizei üben: Fachwissen, Sprachlogik, Zahlenreihen, Konzentration und Figuren trainieren – kostenlos mit KI-Feedback, unabhängig vom Sporttest.",
+      "seoTitle": "Einstellungstest Polizei: Eignungstest kostenlos üben",
+      "description": "Kostenlos üben: Eignungstest Polizei mit Sprachlogik, Zahlenreihen und Konzentration – unabhängig vom Sporttest, mit KI-Feedback.",
       "intro": "Bereite dich gezielt auf den computergestützten Auswahltest der Polizei vor: jobreif erstellt aus einer echten Stellenanzeige einen passgenauen Test und ergänzt ihn um die typischen Eignungstest-Module aus Allgemeinwissen, Sprachlogik, Zahlen und Konzentration. Sporttest und Assessment-Center gehören separat dazu – hier übst du den kognitiven Teil des Auswahlverfahrens.",
       "testTypes": [
         "fachwissen",
@@ -961,20 +1344,21 @@
         },
         {
           "q": "Ist das Üben kostenlos?",
-          "a": "Die allgemeinen Module wie Sprachlogik, Zahlenreihen und Konzentration kannst du kostenlos und ohne Anmeldung üben. Für einen kompletten, stellenbezogenen Test mit Fachfragen aus einer echten Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
+          "a": "Die allgemeinen Module wie Assoziationen, Zahlenreihen und Konzentration kannst du kostenlos und ohne Anmeldung üben. Für einen kompletten, stellenbezogenen Test mit Fachfragen aus einer echten Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
         },
         {
           "q": "Ersetzt jobreif den Sporttest oder das Assessment-Center?",
           "a": "Nein. jobreif bereitet dich auf die kognitiven Testteile vor – Allgemeinwissen, Deutsch, Logik und Konzentration. Sporttest, Assessment-Center-Übungen und die ärztliche Eignungsuntersuchung sind eigene Verfahrensschritte, die du separat trainierst bzw. wahrnimmst."
         }
       ],
-      "lastmod": "2026-07-14"
+      "lastmod": "2026-09-03"
     },
     {
       "slug": "zoll",
       "beruf": "Zoll",
       "title": "Einstellungstest Zoll üben",
-      "description": "Einstellungstest Zoll üben: Fachwissen, Sprachlogik, Zahlenreihen, Konzentration und Figuren trainieren – kostenlos mit KI-Feedback aus echter Stellenanzeige.",
+      "seoTitle": "Einstellungstest Zoll: Eignungstest kostenlos üben",
+      "description": "Kostenlos üben: Eignungstest Zoll mit Fachwissen, Sprachlogik und Zahlenreihen – KI-Feedback aus echter Stellenanzeige.",
       "intro": "Bereite dich gezielt auf das schriftliche Auswahlverfahren des Zolls vor. jobreif erstellt aus einer echten Stellenanzeige einen passgenauen Test und ergänzt ihn um die typischen Eignungstest-Module wie Sprachlogik, Zahlenreihen und Konzentration.",
       "testTypes": [
         "fachwissen",
@@ -1049,13 +1433,14 @@
           "a": "Die allgemeinen Module wie Zahlenreihen, Konzentration und Figuren übst du kostenlos und ohne Anmeldung. Für einen kompletten, auf eine konkrete Zoll-Stellenanzeige zugeschnittenen Test mit KI-Feedback genügt eine kostenlose Anmeldung."
         }
       ],
-      "lastmod": "2026-07-14"
+      "lastmod": "2026-09-03"
     },
     {
       "slug": "elektroniker-betriebstechnik",
       "beruf": "Elektroniker / Elektronikerin für Betriebstechnik",
       "title": "Einstellungstest Elektroniker für Betriebstechnik üben",
-      "description": "Einstellungstest Elektroniker für Betriebstechnik üben: Fachfragen zu Strom & Schaltplänen plus Zahlenreihen, Sprachlogik, Figuren – kostenlos mit KI-Feedback.",
+      "seoTitle": "Einstellungstest Elektroniker/in Betriebstechnik: kostenlos üben",
+      "description": "Kostenlos üben: Einstellungstest Elektroniker Betriebstechnik mit Fachfragen zu Strom & Schaltplänen, Zahlenreihen und Figuren – mit KI-Feedback.",
       "intro": "Bereite dich gezielt auf den Einstellungstest als Elektroniker oder Elektronikerin für Betriebstechnik vor. jobreif erzeugt aus einer echten Stellenanzeige einen passgenauen Test mit elektrotechnischen Fachfragen – ergänzt um die typischen Eignungstest-Module wie technisches Rechnen und figurale Logik, die Industriebetriebe im Auswahlverfahren einsetzen.",
       "testTypes": [
         "fachwissen",
@@ -1129,13 +1514,14 @@
           "a": "Ja, du brauchst keine Software zu installieren. Du fügst eine Stellenanzeige ein oder wählst allgemeine Übungsmodule und bearbeitest die Aufgaben direkt im Browser – am Rechner wie am Smartphone."
         }
       ],
-      "lastmod": "2026-08-02"
+      "lastmod": "2026-09-03"
     },
     {
       "slug": "anlagenmechaniker-shk",
       "beruf": "Anlagenmechaniker für Sanitär-, Heizungs- und Klimatechnik",
       "title": "Einstellungstest Anlagenmechaniker für Sanitär-, Heizungs- und Klimatechnik üben",
-      "description": "Einstellungstest Anlagenmechaniker SHK üben: Fachwissen aus der Stellenanzeige, technisches Rechnen, Zahlenreihen und Konzentration – kostenlos mit KI-Feedback.",
+      "seoTitle": "Einstellungstest Anlagenmechaniker/in SHK: kostenlos üben",
+      "description": "Kostenlos üben: Einstellungstest Anlagenmechaniker SHK mit Fachwissen, technischem Rechnen und Konzentration – mit KI-Feedback.",
       "intro": "Bereite dich gezielt auf den Einstellungstest als Anlagenmechaniker oder Anlagenmechanikerin für Sanitär-, Heizungs- und Klimatechnik vor. jobreif erzeugt aus einer echten Stellenanzeige einen passgenauen Test – inklusive der typischen Eignungstest-Module wie Zahlenreihen und Konzentration, auf die Handwerksbetriebe bei der Auswahl achten.",
       "testTypes": [
         "fachwissen",
@@ -1209,13 +1595,14 @@
           "a": "Ja, du brauchst keine Software zu installieren. Die allgemeinen Module wie Zahlenreihen und Konzentration kannst du sofort und ohne Anmeldung im Browser starten."
         }
       ],
-      "lastmod": "2026-08-02"
+      "lastmod": "2026-09-03"
     },
     {
       "slug": "zerspanungsmechaniker",
       "beruf": "Zerspanungsmechaniker / Zerspanungsmechanikerin",
       "title": "Einstellungstest Zerspanungsmechaniker üben",
-      "description": "Einstellungstest Zerspanungsmechaniker üben: Fachwissen zu Drehen, Fräsen und Toleranzen plus Zahlenreihen, Konzentration und Figuren – kostenlos mit KI-Feedback.",
+      "seoTitle": "Einstellungstest Zerspanungsmechaniker/in: kostenlos üben",
+      "description": "Kostenlos üben: Einstellungstest Zerspanungsmechaniker mit Fachwissen zu Drehen und Fräsen, Zahlenreihen und Konzentration – mit KI-Feedback.",
       "intro": "Bereite dich gezielt auf den Einstellungstest als Zerspanungsmechaniker oder Zerspanungsmechanikerin vor. jobreif erstellt aus einer echten Stellenanzeige einen passgenauen Test und ergänzt ihn um die typischen Eignungstest-Module wie Zahlenreihen, Konzentration und figurale Aufgaben, die in der Metallbearbeitung häufig geprüft werden.",
       "testTypes": [
         "fachwissen",
@@ -1289,13 +1676,14 @@
           "a": "Ja, du brauchst keine zusätzliche Software – der Test läuft direkt im Browser, am Rechner genauso wie am Smartphone."
         }
       ],
-      "lastmod": "2026-08-02"
+      "lastmod": "2026-09-03"
     },
     {
       "slug": "fachkraft-lagerlogistik",
       "beruf": "Fachkraft für Lagerlogistik",
       "title": "Einstellungstest Fachkraft für Lagerlogistik üben",
-      "description": "Einstellungstest Fachkraft für Lagerlogistik üben: Zahlenreihen, Konzentration, Sprachlogik und Fachfragen aus echten Stellenanzeigen – kostenlos mit KI-Feedback.",
+      "seoTitle": "Einstellungstest Fachkraft Lagerlogistik: kostenlos üben",
+      "description": "Kostenlos üben: Einstellungstest Fachkraft Lagerlogistik mit Zahlenreihen, Konzentration und Sprachlogik – KI-Feedback aus echter Stellenanzeige.",
       "intro": "Bereite dich gezielt auf den Einstellungstest als Fachkraft für Lagerlogistik vor: jobreif erzeugt aus einer echten Stellenanzeige einen passgenauen Test und ergänzt ihn um die typischen Eignungstest-Module wie Zahlenreihen, Konzentration und Sprachlogik.",
       "testTypes": [
         "fachwissen",
@@ -1369,13 +1757,14 @@
           "a": "Am besten funktioniert es mit einer echten Anzeige als Text oder Link, weil die Fachfragen direkt daraus abgeleitet werden. Es geht aber auch mit einer allgemeinen Beschreibung der Position."
         }
       ],
-      "lastmod": "2026-07-14"
+      "lastmod": "2026-09-03"
     },
     {
       "slug": "kaufmann-bueromanagement",
       "beruf": "Kaufmann / Kauffrau für Büromanagement",
       "title": "Einstellungstest Kaufmann / Kauffrau für Büromanagement üben",
-      "description": "Einstellungstest Kaufmann / Kauffrau für Büromanagement üben: Rechtschreibung, kaufmännisches Rechnen, Sprachlogik, Zahlenreihen und Konzentration – kostenlos mit KI-Feedback.",
+      "seoTitle": "Einstellungstest Kaufmann/-frau Büromanagement: kostenlos üben",
+      "description": "Einstellungstest & kaufmännischer Test für Büromanagement üben: Ablauf, Rechenaufgaben, Rechtschreibung, Umschulung und FAQ – kostenlos mit KI-Feedback.",
       "intro": "Bereite dich gezielt auf den Einstellungstest als Kaufmann oder Kauffrau für Büromanagement vor (früher Bürokaufmann bzw. Bürokauffrau). jobreif macht aus einer echten Stellenanzeige einen passgenauen Test zu Geschäftskorrespondenz, kaufmännischem Rechnen und Büroorganisation – ergänzt um die typischen Eignungstest-Module Sprachlogik, Zahlenreihen und Konzentration.",
       "testTypes": [
         "fachwissen",
@@ -1428,6 +1817,103 @@
             "Drucker"
           ],
           "answer": "Ordner – ein Termin wird im Kalender festgehalten und strukturiert verwaltet, eine Datei wird entsprechend in einem Ordner abgelegt und organisiert."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Wofür steht die Normenreihe DIN 5008 im Büroalltag?",
+          "options": [
+            "Sie regelt die Gestaltung von Geschäftsbriefen und Schriftstücken",
+            "Sie regelt die Aufbewahrungsfristen von Rechnungen",
+            "Sie regelt die Maße von Aktenordnern",
+            "Sie regelt die Formatierung von E-Mail-Adressen"
+          ],
+          "answer": "Sie regelt die Gestaltung von Geschäftsbriefen und Schriftstücken – DIN 5008 legt Regeln für Anschriftfeld, Absätze und Betreffzeile in der Geschäftskorrespondenz fest, auch für E-Mails."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Ein Bürobedarf-Artikel kostet 80 Euro netto. Der Lieferant gewährt 15 % Rabatt. Wie hoch ist der Rechnungsbetrag vor Mehrwertsteuer?",
+          "options": [
+            "68 Euro",
+            "65 Euro",
+            "72 Euro",
+            "76 Euro"
+          ],
+          "answer": "68 Euro – 15 % von 80 Euro sind 12 Euro Rabatt, 80 Euro minus 12 Euro ergibt einen Rechnungsbetrag von 68 Euro vor Mehrwertsteuer."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Ein Kunde erhält eine Rechnung über 250 Euro netto. Wie hoch ist der Bruttobetrag bei einem Umsatzsteuersatz von 19 %?",
+          "options": [
+            "297,50 Euro",
+            "269 Euro",
+            "287,50 Euro",
+            "300 Euro"
+          ],
+          "answer": "297,50 Euro – 19 % von 250 Euro sind 47,50 Euro Umsatzsteuer, addiert zum Nettobetrag ergibt das einen Bruttobetrag von 297,50 Euro."
+        },
+        {
+          "type": "fachwissen",
+          "question": "Welche Aufgabe gehört typischerweise zum Aufgabenbereich von Kaufleuten für Büromanagement?",
+          "options": [
+            "Terminplanung, Korrespondenz und Rechnungsprüfung koordinieren",
+            "Maschinen in der Fertigung programmieren und warten",
+            "Filialen des Einzelhandels leiten und Warenbestellungen auslösen",
+            "Bankkonten von Firmenkunden eröffnen und Kredite vergeben"
+          ],
+          "answer": "Terminplanung, Korrespondenz und Rechnungsprüfung koordinieren – diese organisatorischen und kaufmännischen Aufgaben bilden den Kern des Berufsbilds, während Fertigung, Filialleitung im Einzelhandel und Kreditvergabe zu anderen kaufmännischen Berufen gehören."
+        }
+      ],
+      "sections": [
+        {
+          "heading": "Kaufmännischer Test: diese Aufgaben kommen dran",
+          "paragraphs": [
+            "Der Begriff kaufmännischer Test taucht in Stellenanzeigen für Büroberufe oft synonym zu kaufmännischer Eignungstest oder kaufmännischer Einstellungstest auf – gemeint ist meist derselbe Ablauf: eine Mischung aus Sprache, Rechnen, Konzentration und teils Fachwissen zur Büroorganisation.",
+            "Im Kern prüfen Betriebe vier Bereiche: Rechtschreibung und Kommasetzung in Geschäftstexten, kaufmännisches Rechnen wie Rabatt, Skonto und Mehrwertsteuer, Konzentration unter Zeitdruck sowie logisches und sprachliches Denkvermögen.",
+            "Zwischen Handwerksbetrieb, Mittelstand und Konzern unterscheiden sich Auswahl und Schwerpunkte des Tests spürbar – von einem kurzen Online-Fragebogen bis zum mehrstufigen Verfahren mit Interview ist alles möglich. Wer die vier genannten Bereiche trainiert, ist für die meisten Varianten gut vorbereitet.",
+            "Am schnellsten bekommst du ein Gefühl für den eigenen Wissensstand, wenn du die Beispielaufgaben weiter unten durchgehst und danach gezielt an den Lücken arbeitest."
+          ],
+          "items": [
+            "Rechtschreibung, Zeichensetzung und Textverständnis in Geschäftskorrespondenz",
+            "Kaufmännisches Rechnen: Prozent, Dreisatz, Rabatt, Skonto und Mehrwertsteuer",
+            "Konzentrationsaufgaben, die Sorgfalt bei Zahlen und Terminen prüfen",
+            "Logisches und sprachliches Denken, etwa bei Wortanalogien",
+            "Grundkenntnisse in gängiger Bürosoftware wie Textverarbeitung und Tabellenkalkulation",
+            "Sorgfalt beim Übertragen von Zahlen und Terminen ohne Flüchtigkeitsfehler"
+          ],
+          "links": [
+            {
+              "href": "/lernen/rechtschreibung.html",
+              "label": "Rechtschreibung üben"
+            }
+          ]
+        },
+        {
+          "heading": "Ablauf und Dauer des Einstellungstests",
+          "paragraphs": [
+            "Der Einstellungstest läuft bei den meisten Betrieben online ab, entweder von zu Hause aus oder direkt beim Unternehmen an einem eigenen Termin. Üblich sind einzelne Module von jeweils fünf bis fünfzehn Minuten, die insgesamt meist innerhalb einer knappen Stunde zu schaffen sind.",
+            "Nach dem Test folgt je nach Betrieb entweder direkt ein Vorstellungsgespräch oder eine gesonderte Einladung dazu. Manche Unternehmen kombinieren den Test mit einem kurzen Probearbeiten oder Schnuppertag, andere werten ihn ausschließlich für die Vorauswahl aus.",
+            "Größere Unternehmen und Behörden setzen häufiger auf ein mehrstufiges Verfahren mit separatem Auswahltag, kleinere Betriebe entscheiden oft schon nach dem Online-Test und einem kurzen Gespräch. Frag im Zweifel direkt nach, wie der Ablauf bei deinem Wunscharbeitgeber konkret aussieht.",
+            "Manche Arbeitgeber schicken den Online-Test schon vor der Einladung zum Gespräch, andere erst danach als zusätzlichen Baustein – verlass dich nicht auf eine feste Reihenfolge, sondern lies die Einladung genau."
+          ]
+        },
+        {
+          "heading": "Umschulung und Quereinstieg: der Eignungstest für Bürokaufleute",
+          "paragraphs": [
+            "Wer eine Umschulung zur Bürokauffrau oder zum Bürokaufmann macht oder als Quereinsteiger startet, trifft häufig auf einen Eignungstest Büromanagement, der weniger Vorwissen als vielmehr allgemeine Fähigkeiten prüft: sauberes Rechnen, sicheres Deutsch und Konzentration.",
+            "Gerade weil Umschüler und Quereinsteiger selten eine kaufmännische Ausbildung im Rucksack haben, lohnt sich gezieltes Üben der Grundlagen – Prozentrechnen, Rechtschreibung und Textverständnis lassen sich in kurzer Zeit spürbar verbessern.",
+            "Auch wer bereits Berufserfahrung in einem anderen Bereich mitbringt, profitiert von der Vorbereitung: Die Aufgaben sind bewusst allgemein gehalten und setzen kein spezielles kaufmännisches Vorwissen voraus, sondern prüfen, wie sicher du mit Zahlen, Sprache und Konzentration unter Zeitdruck umgehst."
+          ],
+          "items": [
+            "Prozentrechnen: Rabatt, Skonto, Mehrwertsteuer im Kopf üben",
+            "Rechtschreibung: Kommasetzung und Groß- und Kleinschreibung auffrischen",
+            "Textverständnis: kurze Geschäftstexte aufmerksam lesen und zusammenfassen"
+          ],
+          "links": [
+            {
+              "href": "/lernen/kaufmaennisches-rechnen.html",
+              "label": "Kaufmännisches Rechnen üben"
+            }
+          ]
         }
       ],
       "tipps": [
@@ -1442,11 +1928,23 @@
         },
         {
           "q": "Ist das Üben kostenlos?",
-          "a": "Die allgemeinen Module Sprachlogik, Zahlenreihen und Konzentration übst du kostenlos und ohne Anmeldung. Für einen kompletten, auf deine Stellenanzeige zugeschnittenen Test mit KI-Feedback reicht eine kostenlose Anmeldung."
+          "a": "Die allgemeinen Module Assoziationen, Zahlenreihen und Konzentration übst du kostenlos und ohne Anmeldung. Für einen kompletten, auf deine Stellenanzeige zugeschnittenen Test mit KI-Feedback reicht eine kostenlose Anmeldung."
         },
         {
           "q": "Läuft der Test einfach im Browser?",
           "a": "Ja, du brauchst keine Software – Text oder Link der Stellenanzeige einfügen, Test starten und direkt im Browser bearbeiten. Am Ende bekommst du KI-Feedback zu deinen Antworten."
+        },
+        {
+          "q": "Was ist der Unterschied zwischen kaufmännischem Test und kaufmännischem Eignungstest?",
+          "a": "In der Praxis keiner – kaufmännischer Test, kaufmännischer Eignungstest und kaufmännischer Einstellungstest stehen in Stellenanzeigen meist als Synonyme für denselben Ablauf aus Sprache, Rechnen, Konzentration und teils Fachfragen. Lass dich von der Wortwahl in der Anzeige also nicht verunsichern – entscheidend ist, welche Aufgabentypen tatsächlich genannt werden."
+        },
+        {
+          "q": "Kann ich den Einstellungstest für Bürokauffrau kostenlos üben?",
+          "a": "Ja: Rechtschreibung, Zahlenreihen, Konzentration und Assoziationen übst du direkt im Browser, ohne Anmeldung und ohne Kosten. Möchtest du den kompletten Test zu deiner Stellenanzeige inklusive KI-Feedback, genügt eine kostenlose Anmeldung. Ein Zeitlimit gibt es dabei nicht, du kannst die Module so oft wiederholen, wie du möchtest."
+        },
+        {
+          "q": "Was prüft der Eignungstest bei einer Umschulung zur Bürokauffrau oder zum Bürokaufmann besonders?",
+          "a": "Bei Umschulung und Quereinstieg liegt der Schwerpunkt meist auf allgemeinen Fähigkeiten statt auf Fachwissen aus einer laufenden Ausbildung: sicheres Rechnen, fehlerfreie Rechtschreibung und Konzentration unter Zeitdruck. Genau diese Grundlagen lassen sich mit den kostenlosen Übungsmodulen gezielt trainieren. Schon wenige Tage gezieltes Training reichen oft aus, um dich spürbar sicherer zu fühlen."
         }
       ],
       "uebungen": [
@@ -1461,7 +1959,8 @@
       "slug": "steuerfachangestellte",
       "beruf": "Steuerfachangestellte",
       "title": "Einstellungstest Steuerfachangestellte üben",
-      "description": "Einstellungstest Steuerfachangestellte üben: Fachfragen aus echten Stellenanzeigen plus Zahlenreihen, Sprachlogik und Konzentration – kostenlos und mit KI-Feedback.",
+      "seoTitle": "Einstellungstest Steuerfachangestellte: kostenlos üben",
+      "description": "Kostenlos üben: Einstellungstest Steuerfachangestellte mit Fachfragen, Zahlenreihen und Sprachlogik – KI-Feedback aus echter Stellenanzeige.",
       "intro": "Bereite dich gezielt auf den Einstellungstest als Steuerfachangestellte oder Steuerfachangestellter vor. jobreif erzeugt aus einer echten Stellenanzeige einen passgenauen Test zu Steuern und Buchführung – inklusive der typischen Eignungstest-Module, die Steuerkanzleien bei der Auswahl einsetzen.",
       "testTypes": [
         "fachwissen",
@@ -1528,7 +2027,7 @@
         },
         {
           "q": "Kostet das Üben etwas?",
-          "a": "Die allgemeinen Eignungsmodule (Zahlenreihen, Konzentration, Sprachlogik) übst du kostenlos und ohne Anmeldung. Für einen kompletten, stellenbezogenen Test aus einer echten Anzeige mit KI-Feedback genügt eine kostenlose Anmeldung."
+          "a": "Die allgemeinen Eignungsmodule (Zahlenreihen, Konzentration, Assoziationen) übst du kostenlos und ohne Anmeldung. Für einen kompletten, stellenbezogenen Test aus einer echten Anzeige mit KI-Feedback genügt eine kostenlose Anmeldung."
         },
         {
           "q": "Läuft der Test im Browser?",
@@ -1547,7 +2046,8 @@
       "slug": "notfallsanitaeter",
       "beruf": "Notfallsanitäter / Notfallsanitäterin",
       "title": "Einstellungstest Notfallsanitäter / Notfallsanitäterin üben",
-      "description": "Einstellungstest Notfallsanitäter online üben: Fachwissen zu Vitalwerten und Dosierung, Sprachlogik, Zahlenreihen und Konzentration – mit KI-Feedback, kostenlos.",
+      "seoTitle": "Einstellungstest Notfallsanitäter/in: kostenlos üben",
+      "description": "Kostenlos üben: Einstellungstest Notfallsanitäter mit Fachwissen zu Vitalwerten und Dosierung, Sprachlogik und Zahlenreihen – mit KI-Feedback.",
       "intro": "Bereite dich gezielt auf den Einstellungstest deiner Rettungsdienstschule oder Hilfsorganisation als Notfallsanitäter oder Notfallsanitäterin vor. jobreif erzeugt aus einer echten Stellenanzeige einen passgenauen Test mit Fachfragen zu Vitalwerten, Dosierung und Erstversorgung – ergänzt um die typischen Eignungstest-Module Sprachlogik, Zahlenreihen und Konzentration.",
       "testTypes": [
         "fachwissen",
@@ -1614,20 +2114,21 @@
         },
         {
           "q": "Ist das Üben kostenlos?",
-          "a": "Die allgemeinen Module Sprachlogik, Zahlenreihen und Konzentration übst du kostenlos und ohne Anmeldung. Für einen kompletten, stellenbezogenen Test mit Fachfragen aus einer Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
+          "a": "Die allgemeinen Module Assoziationen, Zahlenreihen und Konzentration übst du kostenlos und ohne Anmeldung. Für einen kompletten, stellenbezogenen Test mit Fachfragen aus einer Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
         },
         {
           "q": "Ersetzt das Üben den Sporttest oder Assessment-Tag?",
           "a": "Nein. jobreif bereitet dich auf den schriftlichen bzw. digitalen Eignungstest vor. Sporttest, Sanitäter-Praxisaufgaben und Auswahlgespräche am Assessment-Tag sind eigene Bausteine, die zusätzlich dazugehören und hier nicht abgedeckt werden."
         }
       ],
-      "lastmod": "2026-08-02"
+      "lastmod": "2026-09-03"
     },
     {
       "slug": "erzieher",
       "beruf": "Erzieher / Erzieherin",
       "title": "Einstellungstest Erzieher / Erzieherin üben",
-      "description": "Einstellungstest Erzieher üben: pädagogisches Fachwissen, Sprachlogik, Konzentration und Zahlenreihen aus echten Stellenanzeigen – kostenlos mit KI-Feedback.",
+      "seoTitle": "Einstellungstest Erzieher/in: kostenlos üben, mit Lösungen",
+      "description": "Kostenlos üben: Einstellungstest Erzieher mit pädagogischem Fachwissen, Sprachlogik und Konzentration – KI-Feedback aus echter Stellenanzeige.",
       "intro": "Bereite dich gezielt auf den Einstellungstest beim Auswahlverfahren für Erzieher und Erzieherinnen vor. jobreif erstellt aus einer echten Stellenanzeige einen passgenauen Test und ergänzt ihn um die typischen Eignungstest-Module, mit denen Fachschulen und Träger Sprachkompetenz, pädagogisches Grundwissen und Beobachtungsfähigkeit prüfen.",
       "testTypes": [
         "fachwissen",
@@ -1698,10 +2199,10 @@
         },
         {
           "q": "Kostet das Üben etwas?",
-          "a": "Sprachlogik, Konzentration und Zahlenreihen kannst du kostenlos und ohne Anmeldung üben. Für den vollständigen, stellenbezogenen Test mit Fachfragen aus einer echten Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
+          "a": "Assoziationen, Konzentration und Zahlenreihen kannst du kostenlos und ohne Anmeldung üben. Für den vollständigen, stellenbezogenen Test mit Fachfragen aus einer echten Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
         }
       ],
-      "lastmod": "2026-07-14"
+      "lastmod": "2026-09-03"
     }
   ]
 }
