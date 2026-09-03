@@ -2275,8 +2275,8 @@
       {
         "heading": "Was ist der Einstellungstest für die Ausbildung?",
         "paragraphs": [
-          "Der Einstellungstest für die Ausbildung ist eine schriftliche oder digitale Prüfung, mit der ein Betrieb vor dem Vorstellungsgespräch die Grundfertigkeiten von Bewerberinnen und Bewerbern einschätzt – Rechnen, Sprache, logisches Denken und je nach Beruf Fachwissen zur Ausbildungsstelle.",
-          "Eingesetzt wird er vor allem dort, wo viele Bewerbungen auf wenige Ausbildungsplätze treffen: in der Industrie, im Handel, bei Banken, im öffentlichen Dienst sowie im Gesundheitswesen. Kleinere Handwerksbetriebe verzichten dagegen häufig ganz auf einen standardisierten Test und setzen stärker auf das persönliche Gespräch.",
+          "Der Einstellungstest für die Ausbildung ist eine schriftliche oder digitale Prüfung, mit der ein Betrieb im Auswahlverfahren Grundfertigkeiten von Bewerberinnen und Bewerbern einschätzt – etwa Rechnen, Sprache und logisches Denken sowie je nach Beruf weitere Kenntnisse.",
+          "Einstellungstests setzen Ausbildungsbetriebe unterschiedlicher Größe ein, besonders häufig größere Unternehmen und Behörden. Andere Betriebe entscheiden nur nach Unterlagen und Gespräch.",
           "Die Begriffe Einstellungstest, Eignungstest und Assessment-Center werden oft synonym verwendet, meinen aber nicht dasselbe. Einstellungstest und Eignungstest bezeichnen meist dieselbe, einzelne schriftliche oder online durchgeführte Prüfung mit festen Aufgaben. Ein Assessment-Center ist umfangreicher: Es kombiniert mehrere Bausteine, etwa Gruppenübungen, Präsentationen, Tests und Interviews; je nach Unternehmen dauert es einige Stunden bis mehrere Tage und kann vor Ort oder teilweise digital stattfinden. Viele Ausbildungsbetriebe nutzen nur den Einstellungstest, größere Konzerne teils zusätzlich ein Assessment-Center für die engere Auswahl.",
           "Wer den Test entwickelt und auswertet, ist ebenfalls unterschiedlich: Manche Betriebe nutzen eigene, selbst zusammengestellte Aufgaben, andere setzen auf fertige Testverfahren externer Anbieter. Für dich als Bewerber ändert das wenig – die abgefragten Grundfertigkeiten bleiben ähnlich."
         ]
@@ -2379,15 +2379,15 @@
           "Tag 4–7: Sprachliche Aufgaben und Konzentrationsübungen ergänzen, erste Runden unter Zeitlimit üben.",
           "Tag 8–11: Fachthemen zur Ausbildung auffrischen und die Stellenanzeige genau lesen; Merkfähigkeit und Rechtschreibung dazunehmen.",
           "Tag 12–13: Allgemeinwissen zu Wirtschaft und aktuellem Zeitgeschehen auffrischen, offene Schwächen gezielt nachüben.",
-          "Tag 14: Ruhig angehen lassen – ausreichend schlafen und am Testtag rechtzeitig da sein zählt mehr als eine letzte durchgepaukte Nacht."
+          "Tag 14: Ruhig angehen lassen und ausreichend schlafen. Unmittelbar vor dem Test bringt Erholung meist mehr als eine letzte lange Lerneinheit."
         ]
       },
       {
         "heading": "Einstellungstest nach Ausbildungsberuf",
         "paragraphs": [
-          "Wie genau der Test aussieht, hängt stark vom Ausbildungsberuf ab: Kaufmännische Berufe prüfen oft stärker Rechnen und Rechtschreibung, technische Berufe eher räumliches und logisches Denken, Berufe im Gesundheits- und Sicherheitsbereich häufiger Merkfähigkeit und Konzentration.",
-          "Größere Unternehmen und Behörden arbeiten häufig mit festgelegten, oft zentral vorgegebenen Auswahlverfahren, etwa bei Banken, größeren Industrieunternehmen sowie bei Polizei und Zoll. Aufbau und Inhalte können sich dabei trotzdem nach Arbeitgeber, Ausbildungsberuf, Laufbahn oder Standort unterscheiden; kleinere Betriebe stellen ihren Test häufig individuell zusammen oder verzichten ganz darauf.",
-          "Die Berufsübersicht oben auf dieser Seite zeigt dir, welche typischen Aufgaben und Fachfragen für deinen Wunschberuf infrage kommen – wähle deinen Beruf für die passenden Beispiele.",
+          "Wie genau der Test aussieht, hängt von Ausbildungsberuf und Betrieb ab. Neben Deutsch, Mathematik, Allgemeinwissen und Konzentration können technisches Verständnis, räumliches Denken oder berufsbezogene Aufgaben vorkommen. Die Berufsseiten oben zeigen je Beruf, welche Aufgabentypen in Ausschreibungen genannt werden.",
+          "Größere Unternehmen und Behörden setzen häufiger auf festgelegte, oft zentral vorgegebene Auswahlverfahren. Aufbau und Inhalte können sich dabei trotzdem nach Arbeitgeber, Ausbildungsberuf, Laufbahn oder Standort unterscheiden; kleinere Betriebe stellen ihren Test häufig individuell zusammen oder verzichten ganz darauf.",
+          "Wähle oben deinen Beruf, um passende Beispielaufgaben und weitere Details zu sehen.",
           "Auch innerhalb eines Berufs unterscheiden sich Betriebe: Ein großer Ausbildungsbetrieb mit zentralem Auswahlverfahren testet oft anders als ein kleiner, inhabergeführter Betrieb, der denselben Ausbildungsberuf anbietet. Ein Blick in die Stellenanzeige oder eine kurze Nachfrage beim Betrieb zeigt dir, was für deine Bewerbung konkret gilt."
         ]
       }
@@ -2407,7 +2407,7 @@
       },
       {
         "q": "Welche Aufgaben kommen im Eignungstest für die Ausbildung vor?",
-        "a": "Je nach Beruf eine Mischung aus Zahlenreihen, sprachlicher Logik, Konzentrationsaufgaben, figuralen Matrizen sowie Rechenaufgaben, dazu häufig Fachfragen zur Ausbildung und Allgemeinwissen. Die Beispiele oben in diesem Ratgeber zeigen den typischen Zuschnitt."
+        "a": "Je nach Beruf und Betrieb kommen Aufgaben zu Sprache, Mathematik, logischem Denken, Konzentration und Allgemeinwissen vor. Möglich sind außerdem Fragen zum Ausbildungsberuf oder zum Betrieb. Die Beispiele oben in diesem Ratgeber zeigen typische Aufgabenformate."
       },
       {
         "q": "Gibt es Einstellungstest-Aufgaben mit Lösungen als PDF?",
@@ -2415,7 +2415,7 @@
       },
       {
         "q": "Wie unterscheidet sich der Test je nach Beruf?",
-        "a": "Die Testmodule (Zahlenreihen, Sprache, Konzentration, Rechnen) ähneln sich branchenübergreifend meist; der Unterschied liegt vor allem in den Fachfragen und der Gewichtung – kaufmännische Berufe testen stärker Rechnen und Rechtschreibung, technische Berufe eher räumliches Denken. Wähle oben deinen Beruf für die passenden Beispiele."
+        "a": "Welche Module vorkommen und wie sie gewichtet werden, hängt von Ausbildungsberuf und Betrieb ab. Verbreitet sind Aufgaben zu Sprache, Mathematik, logischem Denken, Konzentration und Allgemeinwissen. Wähle oben deinen Beruf für die passenden Beispiele."
       }
     ],
     "lastmod": "2026-09-03"
