@@ -2277,7 +2277,7 @@
       "title": "Einstellungstest Elektroniker für Energie- und Gebäudetechnik üben",
       "seoTitle": "Einstellungstest Elektroniker EGT: kostenlos üben, mit Lösungen",
       "description": "Kostenlos üben: Einstellungstest Elektroniker EGT mit Fachfragen zu Schaltungen, Sicherungstechnik und Zahlenreihen – mit KI-Feedback.",
-      "intro": "Stellenanzeigen für Elektroniker/innen Energie- und Gebäudetechnik verlangen fast immer technisches Verständnis für Stromkreise und Schaltpläne, sicheren Umgang mit Maßeinheiten wie Volt, Ampere und Watt sowie Sorgfalt beim Lesen von Sicherheitsvorschriften. Aus deiner eingefügten Stellenanzeige baut jobreif einen passenden Test mit Fachfragen zu Schaltungsarten, Sicherungstechnik und Gebäudeautomation. Prüfe in der Anzeige, ob ein schriftlicher Eignungstest, ein Online-Test oder direkt ein Werkstatttag genannt wird – danach richtet sich, wie du dich vorbereitest.",
+      "intro": "Prüfe in deiner Stellenanzeige, ob technisches Verständnis für Stromkreise und Schaltpläne, der Umgang mit elektrischen Einheiten wie Volt und Ampere oder das Lesen von Sicherheitsvorschriften verlangt werden – daraus leitet jobreif deine Fachfragen zu Schaltungsarten, Sicherungstechnik und Gebäudeautomation ab. Elektroniker/innen für Energie- und Gebäudetechnik installieren und warten genau solche Anlagen im späteren Berufsalltag. Ob zusätzlich ein Werkstatttag oder ein Online-Test angekündigt ist, steht ebenfalls in der Anzeige.",
       "testTypes": [
         "fachwissen",
         "zahlenreihe",
@@ -2360,14 +2360,14 @@
         }
       ],
       "tipps": [
-        "Wiederhole gängige Schaltungsarten (Aus-, Wechsel-, Kreuzschaltung) und die fünf Sicherheitsregeln der Elektrotechnik – Grundlagen, die in Stellenanzeigen für diesen Beruf oft als Anforderung genannt werden.",
+        "Wiederhole gängige Schaltungsarten (Aus-, Wechsel-, Kreuzschaltung) und die fünf Sicherheitsregeln der Elektrotechnik – prüfe in der Stellenanzeige, ob diese Grundlagen als Anforderung genannt werden.",
         "Übe das Ohmsche Gesetz und einfache Einheitenumrechnungen, falls der Betrieb im Auswahltest elektrotechnisches Grundverständnis prüft.",
-        "Lies die Einladung zum Auswahltest genau: Betriebe nennen dort oft Dauer, erlaubte Hilfsmittel wie einen Taschenrechner und ob der Test schriftlich, digital oder im Testcenter stattfindet."
+        "Lies die Einladung zum Auswahltest genau: Sie kann Dauer, erlaubte Hilfsmittel wie einen Taschenrechner sowie angeben, ob der Test schriftlich, digital oder im Testcenter stattfindet."
       ],
       "faq": [
         {
           "q": "Was wird im Einstellungstest für Elektroniker für Energie- und Gebäudetechnik geprüft?",
-          "a": "In den Anforderungen der Stellenanzeige stehen bei diesem Beruf meist elektrotechnische Grundlagen wie Schaltungsarten, Sicherungstechnik und das Ohmsche Gesetz. jobreif leitet daraus passende Fachfragen ab und ergänzt allgemeine Eignungsmodule wie Zahlenreihen und Sprachlogik; welche Module der Betrieb tatsächlich einsetzt, steht in der Einladung zum Auswahltest."
+          "a": "In der Stellenanzeige können elektrotechnische Grundlagen wie Schaltungsarten, Sicherungstechnik und das Ohmsche Gesetz stehen. jobreif leitet daraus passende Fachfragen ab und ergänzt allgemeine Eignungsmodule wie Zahlenreihen und Sprachlogik; welche Module der Betrieb tatsächlich einsetzt, steht in der Einladung zum Auswahltest."
         },
         {
           "q": "Kann ich den Einstellungstest Elektroniker EGT kostenlos üben?",
@@ -2375,7 +2375,7 @@
         },
         {
           "q": "Wie läuft das Auswahlverfahren für Elektroniker EGT üblicherweise ab?",
-          "a": "Reihenfolge und Umfang bestimmt der Ausbildungsbetrieb selbst; verbreitet sind ein schriftlicher oder Online-Test, ein Vorstellungsgespräch und bei manchen Betrieben ein zusätzlicher Werkstatttag. Was für deine Bewerbung gilt, steht in der Stellenanzeige."
+          "a": "Ob ein schriftlicher oder Online-Test, ein Vorstellungsgespräch oder zusätzlich ein Werkstatttag vorgesehen ist, legt der Ausbildungsbetrieb selbst fest. Was für deine Bewerbung gilt, steht in der Stellenanzeige."
         },
         {
           "q": "Brauche ich Vorkenntnisse in Elektrotechnik für den Test?",
@@ -2390,7 +2390,7 @@
       "title": "Einstellungstest Fachinformatiker Anwendungsentwicklung üben",
       "seoTitle": "Einstellungstest Fachinformatiker AE: kostenlos üben",
       "description": "Kostenlos üben: Einstellungstest Fachinformatiker Anwendungsentwicklung mit Programmierlogik, Sprachlogik und Zahlenreihen – mit KI-Feedback.",
-      "intro": "Ausbildungsbetriebe für Fachinformatiker/innen Anwendungsentwicklung nennen in ihren Anzeigen häufig Interesse an Softwareentwicklung, erste Berührungspunkte mit einer Programmiersprache und analytisches, strukturiertes Denken als Anforderung. Fügst du eine echte Stellenanzeige ein, erstellt jobreif daraus einen Test mit Fachfragen zu Programmierlogik, Datenbanken und Softwareentwicklung. Ob die Anzeige konkrete Sprachen oder Werkzeuge wie Git nennt, verrät dir, welches Vorwissen hilfreich ist.",
+      "intro": "Reicht Interesse an Software, oder erwartet der Ausbildungsbetrieb schon Programmiererfahrung? Das steht in der Stellenanzeige: Prüfe dort, ob eine bestimmte Programmiersprache, Datenbankkenntnisse oder analytisches Denken verlangt werden – jobreif erstellt daraus Fachfragen zu Programmierlogik, Datenbanken und Softwareentwicklung. Nennt die Anzeige zusätzlich Git oder agile Arbeitsweisen wie Scrum, lohnt sich auch dort ein Blick vorab.",
       "testTypes": [
         "fachwissen",
         "sprachlogik",
@@ -2418,14 +2418,14 @@
         },
         {
           "type": "fachwissen",
-          "question": "Wie viele Werte kann eine Variable vom Datentyp boolean annehmen?",
+          "question": "Wie viele Werte kann eine Variable des primitiven Datentyps boolean in Java annehmen?",
           "options": [
             "Zwei (wahr oder falsch)",
             "Drei (wahr, falsch oder unbekannt)",
             "Beliebig viele Ganzzahlen",
             "Nur den Wert null"
           ],
-          "answer": "Zwei (wahr oder falsch) – ein nicht-nullbarer boolescher Wert kann true oder false sein. Manche Sprachen und Datenbanksysteme erlauben zusätzlich einen Null- beziehungsweise Unbekannt-Zustand, etwa nullable Typen oder die dreiwertige Logik in SQL."
+          "answer": "Zwei (wahr oder falsch) – der primitive Datentyp boolean in Java kennt ausschließlich die Werte true und false. Die Wrapper-Klasse Boolean kann zusätzlich null sein, ist aber kein primitiver Typ."
         },
         {
           "type": "fachwissen",
@@ -2480,7 +2480,7 @@
       "faq": [
         {
           "q": "Was wird im Einstellungstest für Fachinformatiker Anwendungsentwicklung geprüft?",
-          "a": "Der fachliche Teil orientiert sich an der Stellenanzeige – häufig Programmierlogik (Schleifen, Bedingungen, Datenbanken) –, dazu kommen bei vielen Betrieben analytisches Denken (Sprachlogik, Zahlenreihen) und teils IT-Grundwissen. jobreif bildet diese Module ab und ergänzt Fachfragen aus deiner Anzeige."
+          "a": "Der fachliche Teil orientiert sich an der Stellenanzeige, etwa an Programmierlogik (Schleifen, Bedingungen, Datenbanken); ergänzend können analytisches Denken (Sprachlogik, Zahlenreihen) und IT-Grundwissen geprüft werden. jobreif bildet diese Module ab und ergänzt Fachfragen aus deiner Anzeige."
         },
         {
           "q": "Kann ich den Einstellungstest Fachinformatiker Anwendungsentwicklung kostenlos üben?",
@@ -2488,11 +2488,11 @@
         },
         {
           "q": "Muss ich schon programmieren können, um den Test zu bestehen?",
-          "a": "Grundkenntnisse helfen, sind aber in vielen Ausbildungsbetrieben keine feste Voraussetzung – geprüft wird eher logisches, strukturiertes Denken als eine bestimmte Programmiersprache, die du ohnehin erst in der Ausbildung vertiefst."
+          "a": "Grundkenntnisse helfen, sind aber keine feste Voraussetzung – geprüft wird eher logisches, strukturiertes Denken als eine bestimmte Programmiersprache, die du ohnehin erst in der Ausbildung vertiefst."
         },
         {
           "q": "Wie läuft das Auswahlverfahren für Fachinformatiker Anwendungsentwicklung typischerweise ab?",
-          "a": "Wie viele Schritte es gibt, entscheidet der Arbeitgeber: Neben einem schriftlichen oder digitalen Einstellungstest ist bei manchen Betrieben eine kleine Programmier- oder Logikaufgabe am Rechner sowie ein Vorstellungsgespräch üblich. Verlässliche Angaben findest du nur in der jeweiligen Stellenanzeige."
+          "a": "Ob ein Test, eine Programmier- oder Logikaufgabe oder ein Gespräch vorgesehen ist, steht in der Stellenanzeige oder Einladung."
         }
       ],
       "lastmod": "2026-09-03"
@@ -2503,7 +2503,7 @@
       "title": "Einstellungstest Konstruktionsmechaniker / Konstruktionsmechanikerin üben",
       "seoTitle": "Einstellungstest Konstruktionsmechaniker/in: kostenlos üben",
       "description": "Kostenlos üben: Einstellungstest Konstruktionsmechaniker mit Fachfragen zu Schweißen, Werkstoffen und Zahlenreihen – mit KI-Feedback.",
-      "intro": "Ausschreibungen für Konstruktionsmechaniker/innen verlangen häufig handwerkliches Geschick im Metall- und Stahlbau, ein Grundverständnis für Schweißverfahren und technisches Zeichnen sowie Sorgfalt beim Einhalten von Maßtoleranzen. jobreif macht aus deiner eingefügten Stellenanzeige einen passgenauen Test mit Fachfragen zu Schweißverfahren, Werkstoffen und technischem Zeichnen. Ist in der Anzeige von einem Werkstatttag oder Praktikum die Rede, verändert das, wie du dich vorbereitest.",
+      "intro": "Anders als Industriemechaniker/innen, die überwiegend Maschinen und Anlagen warten, fertigen und montieren Konstruktionsmechaniker/innen Bauteile aus Stahl und Blechen – vom Zuschnitt über das Schweißen bis zur Endkontrolle nach technischer Zeichnung. Ob handwerkliches Geschick, Grundwissen zu Schweißverfahren oder der Umgang mit Maßtoleranzen in der Ausschreibung ausdrücklich genannt werden, entscheidet der Betrieb; darauf bezieht jobreif deine Fachfragen. Ist zusätzlich von einem Werkstatttag oder Praktikum die Rede, verändert das, wie du dich vorbereitest.",
       "testTypes": [
         "fachwissen",
         "zahlenreihe",
@@ -2586,14 +2586,14 @@
         }
       ],
       "tipps": [
-        "Wiederhole die gängigen Schweißverfahren (WIG, MAG) und den Unterschied zwischen Kehl- und Stumpfnaht – Grundwissen, das in vielen Stellenanzeigen für diesen Beruf gefragt ist.",
+        "Wiederhole die gängigen Schweißverfahren (WIG, MAG) und den Unterschied zwischen Kehl- und Stumpfnaht – prüfe in der Stellenanzeige, ob diese Grundlagen gefragt sind.",
         "Übe technisches Rechnen zu Längen, Flächen und Winkeln beim Blech- und Stahlbau sowie den Umgang mit Maßtoleranzen in technischen Zeichnungen.",
-        "Bearbeite Zahlenreihen und Konzentrationsaufgaben sorgfältig; ob dabei Zeitdruck herrscht, verrät oft schon die Einladung zum Auswahltermin oder die Stellenanzeige."
+        "Bearbeite Zahlenreihen und Konzentrationsaufgaben sorgfältig; ob dabei Zeitdruck herrscht, verrät die Einladung zum Auswahltermin oder die Stellenanzeige."
       ],
       "faq": [
         {
           "q": "Was wird im Einstellungstest für Konstruktionsmechaniker geprüft?",
-          "a": "Ausbildungsbetriebe fragen häufig Schweißverfahren, Werkstoffkunde und technisches Zeichnen ab, dazu kommen oft technisches Rechnen sowie Zahlenreihen und Konzentrationsaufgaben. jobreif leitet die Fachfragen aus deiner echten Stellenanzeige ab und ergänzt die üblichen Eignungsmodule."
+          "a": "Ausbildungsbetriebe können Schweißverfahren, Werkstoffkunde und technisches Zeichnen abfragen, dazu technisches Rechnen sowie Zahlenreihen und Konzentrationsaufgaben. jobreif leitet die Fachfragen aus deiner echten Stellenanzeige ab und ergänzt passende Eignungsmodule."
         },
         {
           "q": "Kann ich den Einstellungstest Konstruktionsmechaniker kostenlos üben?",
@@ -2605,7 +2605,7 @@
         },
         {
           "q": "Wie läuft das Auswahlverfahren für Konstruktionsmechaniker üblicherweise ab?",
-          "a": "Jeder Ausbildungsbetrieb organisiert das selbst: Neben einem schriftlichen oder digitalen Test sind ein Vorstellungsgespräch sowie teils ein praktischer Werkstatttag oder ein kurzes Praktikum verbreitet. Genaueres erfährst du aus der Stellenanzeige oder deiner Einladung zum Auswahltermin."
+          "a": "Ob der Betrieb einen Test, ein Vorstellungsgespräch, einen Werkstatttag oder ein Praktikum vorsieht, entnimmst du der Stellenanzeige oder Einladung."
         }
       ],
       "lastmod": "2026-09-03"
@@ -2616,7 +2616,7 @@
       "title": "Einstellungstest Fachlagerist / Fachlageristin üben",
       "seoTitle": "Einstellungstest Fachlagerist/in: kostenlos üben, mit Lösungen",
       "description": "Kostenlos üben: Einstellungstest Fachlagerist mit Fachfragen zum Lagerablauf, Kopfrechnen und Konzentration – mit KI-Feedback.",
-      "intro": "Stellenanzeigen für Fachlageristen und Fachlageristinnen nennen häufig Genauigkeit beim Zählen und Kennzeichnen, körperliche Belastbarkeit und Grundrechnen mit Mengen und Prozent als Anforderung. Aus einer echten Stellenanzeige erzeugt jobreif passende Fachfragen zu Wareneingang, Kommissionieren und Lagerkennzeichnung. Nennt die Anzeige einen Staplerschein oder Schichtarbeit als Voraussetzung, prüft der Betrieb im Auswahlverfahren häufig noch weitere Punkte.",
+      "intro": "Fachlageristen und Fachlageristinnen nehmen Ware an, lagern sie ein und stellen Bestellungen für den Versand zusammen. Prüfe in der Stellenanzeige, ob Genauigkeit beim Zählen und Kennzeichnen, körperliche Belastbarkeit oder Grundrechnen mit Mengen und Prozent ausdrücklich verlangt werden – eine echte Anzeige nutzt jobreif für passende Fachfragen zu Wareneingang, Kommissionieren und Lagerkennzeichnung. Achte außerdem darauf, ob die Anzeige einen Staplerschein, Schichtbereitschaft oder weitere Voraussetzungen nennt.",
       "testTypes": [
         "fachwissen",
         "zahlenreihe",
@@ -2705,8 +2705,8 @@
       ],
       "faq": [
         {
-          "q": "Was wird im Einstellungstest für Fachlagerist und Fachlageristin geprüft?",
-          "a": "Die Stellenanzeige zeigt meist, welches praktische Grundwissen zum Lagerablauf (Wareneingang, Einlagerung, Kommissionieren) gefragt ist; viele Betriebe ergänzen das um einfaches Kopfrechnen und Konzentrationsaufgaben. jobreif leitet daraus passende Fachfragen ab und stellt zusätzlich die üblichen Eignungsmodule bereit."
+          "q": "Was wird im Einstellungstest für Fachlageristen und Fachlageristinnen geprüft?",
+          "a": "Die Stellenanzeige zeigt, welches praktische Grundwissen zum Lagerablauf (Wareneingang, Einlagerung, Kommissionieren) gefragt ist; je nach Betrieb kommen einfaches Kopfrechnen und Konzentrationsaufgaben dazu. jobreif leitet daraus passende Fachfragen ab und stellt zusätzlich passende Eignungsmodule bereit."
         },
         {
           "q": "Kann ich den Einstellungstest Fachlagerist kostenlos üben?",
@@ -2729,7 +2729,7 @@
       "title": "Einstellungstest Bundeswehr üben",
       "seoTitle": "Einstellungstest Bundeswehr: Eignungstest kostenlos üben",
       "description": "Kostenlos üben: Eignungstest Bundeswehr mit Sprachlogik, Zahlenreihen und technischem Verständnis – unabhängig vom Sporttest, mit KI-Feedback.",
-      "intro": "Bewerbungen für militärische Laufbahnen bei der Bundeswehr nennen in der Ausschreibung meist Anforderungen wie Deutsch- und Textverständnis, Rechnen sowie technisches oder räumliches Vorstellungsvermögen – abhängig von Laufbahn und Verwendung. jobreif erstellt aus deiner eingefügten Stellenausschreibung einen passenden Test und ergänzt typische Aufgabenformate aus Sprache, Rechnen, technischem Verständnis und Konzentration. Sporttest, ärztliche Untersuchung, Gespräch und der genaue Ort des Auswahlverfahrens hängen von deiner Laufbahn ab – Details stehen in deiner Einladung.",
+      "intro": "Ausschreibungen für militärische Laufbahnen bei der Bundeswehr können Anforderungen wie Deutsch- und Textverständnis, Rechnen sowie technisches oder räumliches Vorstellungsvermögen nennen – abhängig von Laufbahn und Verwendung. jobreif wandelt deine eingefügte Stellenausschreibung in passende Fachfragen um und ergänzt Aufgabenformate aus Sprache, Rechnen, technischem Verständnis und Konzentration. Sporttest, ärztliche Untersuchung, Gespräch und der genaue Ort des Auswahlverfahrens hängen von deiner Laufbahn ab – Details stehen in deiner Einladung.",
       "testTypes": [
         "fachwissen",
         "sprachlogik",
@@ -2817,8 +2817,8 @@
         }
       ],
       "tipps": [
-        "Wiederhole Grundwissen zu Staatsaufbau und Grundgesetz sowie aktuelles politisches und gesellschaftliches Zeitgeschehen – Themen, die in kognitiven Eignungstests militärischer Laufbahnen häufig vorkommen.",
-        "Übe Kopfrechnen und einfache technische Verständnisfragen (Hebel, Kräfte, Maßeinheiten) unter Zeitdruck, denn Rechnen und technisches Denken gehören bei vielen militärischen Auswahlverfahren zu den geprüften Modulen.",
+        "Wiederhole Staatsaufbau, Grundgesetz und aktuelles Zeitgeschehen, wenn diese Themen in den Informationen zu deiner Laufbahn oder deiner Einladung genannt werden.",
+        "Übe Kopfrechnen und einfache technische Verständnisfragen (Hebel, Kräfte, Maßeinheiten) unter Zeitdruck, falls Rechnen und technisches Denken laut Ausschreibung zu den geprüften Modulen gehören.",
         "Lies die Einladung zum Auswahlverfahren genau: Sie nennt Ort, Dauer und Ablauf des Testtages sowie – je nach Laufbahn – zusätzliche Bausteine wie Sporttest oder ärztliche Untersuchung."
       ],
       "faq": [
@@ -2847,7 +2847,7 @@
       "title": "Einstellungstest Feuerwehr üben",
       "seoTitle": "Einstellungstest Feuerwehr: Eignungstest kostenlos üben",
       "description": "Kostenlos üben: Eignungstest Feuerwehr mit Allgemeinwissen, Sprachlogik und Zahlenreihen – unabhängig vom Sporttest, mit KI-Feedback.",
-      "intro": "Stellenausschreibungen für den Feuerwehrdienst nennen für den schriftlichen Teil meist Allgemeinwissen, Textverständnis, Rechnen und technisches Grundverständnis, für die weiteren Schritte körperliche Fitness und gesundheitliche Eignung. Deine eingefügte Stellenausschreibung wird bei jobreif zum passgenauen Test, ergänzt um Aufgabenformate aus Allgemeinwissen, Sprache, Rechnen und Konzentration. Sporttest, ärztliche Untersuchung und Auswahlgespräch legt jede Stadt oder Gemeinde eigenständig fest – Details stehen in der Ausschreibung.",
+      "intro": "Feuerwehrleute retten, löschen, bergen und schützen bei Bränden, Unfällen und anderen Notlagen; prüfe in der Ausschreibung, ob für den schriftlichen Teil Allgemeinwissen, Textverständnis, Rechnen oder technisches Grundverständnis verlangt werden. Deine eingefügte Stellenausschreibung wird bei jobreif zum passenden Test, ergänzt um Aufgabenformate aus Allgemeinwissen, Sprache, Rechnen und Konzentration. Sporttest, ärztliche Untersuchung und Auswahlgespräch legt jede Stadt oder Gemeinde eigenständig fest – Details stehen in der Ausschreibung.",
       "testTypes": [
         "fachwissen",
         "sprachlogik",
@@ -2937,7 +2937,7 @@
       "faq": [
         {
           "q": "Was wird im Einstellungstest für die Feuerwehr geprüft?",
-          "a": "Städte und Gemeinden legen Inhalt und Gewichtung selbst fest; üblich sind ein schriftlicher Test mit Allgemeinwissen, Rechnen, Sprachverständnis und technischem Grundwissen sowie zusätzlich Sporttest, ärztliche Untersuchung und Gespräch. jobreif bereitet dich auf den schriftlichen, kognitiven Teil vor und ergänzt Fachfragen aus deiner Stellenausschreibung."
+          "a": "Städte und Gemeinden legen Inhalt und Gewichtung selbst fest; möglich sind ein schriftlicher Test mit Allgemeinwissen, Rechnen, Sprachverständnis und technischem Grundwissen sowie zusätzlich Sporttest, ärztliche Untersuchung und Gespräch. jobreif bereitet dich auf den schriftlichen, kognitiven Teil vor und ergänzt Fachfragen aus deiner Stellenausschreibung."
         },
         {
           "q": "Kann ich den Einstellungstest Feuerwehr kostenlos üben?",
@@ -2945,7 +2945,7 @@
         },
         {
           "q": "Wie läuft das Auswahlverfahren bei der Feuerwehr ab?",
-          "a": "Das legt jede Stadt oder Gemeinde eigenständig fest: Üblich ist, dass nach dem schriftlichen Test bei Eignung Sporttest, ärztliche Untersuchung und ein persönliches Gespräch folgen. Reihenfolge und Details stehen in der Ausschreibung oder Einladung."
+          "a": "Ob ein schriftlicher Test, ein Sporttest, eine ärztliche Untersuchung oder ein Gespräch vorgesehen ist und in welcher Reihenfolge, steht in der Ausschreibung oder Einladung."
         },
         {
           "q": "Ersetzt das Üben den Sporttest?",
@@ -2960,7 +2960,7 @@
       "title": "Einstellungstest Justizfachangestellte / Justizfachangestellter üben",
       "seoTitle": "Einstellungstest Justizfachangestellte: kostenlos üben",
       "description": "Kostenlos üben: Einstellungstest Justizfachangestellte mit Rechtschreibung, Mathe und Logik – aus echter Ausschreibung, mit KI-Feedback.",
-      "intro": "Ausschreibungen für den Justizdienst verlangen häufig sichere Rechtschreibung und Zeichensetzung, sorgfältiges, genaues Arbeiten und ein grundlegendes Zahlenverständnis für Fristen- und Gebührenberechnungen. jobreif verwandelt deine eingefügte Stellenausschreibung in einen passgenauen Test und ergänzt Aufgabenformate aus Rechtschreibung, Mathematik, Logik und Allgemeinwissen. Achte in der Ausschreibung darauf, welche Landesjustizverwaltung oder Ausbildungsbehörde das Verfahren durchführt – davon hängen Testinhalt und Ablauf ab.",
+      "intro": "Justizfachangestellte führen Akten, überwachen Fristen und bereiten Schriftstücke für Gerichtsverfahren vor. Ob sichere Rechtschreibung und Zeichensetzung, sorgfältiges Arbeiten oder ein grundlegendes Zahlenverständnis verlangt werden, steht in der Ausschreibung; jobreif entwickelt daraus deine Fachfragen. Achte darauf, welche Landesjustizverwaltung oder Ausbildungsbehörde das Verfahren durchführt – davon hängen Testinhalt und Ablauf ab.",
       "testTypes": [
         "fachwissen",
         "sprachlogik",
@@ -3048,14 +3048,14 @@
         }
       ],
       "tipps": [
-        "Übe Rechtschreibung und Zeichensetzung gezielt, zum Beispiel mit Diktaten – diese Grundfertigkeit prüfen viele Auswahlverfahren für den Justizdienst.",
-        "Wiederhole Kopfrechnen sowie einfache Prozent- und Dreisatzaufgaben, da Fristen- und Gebührenberechnungen im Berufsalltag häufig vorkommen.",
+        "Übe Rechtschreibung und Zeichensetzung gezielt, zum Beispiel mit Diktaten – diese Grundfertigkeit kann in Auswahlverfahren für den Justizdienst geprüft werden.",
+        "Wiederhole Kopfrechnen sowie einfache Prozent- und Dreisatzaufgaben, wenn Mathematik in der Ausschreibung genannt wird; im Berufsalltag werden außerdem Fristen überwacht sowie Kosten und Gebühren berechnet.",
         "Die Ausschreibung oder Einladung deiner Landesjustizverwaltung verrät, ob der Test schriftlich oder digital ist, wie lange er dauert und ob Rechtschreibung eigens gewichtet wird."
       ],
       "faq": [
         {
           "q": "Was wird im Einstellungstest für Justizfachangestellte geprüft?",
-          "a": "Das entscheidet die zuständige Landesjustizverwaltung oder Ausbildungsbehörde: Häufig geprüft werden Rechtschreibung, Mathematik, logisches Denken und Allgemeinwissen, in unterschiedlicher Gewichtung. jobreif leitet aus deiner echten Stellenausschreibung passende Fachfragen ab und ergänzt die üblichen Eignungstest-Module."
+          "a": "Welche Bereiche geprüft und wie sie gewichtet werden, nennt die zuständige Landesjustizverwaltung in der Ausschreibung oder Einladung. jobreif leitet aus deiner echten Stellenausschreibung passende Fachfragen ab und ergänzt geeignete Eignungstest-Module."
         },
         {
           "q": "Kann ich den Einstellungstest Justizfachangestellte kostenlos üben?",
@@ -3078,7 +3078,7 @@
       "title": "Einstellungstest Rettungssanitäter / Rettungssanitäterin üben",
       "seoTitle": "Einstellungstest Rettungssanitäter/in: kostenlos üben",
       "description": "Kostenlos üben: Einstellungstest Rettungssanitäter mit Fachwissen zur Erstversorgung, Sprachlogik und Zahlenreihen – mit KI-Feedback.",
-      "intro": "Hilfsorganisationen und Rettungsdienste erwarten in ihren Ausschreibungen für Rettungssanitäter/innen häufig Grundwissen zur Ersten Hilfe, körperliche Belastbarkeit und die Bereitschaft zu Schicht- und Wochenenddiensten. Fügst du deine Stellenausschreibung ein, macht jobreif daraus einen passgenauen Test mit Fachfragen zur Erstversorgung – ergänzt um die Module Sprachlogik, Zahlenreihen und Konzentration. Prüfe in der Ausschreibung, ob ein Fitness- oder Gesundheitsnachweis verlangt wird – das unterscheidet sich stark nach Träger und Bundesland.",
+      "intro": "Was genau erwartet dich im Auswahlverfahren für Rettungssanitäter/innen? Am verlässlichsten steht das in der Ausschreibung: Dort findest du, ob Grundwissen zur Ersten Hilfe, körperliche Belastbarkeit, Schicht- und Wochenenddienste oder ein Fitness- beziehungsweise Gesundheitsnachweis verlangt werden – das unterscheidet sich stark nach Träger und Bundesland. Fügst du deine Stellenausschreibung ein, generiert jobreif daraus Fachfragen zur Erstversorgung, ergänzt um die Module Sprachlogik, Zahlenreihen und Konzentration.",
       "testTypes": [
         "fachwissen",
         "sprachlogik",
@@ -3161,7 +3161,7 @@
         }
       ],
       "tipps": [
-        "Wiederhole Vitalwerte-Richtwerte (Puls, Blutdruck, Atemfrequenz) sowie die Erstversorgung bei Verbrennungen und Blutungen – zentrale Themen bei vielen Auswahlverfahren.",
+        "Wiederhole Vitalwerte-Richtwerte (Puls, Blutdruck, Atemfrequenz) sowie die Erstversorgung bei Verbrennungen und Blutungen – Themen, die in Auswahlverfahren vorkommen können.",
         "Trainiere Sprachlogik und Zahlenreihen unter Zeitdruck, falls die Einladung einen Wissenstest mit fester Bearbeitungszeit ankündigt – das unterscheidet sich stark nach Träger.",
         "Prüfe in der konkreten Ausschreibung, ob ein ärztlicher Nachweis, ein Führerschein oder ein Nachweis der körperlichen Eignung verlangt wird."
       ],
@@ -3180,7 +3180,7 @@
         },
         {
           "q": "Wie läuft die Auswahl bei Hilfsorganisationen und Rettungsdiensten typischerweise ab?",
-          "a": "Das legt der jeweilige Träger fest, häufig auch abhängig vom Bundesland und der Rettungsdienstschule: Üblich ist ein persönliches Gespräch, bei manchen Trägern ergänzt um einen kurzen Wissenstest oder einen Fitness-Nachweis. Details stehen in der Ausschreibung oder Einladung."
+          "a": "Ob ein Gespräch, Wissenstest, Fitness- oder Gesundheitsnachweis vorgesehen ist, steht in der Ausschreibung oder Einladung des jeweiligen Trägers."
         }
       ],
       "lastmod": "2026-09-03"
@@ -3191,7 +3191,7 @@
       "title": "Einstellungstest Zahnmedizinische Fachangestellte (ZFA) üben",
       "seoTitle": "Einstellungstest ZFA: kostenlos üben, mit Lösungen",
       "description": "Kostenlos üben: Einstellungstest ZFA mit Fachwissen zu Zahnschema und Hygiene, Rechtschreibung und Zahlenreihen – mit KI-Feedback.",
-      "intro": "Stellenanzeigen für Zahnmedizinische Fachangestellte nennen häufig Sorgfalt und Hygienebewusstsein, ein freundliches Auftreten im Patientenkontakt und Interesse an medizinischen Abläufen als Anforderung. Aus deiner eingefügten Stellenanzeige entsteht bei jobreif ein passgenauer Test mit Fachfragen zu Zahnschema, Hygiene und Praxisabläufen. Ein schriftlicher Einstellungstest ist bei diesem Beruf eher die Ausnahme – prüfe in der Anzeige, ob überhaupt einer angekündigt wird.",
+      "intro": "Zahnmedizinische Fachangestellte assistieren bei der Behandlung, bereiten Instrumente auf und betreuen Patientinnen und Patienten am Empfang. Prüfe in der Stellenanzeige, ob Sorgfalt und Hygienebewusstsein, ein freundliches Auftreten im Patientenkontakt oder Interesse an medizinischen Abläufen ausdrücklich verlangt werden – jobreif erzeugt daraus passende Fachfragen zu Zahnschema, Hygiene und Praxisabläufen. Ob dabei ein schriftlicher Test, ein Gespräch oder ein Praxistermin vorgesehen ist, verrät die Stellenanzeige oder deine Einladung.",
       "testTypes": [
         "fachwissen",
         "sprachlogik",
@@ -3276,7 +3276,7 @@
       "tipps": [
         "Wiederhole Grundwissen zu Zahnaufbau und Zahnschema (Milch- und bleibende Zähne) sowie zu Hygiene- und Sterilisationsverfahren in der Praxis – Themen, die vorkommen können, falls die Praxis fachliches Grundwissen abfragt.",
         "Übe Rechtschreibung und sorgfältiges Lesen, denn Patientendokumentation und Schriftverkehr mit Krankenkassen gehören zum Praxisalltag.",
-        "Falls die Einladung einen schriftlichen Test ankündigt, frag nach Dauer und Themen – bei vielen kleineren Praxen entfällt dieser Schritt zugunsten eines persönlichen Gesprächs oder Probearbeitstags."
+        "Falls die Einladung einen schriftlichen Test ankündigt, frag nach Dauer und Themen – bei kleineren Praxen entfällt dieser Schritt teils zugunsten eines persönlichen Gesprächs oder Probearbeitstags."
       ],
       "faq": [
         {
@@ -3289,11 +3289,11 @@
         },
         {
           "q": "Brauche ich medizinisches Vorwissen für den Test?",
-          "a": "Nein, meist reichen Interesse an Medizin und ein gutes Gedächtnis für den Einstieg – tieferes zahnmedizinisches Fachwissen wird erst während der Ausbildung in der Berufsschule vermittelt."
+          "a": "Nein, Interesse an Medizin und ein gutes Gedächtnis reichen für den Einstieg – tieferes zahnmedizinisches Fachwissen wird erst während der Ausbildung in der Berufsschule vermittelt."
         },
         {
           "q": "Wie läuft das Auswahlverfahren in der Praxis typischerweise ab?",
-          "a": "Das entscheidet die jeweilige Praxis oder Zahnklinik: Üblich ist ein persönliches Gespräch, teils ergänzt um ein kurzes Praktikum oder einen Probearbeitstag; ein schriftlicher Test kommt eher bei größeren Zahnkliniken vor. Details stehen in der Stellenanzeige."
+          "a": "Das entscheidet die jeweilige Praxis oder Zahnklinik: Möglich sind ein persönliches Gespräch, teils ergänzt um ein kurzes Praktikum oder einen Probearbeitstag sowie bei größeren Zahnkliniken auch ein schriftlicher Test. Details stehen in der Stellenanzeige."
         }
       ],
       "lastmod": "2026-09-03"
