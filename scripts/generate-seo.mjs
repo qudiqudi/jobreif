@@ -81,6 +81,58 @@ function jsonLd(obj) {
 }
 
 // --- Validierung ------------------------------------------------------------
+// sections/faq (SEO-Welle Punkt 2 + Punkt 5): dasselbe Format bei Berufsseiten
+// (pages[].sections/faq) UND dem Hub (hub.sections/faq, Ratgeber-Ausbau) - hier
+// EINMAL geprueft statt zweimal dupliziert. "report" ist ein (msg) => void
+// Callback, der den vollen Fehlerpfad zusammenbaut (siehe die beiden
+// Aufrufstellen unten in validate()), damit Fehlermeldungen an beiden
+// Einsatzorten weiterhin aussagekraeftig bleiben (z. B. "pages[3] (foo):
+// sections[0].heading fehlt" vs. "hub: sections[0].heading fehlt").
+function validateSections(sections, internalLocs, report) {
+  if (!Array.isArray(sections)) return report("sections: Array erwartet");
+  sections.forEach((sec, j) => {
+    if (!sec || typeof sec !== "object") return report(`sections[${j}]: kein Objekt`);
+    if (typeof sec.heading !== "string" || !sec.heading.trim()) report(`sections[${j}].heading fehlt/leer`);
+    if (!Array.isArray(sec.paragraphs) || sec.paragraphs.length === 0
+      || sec.paragraphs.some((t) => typeof t !== "string" || !t.trim())) {
+      report(`sections[${j}].paragraphs: nicht-leeres String-Array erwartet`);
+    }
+    if (sec.items != null) {
+      if (!Array.isArray(sec.items) || sec.items.some((t) => typeof t !== "string" || !t.trim())) {
+        report(`sections[${j}].items: String-Array erwartet`);
+      }
+    }
+    if (sec.examples != null) {
+      if (!Array.isArray(sec.examples)) report(`sections[${j}].examples: Array erwartet`);
+      else sec.examples.forEach((ex, k) => {
+        if (!ex || typeof ex.q !== "string" || !ex.q.trim() || typeof ex.a !== "string" || !ex.a.trim()) {
+          report(`sections[${j}].examples[${k}]: {q, a} als nicht-leere Strings erwartet`);
+        }
+      });
+    }
+    if (sec.links != null) {
+      if (!Array.isArray(sec.links)) report(`sections[${j}].links: Array erwartet`);
+      else sec.links.forEach((l, k) => {
+        if (!l || typeof l !== "object") return report(`sections[${j}].links[${k}]: kein Objekt`);
+        if (typeof l.href !== "string" || !INTERNAL_HREF_RE.test(l.href)) {
+          report(`sections[${j}].links[${k}].href: muss ein interner Pfad ohne "//", Backslash, Query oder Fragment sein`);
+        } else if (!internalLocs.has(l.href)) report(`sections[${j}].links[${k}].href "${l.href}" nicht in staticPages/pages`);
+        if (typeof l.label !== "string" || !l.label.trim()) report(`sections[${j}].links[${k}].label fehlt/leer`);
+      });
+    }
+  });
+}
+
+// faq: ebenfalls geteilt zwischen Berufsseiten (pages[].faq) und dem Hub (hub.faq).
+function validateFaq(faq, report) {
+  if (!Array.isArray(faq)) return report("faq: Array erwartet");
+  faq.forEach((q, j) => {
+    if (!q || typeof q.q !== "string" || !q.q.trim() || typeof q.a !== "string" || !q.a.trim()) {
+      report(`faq[${j}]: {q, a} als nicht-leere Strings erwartet`);
+    }
+  });
+}
+
 function validate(cat) {
   const errs = [];
   const fail = (m) => errs.push(m);
@@ -198,14 +250,7 @@ function validate(cat) {
         }
       });
     }
-    if (p.faq != null) {
-      if (!Array.isArray(p.faq)) at("faq: Array erwartet");
-      else p.faq.forEach((q, j) => {
-        if (!q || typeof q.q !== "string" || !q.q.trim() || typeof q.a !== "string" || !q.a.trim()) {
-          at(`faq[${j}]: {q, a} als nicht-leere Strings erwartet`);
-        }
-      });
-    }
+    if (p.faq != null) validateFaq(p.faq, at);
     // uebungen: optionales, additives Feld - verlinkt passende Gratis-Uebungsmodule (/lernen/)
     // unter "Diese Testarten uebst du hier". href MUSS ein bekanntes internes Ziel sein
     // (staticPages ODER eine generierte Berufsseite, siehe internalLocs oben) UND dem
@@ -227,40 +272,7 @@ function validate(cat) {
     // items/examples/links sind je Abschnitt optional; examples nutzt dasselbe Frage-/Antwort-
     // Markup wie die Beispielaufgaben (Details/"Loesung anzeigen"), links denselben Stil wie
     // das uebungen-Feld. links.href gilt derselben internalLocs-Pflicht wie uebungen.href.
-    if (p.sections != null) {
-      if (!Array.isArray(p.sections)) at("sections: Array erwartet");
-      else p.sections.forEach((sec, j) => {
-        if (!sec || typeof sec !== "object") return at(`sections[${j}]: kein Objekt`);
-        if (typeof sec.heading !== "string" || !sec.heading.trim()) at(`sections[${j}].heading fehlt/leer`);
-        if (!Array.isArray(sec.paragraphs) || sec.paragraphs.length === 0
-          || sec.paragraphs.some((t) => typeof t !== "string" || !t.trim())) {
-          at(`sections[${j}].paragraphs: nicht-leeres String-Array erwartet`);
-        }
-        if (sec.items != null) {
-          if (!Array.isArray(sec.items) || sec.items.some((t) => typeof t !== "string" || !t.trim())) {
-            at(`sections[${j}].items: String-Array erwartet`);
-          }
-        }
-        if (sec.examples != null) {
-          if (!Array.isArray(sec.examples)) at(`sections[${j}].examples: Array erwartet`);
-          else sec.examples.forEach((ex, k) => {
-            if (!ex || typeof ex.q !== "string" || !ex.q.trim() || typeof ex.a !== "string" || !ex.a.trim()) {
-              at(`sections[${j}].examples[${k}]: {q, a} als nicht-leere Strings erwartet`);
-            }
-          });
-        }
-        if (sec.links != null) {
-          if (!Array.isArray(sec.links)) at(`sections[${j}].links: Array erwartet`);
-          else sec.links.forEach((l, k) => {
-            if (!l || typeof l !== "object") return at(`sections[${j}].links[${k}]: kein Objekt`);
-            if (typeof l.href !== "string" || !INTERNAL_HREF_RE.test(l.href)) {
-              at(`sections[${j}].links[${k}].href: muss ein interner Pfad ohne "//", Backslash, Query oder Fragment sein`);
-            } else if (!internalLocs.has(l.href)) at(`sections[${j}].links[${k}].href "${l.href}" nicht in staticPages/pages`);
-            if (typeof l.label !== "string" || !l.label.trim()) at(`sections[${j}].links[${k}].label fehlt/leer`);
-          });
-        }
-      });
-    }
+    if (p.sections != null) validateSections(p.sections, internalLocs, at);
     if (typeof p.lastmod !== "string" || !DATE_RE.test(p.lastmod)) at("lastmod: YYYY-MM-DD erwartet");
   });
 
@@ -276,6 +288,39 @@ function validate(cat) {
         }
       });
     });
+  }
+
+  // hub: optionales, additives Feld (SEO-Welle Punkt 5) - macht die Uebersicht
+  // /einstellungstest/ zum Ratgeber ("Ablauf, Aufgaben, Vorbereitung"), ohne ihre
+  // Funktion als Berufsuebersicht zu verlieren (siehe renderHub()). Fehlt "hub"
+  // komplett, bleibt die schlanke Alt-Fassung der Hub-Seite unveraendert - dieser
+  // ganze Block prueft dann gar nichts (siehe main(), byte-identischer Output).
+  // seoTitle/description tragen dieselbe Laengengrenze wie pages[].seoTitle
+  // (Codepoints, nicht String.length - siehe dort) bzw. neu 155 Zeichen fuer die
+  // Meta-Description (Suchmaschinen kuerzen laengere Descriptions im Snippet).
+  if (cat.hub != null) {
+    const hub = cat.hub;
+    const at = (m) => fail(`hub: ${m}`);
+    if (!hub || typeof hub !== "object" || Array.isArray(hub)) {
+      at("kein Objekt");
+    } else {
+      for (const f of ["title", "seoTitle", "description", "lead"]) {
+        if (typeof hub[f] !== "string" || !hub[f].trim()) at(`${f} fehlt/leer`);
+      }
+      if (typeof hub.seoTitle === "string" && hub.seoTitle.trim()) {
+        const len = [...hub.seoTitle].length;
+        if (len > 65) at(`seoTitle: max. 65 Zeichen erwartet (war ${len})`);
+      }
+      if (typeof hub.description === "string" && hub.description.trim()) {
+        const len = [...hub.description].length;
+        if (len > 155) at(`description: max. 155 Zeichen erwartet (war ${len})`);
+      }
+      if (hub.sections != null) validateSections(hub.sections, internalLocs, at);
+      if (hub.faq != null) validateFaq(hub.faq, at);
+      if (hub.lastmod != null && (typeof hub.lastmod !== "string" || !DATE_RE.test(hub.lastmod))) {
+        at("lastmod: YYYY-MM-DD erwartet");
+      }
+    }
   }
 
   return errs;
@@ -566,22 +611,110 @@ ${FOOTER}
 
 // Hub-/Uebersichtsseite unter /einstellungstest/ — verlinkt alle Berufe (interne
 // Verlinkung fuer SEO) und macht den Breadcrumb-Mittelknoten begehbar (sonst 404).
+//
+// SEO-Welle Punkt 5: optionales cat.hub macht daraus zusaetzlich einen Ratgeber
+// ("Ablauf, Aufgaben, Vorbereitung") - die Berufsliste bleibt dabei OBEN stehen,
+// sie ist weiterhin die Navigation des Hubs (siehe CLAUDE.md-Auftrag). Fehlt
+// "hub" im Katalog, muss die Ausgabe byte-identisch zur schlanken Alt-Fassung
+// bleiben: JEDE neue Zeile unten ist deshalb an "hub" bedingt (leerer String,
+// wenn hub fehlt) statt den bestehenden Aufbau umzuschreiben.
 function renderHub(cat) {
   const { baseUrl } = cat;
+  const hub = cat.hub || null;
   const url = `${baseUrl}/einstellungstest/`;
-  // Einmal definiert, fuer <meta name="description"> und og:description (F9).
-  const desc = "Einstellungstest gezielt nach Beruf üben: Fachfragen aus echten Stellenanzeigen plus Sprachlogik, Zahlenreihen, Konzentration und figurale Aufgaben – kostenlos mit KI-Feedback.";
-  const title = "Einstellungstest nach Beruf üben – jobreif.de";
+  // Ohne hub: dieselben Default-Texte wie vor der Ratgeber-Erweiterung (F9).
+  const desc = hub
+    ? hub.description
+    : "Einstellungstest gezielt nach Beruf üben: Fachfragen aus echten Stellenanzeigen plus Sprachlogik, Zahlenreihen, Konzentration und figurale Aufgaben – kostenlos mit KI-Feedback.";
+  const title = hub ? hub.seoTitle : "Einstellungstest nach Beruf üben – jobreif.de";
+  const h1 = hub ? hub.title : "Einstellungstest nach Beruf üben";
+  const lead = hub
+    ? hub.lead
+    : "Wähle deinen Beruf und übe mit realistischen Aufgaben – Fachfragen aus echten Stellenanzeigen plus die typischen Eignungstest-Module. Kostenlos, im Browser, mit KI-Feedback.";
   const items = cat.pages.map((p) =>
     `<li><a href="/einstellungstest/${esc(p.slug)}/">Einstellungstest ${esc(p.beruf)}</a></li>`).join("\n        ");
-  const ld = {
+
+  // JSON-LD: BreadcrumbList immer, FAQPage nur mit hub.faq (gleiches Muster wie
+  // renderPage() - ld als Array, damit ein zweites Schema sich additiv anhaengt).
+  const ld = [{
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Start", item: `${baseUrl}/` },
       { "@type": "ListItem", position: 2, name: "Einstellungstest", item: url },
     ],
-  };
+  }];
+  const faq = hub && Array.isArray(hub.faq) ? hub.faq : [];
+  if (faq.length) {
+    ld.push({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: faq.map((q) => ({
+        "@type": "Question", name: q.q,
+        acceptedAnswer: { "@type": "Answer", text: q.a },
+      })),
+    });
+  }
+  const ldHtml = ld.map((o) => `<script type="application/ld+json">${jsonLd(o)}</script>`).join("\n  ");
+
+  // Vertiefende Sections (renderSection() wiederverwendet, siehe oben - identisches
+  // Format/Rendering wie bei Berufsseiten, Punkt 5 im Auftrag).
+  const sections = hub && Array.isArray(hub.sections) ? hub.sections : [];
+  const sectionsHtml = sections.length ? sections.map(renderSection).join("\n\n    ") : "";
+  const sectionsBlock = sectionsHtml ? `\n\n    ${sectionsHtml}` : "";
+
+  // FAQ: dasselbe details/summary-Markup wie renderPage()'s faqHtml.
+  const faqHtml = faq.length
+    ? `<section class="block">
+        <h2>Häufige Fragen</h2>
+        ${faq.map((q) => `<details class="faq"><summary>${esc(q.q)}</summary><p>${esc(q.a)}</p></details>`).join("\n        ")}
+      </section>`
+    : "";
+  const faqBlock = faqHtml ? `\n\n    ${faqHtml}` : "";
+
+  // Zweiter CTA (nur mit hub) - eigener ref-Suffix, damit sich der Klick am Ende
+  // des Ratgebers von dem auf der Berufsliste oben unterscheiden laesst.
+  const ctaUrl2 = `${baseUrl}/?ref=einstellungstest-hub-faq`;
+  const cta2 = hub ? `<a class="cta" href="${esc(ctaUrl2)}">Jetzt eigene Stellenanzeige einfügen →</a>` : "";
+  const cta2Block = cta2 ? `\n\n    ${cta2}` : "";
+
+  // Zusaetzliche CSS-Regeln fuer sections/FAQ (dieselben Deklarationen wie im
+  // <style> von renderPage() - dort NICHT angefasst, damit dessen Output exakt
+  // gleich bleibt) - nur mit hub angehaengt.
+  const extraCss = hub ? `
+    h2{font-size:1.25rem;margin:1.6em 0 .5em;color:#2c2521}
+    .block{margin-top:8px}
+    ul.samples{list-style:none;padding:0;margin:0}
+    .uebungen-hinweis{margin:10px 0 0;font-size:.9rem;color:var(--muted)}
+    .uebungen-hinweis a{font-weight:600}
+    ul.tipps{margin:.4em 0;padding-left:1.2em}
+    ul.tipps li{padding:4px 0}
+    .samples li.sample{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin:12px 0;box-shadow:0 2px 8px -5px rgba(80,50,40,.25)}
+    .sample-q{font-weight:600;margin:.2em 0}
+    details{margin:.4em 0}
+    details summary{cursor:pointer;font-weight:600;color:var(--primary-dark)}
+    details.faq{border-bottom:1px solid var(--border);padding:10px 0}
+    details.faq summary{font-weight:600;color:#2c2521}` : "";
+
+  // Kompletter <main>-Innenbereich: zwei vollstaendig separate Fassungen (statt
+  // vieler kleiner Bedingungen in einem gemeinsamen Template), damit der Fall
+  // "ohne hub" 1:1 der alten Fassung entspricht und leicht gegenprüfbar bleibt.
+  const bodyMain = hub
+    ? `<h1>${esc(h1)}</h1>
+    <p class="lead">${esc(lead)}</p>
+
+    <h2>Einstellungstest nach Beruf üben</h2>
+    <ul class="berufe">
+        ${items}
+    </ul>
+    <a class="cta" href="/?ref=einstellungstest-hub">Eigene Stellenanzeige einfügen →</a>${sectionsBlock}${faqBlock}${cta2Block}`
+    : `<h1>${esc(h1)}</h1>
+    <p class="lead">${esc(lead)}</p>
+    <ul class="berufe">
+        ${items}
+    </ul>
+    <a class="cta" href="/?ref=einstellungstest-hub">Eigene Stellenanzeige einfügen →</a>`;
+
   return `<!doctype html>
 <html lang="de">
 <head>
@@ -602,7 +735,7 @@ function renderHub(cat) {
   <meta property="og:title" content="${esc(title)}">
   <meta property="og:description" content="${esc(desc)}">
   <meta property="og:image" content="${baseUrl}/assets/social-preview.png">
-  <script type="application/ld+json">${jsonLd(ld)}</script>
+  ${ldHtml}
   <style>
 ${BASE_CSS}
     ul.berufe{list-style:none;padding:0;margin:20px 0}
@@ -610,19 +743,14 @@ ${BASE_CSS}
     ul.berufe a{display:block;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;text-decoration:none;font-weight:600;box-shadow:0 2px 8px -5px rgba(80,50,40,.25)}
     ul.berufe a:hover{border-color:var(--primary)}
     .cta{display:block;text-align:center;margin:24px 0 4px;background:var(--primary);color:#fff;text-decoration:none;font-weight:700;padding:16px 22px;border-radius:var(--radius)}
-    .cta:hover{background:var(--primary-dark)}
+    .cta:hover{background:var(--primary-dark)}${extraCss}
   </style>
 </head>
 <body>
 ${HEADER}
   <main>
     <nav class="crumbs"><a href="/">Start</a> › Einstellungstest</nav>
-    <h1>Einstellungstest nach Beruf üben</h1>
-    <p class="lead">Wähle deinen Beruf und übe mit realistischen Aufgaben – Fachfragen aus echten Stellenanzeigen plus die typischen Eignungstest-Module. Kostenlos, im Browser, mit KI-Feedback.</p>
-    <ul class="berufe">
-        ${items}
-    </ul>
-    <a class="cta" href="/?ref=einstellungstest-hub">Eigene Stellenanzeige einfügen →</a>
+    ${bodyMain}
   </main>
 ${FOOTER}
 </body>
@@ -632,12 +760,17 @@ ${FOOTER}
 
 function renderSitemap(cat) {
   const staticPages = Array.isArray(cat.staticPages) ? cat.staticPages : [];
+  // Hub-lastmod (SEO-Welle Punkt 5): eigenes hub.lastmod, falls gesetzt - sonst
+  // wie bisher cat.updatedAt (Katalog-weites Datum als Fallback).
+  const hubLastmod = cat.hub && typeof cat.hub.lastmod === "string" && cat.hub.lastmod.trim()
+    ? cat.hub.lastmod
+    : cat.updatedAt;
   const urls = [
     { loc: `${cat.baseUrl}/`, lastmod: cat.updatedAt },
     // Handgepflegte Bestandsseiten (z. B. /lernen/) — duerfen beim Neuschreiben
     // der Sitemap NICHT verloren gehen.
     ...staticPages.map((s) => ({ loc: `${cat.baseUrl}${s.loc}`, lastmod: s.lastmod })),
-    { loc: `${cat.baseUrl}/einstellungstest/`, lastmod: cat.updatedAt },
+    { loc: `${cat.baseUrl}/einstellungstest/`, lastmod: hubLastmod },
     ...cat.pages.map((p) => ({ loc: `${cat.baseUrl}/einstellungstest/${p.slug}/`, lastmod: p.lastmod })),
   ];
   const body = urls.map((u) =>

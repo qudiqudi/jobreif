@@ -158,6 +158,103 @@ async function run() {
     assert(errs.length > 0, "seoTitle mit 65 ASCII-Zeichen + 1 astralem Zeichen (66 Codepoints) wird abgelehnt");
   }
 
+  // --- SEO-Welle Punkt 5 (Hub als Ratgeber): cat.hub ist optional; validate()
+  // muss ohne "hub" unveraendert durchlaufen UND mit "hub" dieselben Regeln wie
+  // pages[].seoTitle/sections anwenden (validateSections()/validateFaq() sind
+  // fuer beide Einsatzorte geteilt, siehe generate-seo.mjs).
+  function baseHub() {
+    return { title: "Hub-Titel", seoTitle: "Hub-SEO-Titel", description: "Hub-Beschreibung", lead: "Hub-Lead" };
+  }
+
+  // q) Katalog ohne "hub" bleibt gueltig (additives, optionales Feld).
+  {
+    const cat = baseCatalog();
+    assert(!("hub" in cat), "Fixtur-Voraussetzung: baseCatalog() hat kein hub");
+    const errs = validate(cat);
+    assert(errs.length === 0, "validate() laeuft ohne cat.hub unveraendert durch (keine hub-Fehler)");
+  }
+
+  // r) hub.seoTitle: dieselbe 65-Zeichen-Grenze (Codepoints) wie pages[].seoTitle.
+  {
+    const cat = baseCatalog();
+    cat.hub = { ...baseHub(), seoTitle: "x".repeat(66) };
+    const errs = validate(cat);
+    assert(errs.length > 0, "hub.seoTitle mit 66 Zeichen wird abgelehnt");
+  }
+  {
+    const cat = baseCatalog();
+    cat.hub = { ...baseHub(), seoTitle: "x".repeat(65) };
+    const errs = validate(cat);
+    assert(errs.length === 0, "hub.seoTitle mit 65 Zeichen wird akzeptiert");
+  }
+
+  // s) hub.description: 155-Zeichen-Grenze (neu, nur fuer den Hub - pages[] hat
+  // dafuer keine Laengenpruefung).
+  {
+    const cat = baseCatalog();
+    cat.hub = { ...baseHub(), description: "x".repeat(156) };
+    const errs = validate(cat);
+    assert(errs.length > 0, "hub.description mit 156 Zeichen wird abgelehnt");
+  }
+  {
+    const cat = baseCatalog();
+    cat.hub = { ...baseHub(), description: "x".repeat(155) };
+    const errs = validate(cat);
+    assert(errs.length === 0, "hub.description mit 155 Zeichen wird akzeptiert");
+  }
+
+  // t) hub.sections[].links[].href: dieselbe internalLocs-Pflicht wie bei
+  // pages[].sections[].links[].href (validateSections() ist geteilt).
+  {
+    const cat = baseCatalog();
+    cat.hub = {
+      ...baseHub(),
+      sections: [{ heading: "H", paragraphs: ["p"], links: [{ href: "/lernen/nicht-vorhanden.html", label: "L" }] }],
+    };
+    const errs = validate(cat);
+    assert(errs.length > 0, "hub.sections[].links[].href auf unbekanntes Ziel wird abgelehnt");
+  }
+  {
+    const cat = baseCatalog();
+    cat.hub = {
+      ...baseHub(),
+      sections: [{ heading: "H", paragraphs: ["p"], links: [{ href: "/lernen/x.html", label: "L" }] }],
+    };
+    const errs = validate(cat);
+    assert(errs.length === 0, "hub.sections[].links[].href auf bekannte staticPages-loc wird akzeptiert");
+  }
+  {
+    const cat = baseCatalog();
+    cat.hub = {
+      ...baseHub(),
+      sections: [{ heading: "H", paragraphs: ["p"], links: [{ href: "/einstellungstest/beruf-a/", label: "L" }] }],
+    };
+    const errs = validate(cat);
+    assert(errs.length === 0, "hub.sections[].links[].href auf eine generierte Berufsseite wird akzeptiert");
+  }
+
+  // u) hub.faq: dasselbe {q, a}-Format wie pages[].faq (validateFaq() ist geteilt).
+  {
+    const cat = baseCatalog();
+    cat.hub = { ...baseHub(), faq: [{ q: "Frage?" }] };
+    const errs = validate(cat);
+    assert(errs.length > 0, "hub.faq mit fehlendem 'a' wird abgelehnt");
+  }
+  {
+    const cat = baseCatalog();
+    cat.hub = { ...baseHub(), faq: [{ q: "Frage?", a: "Antwort." }] };
+    const errs = validate(cat);
+    assert(errs.length === 0, "hub.faq mit gueltigem {q, a} wird akzeptiert");
+  }
+
+  // v) hub ohne title/seoTitle/description/lead wird abgelehnt (Pflichtfelder).
+  {
+    const cat = baseCatalog();
+    cat.hub = { title: "Nur Titel" };
+    const errs = validate(cat);
+    assert(errs.length > 0, "hub ohne seoTitle/description/lead wird abgelehnt");
+  }
+
   // --- SEO-Welle Punkt 4 (interne Verlinkung): Footer-Linkblock (index.html) --
   // und Berufe-Block auf den Lernseiten. Regressionsschutz fuer
   // renderFooterLinks()/renderLernenBerufe()/berufeForLernenPage() aus
