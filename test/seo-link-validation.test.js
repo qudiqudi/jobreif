@@ -8,8 +8,8 @@
 // staticPages als bekannte Ziele zaehlten.
 //
 // generate-seo.mjs ist ein ES-Modul; diese Datei bleibt bewusst CommonJS
-// (wie die uebrigen *.test.js hier) und laedt validate() per dynamischem
-// import() nach.
+// (wie die anderen Testdateien in diesem Ordner) und laedt validate() per
+// dynamischem import() nach.
 //
 // Start: node test/seo-link-validation.test.js
 
