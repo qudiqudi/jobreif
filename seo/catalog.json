@@ -1333,14 +1333,14 @@
         },
         {
           "q": "Ist das Üben kostenlos?",
-          "a": "Die allgemeinen Module wie Sprachlogik, Zahlenreihen und Konzentration kannst du kostenlos und ohne Anmeldung üben. Für einen kompletten, stellenbezogenen Test mit Fachfragen aus einer echten Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
+          "a": "Die allgemeinen Module wie Assoziationen, Zahlenreihen und Konzentration kannst du kostenlos und ohne Anmeldung üben. Für einen kompletten, stellenbezogenen Test mit Fachfragen aus einer echten Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
         },
         {
           "q": "Ersetzt jobreif den Sporttest oder das Assessment-Center?",
           "a": "Nein. jobreif bereitet dich auf die kognitiven Testteile vor – Allgemeinwissen, Deutsch, Logik und Konzentration. Sporttest, Assessment-Center-Übungen und die ärztliche Eignungsuntersuchung sind eigene Verfahrensschritte, die du separat trainierst bzw. wahrnimmst."
         }
       ],
-      "lastmod": "2026-07-14"
+      "lastmod": "2026-09-03"
     },
     {
       "slug": "zoll",
@@ -2009,7 +2009,7 @@
         },
         {
           "q": "Kostet das Üben etwas?",
-          "a": "Die allgemeinen Eignungsmodule (Zahlenreihen, Konzentration, Sprachlogik) übst du kostenlos und ohne Anmeldung. Für einen kompletten, stellenbezogenen Test aus einer echten Anzeige mit KI-Feedback genügt eine kostenlose Anmeldung."
+          "a": "Die allgemeinen Eignungsmodule (Zahlenreihen, Konzentration, Assoziationen) übst du kostenlos und ohne Anmeldung. Für einen kompletten, stellenbezogenen Test aus einer echten Anzeige mit KI-Feedback genügt eine kostenlose Anmeldung."
         },
         {
           "q": "Läuft der Test im Browser?",
@@ -2095,14 +2095,14 @@
         },
         {
           "q": "Ist das Üben kostenlos?",
-          "a": "Die allgemeinen Module Sprachlogik, Zahlenreihen und Konzentration übst du kostenlos und ohne Anmeldung. Für einen kompletten, stellenbezogenen Test mit Fachfragen aus einer Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
+          "a": "Die allgemeinen Module Assoziationen, Zahlenreihen und Konzentration übst du kostenlos und ohne Anmeldung. Für einen kompletten, stellenbezogenen Test mit Fachfragen aus einer Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
         },
         {
           "q": "Ersetzt das Üben den Sporttest oder Assessment-Tag?",
           "a": "Nein. jobreif bereitet dich auf den schriftlichen bzw. digitalen Eignungstest vor. Sporttest, Sanitäter-Praxisaufgaben und Auswahlgespräche am Assessment-Tag sind eigene Bausteine, die zusätzlich dazugehören und hier nicht abgedeckt werden."
         }
       ],
-      "lastmod": "2026-08-02"
+      "lastmod": "2026-09-03"
     },
     {
       "slug": "erzieher",
@@ -2179,10 +2179,10 @@
         },
         {
           "q": "Kostet das Üben etwas?",
-          "a": "Sprachlogik, Konzentration und Zahlenreihen kannst du kostenlos und ohne Anmeldung üben. Für den vollständigen, stellenbezogenen Test mit Fachfragen aus einer echten Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
+          "a": "Assoziationen, Konzentration und Zahlenreihen kannst du kostenlos und ohne Anmeldung üben. Für den vollständigen, stellenbezogenen Test mit Fachfragen aus einer echten Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
         }
       ],
-      "lastmod": "2026-07-14"
+      "lastmod": "2026-09-03"
     }
   ]
 }
