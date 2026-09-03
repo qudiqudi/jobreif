@@ -138,6 +138,23 @@ async function run() {
     assert(errs.length > 0, "leerer seoTitle wird abgelehnt");
   }
 
+  // h) seoTitle-Laenge zaehlt Unicode-Codepoints, nicht UTF-16-Einheiten
+  //    (String.length wuerde ein astrales Zeichen wie "𝄞" als 2 zaehlen, weil
+  //    es als Surrogatpaar codiert ist - dann liesse ein zu langer Titel sich
+  //    faelschlich durchschmuggeln oder ein gueltiger wuerde abgelehnt).
+  {
+    const cat = baseCatalog();
+    cat.pages[0].seoTitle = `${"x".repeat(64)}𝄞`; // 64 ASCII + 1 astrales Zeichen = 65 Codepoints
+    const errs = validate(cat);
+    assert(errs.length === 0, "seoTitle mit 64 ASCII-Zeichen + 1 astralem Zeichen (65 Codepoints) wird akzeptiert");
+  }
+  {
+    const cat = baseCatalog();
+    cat.pages[0].seoTitle = `${"x".repeat(65)}𝄞`; // 65 ASCII + 1 astrales Zeichen = 66 Codepoints
+    const errs = validate(cat);
+    assert(errs.length > 0, "seoTitle mit 65 ASCII-Zeichen + 1 astralem Zeichen (66 Codepoints) wird abgelehnt");
+  }
+
   console.log(failures === 0 ? "\nALLE TESTS OK" : `\n${failures} FEHLER`);
   if (failures > 0) process.exit(1);
 }

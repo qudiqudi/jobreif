@@ -143,7 +143,13 @@ function validate(cat) {
     // abgeschnittener Titel waere fuer die Klickrate kontraproduktiv.
     if (p.seoTitle != null) {
       if (typeof p.seoTitle !== "string" || !p.seoTitle.trim()) at("seoTitle: nicht-leerer String erwartet");
-      else if (p.seoTitle.length > 65) at(`seoTitle: max. 65 Zeichen erwartet (war ${p.seoTitle.length})`);
+      else {
+        // Codepoints zaehlen, nicht UTF-16-Einheiten (String.length): astrale
+        // Zeichen (z. B. Emoji) bestehen aus einem Surrogatpaar und wuerden sonst
+        // doppelt gezaehlt - [...str] iteriert ueber Codepoints.
+        const len = [...p.seoTitle].length;
+        if (len > 65) at(`seoTitle: max. 65 Zeichen erwartet (war ${len})`);
+      }
     }
     if (!Array.isArray(p.testTypes) || p.testTypes.length === 0) at("testTypes: nicht-leeres Array");
     else p.testTypes.forEach((t) => { if (!knownType(t)) at(`testTypes-Eintrag "${t}" nicht in catalog.testTypes`); });
