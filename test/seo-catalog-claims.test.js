@@ -12,8 +12,9 @@
 // Anmeldung" oder "ohne Login" darf "Sprachlogik" nicht enthalten), nicht
 // jede inhaltliche Aussage im Katalog - sonst bricht der Test bei jeder
 // unbeteiligten Textaenderung. Erfasst werden ALLE nutzersichtbaren Felder
-// einer Seite (auch title/description/beruf), der Vergleich ist
-// schreibungsunabhaengig. Zwei Negativproben sichern den Test selbst ab.
+// einer Seite (auch title/description/beruf/uebungen) sowie die Testarten-Texte
+// (testTypes label/description), der Vergleich ist schreibungsunabhaengig.
+// Negativproben je Renderpfad sichern den Test selbst ab.
 //
 // Start: node test/seo-catalog-claims.test.js
 
@@ -30,14 +31,18 @@ function assert(cond, msg) {
   console.error("  FAIL:", msg);
 }
 
-// Sammelt alle nutzersichtbaren Strings einer Seite: title, description, beruf,
-// intro, tipps, faq (q/a), samples (question/answer/options/note), sections
-// (heading/paragraphs/items/examples q+a/links label).
+// Sammelt alle nutzersichtbaren Strings: testTypes (label/description) sowie je
+// Seite title, description, beruf, intro, uebungen label, tipps, faq (q/a),
+// samples (question/answer/options/note), sections (heading/paragraphs/items/
+// examples q+a/links label).
 function collectTexts(cat) {
   const texts = [];
   const push = (v) => { if (typeof v === "string") texts.push(v); };
+  // Testarten-Texte erscheinen auf jeder Seite, die den Typ nennt.
+  for (const tt of Object.values(cat.testTypes || {})) { push(tt && tt.label); push(tt && tt.description); }
   for (const p of cat.pages || []) {
     push(p.title); push(p.description); push(p.beruf); push(p.intro);
+    for (const u of p.uebungen || []) push(u && u.label);
     for (const t of p.tipps || []) push(t);
     for (const f of p.faq || []) { push(f.q); push(f.a); }
     for (const s of p.samples || []) {
@@ -86,6 +91,10 @@ function run() {
   assert(findViolations(fixtureLowercase).violations.length === 1, "Negativprobe: kleingeschriebenes sprachlogik + ohne Login wird erkannt");
   assert(findViolations(fixtureTitle).violations.length === 1, "Negativprobe: title mit Sprachlogik + ohne Anmeldung wird erkannt");
   assert(findViolations(fixtureClean).violations.length === 0, "Positivprobe: Sprachlogik in einem anderen Satz ist erlaubt");
+  const fixtureTestType = { testTypes: { sprachlogik: { label: "Sprachlogik", description: "Sprachlogik übst du ohne Anmeldung." } }, pages: [] };
+  const fixtureUebung = { pages: [{ uebungen: [{ href: "/lernen/x.html", label: "Sprachlogik ohne Login" }] }] };
+  assert(findViolations(fixtureTestType).violations.length === 1, "Negativprobe: testTypes.description mit Sprachlogik + ohne Anmeldung wird erkannt");
+  assert(findViolations(fixtureUebung).violations.length === 1, "Negativprobe: uebungen.label mit Sprachlogik + ohne Login wird erkannt");
 
   // 2) Echter Katalog.
   const catalogPath = path.join(__dirname, "..", "seo", "catalog.json");
