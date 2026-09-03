@@ -161,9 +161,29 @@ async function run() {
   // --- SEO-Welle Punkt 5 (Hub als Ratgeber): cat.hub ist optional; validate()
   // muss ohne "hub" unveraendert durchlaufen UND mit "hub" dieselben Regeln wie
   // pages[].seoTitle/sections anwenden (validateSections()/validateFaq() sind
-  // fuer beide Einsatzorte geteilt, siehe generate-seo.mjs).
+  // fuer beide Einsatzorte geteilt, siehe generate-seo.mjs). baseHub() liefert
+  // einen VOLLSTAENDIGEN, gueltigen Hub (inkl. sections/faq/lastmod) - sobald
+  // "hub" existiert, sind diese drei Pflicht (Codex-Review zu bc1f423: ein
+  // gekuerzter Katalog darf keinen stillen Hub ohne Ratgeber/FAQ erzeugen und
+  // die Sitemap darf nicht still auf updatedAt zurueckfallen).
   function baseHub() {
-    return { title: "Hub-Titel", seoTitle: "Hub-SEO-Titel", description: "Hub-Beschreibung", lead: "Hub-Lead" };
+    return {
+      title: "Hub-Titel",
+      seoTitle: "Hub-SEO-Titel",
+      description: "Hub-Beschreibung",
+      lead: "Hub-Lead",
+      sections: [
+        { heading: "H1", paragraphs: ["p1"] },
+        { heading: "H2", paragraphs: ["p2"] },
+        { heading: "H3", paragraphs: ["p3"] },
+      ],
+      faq: [
+        { q: "F1?", a: "A1." },
+        { q: "F2?", a: "A2." },
+        { q: "F3?", a: "A3." },
+      ],
+      lastmod: "2026-01-01",
+    };
   }
 
   // q) Katalog ohne "hub" bleibt gueltig (additives, optionales Feld).
@@ -203,13 +223,25 @@ async function run() {
     assert(errs.length === 0, "hub.description mit 155 Zeichen wird akzeptiert");
   }
 
+  // Zwei neutrale Fuellabschnitte, damit die t)/u)-Faelle unten trotz des neuen
+  // Minimums (mind. 3 sections/faq, siehe oben) gezielt NUR das eine interessante
+  // Element testen koennen, ohne selbst gegen das Minimum zu verstossen.
+  const fillerSections = [
+    { heading: "F1", paragraphs: ["p"] },
+    { heading: "F2", paragraphs: ["p"] },
+  ];
+  const fillerFaq = [
+    { q: "F1?", a: "A1." },
+    { q: "F2?", a: "A2." },
+  ];
+
   // t) hub.sections[].links[].href: dieselbe internalLocs-Pflicht wie bei
   // pages[].sections[].links[].href (validateSections() ist geteilt).
   {
     const cat = baseCatalog();
     cat.hub = {
       ...baseHub(),
-      sections: [{ heading: "H", paragraphs: ["p"], links: [{ href: "/lernen/nicht-vorhanden.html", label: "L" }] }],
+      sections: [...fillerSections, { heading: "H", paragraphs: ["p"], links: [{ href: "/lernen/nicht-vorhanden.html", label: "L" }] }],
     };
     const errs = validate(cat);
     assert(errs.length > 0, "hub.sections[].links[].href auf unbekanntes Ziel wird abgelehnt");
@@ -218,7 +250,7 @@ async function run() {
     const cat = baseCatalog();
     cat.hub = {
       ...baseHub(),
-      sections: [{ heading: "H", paragraphs: ["p"], links: [{ href: "/lernen/x.html", label: "L" }] }],
+      sections: [...fillerSections, { heading: "H", paragraphs: ["p"], links: [{ href: "/lernen/x.html", label: "L" }] }],
     };
     const errs = validate(cat);
     assert(errs.length === 0, "hub.sections[].links[].href auf bekannte staticPages-loc wird akzeptiert");
@@ -227,7 +259,7 @@ async function run() {
     const cat = baseCatalog();
     cat.hub = {
       ...baseHub(),
-      sections: [{ heading: "H", paragraphs: ["p"], links: [{ href: "/einstellungstest/beruf-a/", label: "L" }] }],
+      sections: [...fillerSections, { heading: "H", paragraphs: ["p"], links: [{ href: "/einstellungstest/beruf-a/", label: "L" }] }],
     };
     const errs = validate(cat);
     assert(errs.length === 0, "hub.sections[].links[].href auf eine generierte Berufsseite wird akzeptiert");
@@ -236,13 +268,13 @@ async function run() {
   // u) hub.faq: dasselbe {q, a}-Format wie pages[].faq (validateFaq() ist geteilt).
   {
     const cat = baseCatalog();
-    cat.hub = { ...baseHub(), faq: [{ q: "Frage?" }] };
+    cat.hub = { ...baseHub(), faq: [...fillerFaq, { q: "Frage?" }] };
     const errs = validate(cat);
     assert(errs.length > 0, "hub.faq mit fehlendem 'a' wird abgelehnt");
   }
   {
     const cat = baseCatalog();
-    cat.hub = { ...baseHub(), faq: [{ q: "Frage?", a: "Antwort." }] };
+    cat.hub = { ...baseHub(), faq: [...fillerFaq, { q: "Frage?", a: "Antwort." }] };
     const errs = validate(cat);
     assert(errs.length === 0, "hub.faq mit gueltigem {q, a} wird akzeptiert");
   }
@@ -253,6 +285,85 @@ async function run() {
     cat.hub = { title: "Nur Titel" };
     const errs = validate(cat);
     assert(errs.length > 0, "hub ohne seoTitle/description/lead wird abgelehnt");
+  }
+
+  // w) hub.sections ist Pflicht (mind. 3 Eintraege), SOBALD hub existiert -
+  // sonst wuerde ein gekuerzter Katalog still einen Hub ohne Ratgeber-Inhalt
+  // erzeugen (Codex-Review zu bc1f423).
+  {
+    const cat = baseCatalog();
+    const hub = baseHub();
+    delete hub.sections;
+    cat.hub = hub;
+    const errs = validate(cat);
+    assert(errs.length > 0, "hub ohne sections wird abgelehnt (Pflichtfeld)");
+  }
+  {
+    const cat = baseCatalog();
+    cat.hub = { ...baseHub(), sections: [] };
+    const errs = validate(cat);
+    assert(errs.length > 0, "hub.sections als leeres Array wird abgelehnt");
+  }
+  {
+    const cat = baseCatalog();
+    cat.hub = { ...baseHub(), sections: fillerSections }; // nur 2 Eintraege
+    const errs = validate(cat);
+    assert(errs.length > 0, "hub.sections mit nur 2 Eintraegen wird abgelehnt (Minimum 3)");
+  }
+
+  // x) hub.faq ist Pflicht (mind. 3 Eintraege), SOBALD hub existiert - sonst
+  // wuerde ein gekuerzter Katalog still einen Hub ohne FAQ erzeugen.
+  {
+    const cat = baseCatalog();
+    const hub = baseHub();
+    delete hub.faq;
+    cat.hub = hub;
+    const errs = validate(cat);
+    assert(errs.length > 0, "hub ohne faq wird abgelehnt (Pflichtfeld)");
+  }
+  {
+    const cat = baseCatalog();
+    cat.hub = { ...baseHub(), faq: [] };
+    const errs = validate(cat);
+    assert(errs.length > 0, "hub.faq als leeres Array wird abgelehnt");
+  }
+  {
+    const cat = baseCatalog();
+    cat.hub = { ...baseHub(), faq: fillerFaq }; // nur 2 Eintraege
+    const errs = validate(cat);
+    assert(errs.length > 0, "hub.faq mit nur 2 Eintraegen wird abgelehnt (Minimum 3)");
+  }
+
+  // y) hub.lastmod ist Pflicht, SOBALD hub existiert - kein stiller Fallback
+  // auf cat.updatedAt mehr in der Sitemap (renderSitemap() in generate-seo.mjs).
+  {
+    const cat = baseCatalog();
+    const hub = baseHub();
+    delete hub.lastmod;
+    cat.hub = hub;
+    const errs = validate(cat);
+    assert(errs.length > 0, "hub ohne lastmod wird abgelehnt (Pflichtfeld)");
+  }
+  {
+    const cat = baseCatalog();
+    cat.hub = { ...baseHub(), lastmod: "01.01.2026" };
+    const errs = validate(cat);
+    assert(errs.length > 0, "hub.lastmod im falschen Format (DATE_RE) wird abgelehnt");
+  }
+  {
+    const cat = baseCatalog();
+    cat.hub = { ...baseHub(), lastmod: "" };
+    const errs = validate(cat);
+    assert(errs.length > 0, "hub.lastmod als leerer String wird abgelehnt");
+  }
+
+  // z) ein vollstaendiger hub (alle Pflichtfelder inkl. sections/faq/lastmod)
+  // wird akzeptiert - Gegenprobe zu w)/x)/y).
+  {
+    const cat = baseCatalog();
+    cat.hub = baseHub();
+    const errs = validate(cat);
+    assert(errs.length === 0, "vollstaendiger hub (inkl. sections/faq/lastmod) wird akzeptiert");
   }
 
   // --- SEO-Welle Punkt 4 (interne Verlinkung): Footer-Linkblock (index.html) --

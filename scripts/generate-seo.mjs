@@ -298,6 +298,13 @@ function validate(cat) {
   // seoTitle/description tragen dieselbe Laengengrenze wie pages[].seoTitle
   // (Codepoints, nicht String.length - siehe dort) bzw. neu 155 Zeichen fuer die
   // Meta-Description (Suchmaschinen kuerzen laengere Descriptions im Snippet).
+  //
+  // sections/faq/lastmod sind bei pages[] optional, HIER aber Pflicht (Codex-
+  // Review zu bc1f423): Ist "hub" einmal gesetzt, soll ein gekuerzter Katalog
+  // NICHT still einen Hub ohne Ratgeber/FAQ erzeugen und die Sitemap NICHT still
+  // auf updatedAt zurueckfallen (siehe renderSitemap() unten - dort jetzt ohne
+  // Fallback, wenn hub existiert). Mindestens 3 Eintraege je Array, damit ein
+  // einzelner Platzhalter-Abschnitt nicht durchrutscht.
   if (cat.hub != null) {
     const hub = cat.hub;
     const at = (m) => fail(`hub: ${m}`);
@@ -315,9 +322,17 @@ function validate(cat) {
         const len = [...hub.description].length;
         if (len > 155) at(`description: max. 155 Zeichen erwartet (war ${len})`);
       }
-      if (hub.sections != null) validateSections(hub.sections, internalLocs, at);
-      if (hub.faq != null) validateFaq(hub.faq, at);
-      if (hub.lastmod != null && (typeof hub.lastmod !== "string" || !DATE_RE.test(hub.lastmod))) {
+      if (!Array.isArray(hub.sections) || hub.sections.length < 3) {
+        at(`sections: Array mit mindestens 3 Eintraegen erwartet (war ${Array.isArray(hub.sections) ? hub.sections.length : typeof hub.sections})`);
+      } else {
+        validateSections(hub.sections, internalLocs, at);
+      }
+      if (!Array.isArray(hub.faq) || hub.faq.length < 3) {
+        at(`faq: Array mit mindestens 3 Eintraegen erwartet (war ${Array.isArray(hub.faq) ? hub.faq.length : typeof hub.faq})`);
+      } else {
+        validateFaq(hub.faq, at);
+      }
+      if (typeof hub.lastmod !== "string" || !DATE_RE.test(hub.lastmod)) {
         at("lastmod: YYYY-MM-DD erwartet");
       }
     }
@@ -760,11 +775,12 @@ ${FOOTER}
 
 function renderSitemap(cat) {
   const staticPages = Array.isArray(cat.staticPages) ? cat.staticPages : [];
-  // Hub-lastmod (SEO-Welle Punkt 5): eigenes hub.lastmod, falls gesetzt - sonst
-  // wie bisher cat.updatedAt (Katalog-weites Datum als Fallback).
-  const hubLastmod = cat.hub && typeof cat.hub.lastmod === "string" && cat.hub.lastmod.trim()
-    ? cat.hub.lastmod
-    : cat.updatedAt;
+  // Hub-lastmod (SEO-Welle Punkt 5): existiert "hub", ist hub.lastmod PFLICHT
+  // (siehe validate() oben) - deshalb HIER kein Fallback auf cat.updatedAt, das
+  // wuerde eine vergessene/veraltete Aktualisierung des Ratgebers stumm
+  // verschleiern (Codex-Review zu bc1f423). Ohne "hub" bleibt es wie bisher
+  // cat.updatedAt (Katalog-weites Datum).
+  const hubLastmod = cat.hub ? cat.hub.lastmod : cat.updatedAt;
   const urls = [
     { loc: `${cat.baseUrl}/`, lastmod: cat.updatedAt },
     // Handgepflegte Bestandsseiten (z. B. /lernen/) — duerfen beim Neuschreiben
