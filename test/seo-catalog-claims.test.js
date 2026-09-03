@@ -34,7 +34,19 @@ function assert(cond, msg) {
 // Sammelt alle nutzersichtbaren Strings: testTypes (label/description) sowie je
 // Seite title, description, beruf, intro, uebungen label, tipps, faq (q/a),
 // samples (question/answer/options/note), sections (heading/paragraphs/items/
-// examples q+a/links label).
+// examples q+a/links label) - UND (SEO-Welle Punkt 5) dieselben Felder auf dem
+// optionalen Hub (cat.hub: title/seoTitle/description/lead/sections/faq). Eine
+// eigene collectSections()-Hilfsfunktion vermeidet, die sections-Extraktion
+// zweimal (pages[] und hub) auszuschreiben.
+function collectSectionTexts(sections, push) {
+  for (const sec of sections || []) {
+    push(sec.heading);
+    for (const para of sec.paragraphs || []) push(para);
+    for (const it of sec.items || []) push(it);
+    for (const ex of sec.examples || []) { push(ex.q); push(ex.a); }
+    for (const l of sec.links || []) push(l.label);
+  }
+}
 function collectTexts(cat) {
   const texts = [];
   const push = (v) => { if (typeof v === "string") texts.push(v); };
@@ -49,13 +61,12 @@ function collectTexts(cat) {
       push(s.question); push(s.answer); push(s.note);
       for (const o of s.options || []) push(o);
     }
-    for (const sec of p.sections || []) {
-      push(sec.heading);
-      for (const para of sec.paragraphs || []) push(para);
-      for (const it of sec.items || []) push(it);
-      for (const ex of sec.examples || []) { push(ex.q); push(ex.a); }
-      for (const l of sec.links || []) push(l.label);
-    }
+    collectSectionTexts(p.sections, push);
+  }
+  if (cat.hub) {
+    push(cat.hub.title); push(cat.hub.seoTitle); push(cat.hub.description); push(cat.hub.lead);
+    collectSectionTexts(cat.hub.sections, push);
+    for (const f of cat.hub.faq || []) { push(f.q); push(f.a); }
   }
   return texts;
 }
@@ -95,6 +106,17 @@ function run() {
   const fixtureUebung = { pages: [{ uebungen: [{ href: "/lernen/x.html", label: "Sprachlogik ohne Login" }] }] };
   assert(findViolations(fixtureTestType).violations.length === 1, "Negativprobe: testTypes.description mit Sprachlogik + ohne Anmeldung wird erkannt");
   assert(findViolations(fixtureUebung).violations.length === 1, "Negativprobe: uebungen.label mit Sprachlogik + ohne Login wird erkannt");
+
+  // 1b) Negativproben fuer den Hub (SEO-Welle Punkt 5): collectTexts() muss
+  // cat.hub mit erfassen - title/lead ebenso wie sections und faq.
+  const fixtureHubLead = { hub: { lead: "Sprachlogik übst du hier ohne Anmeldung." } };
+  const fixtureHubSection = { hub: { sections: [{ heading: "H", paragraphs: ["Sprachlogik trainierst du ohne Login."] }] } };
+  const fixtureHubFaq = { hub: { faq: [{ q: "Kostenlos?", a: "Sprachlogik übst du ohne Anmeldung." }] } };
+  const fixtureHubClean = { hub: { title: "Einstellungstest für die Ausbildung", faq: [{ q: "Kostenlos?", a: "Zahlenreihen übst du ohne Anmeldung. Sprachlogik ist Teil des kompletten Tests." }] } };
+  assert(findViolations(fixtureHubLead).violations.length === 1, "Negativprobe: hub.lead mit Sprachlogik + ohne Anmeldung wird erkannt");
+  assert(findViolations(fixtureHubSection).violations.length === 1, "Negativprobe: hub.sections[].paragraphs mit Sprachlogik + ohne Login wird erkannt");
+  assert(findViolations(fixtureHubFaq).violations.length === 1, "Negativprobe: hub.faq mit Sprachlogik + ohne Anmeldung wird erkannt");
+  assert(findViolations(fixtureHubClean).violations.length === 0, "Positivprobe: hub-Sprachlogik in einem anderen Satz ist erlaubt");
 
   // 2) Echter Katalog.
   const catalogPath = path.join(__dirname, "..", "seo", "catalog.json");

@@ -31,37 +31,82 @@
       "loc": "/lernen/kopfrechnen.html",
       "lastmod": "2026-09-03",
       "label": "Kopfrechnen",
-      "berufe": ["industriekaufmann", "kaufmann-im-einzelhandel", "fachkraft-lagerlogistik", "mechatroniker", "zerspanungsmechaniker", "anlagenmechaniker-shk"]
+      "berufe": [
+        "industriekaufmann",
+        "kaufmann-im-einzelhandel",
+        "fachkraft-lagerlogistik",
+        "mechatroniker",
+        "zerspanungsmechaniker",
+        "anlagenmechaniker-shk"
+      ]
     },
     {
       "loc": "/lernen/kaufmaennisches-rechnen.html",
       "lastmod": "2026-09-03",
       "label": "Kaufmännisches Rechnen",
-      "berufe": ["bankkaufmann", "industriekaufmann", "kaufmann-bueromanagement", "kaufmann-im-einzelhandel", "steuerfachangestellte", "verwaltungsfachangestellte"]
+      "berufe": [
+        "bankkaufmann",
+        "industriekaufmann",
+        "kaufmann-bueromanagement",
+        "kaufmann-im-einzelhandel",
+        "steuerfachangestellte",
+        "verwaltungsfachangestellte"
+      ]
     },
     {
       "loc": "/lernen/buchstabenreihen.html",
       "lastmod": "2026-09-03",
       "label": "Buchstabenreihen",
-      "berufe": ["fachinformatiker-systemintegration", "industriemechaniker", "kfz-mechatroniker", "elektroniker-betriebstechnik", "anlagenmechaniker-shk", "zerspanungsmechaniker", "verwaltungsfachangestellte"]
+      "berufe": [
+        "fachinformatiker-systemintegration",
+        "industriemechaniker",
+        "kfz-mechatroniker",
+        "elektroniker-betriebstechnik",
+        "anlagenmechaniker-shk",
+        "zerspanungsmechaniker",
+        "verwaltungsfachangestellte"
+      ]
     },
     {
       "loc": "/lernen/merkfaehigkeit.html",
       "lastmod": "2026-09-03",
       "label": "Merkfähigkeit",
-      "berufe": ["polizei", "zoll", "notfallsanitaeter", "pflegefachmann", "medizinische-fachangestellte", "fachkraft-lagerlogistik"]
+      "berufe": [
+        "polizei",
+        "zoll",
+        "notfallsanitaeter",
+        "pflegefachmann",
+        "medizinische-fachangestellte",
+        "fachkraft-lagerlogistik"
+      ]
     },
     {
       "loc": "/lernen/rechtschreibung.html",
       "lastmod": "2026-09-03",
       "label": "Rechtschreibung",
-      "berufe": ["kaufmann-bueromanagement", "verwaltungsfachangestellte", "steuerfachangestellte", "medizinische-fachangestellte", "erzieher", "polizei", "zoll"]
+      "berufe": [
+        "kaufmann-bueromanagement",
+        "verwaltungsfachangestellte",
+        "steuerfachangestellte",
+        "medizinische-fachangestellte",
+        "erzieher",
+        "polizei",
+        "zoll"
+      ]
     },
     {
       "loc": "/lernen/assoziationen.html",
       "lastmod": "2026-09-03",
       "label": "Assoziationen",
-      "berufe": ["erzieher", "medizinische-fachangestellte", "pflegefachmann", "notfallsanitaeter", "bankkaufmann", "kaufmann-bueromanagement", "polizei"]
+      "berufe": [
+        "erzieher",
+        "medizinische-fachangestellte",
+        "pflegefachmann",
+        "notfallsanitaeter",
+        "bankkaufmann",
+        "kaufmann-bueromanagement",
+        "polizei"
+      ]
     }
   ],
   "testTypes": {
@@ -2220,5 +2265,159 @@
       ],
       "lastmod": "2026-09-03"
     }
-  ]
+  ],
+  "hub": {
+    "title": "Einstellungstest für die Ausbildung: Ablauf, Aufgaben, Vorbereitung",
+    "seoTitle": "Einstellungstest Ausbildung: Ablauf, Aufgaben und Vorbereitung",
+    "description": "Einstellungstest für die Ausbildung: Ablauf, typische Aufgaben mit Beispielen und ein Vorbereitungsplan – kostenlos üben, sortiert nach Beruf.",
+    "lead": "Ein Einstellungstest kann für Bewerberinnen und Bewerber Teil des Auswahlverfahrens sein. Dieser Ratgeber erklärt mögliche Abläufe, typische Aufgaben und einen konkreten Zwei-Wochen-Plan zur Vorbereitung. Darunter findest du passende Übungsaufgaben nach Ausbildungsberuf.",
+    "sections": [
+      {
+        "heading": "Was ist der Einstellungstest für die Ausbildung?",
+        "paragraphs": [
+          "Der Einstellungstest für die Ausbildung ist eine schriftliche oder digitale Prüfung, mit der ein Betrieb im Auswahlverfahren Grundfertigkeiten von Bewerberinnen und Bewerbern einschätzt – etwa Rechnen, Sprache und logisches Denken sowie je nach Beruf weitere Kenntnisse.",
+          "Einstellungstests werden von Ausbildungsbetrieben unterschiedlicher Größe und von Behörden eingesetzt. Andere Betriebe entscheiden nur nach Unterlagen und Gespräch.",
+          "Die Begriffe Einstellungstest, Eignungstest und Assessment-Center werden oft synonym verwendet, meinen aber nicht dasselbe. Einstellungstest und Eignungstest können dieselbe, einzelne schriftliche oder online durchgeführte Prüfung mit festen Aufgaben bezeichnen. Ein Assessment-Center ist umfangreicher: Es kombiniert mehrere Bausteine, etwa Gruppenübungen, Präsentationen, Tests und Interviews. Die Bundesagentur für Arbeit nennt als Dauer einen halben bis zwei Tage; Ablauf und Ort stehen in der Einladung. Manche Ausbildungsbetriebe nutzen nur den Einstellungstest, andere setzen zusätzlich ein Assessment-Center für die engere Auswahl ein.",
+          "Wer den Test entwickelt und auswertet, ist ebenfalls unterschiedlich: Manche Betriebe nutzen eigene, selbst zusammengestellte Aufgaben, andere setzen auf fertige Testverfahren externer Anbieter. Für dich als Bewerber ändert das wenig – die abgefragten Grundfertigkeiten bleiben ähnlich."
+        ]
+      },
+      {
+        "heading": "So läuft der Einstellungstest ab",
+        "paragraphs": [
+          "Nach der Bewerbung kann dich der Betrieb schriftlich oder per E-Mail zum Einstellungstest einladen. Wie viel Vorlauf du bekommst und ob Beispielaufgaben oder ein Hinweis auf das Testformat beiliegen, unterscheidet sich je nach Betrieb – ein Blick in die Einladung und die ursprüngliche Stellenanzeige gibt oft schon Hinweise auf Testinhalte.",
+          "Der Test läuft entweder online von zu Hause aus – über ein Testportal mit Zeitlimit – oder vor Ort im Betrieb an einem PC oder auf Papier; beide Formate kommen vor. Ob dein Termin online oder vor Ort stattfindet und ob ein Taschenrechner erlaubt ist, kannst du der Einladung entnehmen.",
+          "Die Bearbeitungszeit hängt vom Testformat und von der Zahl der Aufgabenblöcke ab. Die genaue Zeit findest du in der Einladung; im Zweifel hilft eine kurze Nachfrage beim Betrieb. Plane bei einem Termin vor Ort Puffer für Anreise und Wartezeit ein.",
+          "Auf einen bestandenen Test kann ein Vorstellungsgespräch folgen; ob und wann es stattfindet, teilt dir der Betrieb mit. Manche Betriebe führen das Gespräch jedoch vorher oder verbinden Test, Gespräch und weitere Aufgaben an einem gemeinsamen Auswahltag. Wie du das Ergebnis erfährst, hängt ebenfalls vom Betrieb ab: Manche teilen nur mit, ob du die nächste Runde erreicht hast, andere geben zusätzlich eine Punktzahl oder Rückmeldung.",
+          "Sei rechtzeitig da und bring einen Ausweis sowie gegebenenfalls die Einladung mit; bei Unklarheiten zum Ablauf hilft eine kurze Nachfrage beim Betrieb. Prüfe bei einem Online-Test vorher Internetverbindung, Browser und – falls angekündigt – Kamera und Mikrofon."
+        ]
+      },
+      {
+        "heading": "Diese Aufgaben kommen im Einstellungstest dran",
+        "paragraphs": [
+          "Welche Aufgaben vorkommen, hängt von Beruf und Betrieb ab. Geprüft werden können allgemeine Fähigkeiten wie Rechnen, Sprache, Konzentration und logisches Denken; möglich sind außerdem technisches Verständnis, Englisch, Allgemeinwissen, Persönlichkeitseinschätzungen oder Fragen zur Ausbildung.",
+          "Je nach Beruf kommen außerdem Fragen zum Betrieb selbst oder aktuelles Zeitgeschehen als Teil des Allgemeinwissens vor. Die folgenden drei Beispiele zeigen typische Aufgabenformate."
+        ],
+        "items": [
+          "Zahlenreihen – die Regel erkennen und die nächste Zahl finden",
+          "Sprachliche Logik – Wortanalogien, Wortbeziehungen und Schlussfolgern",
+          "Konzentration – Zeichen zählen und Muster unter Zeitdruck prüfen",
+          "Figuren & Matrizen – die fehlende Figur in einer Reihe erkennen",
+          "Kopfrechnen – Grundrechenarten sicher lösen, teils ohne Taschenrechner",
+          "Kaufmännisches Rechnen – Prozent-, Dreisatz- und Rabattaufgaben",
+          "Buchstabenreihen – Regeln in Buchstabenfolgen erkennen",
+          "Merkfähigkeit – Informationen kurz aufnehmen und wiedergeben",
+          "Rechtschreibung – Fehler in Texten erkennen und korrigieren",
+          "Assoziationen – Begriffe sinnvoll miteinander verknüpfen",
+          "Fachfragen – Wissen zur Ausbildung und zum Betrieb",
+          "Allgemeinwissen – Wirtschaft, Politik und aktuelles Zeitgeschehen"
+        ],
+        "examples": [
+          {
+            "q": "Wie geht die Zahlenreihe weiter: 2, 4, 8, 16, 32, ...?",
+            "a": "64 – jede Zahl in der Reihe wird verdoppelt (mal 2)."
+          },
+          {
+            "q": "Ein Artikel kostet 80 Euro und wird um 15 % reduziert. Wie viel kostet er nach dem Rabatt?",
+            "a": "68 Euro – 15 % von 80 Euro sind 12 Euro Nachlass, 80 Euro minus 12 Euro ergibt 68 Euro."
+          },
+          {
+            "q": "Welches Wort passt in die Analogie: Hand verhält sich zu Fingern wie Fuß zu ...?",
+            "a": "Zehen – Finger sind Teile der Hand, Zehen sind Teile des Fußes; das Verhältnis Ganzes zu Teilen ist in beiden Paaren gleich."
+          }
+        ],
+        "links": [
+          {
+            "href": "/lernen/zahlenreihen.html",
+            "label": "Zahlenreihen üben"
+          },
+          {
+            "href": "/lernen/sprachlogik.html",
+            "label": "Sprachliche Logik üben"
+          },
+          {
+            "href": "/lernen/konzentration.html",
+            "label": "Konzentration üben"
+          },
+          {
+            "href": "/lernen/figuren-matrizen.html",
+            "label": "Figuren & Matrizen üben"
+          },
+          {
+            "href": "/lernen/kopfrechnen.html",
+            "label": "Kopfrechnen üben"
+          },
+          {
+            "href": "/lernen/kaufmaennisches-rechnen.html",
+            "label": "Kaufmännisches Rechnen üben"
+          },
+          {
+            "href": "/lernen/buchstabenreihen.html",
+            "label": "Buchstabenreihen üben"
+          },
+          {
+            "href": "/lernen/merkfaehigkeit.html",
+            "label": "Merkfähigkeit üben"
+          },
+          {
+            "href": "/lernen/rechtschreibung.html",
+            "label": "Rechtschreibung üben"
+          },
+          {
+            "href": "/lernen/assoziationen.html",
+            "label": "Assoziationen üben"
+          }
+        ]
+      },
+      {
+        "heading": "Vorbereitung in zwei Wochen",
+        "paragraphs": [
+          "Mit zwei Wochen Vorlauf kannst du dich strukturiert vorbereiten – Grundlagen zuerst, Zeitdruck-Training gegen Ende. Wie viel Übung du tatsächlich brauchst, hängt von deinen Vorkenntnissen und den angekündigten Testinhalten ab.",
+          "Hast du wenig Zeit, prüfe zuerst die Einladung und die Stellenanzeige auf Hinweise zum Test – manche Betriebe nennen dort Themen oder Beispielaufgaben. Übe danach gezielt die angekündigten Aufgabenarten und deine persönlichen Schwächen; kurze, tägliche Übungseinheiten wirken oft nachhaltiger als eine einzelne lange Sitzung kurz vor dem Test."
+        ],
+        "items": [
+          "Tag 1–3: Grundrechenarten und Prozentrechnen wiederholen, teils ohne Taschenrechner, Zahlenreihen üben.",
+          "Tag 4–7: Sprachliche Aufgaben und Konzentrationsübungen ergänzen, erste Runden unter Zeitlimit üben.",
+          "Tag 8–11: Fachthemen zur Ausbildung auffrischen und die Stellenanzeige genau lesen; Merkfähigkeit und Rechtschreibung dazunehmen.",
+          "Tag 12–13: Allgemeinwissen zu Wirtschaft und aktuellem Zeitgeschehen auffrischen, offene Schwächen gezielt nachüben.",
+          "Tag 14: Ruhig angehen lassen und ausreichend schlafen. Unmittelbar vor dem Test bringt Erholung meist mehr als eine letzte lange Lerneinheit."
+        ]
+      },
+      {
+        "heading": "Einstellungstest nach Ausbildungsberuf",
+        "paragraphs": [
+          "Wie genau der Test aussieht, hängt von Ausbildungsberuf und Betrieb ab. Neben Deutsch, Mathematik, Allgemeinwissen und Konzentration können technisches Verständnis, räumliches Denken oder berufsbezogene Aufgaben vorkommen. Die Berufsseiten oben zeigen je Beruf, welche Aufgabentypen in Ausschreibungen genannt werden.",
+          "Unternehmen und Behörden können festgelegte oder zentral vorgegebene Auswahlverfahren einsetzen. Aufbau und Inhalte können sich dabei trotzdem nach Arbeitgeber, Ausbildungsberuf, Laufbahn oder Standort unterscheiden; andere Betriebe stellen ihren Test individuell zusammen oder verzichten ganz darauf.",
+          "Wähle oben deinen Beruf, um passende Beispielaufgaben und weitere Details zu sehen.",
+          "Auch innerhalb eines Berufs unterscheiden sich die Testaufbauten: Entscheidend sind das konkrete Auswahlverfahren und die Angaben des jeweiligen Betriebs. Ein Blick in die Stellenanzeige oder eine kurze Nachfrage beim Betrieb zeigt dir, was für deine Bewerbung konkret gilt."
+        ]
+      }
+    ],
+    "faq": [
+      {
+        "q": "Wie lange dauert ein Einstellungstest für die Ausbildung?",
+        "a": "Das hängt vom Testformat und von der Zahl der Aufgabenblöcke ab. Die genaue Zeit steht in der Einladung zum Test. Fehlt sie dort, frag beim Betrieb nach."
+      },
+      {
+        "q": "Kann ich den Einstellungstest kostenlos üben?",
+        "a": "Ja – die allgemeinen Eignungstest-Module Zahlenreihen, Konzentration, Figuren & Matrizen, Kopfrechnen, Kaufmännisches Rechnen, Buchstabenreihen, Merkfähigkeit, Rechtschreibung und Assoziationen übst du auf jobreif kostenlos und ohne Anmeldung. Für einen kompletten, stellenbezogenen Test mit Fachfragen aus einer echten Anzeige genügt eine kostenlose Anmeldung."
+      },
+      {
+        "q": "Was passiert, wenn ich den Einstellungstest nicht bestehe?",
+        "a": "Bestehst du den Test nicht, kann das aktuelle Bewerbungsverfahren enden. Ob du dich später erneut oder auf eine andere Stelle im selben Unternehmen bewerben kannst, erfährst du beim jeweiligen Betrieb; auch ob und in welchem Umfang du eine Rückmeldung erhältst, hängt vom Betrieb ab."
+      },
+      {
+        "q": "Welche Aufgaben kommen im Eignungstest für die Ausbildung vor?",
+        "a": "Je nach Beruf und Betrieb kommen Aufgaben zu Sprache, Mathematik, logischem Denken, Konzentration und Allgemeinwissen vor. Möglich sind außerdem Fragen zum Ausbildungsberuf oder zum Betrieb. Die Beispiele oben in diesem Ratgeber zeigen typische Aufgabenformate."
+      },
+      {
+        "q": "Gibt es Einstellungstest-Aufgaben mit Lösungen als PDF?",
+        "a": "Nicht als PDF zum Download – dafür findest du auf dieser Seite und den Berufsseiten Beispielaufgaben mit ausklappbaren Lösungen direkt online, jederzeit kostenlos abrufbar."
+      },
+      {
+        "q": "Wie unterscheidet sich der Test je nach Beruf?",
+        "a": "Welche Module vorkommen und wie sie gewichtet werden, hängt von Ausbildungsberuf und Betrieb ab. Möglich sind Aufgaben zu Sprache, Mathematik, logischem Denken, Konzentration und Allgemeinwissen. Wähle oben deinen Beruf für die passenden Beispiele."
+      }
+    ],
+    "lastmod": "2026-09-03"
+  }
 }
