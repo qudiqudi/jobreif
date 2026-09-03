@@ -660,17 +660,43 @@ function berufKurz(beruf) {
   return m ? `${m[1]}${m[2]}` : beruf;
 }
 
+// Findet GENAU EIN Vorkommen von "marker" in "text" - wirft, wenn es fehlt
+// ODER mehrfach vorkommt. Ein zweiter (versehentlich doppelter) Marker waere
+// sonst eine stille Falle: replaceBetweenMarkers wuerde beim naechsten Lauf
+// alles zwischen dem ERSTEN und dem naechstbesten Marker-Fund loeschen -
+// moeglicherweise handgepflegtes HTML, das eigentlich AUSSERHALB des
+// beabsichtigten Blocks stand - und der Drift-Check saehe das Ergebnis
+// danach faelschlich als korrekt an (Codex-Review zu f790d80).
+function findExactlyOne(text, marker, sourceLabel, role) {
+  const first = text.indexOf(marker);
+  if (first === -1) {
+    throw new Error(
+      `${sourceLabel}: ${role}-Marker "${marker}" nicht gefunden - bitte einmalig von Hand setzen.`
+    );
+  }
+  const second = text.indexOf(marker, first + 1);
+  if (second !== -1) {
+    throw new Error(
+      `${sourceLabel}: ${role}-Marker "${marker}" kommt mehrfach vor (Fund bei ${first} und ${second}) - erwartet genau ein Vorkommen.`
+    );
+  }
+  return first;
+}
+
 // --- Marker-Ersetzung in handgepflegten Seiten (index.html, lernen/*.html) --
 // Ersetzt NUR den Inhalt zwischen start/end-Marker, alles andere bleibt
-// byte-identisch. Fehlen die Marker (z. B. weil sie versehentlich geloescht
-// wurden), bricht der Lauf mit einer klaren Fehlermeldung ab statt still
-// nichts zu tun oder den Marker selbst zu duplizieren.
+// byte-identisch - "before"/"after" sind rohe Teilstrings des Originals, es
+// findet KEINE Zeilenenden-Normalisierung statt (eine CRLF-Datei bliebe
+// ausserhalb des Marker-Blocks CRLF). Fehlen die Marker, kommen sie mehrfach
+// vor, oder steht der End- vor dem Start-Marker, bricht der Lauf mit einer
+// klaren Fehlermeldung ab statt still nichts zu tun, den falschen Bereich zu
+// loeschen oder den Marker selbst zu duplizieren.
 function replaceBetweenMarkers(html, startMarker, endMarker, inner, sourceLabel) {
-  const startIdx = html.indexOf(startMarker);
-  const endIdx = html.indexOf(endMarker);
-  if (startIdx === -1 || endIdx === -1 || endIdx < startIdx) {
+  const startIdx = findExactlyOne(html, startMarker, sourceLabel, "Start");
+  const endIdx = findExactlyOne(html, endMarker, sourceLabel, "End");
+  if (!(startIdx < endIdx)) {
     throw new Error(
-      `${sourceLabel}: Marker "${startMarker}" / "${endMarker}" nicht gefunden - bitte einmalig von Hand setzen.`
+      `${sourceLabel}: End-Marker "${endMarker}" steht nicht nach dem Start-Marker "${startMarker}" (vertauschte Reihenfolge).`
     );
   }
   const before = html.slice(0, startIdx + startMarker.length);
@@ -793,6 +819,38 @@ async function main() {
     process.exit(1);
   }
 
+  // Erst ALLE handgepflegten Zieldateien (index.html, lernen/*.html) lesen
+  // und die Marker-Ersetzung berechnen - das kann werfen (fehlender/doppelter
+  // Marker, vertauschte Reihenfolge), aber NOCH WIRD NICHTS GESCHRIEBEN. Erst
+  // wenn das fuer JEDE Datei geklappt hat, geht es weiter unten an die
+  // eigentlichen Schreiboperationen (inkl. pruneStale und die generierten
+  // Berufsseiten). Ein Fehler in einer Datei darf keine andere Datei schon
+  // veraendert haben (Codex-Review zu f790d80).
+  const staticPages = Array.isArray(cat.staticPages) ? cat.staticPages : [];
+  const indexPath = path.join(root, "index.html");
+  let nextIndexHtml;
+  const lernenWrites = [];
+  try {
+    const indexHtml = await readFile(indexPath, "utf8");
+    nextIndexHtml = replaceBetweenMarkers(
+      indexHtml, MARK_LINKS_START, MARK_LINKS_END, renderFooterLinks(cat), "index.html"
+    );
+
+    for (const s of staticPages) {
+      if (!s || s.loc === "/lernen/") continue;
+      const filePath = path.join(root, s.loc.replace(/^\//, ""));
+      const html = await readFile(filePath, "utf8");
+      const next = replaceBetweenMarkers(
+        html, MARK_BERUFE_START, MARK_BERUFE_END, renderLernenBerufe(s, cat), s.loc
+      );
+      lernenWrites.push({ filePath, content: next });
+    }
+  } catch (e) {
+    console.error(e.message);
+    process.exit(1);
+  }
+
+  // Ab hier sind alle Marker-Pruefungen durch - jetzt erst schreiben.
   await mkdir(outDir, { recursive: true });
   const slugs = new Set(cat.pages.map((p) => p.slug));
   const removed = await pruneStale(slugs);
@@ -805,41 +863,15 @@ async function main() {
   }
   await writeFile(path.join(root, "sitemap.xml"), renderSitemap(cat), "utf8");
 
-  // index.html: Footer-Linkblock (SEO-Welle Punkt 4) - nur der Marker-Bereich
-  // im Footer wird ersetzt, der Rest der Datei bleibt byte-identisch.
-  try {
-    const indexPath = path.join(root, "index.html");
-    const indexHtml = await readFile(indexPath, "utf8");
-    const nextIndexHtml = replaceBetweenMarkers(
-      indexHtml, MARK_LINKS_START, MARK_LINKS_END, renderFooterLinks(cat), "index.html"
-    );
-    await writeFile(indexPath, nextIndexHtml, "utf8");
-  } catch (e) {
-    console.error(e.message);
-    process.exit(1);
-  }
-
-  // lernen/*.html: Berufe-Block (alle staticPages ausser /lernen/ selbst).
-  const staticPages = Array.isArray(cat.staticPages) ? cat.staticPages : [];
-  for (const s of staticPages) {
-    if (!s || s.loc === "/lernen/") continue;
-    const filePath = path.join(root, s.loc.replace(/^\//, ""));
-    try {
-      const html = await readFile(filePath, "utf8");
-      const next = replaceBetweenMarkers(
-        html, MARK_BERUFE_START, MARK_BERUFE_END, renderLernenBerufe(s, cat), s.loc
-      );
-      await writeFile(filePath, next, "utf8");
-    } catch (e) {
-      console.error(e.message);
-      process.exit(1);
-    }
+  await writeFile(indexPath, nextIndexHtml, "utf8");
+  for (const w of lernenWrites) {
+    await writeFile(w.filePath, w.content, "utf8");
   }
 
   const staticCount = staticPages.length;
   const sitemapUrls = 1 /* root */ + staticCount + 1 /* hub */ + cat.pages.length;
   console.log(`SEO generiert: Hub + ${cat.pages.length} Beruf-Seite(n), sitemap.xml mit ${sitemapUrls} URLs.`);
-  console.log(`Footer-Linkblock (index.html) und Berufe-Bloecke (${staticPages.length - 1} Lernseite(n)) aktualisiert.`);
+  console.log(`Footer-Linkblock (index.html) und Berufe-Bloecke (${lernenWrites.length} Lernseite(n)) aktualisiert.`);
   if (removed.length) console.log(`Entfernt (nicht mehr im Katalog): ${removed.join(", ")}`);
 }
 
@@ -849,4 +881,6 @@ if (path.resolve(process.argv[1] || "") === fileURLToPath(import.meta.url)) {
   main();
 }
 
-export { validate, renderFooterLinks, renderLernenBerufe, berufeForLernenPage, berufKurz };
+export {
+  validate, renderFooterLinks, renderLernenBerufe, berufeForLernenPage, berufKurz, replaceBetweenMarkers,
+};

@@ -162,10 +162,11 @@ async function run() {
   // und Berufe-Block auf den Lernseiten. Regressionsschutz fuer
   // renderFooterLinks()/renderLernenBerufe()/berufeForLernenPage() aus
   // generate-seo.mjs.
-  const { renderFooterLinks, renderLernenBerufe, berufeForLernenPage } = mod;
+  const { renderFooterLinks, renderLernenBerufe, berufeForLernenPage, replaceBetweenMarkers } = mod;
   assert(typeof renderFooterLinks === "function", "renderFooterLinks() ist exportiert");
   assert(typeof renderLernenBerufe === "function", "renderLernenBerufe() ist exportiert");
   assert(typeof berufeForLernenPage === "function", "berufeForLernenPage() ist exportiert");
+  assert(typeof replaceBetweenMarkers === "function", "replaceBetweenMarkers() ist exportiert");
 
   // i) renderFooterLinks(): jede Berufsseite als href, jede Lernseite mit label
   //    als href - keine Seite darf im generierten Footer-Block fehlen.
@@ -267,6 +268,72 @@ async function run() {
     const html = renderLernenBerufe(cat.staticPages[0], cat);
     const cardCount = (html.match(/class="card"/g) || []).length;
     eq(cardCount, 8, "renderLernenBerufe: rendert genau 8 Karten (gedeckelt)");
+  }
+
+  // m) replaceBetweenMarkers(): Start- und End-Marker muessen je GENAU einmal
+  //    vorkommen, in der richtigen Reihenfolge - sonst wirft die Funktion.
+  //    Codex-Review zu f790d80: ein versehentlich doppelter Start-Marker
+  //    haette sonst beim naechsten Lauf handgepflegtes HTML geloescht (nur
+  //    das ERSTE indexOf-Ergebnis zaehlte), und der Drift-Check haette das
+  //    Ergebnis danach faelschlich als korrekt durchgehen lassen.
+  {
+    const START = "<!-- s:start -->";
+    const END = "<!-- s:end -->";
+    const cases = [
+      ["fehlender Start-Marker", `PRAEFIX${END}SUFFIX`],
+      ["fehlender End-Marker", `PRAEFIX${START}SUFFIX`],
+      ["doppelter Start-Marker", `PRAEFIX${START}x${START}y${END}SUFFIX`],
+      ["doppelter End-Marker", `PRAEFIX${START}x${END}y${END}SUFFIX`],
+      ["vertauschte Reihenfolge (Ende vor Start)", `PRAEFIX${END}x${START}SUFFIX`],
+    ];
+    for (const [label, text] of cases) {
+      let threw = false;
+      try {
+        replaceBetweenMarkers(text, START, END, "INNER", "fixture.html");
+      } catch (e) {
+        threw = true;
+      }
+      assert(threw, `replaceBetweenMarkers: ${label} wirft`);
+    }
+  }
+
+  // n) Praefix vor dem Start- und Suffix nach dem End-Marker bleiben byte-
+  //    identisch (Sentinel-Strings inkl. Sonderzeichen und Zeilenumbruechen),
+  //    und NUR der Inhalt zwischen den Markern wird ersetzt.
+  {
+    const START = "<!-- s:start -->";
+    const END = "<!-- s:end -->";
+    const prefix = 'PRAEFIX <ä&ö"ü> Zeile1\nZeile2   ';
+    const suffix = '   Zeile3\nZeile4 <ß&ü"ä> SUFFIX';
+    const text = `${prefix}${START}ALT-INHALT${END}${suffix}`;
+    const out = replaceBetweenMarkers(text, START, END, "NEU-INHALT", "fixture.html");
+    assert(out.startsWith(prefix), "replaceBetweenMarkers: Praefix vor dem Start-Marker bleibt byte-identisch");
+    assert(out.endsWith(suffix), "replaceBetweenMarkers: Suffix nach dem End-Marker bleibt byte-identisch");
+    assert(out.includes("NEU-INHALT") && !out.includes("ALT-INHALT"), "replaceBetweenMarkers: Inhalt zwischen den Markern wird ersetzt");
+  }
+
+  // o) Idempotenz: zweimalige Anwendung mit demselben inner liefert dasselbe
+  //    Ergebnis - genau das, was der Generator bei wiederholtem Lauf tut
+  //    (Drift-Check erwartet ein stabiles Fixpunkt-Ergebnis).
+  {
+    const START = "<!-- s:start -->";
+    const END = "<!-- s:end -->";
+    const text = `A${START}alt${END}B`;
+    const once = replaceBetweenMarkers(text, START, END, "X", "fixture.html");
+    const twice = replaceBetweenMarkers(once, START, END, "X", "fixture.html");
+    eq(twice, once, "replaceBetweenMarkers: zweimalige Anwendung mit gleichem inner ist idempotent");
+  }
+
+  // p) CRLF-Eingabe: Zeilenenden AUSSERHALB des Marker-Blocks bleiben CRLF -
+  //    replaceBetweenMarkers normalisiert nicht auf LF, "before"/"after" sind
+  //    rohe Teilstrings des Originals.
+  {
+    const START = "<!-- s:start -->";
+    const END = "<!-- s:end -->";
+    const text = `Zeile1\r\nZeile2\r\n${START}alt${END}\r\nZeile3\r\n`;
+    const out = replaceBetweenMarkers(text, START, END, "X", "fixture.html");
+    assert(out.startsWith("Zeile1\r\nZeile2\r\n"), "replaceBetweenMarkers: CRLF vor dem Start-Marker bleibt erhalten");
+    assert(out.endsWith("\r\nZeile3\r\n"), "replaceBetweenMarkers: CRLF nach dem End-Marker bleibt erhalten");
   }
 
   console.log(failures === 0 ? "\nALLE TESTS OK" : `\n${failures} FEHLER`);
