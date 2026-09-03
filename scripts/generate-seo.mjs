@@ -148,6 +148,45 @@ function validate(cat) {
         if (typeof u.label !== "string" || !u.label.trim()) at(`uebungen[${j}].label fehlt/leer`);
       });
     }
+    // sections: optionales, additives Feld fuer vertiefende Inhaltsabschnitte (Plan 2026,
+    // SEO-Welle Punkt 2). Rendert zwischen "Beispielaufgaben" und "So bereitest du dich vor".
+    // items/examples/links sind je Abschnitt optional; examples nutzt dasselbe Frage-/Antwort-
+    // Markup wie die Beispielaufgaben (Details/"Loesung anzeigen"), links denselben Stil wie
+    // das uebungen-Feld. links.href gilt derselben staticPages-Pflicht wie uebungen.href, sonst
+    // entstuende ein interner Link ins Leere.
+    if (p.sections != null) {
+      if (!Array.isArray(p.sections)) at("sections: Array erwartet");
+      else p.sections.forEach((sec, j) => {
+        if (!sec || typeof sec !== "object") return at(`sections[${j}]: kein Objekt`);
+        if (typeof sec.heading !== "string" || !sec.heading.trim()) at(`sections[${j}].heading fehlt/leer`);
+        if (!Array.isArray(sec.paragraphs) || sec.paragraphs.length === 0
+          || sec.paragraphs.some((t) => typeof t !== "string" || !t.trim())) {
+          at(`sections[${j}].paragraphs: nicht-leeres String-Array erwartet`);
+        }
+        if (sec.items != null) {
+          if (!Array.isArray(sec.items) || sec.items.some((t) => typeof t !== "string" || !t.trim())) {
+            at(`sections[${j}].items: String-Array erwartet`);
+          }
+        }
+        if (sec.examples != null) {
+          if (!Array.isArray(sec.examples)) at(`sections[${j}].examples: Array erwartet`);
+          else sec.examples.forEach((ex, k) => {
+            if (!ex || typeof ex.q !== "string" || !ex.q.trim() || typeof ex.a !== "string" || !ex.a.trim()) {
+              at(`sections[${j}].examples[${k}]: {q, a} als nicht-leere Strings erwartet`);
+            }
+          });
+        }
+        if (sec.links != null) {
+          if (!Array.isArray(sec.links)) at(`sections[${j}].links: Array erwartet`);
+          else sec.links.forEach((l, k) => {
+            if (!l || typeof l !== "object") return at(`sections[${j}].links[${k}]: kein Objekt`);
+            if (typeof l.href !== "string" || !l.href.startsWith("/")) at(`sections[${j}].links[${k}].href: muss mit "/" beginnen`);
+            else if (!staticLocs.has(l.href)) at(`sections[${j}].links[${k}].href "${l.href}" nicht in staticPages`);
+            if (typeof l.label !== "string" || !l.label.trim()) at(`sections[${j}].links[${k}].label fehlt/leer`);
+          });
+        }
+      });
+    }
     if (typeof p.lastmod !== "string" || !DATE_RE.test(p.lastmod)) at("lastmod: YYYY-MM-DD erwartet");
   });
   return errs;
@@ -202,6 +241,50 @@ function renderSample(s, types) {
         ${opts}
         <details class="sample-a"><summary>Lösung anzeigen</summary><p>${esc(s.answer)}</p></details>
       </li>`;
+}
+
+// Rechenbeispiel innerhalb eines "sections"-Abschnitts (z. B. Mathe-Aufgaben).
+// Nutzt bewusst dieselbe ul.samples/li.sample/details.sample-a-Struktur wie
+// renderSample() oben, damit exakt dasselbe CSS greift und keine neuen Regeln
+// noetig sind - nur ohne den Testarten-Badge, da diese Beispiele nicht an
+// eine der App-Testarten (fachwissen/sprachlogik/...) gebunden sind.
+function renderSectionExample(ex) {
+  return `<li class="sample">
+        <p class="sample-q">${esc(ex.q)}</p>
+        <details class="sample-a"><summary>Lösung anzeigen</summary><p>${esc(ex.a)}</p></details>
+      </li>`;
+}
+
+// Vertiefender Inhaltsabschnitt (optional, additiv, siehe validate()). Rendert
+// als eigenes <section class="block"> zwischen Beispielaufgaben und Tipps.
+// items nutzt dieselbe ul.tipps-Optik wie die Vorbereitungs-Tipps weiter unten,
+// links dieselbe .uebungen-hinweis-Optik wie das uebungen-Feld - beides
+// bewusst wiederverwendet statt neuem CSS.
+function renderSection(sec) {
+  const paras = sec.paragraphs.map((t) => `<p>${esc(t)}</p>`).join("\n        ");
+  const items = Array.isArray(sec.items) ? sec.items : [];
+  const itemsHtml = items.length
+    ? `<ul class="tipps">
+        ${items.map((x) => `<li>${esc(x)}</li>`).join("\n        ")}
+        </ul>`
+    : "";
+  const examples = Array.isArray(sec.examples) ? sec.examples : [];
+  const examplesHtml = examples.length
+    ? `<ul class="samples">
+        ${examples.map(renderSectionExample).join("\n        ")}
+        </ul>`
+    : "";
+  const links = Array.isArray(sec.links) ? sec.links : [];
+  const linksHtml = links.length
+    ? `<p class="uebungen-hinweis">${links.map((l) => `<a href="${esc(l.href)}">${esc(l.label)}</a>`).join(" · ")}</p>`
+    : "";
+  return `<section class="block">
+        <h2>${esc(sec.heading)}</h2>
+        ${paras}
+        ${itemsHtml}
+        ${examplesHtml}
+        ${linksHtml}
+      </section>`;
 }
 
 function renderPage(p, cat, idx) {
@@ -262,6 +345,17 @@ function renderPage(p, cat, idx) {
         </ul>
       </section>`
     : "";
+
+  // Vertiefende Inhaltsabschnitte (optional, additiv) - zwischen Beispielaufgaben
+  // und Vorbereitungs-Tipps, siehe renderSection(). sectionsBlock traegt seine
+  // eigene Einrueckung/Leerzeile; ist sections leer, bleibt sectionsBlock ein
+  // leerer String, damit sich am Output von Seiten ohne "sections" NICHTS
+  // aendert (kein zusaetzlicher Whitespace zwischen Beispielaufgaben und Tipps).
+  const sections = Array.isArray(p.sections) ? p.sections : [];
+  const sectionsHtml = sections.length
+    ? sections.map(renderSection).join("\n\n    ")
+    : "";
+  const sectionsBlock = sectionsHtml ? `\n\n    ${sectionsHtml}` : "";
 
   const faqHtml = faq.length
     ? `<section class="block">
@@ -362,7 +456,7 @@ ${HEADER}
       ${uebungenHtml}
     </section>
 
-    ${samplesHtml}
+    ${samplesHtml}${sectionsBlock}
 
     ${tippsHtml}
 
