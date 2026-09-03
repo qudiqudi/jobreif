@@ -206,7 +206,7 @@
       "faq": [
         {
           "q": "Was wird im Einstellungstest für Fachinformatiker Systemintegration geprüft?",
-          "a": "Meist eine Mischung aus IT-Fachwissen (Netzwerke, Betriebssysteme, Hardware), logischem Denken (Zahlenreihen, Matrizen) und Sprachverständnis. jobreif bildet beides ab: stellenspezifische Fachfragen plus standardisierte Eignungstest-Module."
+          "a": "Meist eine Mischung aus IT-Fachwissen (Netzwerke, Betriebssysteme, Hardware), logischem Denken (Zahlenreihen, Matrizen) und Sprachverständnis. jobreif deckt aus einer echten Anzeige die stellenspezifischen IT-Fachfragen ab und ergänzt die üblichen Eignungstest-Module."
         },
         {
           "q": "Kostet das Üben etwas?",
@@ -287,7 +287,7 @@
       "faq": [
         {
           "q": "Welche Aufgaben kommen im Einstellungstest für Industriemechaniker?",
-          "a": "Typisch sind technisches und mathematisches Grundverständnis, räumliches Vorstellungsvermögen (figurale Aufgaben), Konzentrationsaufgaben und Fragen zum Berufsbild. jobreif deckt diese Module ab und ergänzt Fachfragen aus deiner Anzeige."
+          "a": "Typisch sind technisches und mathematisches Grundverständnis, räumliches Vorstellungsvermögen (figurale Aufgaben), Konzentrationsaufgaben und Fragen zum Berufsbild. jobreif prüft diese Module ab und ergänzt Fachfragen direkt aus deiner Stellenanzeige."
         },
         {
           "q": "Wie realistisch sind die Aufgaben?",
@@ -685,11 +685,11 @@
       "faq": [
         {
           "q": "Welche Themen hat der Einstellungstest für Bankkaufleute?",
-          "a": "Oft Allgemein- und Wirtschaftswissen, logisches Denken (Zahlenreihen, Matrizen), Sprachverständnis und Konzentration. jobreif deckt diese Module ab und ergänzt Fachfragen aus deiner Anzeige."
+          "a": "Oft Allgemein- und Wirtschaftswissen, logisches Denken (Zahlenreihen, Matrizen), Sprachverständnis und Konzentration. jobreif trainiert diese Module und leitet zusätzlich Fachfragen aus deiner Anzeige ab."
         },
         {
           "q": "Kann ich gezielt für eine bestimmte Bank üben?",
-          "a": "Ja – füge die konkrete Stellenanzeige ein, dann leitet jobreif die Fachfragen genau daraus ab."
+          "a": "Ja – füge die Stellenanzeige der jeweiligen Bank ein, dann bezieht jobreif die Fachfragen direkt darauf."
         },
         {
           "q": "Ist das kostenlos?",
@@ -787,12 +787,12 @@
           "a": "Häufig Allgemeinwissen und einfache Mathematik (z. B. Dosierung, Dreisatz), Konzentration, Sprachverständnis und Fragen zu Motivation und Berufsbild. jobreif bildet Module plus Fachfragen aus deiner Anzeige ab."
         },
         {
-          "q": "Bereitet mich das auch aufs Gespräch vor?",
+          "q": "Hilft mir das auch für das Vorstellungsgespräch in der Pflege?",
           "a": "Ja – du bekommst offene Fragen und KI-Feedback zu deinen Antworten, ideal für das Vorstellungsgespräch in Klinik oder Pflegeeinrichtung."
         },
         {
           "q": "Muss ich etwas installieren?",
-          "a": "Nein. jobreif läuft direkt im Browser auf Handy und Computer, ganz ohne Installation."
+          "a": "Nein, eine Installation ist nicht nötig – jobreif läuft direkt im Browser, auf dem Smartphone genauso wie am Computer."
         }
       ],
       "lastmod": "2026-09-03"
@@ -865,7 +865,7 @@
       "faq": [
         {
           "q": "Was wird im Einstellungstest für Mechatroniker geprüft?",
-          "a": "Meist technisches Verständnis (Mechanik, Elektrotechnik, Steuerungstechnik), logisches Denken (Zahlenreihen, figurale Aufgaben) und Grundrechnen. jobreif bildet diese Module ab und ergänzt Fachfragen aus deiner Anzeige."
+          "a": "Meist technisches Verständnis (Mechanik, Elektrotechnik, Steuerungstechnik), logisches Denken (Zahlenreihen, figurale Aufgaben) und Grundrechnen. jobreif spiegelt diese Module und ergänzt passende Fachfragen aus deiner Stellenanzeige."
         },
         {
           "q": "Wie kann ich gezielt üben?",
@@ -873,7 +873,7 @@
         },
         {
           "q": "Brauche ich eine Anmeldung?",
-          "a": "Für die allgemeinen Eignungsmodule (Zahlenreihen, Konzentration, Figuren) nicht – die übst du sofort ohne Anmeldung. Für den kompletten, stellenbezogenen Test mit KI-Feedback genügt eine kostenlose Anmeldung."
+          "a": "Für die allgemeinen Eignungsmodule wie Zahlenreihen, Konzentration und Figuren nicht – die stehen dir sofort und ohne Anmeldung offen. Für den vollständigen, stellenbezogenen Test mit KI-Feedback reicht eine kostenlose Anmeldung."
         }
       ],
       "lastmod": "2026-09-03"
@@ -946,11 +946,11 @@
       "faq": [
         {
           "q": "Was kommt im Einstellungstest für Kfz-Mechatroniker?",
-          "a": "Häufig technisches Verständnis (Kfz-Technik, Elektronik), Zahlenreihen, Konzentration und räumliches Denken. jobreif deckt diese Module ab und ergänzt Fachfragen aus deiner Anzeige."
+          "a": "Häufig technisches Verständnis (Kfz-Technik, Elektronik), Zahlenreihen, Konzentration und räumliches Denken. jobreif übt genau diese Module und ergänzt sie um Fachfragen aus deiner Stellenanzeige."
         },
         {
           "q": "Kann ich für eine bestimmte Werkstatt oder Marke üben?",
-          "a": "Ja – füge die konkrete Stellenanzeige ein, dann leitet jobreif die Fachfragen genau daraus ab."
+          "a": "Ja – trägst du die Anzeige der Werkstatt oder Marke ein, entstehen die Fachfragen direkt daraus."
         },
         {
           "q": "Funktioniert das auf dem Handy?",
@@ -1074,7 +1074,7 @@
           "items": [
             "Prozentrechnung: Rabatt, Aufschlag, Veränderung in Prozent",
             "Dreisatz: proportionale Verhältnisse umrechnen",
-            "Zinsrechnung: Kapital, Zinssatz und Zeitraum verknüpfen",
+            "Zinsrechnung: Zinssatz und Laufzeit auf ein Kapital anwenden",
             "Kalkulation: Selbstkosten, Gewinnzuschlag, Verkaufspreis"
           ],
           "examples": [
@@ -1145,7 +1145,7 @@
       "faq": [
         {
           "q": "Was wird im Einstellungstest für Industriekaufleute geprüft?",
-          "a": "Häufig kaufmännisches Rechnen, Wirtschafts- und Allgemeinwissen, Sprachverständnis und Konzentration. jobreif bildet diese Module ab und ergänzt Fachfragen aus deiner Anzeige."
+          "a": "Häufig kaufmännisches Rechnen, Wirtschafts- und Allgemeinwissen, Sprachverständnis und Konzentration. jobreif bildet diese Module nach und stellt dir zusätzlich Fachfragen aus deiner Anzeige bereit."
         },
         {
           "q": "Hilft das auch fürs Vorstellungsgespräch?",
@@ -1244,15 +1244,15 @@
       "faq": [
         {
           "q": "Was wird im Einstellungstest für Verwaltungsfachangestellte geprüft?",
-          "a": "Häufig Allgemeinwissen, Sprachverständnis und Rechtschreibung, logisches Denken (Zahlenreihen) und Konzentration. jobreif bildet diese Module ab und ergänzt Fachfragen aus deiner Anzeige."
+          "a": "Häufig Allgemeinwissen, Sprachverständnis und Rechtschreibung, logisches Denken (Zahlenreihen) und Konzentration. jobreif deckt diese Module mit ab und ergänzt eigene Fachfragen aus deiner Stellenanzeige."
         },
         {
           "q": "Kann ich für eine bestimmte Behörde üben?",
-          "a": "Ja – füge die konkrete Stellenanzeige ein, dann leitet jobreif die Fachfragen genau daraus ab."
+          "a": "Ja – mit der Stellenanzeige der jeweiligen Behörde erzeugt jobreif passende Fachfragen dazu."
         },
         {
           "q": "Brauche ich eine Anmeldung?",
-          "a": "Für die allgemeinen Eignungsmodule (Zahlenreihen, Konzentration, Figuren) nicht – die übst du sofort ohne Anmeldung. Für den kompletten, stellenbezogenen Test mit KI-Feedback genügt eine kostenlose Anmeldung."
+          "a": "Nicht für die allgemeinen Module Zahlenreihen, Konzentration und Figuren – die kannst du direkt ohne Anmeldung starten. Erst für den kompletten, stellenbezogenen Test mit KI-Feedback ist eine kostenlose Anmeldung nötig."
         }
       ],
       "lastmod": "2026-09-03"
@@ -1325,15 +1325,15 @@
       "faq": [
         {
           "q": "Was wird im Einstellungstest für MFA geprüft?",
-          "a": "Häufig einfache Mathematik, Konzentration und Sorgfalt, Sprachverständnis und Fragen zu Organisation und Patientenumgang. jobreif bildet diese Module ab und ergänzt Fachfragen aus deiner Anzeige."
+          "a": "Häufig einfache Mathematik, Konzentration und Sorgfalt, Sprachverständnis und Fragen zu Organisation und Patientenumgang. jobreif übt diese Module mit dir und liefert zusätzlich Fachfragen aus deiner Anzeige."
         },
         {
-          "q": "Bereitet mich das auch aufs Gespräch vor?",
+          "q": "Bereitet mich das zusätzlich auf das Gespräch in der Praxis vor?",
           "a": "Ja – du bekommst offene Fragen und KI-Feedback zu deinen Antworten, ideal für das Gespräch in Praxis oder Klinik."
         },
         {
           "q": "Muss ich etwas installieren?",
-          "a": "Nein. jobreif läuft direkt im Browser auf Handy und Computer, ganz ohne Installation."
+          "a": "Nein. Du öffnest jobreif einfach im Browser, egal ob auf dem Smartphone oder am Rechner in der Praxis."
         }
       ],
       "lastmod": "2026-09-03"
@@ -1574,11 +1574,11 @@
         },
         {
           "q": "Kostet das Üben etwas?",
-          "a": "Die allgemeinen Eignungsmodule wie Zahlenreihen, Konzentration und Figuren übst du kostenlos und ohne Anmeldung. Für einen kompletten, stellenbezogenen Test mit Fachfragen aus einer Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
+          "a": "Die allgemeinen Eignungsmodule wie Zahlenreihen, Konzentration und Figuren übst du kostenlos und ohne Anmeldung. Erst der komplette, stellenbezogene Test mit Fachfragen aus einer Anzeige und KI-Feedback braucht eine kostenlose Anmeldung."
         },
         {
           "q": "Läuft das Üben direkt im Browser?",
-          "a": "Ja, du brauchst keine Software zu installieren. Du fügst eine Stellenanzeige ein oder wählst allgemeine Übungsmodule und bearbeitest die Aufgaben direkt im Browser – am Rechner wie am Smartphone."
+          "a": "Ja, eine Installation ist nicht nötig. Du fügst eine Stellenanzeige ein oder wählst allgemeine Übungsmodule und bearbeitest die Aufgaben direkt im Browser – am Rechner wie am Smartphone."
         }
       ],
       "lastmod": "2026-09-03"
@@ -1651,7 +1651,7 @@
       "faq": [
         {
           "q": "Was wird im Einstellungstest für Anlagenmechaniker SHK geprüft?",
-          "a": "Meist eine Mischung aus fachlichem Grundwissen (Rohrleitungen, Werkstoffe, Wärmelehre), technischem Rechnen (Volumen, Fläche, Druck) sowie logischem Denken und Konzentration. jobreif bildet beides ab: stellenspezifische Fachfragen plus standardisierte Eignungstest-Module."
+          "a": "Meist eine Mischung aus fachlichem Grundwissen (Rohrleitungen, Werkstoffe, Wärmelehre), technischem Rechnen (Volumen, Fläche, Druck) sowie logischem Denken und Konzentration. jobreif kombiniert stellenspezifische Fachfragen aus deiner Anzeige mit den üblichen Eignungstest-Modulen."
         },
         {
           "q": "Hilft das auch für das Vorstellungsgespräch?",
@@ -2181,7 +2181,7 @@
         },
         {
           "q": "Ist das Üben kostenlos?",
-          "a": "Die allgemeinen Module Assoziationen, Zahlenreihen und Konzentration übst du kostenlos und ohne Anmeldung. Für einen kompletten, stellenbezogenen Test mit Fachfragen aus einer Anzeige und KI-Feedback reicht eine kostenlose Anmeldung."
+          "a": "Assoziationen, Zahlenreihen und Konzentration kannst du sofort und ohne Anmeldung üben. Erst der komplette, stellenbezogene Test mit Fachfragen aus einer Anzeige und KI-Feedback setzt eine kostenlose Anmeldung voraus."
         },
         {
           "q": "Ersetzt das Üben den Sporttest oder Assessment-Tag?",
@@ -2374,7 +2374,7 @@
           "a": "Ja. Zahlenreihen, Konzentration und Buchstabenreihen übst du sofort und ohne Anmeldung im Übungsbereich. Für einen vollständigen, auf deine Stellenanzeige zugeschnittenen Test mit KI-Feedback reicht eine kostenlose Anmeldung."
         },
         {
-          "q": "Wie läuft das Auswahlverfahren üblicherweise ab?",
+          "q": "Wie läuft das Auswahlverfahren für Elektroniker EGT üblicherweise ab?",
           "a": "Viele Ausbildungsbetriebe kombinieren einen schriftlichen oder digitalen Einstellungstest mit einem anschließenden Vorstellungsgespräch, teils ergänzt um einen praktischen Werkstatttag. Der genaue Ablauf hängt vom jeweiligen Betrieb ab."
         },
         {
@@ -2491,7 +2491,7 @@
           "a": "Grundkenntnisse helfen, sind aber meist keine Voraussetzung – viele Ausbildungsbetriebe testen eher logisches und strukturiertes Denken als konkrete Programmiersprachen, die ohnehin erst in der Ausbildung vertieft werden."
         },
         {
-          "q": "Wie läuft das Auswahlverfahren typischerweise ab?",
+          "q": "Wie läuft das Auswahlverfahren für Fachinformatiker Anwendungsentwicklung typischerweise ab?",
           "a": "Auf einen schriftlichen oder digitalen Einstellungstest folgt bei Eignung meist ein Vorstellungsgespräch, bei manchen Arbeitgebern zusätzlich eine kleine Programmier- oder Logikaufgabe am Rechner. Der genaue Ablauf unterscheidet sich von Betrieb zu Betrieb."
         }
       ],
@@ -2717,7 +2717,7 @@
           "a": "Fachlagerist ist mit zwei Jahren die kürzere Ausbildung und deckt die grundlegenden Lagerprozesse ab. Fachkraft für Lagerlogistik dauert drei Jahre und vertieft zusätzlich Planung, Steuerung und kaufmännische Aspekte der Logistikkette."
         },
         {
-          "q": "Wie läuft das Auswahlverfahren üblicherweise ab?",
+          "q": "Wie läuft das Auswahlverfahren für Fachlagerist üblicherweise ab?",
           "a": "Viele Betriebe laden nach der Bewerbung zu einem kurzen schriftlichen Test und einem anschließenden Gespräch ein, teils ergänzt um eine praktische Schnupperphase im Lager. Der genaue Ablauf hängt vom jeweiligen Arbeitgeber ab."
         }
       ],
@@ -2875,14 +2875,14 @@
         },
         {
           "type": "fachwissen",
-          "question": "Warum darf ein Fettbrand (Brandklasse F) nicht mit Wasser gelöscht werden?",
+          "question": "Was ist bei einem Fettbrand, etwa in einer Fritteuse, die sichere Sofortreaktion?",
           "options": [
-            "Weil das Wasser im heißen Fett schlagartig verdampft und das brennende Fett explosionsartig herausschleudert",
-            "Weil Wasser bei Fettbränden die Flammen dauerhaft anfacht, ohne zu verdampfen",
-            "Weil Fett generell wasserabweisend ist und Wasser einfach abperlt",
-            "Weil sich beim Kontakt mit Wasser giftige Gase bilden, die Flammen selbst aber unbeeinflusst bleiben"
+            "Herd sofort ausschalten, das Gefäß nur wenn gefahrlos möglich mit einem passenden Deckel abdecken und die Feuerwehr alarmieren",
+            "Den Brand mit einem Schwall Wasser löschen",
+            "Das brennende Gefäß aufnehmen und ins Freie tragen",
+            "Den Deckel abnehmen, um die Flammen besser im Blick zu behalten"
           ],
-          "answer": "Weil das Wasser im heißen Fett schlagartig verdampft und das brennende Fett explosionsartig herausschleudert (Fettexplosion) – deshalb werden Fettbrände mit speziellen Löschmitteln oder einer Löschdecke erstickt, niemals mit Wasser."
+          "answer": "Herd sofort ausschalten, das Gefäß nur wenn gefahrlos möglich mit einem passenden Deckel abdecken und die Feuerwehr alarmieren – Wasser darf auf keinen Fall eingesetzt werden, weil es im heißen Fett schlagartig verdampft und das brennende Fett explosionsartig herausschleudert (Fettexplosion). Für einen bereits ausgebrochenen Fettbrand sind spezielle Fettbrandlöscher der Brandklasse F vorgesehen; das brennende Gefäß sollte nicht bewegt werden."
         },
         {
           "type": "fachwissen",
@@ -3066,7 +3066,7 @@
           "a": "Nein. Träger, Ablauf und Gewichtung der einzelnen Testteile legt jedes Bundesland beziehungsweise jedes Gericht oder jede Staatsanwaltschaft selbst fest – ein Blick in die konkrete Ausschreibung schafft Klarheit."
         },
         {
-          "q": "Wie läuft das Auswahlverfahren typischerweise ab?",
+          "q": "Wie läuft das Auswahlverfahren für Justizfachangestellte typischerweise ab?",
           "a": "Auf den schriftlichen Einstellungstest folgt bei Eignung meist ein Vorstellungsgespräch, teils ergänzt um ein kurzes Praktikum oder einen Schnuppertag am Gericht. Details regelt die jeweilige Ausschreibung."
         }
       ],
