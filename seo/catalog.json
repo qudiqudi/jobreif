@@ -28,6 +28,10 @@
       "lastmod": "2026-07-12"
     },
     {
+      "loc": "/lernen/kaufmaennisches-rechnen.html",
+      "lastmod": "2026-09-03"
+    },
+    {
       "loc": "/lernen/buchstabenreihen.html",
       "lastmod": "2026-07-12"
     },
@@ -305,7 +309,13 @@
           "a": "Deine Eingaben und Ergebnisse bleiben in deinem Browser. jobreif ist auf Datensparsamkeit ausgelegt."
         }
       ],
-      "lastmod": "2026-08-02"
+      "uebungen": [
+        {
+          "href": "/lernen/kaufmaennisches-rechnen.html",
+          "label": "Kaufmännisches Rechnen"
+        }
+      ],
+      "lastmod": "2026-09-03"
     },
     {
       "slug": "bankkaufmann",
@@ -385,7 +395,13 @@
           "a": "Die allgemeinen Eignungsmodule übst du kostenlos und ohne Anmeldung; für den kompletten, stellenbezogenen Test mit KI-Feedback genügt eine kostenlose Anmeldung. Optional gibt es höhere Qualitätsstufen."
         }
       ],
-      "lastmod": "2026-08-02"
+      "uebungen": [
+        {
+          "href": "/lernen/kaufmaennisches-rechnen.html",
+          "label": "Kaufmännisches Rechnen"
+        }
+      ],
+      "lastmod": "2026-09-03"
     },
     {
       "slug": "pflegefachmann",
@@ -705,7 +721,13 @@
           "a": "Die allgemeinen Eignungsmodule übst du kostenlos und ohne Anmeldung direkt im Browser; für den kompletten, stellenbezogenen Test mit KI-Feedback genügt eine kostenlose Anmeldung."
         }
       ],
-      "lastmod": "2026-08-02"
+      "uebungen": [
+        {
+          "href": "/lernen/kaufmaennisches-rechnen.html",
+          "label": "Kaufmännisches Rechnen"
+        }
+      ],
+      "lastmod": "2026-09-03"
     },
     {
       "slug": "verwaltungsfachangestellte",
@@ -1427,7 +1449,13 @@
           "a": "Ja, du brauchst keine Software – Text oder Link der Stellenanzeige einfügen, Test starten und direkt im Browser bearbeiten. Am Ende bekommst du KI-Feedback zu deinen Antworten."
         }
       ],
-      "lastmod": "2026-08-02"
+      "uebungen": [
+        {
+          "href": "/lernen/kaufmaennisches-rechnen.html",
+          "label": "Kaufmännisches Rechnen"
+        }
+      ],
+      "lastmod": "2026-09-03"
     },
     {
       "slug": "steuerfachangestellte",
@@ -1507,7 +1535,13 @@
           "a": "Ja, du brauchst keine Software – jobreif läuft direkt im Browser, am Rechner wie am Smartphone. Du fügst eine Stellenanzeige ein und übst danach die passenden Module direkt online."
         }
       ],
-      "lastmod": "2026-08-02"
+      "uebungen": [
+        {
+          "href": "/lernen/kaufmaennisches-rechnen.html",
+          "label": "Kaufmännisches Rechnen"
+        }
+      ],
+      "lastmod": "2026-09-03"
     },
     {
       "slug": "notfallsanitaeter",

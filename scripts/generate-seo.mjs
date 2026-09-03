@@ -95,6 +95,12 @@ function validate(cat) {
   }
   const knownType = (t) => !!types && Object.prototype.hasOwnProperty.call(types, t);
 
+  // Bekannte staticPages-locs (fuer die uebungen-Validierung unten): ein Uebungsmodul-Link
+  // darf nur auf eine Seite zeigen, die tatsaechlich in der Sitemap landet.
+  const staticLocs = new Set(
+    Array.isArray(cat.staticPages) ? cat.staticPages.map((s) => s && s.loc).filter(Boolean) : []
+  );
+
   if (!Array.isArray(cat.pages) || cat.pages.length === 0) {
     fail("pages: nicht-leeres Array erwartet");
     return errs;
@@ -128,6 +134,18 @@ function validate(cat) {
         if (!q || typeof q.q !== "string" || !q.q.trim() || typeof q.a !== "string" || !q.a.trim()) {
           at(`faq[${j}]: {q, a} als nicht-leere Strings erwartet`);
         }
+      });
+    }
+    // uebungen: optionales, additives Feld - verlinkt passende Gratis-Uebungsmodule (/lernen/)
+    // unter "Diese Testarten uebst du hier". href MUSS eine bestehende staticPages-loc sein,
+    // sonst entstuende ein interner Link auf eine Seite, die die Sitemap gar nicht kennt.
+    if (p.uebungen != null) {
+      if (!Array.isArray(p.uebungen)) at("uebungen: Array erwartet");
+      else p.uebungen.forEach((u, j) => {
+        if (!u || typeof u !== "object") return at(`uebungen[${j}]: kein Objekt`);
+        if (typeof u.href !== "string" || !u.href.startsWith("/")) at(`uebungen[${j}].href: muss mit "/" beginnen`);
+        else if (!staticLocs.has(u.href)) at(`uebungen[${j}].href "${u.href}" nicht in staticPages`);
+        if (typeof u.label !== "string" || !u.label.trim()) at(`uebungen[${j}].label fehlt/leer`);
       });
     }
     if (typeof p.lastmod !== "string" || !DATE_RE.test(p.lastmod)) at("lastmod: YYYY-MM-DD erwartet");
@@ -199,6 +217,16 @@ function renderPage(p, cat, idx) {
       : `<strong>${esc(def.label)}</strong>`;
     return `<li>${label} — ${esc(def.description)}</li>`;
   }).join("\n        ");
+
+  // Passende Gratis-Uebungsmodule (optional, additiv) — kleiner Abschnitt direkt unter der
+  // Testarten-Liste, verlinkt gezielt auf /lernen/-Seiten mit besonderer Relevanz fuer diesen
+  // Beruf (z. B. Kaufmaennisches Rechnen bei kaufmaennischen Berufen).
+  const uebungen = Array.isArray(p.uebungen) ? p.uebungen : [];
+  const uebungenHtml = uebungen.length
+    ? `<p class="uebungen-hinweis">Passende Übungsmodule: ${uebungen
+        .map((u) => `<a href="${esc(u.href)}">${esc(u.label)}</a>`)
+        .join(" · ")}</p>`
+    : "";
 
   // Vorbereitungs-Tipps (optional, beruf-spezifisch) — echter Zusatzinhalt.
   const tipps = Array.isArray(p.tipps) ? p.tipps.filter((x) => typeof x === "string" && x.trim()) : [];
@@ -294,6 +322,8 @@ ${BASE_CSS}
     .block{margin-top:8px}
     ul.types,ul.samples{list-style:none;padding:0;margin:0}
     ul.types li{padding:10px 0;border-bottom:1px solid var(--border)}
+    .uebungen-hinweis{margin:10px 0 0;font-size:.9rem;color:var(--muted)}
+    .uebungen-hinweis a{font-weight:600}
     ul.tipps{margin:.4em 0;padding-left:1.2em}
     ul.tipps li{padding:4px 0}
     ul.related{list-style:none;padding:0;margin:8px 0}
@@ -329,6 +359,7 @@ ${HEADER}
       <ul class="types">
         ${typeList}
       </ul>
+      ${uebungenHtml}
     </section>
 
     ${samplesHtml}

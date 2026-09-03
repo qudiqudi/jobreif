@@ -4,9 +4,16 @@
 
 // Muss mit der VERSION-Datei im Repo übereinstimmen (der CI-Check erzwingt
 // das). Bei jedem Release: VERSION hochzählen und hier einen Eintrag ergänzen.
-const APP_VERSION = "1.55.2";
+const APP_VERSION = "1.56.0";
 
 const CHANGELOG = [
+  {
+    version: "1.56.0",
+    date: "03.09.2026",
+    items: [
+      "Neues Gratis-Übungsmodul „Kaufmännisches Rechnen“: Prozent, Dreisatz, Rabatt, Skonto, Mehrwertsteuer und Zinsen üben – wie gewohnt frisch generiert, sofort lokal ausgewertet und ohne Anmeldung. Dazu eine neue Lernseite mit Beispielen, verlinkt von den kaufmännischen Berufsseiten.",
+    ],
+  },
   {
     version: "1.55.2",
     date: "09.08.2026",
@@ -3063,6 +3070,180 @@ function generateKopfrechnenUebung() {
   };
 }
 
+// Kaufmaennisches Rechnen: gleiches Bauprinzip wie Kopfrechnen (Basiswerte zuerst gewuerfelt,
+// Aufgabe daraus konstruiert - nie "wuerfeln und hoffen"). Deckt die klassischen kaufmaennischen
+// Rechenarten ab (Prozentwert/-satz/Grundwert, Dreisatz proportional/antiproportional, Rabatt,
+// Skonto, Rabatt+Skonto kombiniert, Mehrwertsteuer in beide Richtungen, Jahreszinsen,
+// Waehrungsumrechnung). Basiswerte bewusst "glatt" (Vielfache von 20/50/100/1000, Prozentsaetze
+// Vielfache von 5 bzw. 10), damit jede Rechnung ohne Rundung aufgeht - Ergebnis ist IMMER eine
+// ganze Zahl. Numerischer Pfad wie Kopfrechnen/Zahlenreihe (scoreZahlenreihe/parseZahl).
+function generateKaufmRechnenUebung() {
+  const rezepte = [
+    // Prozentwert: glatter Grundwert (Vielfaches von 20) x glatter Prozentsatz (Vielfaches von 5).
+    () => {
+      const p = uebPick([5, 10, 15, 20, 25, 30, 40, 50]);
+      const G = 20 * uebRandInt(3, 40);
+      const W = (G / 20) * (p / 5);
+      return {
+        frage: `Von einer Rechnung über ${G} € werden ${p} % als Bearbeitungsgebühr berechnet. Wie viel € sind das?`,
+        antwort: W,
+        lerninfo: `${p} % von ${G} € = ${G} € · ${p} / 100 = ${W} €.`,
+      };
+    },
+    // Prozentsatz: welcher Prozentsatz entspricht dem Anteil W am Grundwert G (beide glatt)?
+    () => {
+      const p = uebPick([5, 10, 15, 20, 25, 30, 40, 50, 60, 75]);
+      const G = 20 * uebRandInt(3, 40);
+      const W = (G / 20) * (p / 5);
+      return {
+        frage: `Ein Grundwert von ${G} € entspricht einem Anteil von ${W} €. Wie viel Prozent sind das?`,
+        antwort: p,
+        lerninfo: `${W} € / ${G} € · 100 = ${p} %.`,
+      };
+    },
+    // Grundwert: Prozentsatz und Prozentwert bekannt, Grundwert (Ausgangsbetrag) gesucht.
+    () => {
+      const p = uebPick([5, 10, 15, 20, 25, 30, 40, 50]);
+      const G = 20 * uebRandInt(3, 40);
+      const W = (G / 20) * (p / 5);
+      return {
+        frage: `${p} % einer Rechnungssumme sind ${W} €. Wie hoch ist die gesamte Rechnungssumme?`,
+        antwort: G,
+        lerninfo: `${W} € / ${p} · 100 = ${G} €.`,
+      };
+    },
+    // Dreisatz proportional: mehr Kartons -> proportional mehr Stueck (Einzelmenge zuerst gewuerfelt).
+    () => {
+      const stk = uebRandInt(3, 12);
+      const n1 = uebRandInt(2, 8);
+      let n2 = uebRandInt(3, 15);
+      while (n2 === n1) n2 = uebRandInt(3, 15);
+      const menge1 = n1 * stk, menge2 = n2 * stk;
+      return {
+        frage: `${n1} Kartons enthalten ${menge1} Stück. Wie viele Stück enthalten ${n2} Kartons (gleiche Packungsgröße)?`,
+        antwort: menge2,
+        lerninfo: `${menge1} Stück ÷ ${n1} = ${stk} Stück pro Karton; ${n2} · ${stk} = ${menge2} Stück.`,
+      };
+    },
+    // Dreisatz antiproportional: klassisches Arbeiter/Tage-Beispiel (mehr Arbeiter -> weniger
+    // Tage). Gesamtarbeit als Vielfaches von 24 - durch alle gewaehlten Arbeiterzahlen teilbar.
+    () => {
+      const arbeit = 24 * uebRandInt(1, 10);
+      const opts = [2, 3, 4, 6, 8, 12];
+      const n1 = uebPick(opts);
+      let n2 = uebPick(opts);
+      while (n2 === n1) n2 = uebPick(opts);
+      const t1 = arbeit / n1, t2 = arbeit / n2;
+      return {
+        frage: `${n1} Arbeiter erledigen einen Auftrag in ${t1} Tagen. Wie viele Tage brauchen ${n2} Arbeiter bei gleichem Tempo?`,
+        antwort: t2,
+        lerninfo: `Antiproportional: ${n1} · ${t1} = ${n2} · ${t2} (= ${arbeit} „Arbeitstage" insgesamt).`,
+      };
+    },
+    // Rabatt: glatter Listenpreis (Vielfaches von 20) x glatter Rabattsatz (Vielfaches von 5).
+    () => {
+      const p = uebPick([5, 10, 15, 20, 25, 30, 40]);
+      const G = 20 * uebRandInt(3, 50);
+      const rabatt = (G / 20) * (p / 5);
+      const zahlbetrag = G - rabatt;
+      return {
+        frage: `Ein Artikel kostet ${G} €. Bei ${p} % Rabatt: Wie viel € zahlst du?`,
+        antwort: zahlbetrag,
+        lerninfo: `Rabatt: ${G} € · ${p} / 100 = ${rabatt} €; ${G} € − ${rabatt} € = ${zahlbetrag} €.`,
+      };
+    },
+    // Skonto: 2 % auf Vielfache von 50, 3 % auf Vielfache von 100 - so bleibt der Skontobetrag
+    // in beiden Faellen ganzzahlig.
+    () => {
+      const p = uebPick([2, 3]);
+      const B = p === 2 ? 50 * uebRandInt(4, 60) : 100 * uebRandInt(3, 30);
+      const skonto = (B * p) / 100;
+      const zahlbetrag = B - skonto;
+      return {
+        frage: `Eine Rechnung über ${B} € wird bei Zahlung innerhalb der Frist mit ${p} % Skonto beglichen. Welchen Betrag überweist du?`,
+        antwort: zahlbetrag,
+        lerninfo: `Skonto: ${B} € · ${p} / 100 = ${skonto} €; ${B} € − ${skonto} € = ${zahlbetrag} €.`,
+      };
+    },
+    // Rabatt und Skonto nacheinander: Listenpreis Vielfaches von 1000, Rabattsatz Vielfaches
+    // von 10 - der Zwischenbetrag ist dadurch stets ein Vielfaches von 100, worauf jeder
+    // Skontosatz (2 % oder 3 %) wieder ganzzahlig aufgeht.
+    () => {
+      const L = 1000 * uebRandInt(1, 8);
+      const rabattP = uebPick([10, 20, 30, 40]);
+      const skontoP = uebPick([2, 3]);
+      const rabattbetrag = (L * rabattP) / 100;
+      const Z = L - rabattbetrag;
+      const skontobetrag = (Z * skontoP) / 100;
+      const endbetrag = Z - skontobetrag;
+      return {
+        frage: `Eine Rechnung über ${L} € wird mit ${rabattP} % Rabatt und danach ${skontoP} % Skonto auf den reduzierten Betrag beglichen. Welchen Endbetrag zahlst du?`,
+        antwort: endbetrag,
+        lerninfo: `${L} € − ${rabattP} % Rabatt = ${Z} €; ${Z} € − ${skontoP} % Skonto = ${endbetrag} €.`,
+      };
+    },
+    // Mehrwertsteuer netto -> brutto: Nettopreis Vielfaches von 100, damit 19 % ganzzahlig sind.
+    () => {
+      const N = 100 * uebRandInt(2, 40);
+      const mwst = (N * 19) / 100;
+      const brutto = N + mwst;
+      return {
+        frage: `Ein Nettopreis beträgt ${N} €. Wie hoch ist der Bruttopreis bei 19 % Mehrwertsteuer?`,
+        antwort: brutto,
+        lerninfo: `${N} € + 19 % MwSt (${mwst} €) = ${brutto} €.`,
+      };
+    },
+    // Mehrwertsteuer brutto -> netto: Nettopreis (Ergebnis) zuerst gewuerfelt, Bruttopreis
+    // daraus konstruiert - garantiert glatte Rueckrechnung ohne Rundung.
+    () => {
+      const N = 100 * uebRandInt(2, 40);
+      const brutto = N + (N * 19) / 100;
+      return {
+        frage: `Ein Bruttopreis von ${brutto} € enthält 19 % Mehrwertsteuer. Wie hoch ist der Nettopreis?`,
+        antwort: N,
+        lerninfo: `${brutto} € / 1,19 = ${N} €.`,
+      };
+    },
+    // Jahreszinsen: Kapital Vielfaches von 1000, Zinssatz ganzzahlig - Zinsen daher immer glatt.
+    () => {
+      const K = 1000 * uebRandInt(2, 30);
+      const z = uebPick([2, 3, 4, 5, 6, 8]);
+      const zinsen = (K * z) / 100;
+      return {
+        frage: `Ein Kapital von ${K} € wird ein Jahr lang zu ${z} % Zinsen pro Jahr angelegt. Wie hoch sind die Zinsen am Jahresende?`,
+        antwort: zinsen,
+        lerninfo: `${K} € · ${z} / 100 = ${zinsen} €.`,
+      };
+    },
+    // Waehrungsumrechnung mit glattem (angenommenem) Kurs: Eurobetrag als Vielfaches des
+    // Kurs-Nenners gewuerfelt, damit die Umrechnung ohne Rundung aufgeht.
+    () => {
+      const varianten = [
+        { num: 11, den: 10, einheit: "US-Dollar", kuerzel: "USD" },
+        { num: 9, den: 10, einheit: "Schweizer Franken", kuerzel: "CHF" },
+      ];
+      const v = uebPick(varianten);
+      const E = v.den * uebRandInt(5, 80);
+      const fremd = (E * v.num) / v.den;
+      const kursStr = String(v.num / v.den).replace(".", ",");
+      return {
+        frage: `Bei einem angenommenen Kurs von 1 € = ${kursStr} ${v.einheit} (${v.kuerzel}): Wie viel ${v.kuerzel} sind ${E} €?`,
+        antwort: fremd,
+        lerninfo: `${E} € · ${v.num} / ${v.den} = ${fremd} ${v.kuerzel}.`,
+      };
+    },
+  ];
+  const r = uebPick(rezepte)();
+  return {
+    typ: "kaufmrechnen",
+    frage: r.frage,
+    optionen: [], korrekte_indizes: [],
+    korrekte_antwort: String(r.antwort),
+    material: "", zielzeichen: "", erklaerungen: [],
+    lerninfo: r.lerninfo,
+  };
+}
+
 // Buchstabenreihe: Bildungsregel ueber Alphabet-Indizes (0-25, Modulo-26 auch fuer negative
 // Schritte), Ergebnis als MC mit garantiert eindeutiger, plausibel distraktierter Loesung
 // (kein numerischer Pfad noetig - laeuft ueber den bestehenden MC-Score-Default).
@@ -3378,11 +3559,12 @@ function generateAssoziationenUebung() {
 }
 
 // Frische Uebungsaufgabe nach Typ (figural | zahlenreihe | konzentration | kopfrechnen |
-// buchstabenreihe | merkfaehigkeit | rechtschreibung | assoziationen).
+// kaufmrechnen | buchstabenreihe | merkfaehigkeit | rechtschreibung | assoziationen).
 function generateUebungByType(typ) {
   if (typ === "zahlenreihe") return generateZahlenreiheUebung();
   if (typ === "konzentration") return generateKonzentrationUebung();
   if (typ === "kopfrechnen") return generateKopfrechnenUebung();
+  if (typ === "kaufmrechnen") return generateKaufmRechnenUebung();
   if (typ === "buchstabenreihe") return generateBuchstabenreiheUebung();
   if (typ === "merkfaehigkeit") return generateMerkfaehigkeitUebung();
   if (typ === "rechtschreibung") return generateRechtschreibungUebung();
@@ -8079,7 +8261,7 @@ function frageAnzeigeText(q) {
   // Ganzes zusammenhalten, damit "= ?" nicht umbricht. Textaufgaben ("Wie viel sind 75 % von
   // 500?", "Ein Team hat … uebrig?") enthalten Buchstaben und sollen normal wortweise
   // umbrechen - sonst wuerde die lange Zeile auf schmalen Screens ueberlaufen.
-  if (typ === "kopfrechnen") {
+  if (typ === "kopfrechnen" || typ === "kaufmrechnen") {
     return /[A-Za-zÄÖÜäöüß]/.test(frage) ? frage : frage.replace(/ /g, " ");
   }
   // Zahlen-/Buchstabenreihe (NICHT die Zahlenmatrix - die zeigt ein Gitter statt eines
@@ -11290,7 +11472,7 @@ function scheduleSrCard(deck, id, correct) {
 }
 // Lokale, deterministische Bewertung einer SR-Karte (kein LLM): { correct, musterantwort }.
 function scoreSrCard(q, answer) {
-  if (q.typ === "zahlenreihe" || q.typ === "kopfrechnen") {
+  if (q.typ === "zahlenreihe" || q.typ === "kopfrechnen" || q.typ === "kaufmrechnen") {
     return { correct: scoreZahlenreihe(q, answer).punkte === 10, musterantwort: String(q.korrekte_antwort || "") };
   }
   if (q.typ === "konzentration") {
@@ -11341,6 +11523,7 @@ const UEB_TYPEN = [
   { typ: "zahlenreihe", label: "Zahlenreihen" },
   { typ: "konzentration", label: "Konzentration" },
   { typ: "kopfrechnen", label: "Kopfrechnen" },
+  { typ: "kaufmrechnen", label: "Kaufmännisches Rechnen" },
   { typ: "buchstabenreihe", label: "Buchstabenreihen" },
   { typ: "merkfaehigkeit", label: "Merkfähigkeit" },
   { typ: "rechtschreibung", label: "Rechtschreibung" },
@@ -11497,7 +11680,7 @@ function renderSrCardView() {
 
   const area = document.createElement("div");
   area.className = "sr-answer";
-  if (q.typ === "zahlenreihe" || q.typ === "konzentration" || q.typ === "kopfrechnen") {
+  if (q.typ === "zahlenreihe" || q.typ === "konzentration" || q.typ === "kopfrechnen" || q.typ === "kaufmrechnen") {
     if (q.typ === "konzentration" && q.material) {
       const mat = document.createElement("div");
       mat.className = "konz-material";
