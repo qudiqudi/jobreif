@@ -2762,14 +2762,14 @@
         },
         {
           "type": "fachwissen",
-          "question": "In welche drei Dienstgradgruppen gliedern sich Soldatinnen und Soldaten der Bundeswehr grundsätzlich?",
+          "question": "In welche drei Laufbahngruppen gliedern sich Soldatinnen und Soldaten der Bundeswehr grundsätzlich?",
           "options": [
             "Mannschaften, Unteroffiziere und Offiziere",
-            "Mannschaften, Feldwebel und Generäle",
-            "Rekruten, Gefreite und Hauptleute",
+            "Gefreite, Feldwebel und Hauptleute",
+            "Leutnante, Hauptleute und Stabsoffiziere",
             "Wehrpflichtige, Zeitsoldaten und Berufssoldaten"
           ],
-          "answer": "Mannschaften, Unteroffiziere und Offiziere – das ist die grundlegende Einteilung der Dienstgrade. Die vierte Antwort beschreibt dagegen den Status (Wehrform), nicht die Dienstgradgruppe."
+          "answer": "Mannschaften, Unteroffiziere und Offiziere – das sind die drei Laufbahngruppen der Bundeswehr. Leutnante, Hauptleute und Stabsoffiziere sind dagegen einzelne Dienstgradgruppen innerhalb der Offiziere, und die vierte Antwort beschreibt den Status (Wehrform), nicht die Laufbahngruppe."
         },
         {
           "type": "fachwissen",
